@@ -14,3 +14,7 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo xtask no-comments`. Run `cargo xtask ci` locally before opening a PR.
 - Everything is Rust. No Python, shell, or other languages for tooling; add tasks to `xtask` instead.
+
+## Scope
+
+See `docs/SCOPE.md` for goals, crate layout, milestones, and decisions. Update it when a decision changes.
