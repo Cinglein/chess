@@ -18,3 +18,16 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
 ## Scope
 
 See `docs/SCOPE.md` for goals, crate layout, milestones, and decisions. Update it when a decision changes.
+
+## Working style
+
+The owner is learning how chess engines and neural network training work. Treat every
+milestone as a lesson as well as a deliverable:
+
+- Each PR description explains the concept being introduced, why the engine needs it,
+  what to read in the diff, and one experiment the owner can run.
+- Explanations live in `docs/notes/`, one note per milestone, never in code comments.
+- Tests double as documentation: name them after the behaviour they demonstrate.
+- Before starting a milestone, give a short primer and check how deep to go.
+- The owner runs the training pipeline themselves: datagen, training, embedding the
+  network, arena measurement. Suggest experiments and measure their effect in the arena.
