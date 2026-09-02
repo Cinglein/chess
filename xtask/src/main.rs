@@ -42,6 +42,17 @@ fn ci() -> Result<(), String> {
         "-D",
         "warnings",
     ])?;
+    cargo(&[
+        "clippy",
+        "--package",
+        "engine",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--no-default-features",
+        "--",
+        "-D",
+        "warnings",
+    ])?;
     cargo(&["test", "--workspace", "--all-features"])?;
     no_comments()
 }

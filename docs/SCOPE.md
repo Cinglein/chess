@@ -23,6 +23,9 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
 - The reference time control for all Elo measurements is 10 seconds plus 0.1 second increment per side.
 - The TUI talks to the engine in-process. UCI is a separate binary for testing and GUIs.
 - The trained network is embedded in the engine binary with `include_bytes!`.
+- The engine crate compiles for `wasm32-unknown-unknown`. Threads and wall-clock time live
+  behind the default `threads` feature and the wasm build disables it. CI runs clippy for the
+  wasm target on every PR so this cannot drift. A browser build is a stretch milestone.
 - `bullet_lib` is pinned to a git revision and built with the `metal` feature.
   Development machine: Apple M5 Max, 18 CPU cores, 40 GPU cores, 48 GB RAM.
 
@@ -51,6 +54,7 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
 - NNUE: perspective network, 768 inputs per side, one hidden layer with SCReLU,
   incrementally updated accumulators, int16 quantised weights from bullet.
 - Draw detection: repetition, fifty-move rule, insufficient material.
+- Search limits go through a clock abstraction so a browser host can supply time.
 
 ## TUI
 
@@ -83,6 +87,7 @@ Each milestone is one pull request unless it grows too large to review.
 5. Lazy SMP multithreading with a shared transposition table.
 6. Datagen, bullet trainer, NNUE inference. Arena confirms the gain over the hand-crafted evaluation.
 7. TUI polish: eval and principal variation display, undo, flip, PGN export, optional node-limited difficulty levels.
+8. Stretch: web build. The engine compiled to wasm with a browser board, single-threaded, host-provided clock.
 
 ## Learning
 

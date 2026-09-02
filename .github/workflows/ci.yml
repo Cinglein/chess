@@ -25,8 +25,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+          targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - run: cargo clippy --package engine --target wasm32-unknown-unknown --no-default-features -- -D warnings
 
   test:
     runs-on: ubuntu-latest
