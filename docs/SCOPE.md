@@ -84,6 +84,11 @@ Each milestone is one pull request unless it grows too large to review.
 6. Datagen, bullet trainer, NNUE inference. Arena confirms the gain over the hand-crafted evaluation.
 7. TUI polish: eval and principal variation display, undo, flip, PGN export, optional node-limited difficulty levels.
 
+## Learning
+
+The project is educational. See the working style section of `CLAUDE.md`. Each milestone
+adds a note under `docs/notes/` explaining the concept it introduces.
+
 ## Non-goals
 
 - Opening books, endgame tablebases, pondering, advanced time management.
