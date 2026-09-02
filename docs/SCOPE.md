@@ -52,6 +52,15 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
   incrementally updated accumulators, int16 quantised weights from bullet.
 - Draw detection: repetition, fifty-move rule, insufficient material.
 
+## TUI
+
+The screen shows a visual chessboard, the move list, and a command line. Moves are typed
+in standard algebraic notation, for example `e4`, `Nf3`, `exd5`, `O-O`, `e8=Q`, and
+ambiguous or illegal input is rejected with a message rather than guessed at. Commands
+start with a slash: `/exit` quits. Further commands planned under the same convention
+are `/new`, `/undo`, `/flip`, and `/pgn`. The engine replies on its own after each
+legal move and its reply is shown in algebraic notation.
+
 ## Training pipeline
 
 1. Datagen plays self-play games across all cores using the current best engine,
@@ -69,7 +78,7 @@ Each milestone is one pull request unless it grows too large to review.
 
 1. Board, move generation, FEN, perft tests.
 2. Search with hand-crafted evaluation and the UCI binary. Playable in any GUI.
-3. Minimal TUI: board display, move entry, engine replies. Polish comes later.
+3. Minimal TUI: visual board, algebraic notation move entry, `/exit`, engine replies. Polish comes later.
 4. Arena with Stockfish anchors. First Elo measurement. Every later change is measured.
 5. Lazy SMP multithreading with a shared transposition table.
 6. Datagen, bullet trainer, NNUE inference. Arena confirms the gain over the hand-crafted evaluation.
@@ -85,6 +94,7 @@ Each milestone is one pull request unless it grows too large to review.
 
 - bullet's Metal backend is newer than CUDA. Mitigation: pin a revision, keep the
   network small, keep the data in text format so it can be trained elsewhere if needed.
+- Stockfish is not installed on the development machine yet. Milestone 4 needs `brew install stockfish`.
 - Stockfish's `UCI_Elo` scale is approximate. Mitigation: the done criterion leaves a
   wide margin above 1000, and the arena reports error bars.
 - The no-comments rule is hardest on engine code full of bit tricks and tables.
