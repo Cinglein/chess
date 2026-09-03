@@ -1,3 +1,8 @@
+mod hex_literal;
+mod magic_search;
+mod magic_tables;
+mod xor_shift;
+
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -5,14 +10,18 @@ use std::process::{Command, ExitCode};
 
 use rustc_lexer::{FrontmatterAllowed, TokenKind, tokenize};
 
+use crate::magic_tables::MagicTables;
+use crate::xor_shift::XorShift;
+
 fn main() -> ExitCode {
     let task = env::args().nth(1);
     let result = match task.as_deref() {
         Some("ci") => ci(),
+        Some("magics") => regenerate_magics(),
         Some("no-comments") => no_comments(),
         Some("wasm") => wasm(),
         _ => {
-            eprintln!("usage: cargo xtask <ci|no-comments|wasm>");
+            eprintln!("usage: cargo xtask <ci|magics|no-comments|wasm>");
             return ExitCode::FAILURE;
         }
     };
@@ -46,6 +55,11 @@ fn ci() -> Result<(), String> {
     wasm()?;
     cargo(&["test", "--workspace", "--all-features"])?;
     no_comments()
+}
+
+fn regenerate_magics() -> Result<(), String> {
+    MagicTables::find(&mut XorShift::new(MagicTables::SEED)).write(&workspace_root())?;
+    cargo(&["fmt", "--package", "board"])
 }
 
 const WASM_CRATES: &[&str] = &["board"];
