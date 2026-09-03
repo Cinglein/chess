@@ -20,13 +20,8 @@ impl Iterator for SubsetIter {
     type Item = Bitboard;
 
     fn next(&mut self) -> Option<Bitboard> {
-        let subset = self.next?;
-        let following = self.mask.subset_after(subset);
-        self.next = if following.is_empty() {
-            None
-        } else {
-            Some(following)
-        };
+        let subset = self.next.take()?;
+        self.next = Some(self.mask.subset_after(subset)).filter(|following| !following.is_empty());
         Some(subset)
     }
 }
