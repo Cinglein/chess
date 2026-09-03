@@ -103,9 +103,8 @@ the page. No server component.
 
 Each milestone is one or more pull requests, each small enough to read as a lesson.
 
-1. `board`, one concept per PR: squares and pieces; `Bitboard`; the 16-bit `Move`; leaper
-   attack tables; magic bitboards for sliders; board state with FEN, copy-make, and Zobrist;
-   legal move generation with perft. One note per PR under `docs/notes/`.
+1. `board`: bitboards and attack tables, then board state with FEN and Zobrist, then legal
+   move generation with perft. Three PRs.
 2. `eval` and `search` with hand-crafted evaluation, `engine` orchestration, the `uci` protocol
    crate, and the `chess` binary. Playable in any GUI.
 3. Minimal TUI: visual board, algebraic notation move entry, `/exit`, engine replies. Polish comes later.
@@ -117,8 +116,8 @@ Each milestone is one or more pull requests, each small enough to read as a less
 
 ## Learning
 
-The project is educational. See the working style section of `CLAUDE.md`. Each PR that
-introduces a concept adds a note under `docs/notes/` explaining it.
+The project is educational. See the working style section of `CLAUDE.md`. Each milestone
+adds a note under `docs/notes/` explaining the concept it introduces.
 
 ## Non-goals
 
