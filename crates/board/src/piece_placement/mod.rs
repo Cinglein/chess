@@ -1,4 +1,5 @@
 mod fen;
+mod rank_placement;
 
 use enum_map::EnumMap;
 use strum::{EnumCount, IntoEnumIterator};
