@@ -3,21 +3,21 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use enum_map::EnumMap;
 use strum::{EnumCount, VariantArray};
 
-use super::{Magic, Slider};
+use super::{Magic, Rays};
 use crate::bitboard::Bitboard;
 use crate::square::Square;
 
 pub(super) struct AttackTable<const SIZE: usize> {
-    slider: Slider,
+    rays: Rays,
     magics: EnumMap<Square, Magic>,
     slots: [AtomicU64; SIZE],
 }
 
 impl<const SIZE: usize> AttackTable<SIZE> {
-    pub(super) const fn new(slider: Slider, multipliers: &EnumMap<Square, u64>) -> Self {
+    pub(super) const fn new(rays: Rays, multipliers: &EnumMap<Square, u64>) -> Self {
         AttackTable {
-            slider,
-            magics: Self::magics(slider, multipliers),
+            rays,
+            magics: Self::magics(rays, multipliers),
             slots: [const { AtomicU64::new(0) }; SIZE],
         }
     }
@@ -26,7 +26,7 @@ impl<const SIZE: usize> AttackTable<SIZE> {
         let slot = &self.slots[self.magics[square].index(occupied)];
         match slot.load(Ordering::Relaxed) {
             0 => {
-                let attacks = self.slider.attacks_by_ray(square, occupied);
+                let attacks = self.rays.attacks_by_ray(square, occupied);
                 slot.store(attacks.bits(), Ordering::Relaxed);
                 attacks
             }
@@ -34,13 +34,12 @@ impl<const SIZE: usize> AttackTable<SIZE> {
         }
     }
 
-    const fn magics(slider: Slider, multipliers: &EnumMap<Square, u64>) -> EnumMap<Square, Magic> {
+    const fn magics(rays: Rays, multipliers: &EnumMap<Square, u64>) -> EnumMap<Square, Magic> {
         let mut magics = [Magic::new(Bitboard::EMPTY, 0, 0); Square::COUNT];
         let mut offset = 0;
         let mut index = 0;
         while index < Square::COUNT {
-            let square = Square::VARIANTS[index];
-            let mask = slider.relevant_occupancy(square);
+            let mask = rays.relevant_occupancy(Square::VARIANTS[index]);
             magics[index] = Magic::new(mask, multipliers.as_array()[index], offset);
             offset += magics[index].table_size();
             index += 1;

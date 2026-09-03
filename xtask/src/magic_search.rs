@@ -9,11 +9,11 @@ pub struct MagicSearch {
 }
 
 impl MagicSearch {
-    pub fn new(slider: Slider, square: Square) -> MagicSearch {
-        let mask = slider.relevant_occupancy(square);
+    pub fn new<S: Slider>(square: Square) -> MagicSearch {
+        let mask = S::relevant_occupancy(square);
         let expected = mask
             .subsets()
-            .map(|subset| (subset, slider.attacks_by_ray(square, subset)))
+            .map(|subset| (subset, S::attacks_by_ray(square, subset)))
             .collect();
         let table = vec![Bitboard::EMPTY; Magic::new(mask, 0, 0).table_size()];
         MagicSearch {
@@ -56,7 +56,7 @@ impl MagicSearch {
 
 #[cfg(test)]
 mod tests {
-    use board::{Magic, Slider, Square};
+    use board::{Bishop, Magic, Slider, Square};
 
     use super::MagicSearch;
     use crate::xor_shift::XorShift;
@@ -64,12 +64,12 @@ mod tests {
     #[test]
     fn a_found_magic_maps_every_occupancy_to_its_attacks() {
         let square = Square::D4;
-        let multiplier = MagicSearch::new(Slider::Bishop, square).run(&mut XorShift::new(7));
-        let mask = Slider::Bishop.relevant_occupancy(square);
+        let multiplier = MagicSearch::new::<Bishop>(square).run(&mut XorShift::new(7));
+        let mask = Bishop::relevant_occupancy(square);
         let magic = Magic::new(mask, multiplier, 0);
         let mut table = vec![None; magic.table_size()];
         for subset in mask.subsets() {
-            let attacks = Slider::Bishop.attacks_by_ray(square, subset);
+            let attacks = Bishop::attacks_by_ray(square, subset);
             let slot = &mut table[magic.index(subset)];
             assert!(slot.is_none_or(|stored| stored == attacks));
             *slot = Some(attacks);

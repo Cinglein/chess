@@ -1,26 +1,26 @@
-use crate::bitboard::Bitboard;
+use super::{Leaper, Leaps};
 use crate::direction::Direction;
 
-pub(super) const fn attacks(origin: Bitboard) -> Bitboard {
-    let north = origin.shift(Direction::NORTH).shift(Direction::NORTH);
-    let south = origin.shift(Direction::SOUTH).shift(Direction::SOUTH);
-    let east = origin.shift(Direction::EAST).shift(Direction::EAST);
-    let west = origin.shift(Direction::WEST).shift(Direction::WEST);
-    north
-        .shift(Direction::EAST)
-        .union(north.shift(Direction::WEST))
-        .union(south.shift(Direction::EAST))
-        .union(south.shift(Direction::WEST))
-        .union(east.shift(Direction::NORTH))
-        .union(east.shift(Direction::SOUTH))
-        .union(west.shift(Direction::NORTH))
-        .union(west.shift(Direction::SOUTH))
+pub struct Knight;
+
+impl Leaper for Knight {
+    const LEAPS: Leaps = Leaps::new(&[
+        &[Direction::NORTH, Direction::NORTH, Direction::EAST],
+        &[Direction::NORTH, Direction::NORTH, Direction::WEST],
+        &[Direction::SOUTH, Direction::SOUTH, Direction::EAST],
+        &[Direction::SOUTH, Direction::SOUTH, Direction::WEST],
+        &[Direction::EAST, Direction::EAST, Direction::NORTH],
+        &[Direction::EAST, Direction::EAST, Direction::SOUTH],
+        &[Direction::WEST, Direction::WEST, Direction::NORTH],
+        &[Direction::WEST, Direction::WEST, Direction::SOUTH],
+    ]);
 }
 
 #[cfg(test)]
 mod tests {
     use strum::IntoEnumIterator;
 
+    use super::Knight;
     use crate::bitboard::Bitboard;
     use crate::leaper::Leaper;
     use crate::orthogonal::Orthogonal;
@@ -29,10 +29,10 @@ mod tests {
     #[test]
     fn a_knight_in_the_corner_attacks_two_squares_and_in_the_centre_eight() {
         let corner: Bitboard = [Square::B3, Square::C2].into_iter().collect();
-        assert_eq!(Leaper::Knight.attacks(Square::A1), corner);
-        assert_eq!(Leaper::Knight.attacks(Square::D4).count(), 8);
-        assert!(Leaper::Knight.attacks(Square::D4).contains(Square::E6));
-        assert!(!Leaper::Knight.attacks(Square::D4).contains(Square::D5));
+        assert_eq!(Knight::attacks(Square::A1), corner);
+        assert_eq!(Knight::attacks(Square::D4).count(), 8);
+        assert!(Knight::attacks(Square::D4).contains(Square::E6));
+        assert!(!Knight::attacks(Square::D4).contains(Square::D5));
     }
 
     #[test]
@@ -55,7 +55,7 @@ mod tests {
             .into_iter()
             .flatten()
             .collect();
-            assert_eq!(Leaper::Knight.attacks(square), expected, "{square}");
+            assert_eq!(Knight::attacks(square), expected, "{square}");
         }
     }
 }

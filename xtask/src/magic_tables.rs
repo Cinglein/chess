@@ -2,7 +2,7 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 
-use board::{Slider, Square};
+use board::{Bishop, Rook, Slider, Square};
 use enum_map::EnumMap;
 
 use crate::hex_literal::HexLiteral;
@@ -20,8 +20,8 @@ impl MagicTables {
 
     pub fn find(rng: &mut XorShift) -> MagicTables {
         MagicTables {
-            rook: Self::find_all(Slider::Rook, rng),
-            bishop: Self::find_all(Slider::Bishop, rng),
+            rook: Self::find_all::<Rook>(rng),
+            bishop: Self::find_all::<Bishop>(rng),
         }
     }
 
@@ -32,8 +32,8 @@ impl MagicTables {
         Ok(())
     }
 
-    fn find_all(slider: Slider, rng: &mut XorShift) -> EnumMap<Square, u64> {
-        EnumMap::from_fn(|square| MagicSearch::new(slider, square).run(rng))
+    fn find_all<S: Slider>(rng: &mut XorShift) -> EnumMap<Square, u64> {
+        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).run(rng))
     }
 
     fn fmt_table(

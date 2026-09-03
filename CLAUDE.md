@@ -34,6 +34,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
 - Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. The
   only `as usize` casts on enums live inside `const fn` table construction.
+- A family of behaviours is a trait with zero-sized implementors, not an enum matched on at
+  runtime: `Rook: Slider`, `Knight: Leaper`. Per-implementor data is an associated const.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
