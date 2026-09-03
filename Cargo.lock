@@ -30,9 +30,6 @@ dependencies = [
 [[package]]
 name = "tui"
 version = "0.1.0"
-dependencies = [
- "engine",
-]
 
 [[package]]
 name = "unicode-ident"
