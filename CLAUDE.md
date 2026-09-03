@@ -23,6 +23,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Delete a branch as soon as its PR is merged or closed. GitHub deletes the remote branch on
   merge and the Cleanup workflow deletes it when a PR is closed unmerged. After either, sync
   `main` and delete the local branch. Never leave stale branches.
+- One struct, enum, or trait per file, named after it in snake case, across the whole repo.
+  Its impls and its tests live in the same file. Modules are flat: `crates/board/src/square.rs`,
+  not a `square/` directory.
+- Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
+  `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
+- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. The
+  only `as usize` casts on enums live inside `const fn` table construction.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README

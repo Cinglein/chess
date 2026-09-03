@@ -7,6 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+enum-map = "3"
+strum = { version = "0.28", default-features = false, features = ["derive"] }
 
 [lints]
 workspace = true
