@@ -50,9 +50,6 @@ impl Fen for CastlingRights {}
 
 impl fmt::Display for CastlingRights {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.is_none() {
-            return formatter.write_str("-");
-        }
         Self::LETTERS
             .iter()
             .filter(|(_, right)| self.contains(*right))
@@ -64,10 +61,8 @@ impl FromStr for CastlingRights {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<CastlingRights, FenError> {
-        match text {
-            "-" => return Ok(CastlingRights::NONE),
-            "" => return Err(FenError::CastlingRights),
-            _ => {}
+        if text.is_empty() {
+            return Err(FenError::CastlingRights);
         }
         text.chars()
             .try_fold(CastlingRights::NONE, |rights, letter| {
@@ -91,7 +86,6 @@ mod tests {
     #[test]
     fn rights_display_and_parse_as_fen_letters() {
         assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
-        assert_eq!(CastlingRights::NONE.to_string(), "-");
         let partial = "Kq".parse::<CastlingRights>().unwrap();
         assert!(partial.white_kingside());
         assert!(!partial.white_queenside());
@@ -102,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn repeated_or_unknown_letters_are_rejected() {
+    fn repeated_unknown_or_missing_letters_are_rejected() {
         assert_eq!(
             "KK".parse::<CastlingRights>(),
             Err(FenError::CastlingRights)

@@ -1,23 +1,39 @@
 use core::fmt;
 use core::str::FromStr;
 
-use fen::{Fen, FenError};
+use fen::{DashOr, Fen, FenError};
 
 use super::Board;
+use crate::castling_rights::CastlingRights;
 use crate::color::Color;
 use crate::file::File;
 use crate::square::Square;
 
 impl Board {
     fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
-        if text == "-" {
-            return Ok(None);
+        let DashOr(target) = text
+            .parse::<DashOr<Square>>()
+            .map_err(|_| FenError::EnPassant)?;
+        target
+            .map(|square| {
+                (square.rank() == Self::en_passant_rank(side_to_move))
+                    .then(|| square.file())
+                    .ok_or(FenError::EnPassant)
+            })
+            .transpose()
+    }
+
+    fn parse_castling_rights(text: &str) -> Result<CastlingRights, FenError> {
+        let DashOr(rights) = text.parse::<DashOr<CastlingRights>>()?;
+        Ok(rights.unwrap_or(CastlingRights::NONE))
+    }
+
+    const fn castling_rights_field(&self) -> DashOr<CastlingRights> {
+        if self.castling_rights.is_none() {
+            DashOr(None)
+        } else {
+            DashOr(Some(self.castling_rights))
         }
-        text.parse::<Square>()
-            .ok()
-            .filter(|square| square.rank() == Self::en_passant_rank(side_to_move))
-            .map(|square| Some(square.file()))
-            .ok_or(FenError::EnPassant)
     }
 }
 
@@ -27,17 +43,13 @@ impl fmt::Display for Board {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
-            "{} {} {}",
-            self.placement, self.side_to_move, self.castling_rights
-        )?;
-        match self.en_passant_square() {
-            Some(square) => write!(formatter, " {square}")?,
-            None => formatter.write_str(" -")?,
-        }
-        write!(
-            formatter,
-            " {} {}",
-            self.halfmove_clock, self.fullmove_number
+            "{} {} {} {} {} {}",
+            self.placement,
+            self.side_to_move,
+            self.castling_rights_field(),
+            DashOr(self.en_passant_square()),
+            self.halfmove_clock,
+            self.fullmove_number
         )
     }
 }
@@ -50,7 +62,7 @@ impl FromStr for Board {
         let mut field = || fields.next().ok_or(FenError::FieldCount);
         let placement = field()?.parse()?;
         let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
-        let castling_rights = field()?.parse()?;
+        let castling_rights = Self::parse_castling_rights(field()?)?;
         let en_passant_file = Self::parse_en_passant(side_to_move, field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
         let fullmove_number = field()?.parse().map_err(|_| FenError::FullmoveNumber)?;
