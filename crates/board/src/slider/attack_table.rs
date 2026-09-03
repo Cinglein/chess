@@ -10,7 +10,7 @@ use crate::square::Square;
 pub(super) struct AttackTable<const SIZE: usize> {
     rays: Rays,
     magics: EnumMap<Square, Magic>,
-    slots: [AtomicU64; SIZE],
+    attack_slots: [AtomicU64; SIZE],
 }
 
 impl<const SIZE: usize> AttackTable<SIZE> {
@@ -18,12 +18,12 @@ impl<const SIZE: usize> AttackTable<SIZE> {
         AttackTable {
             rays,
             magics: Self::magics(rays, multipliers),
-            slots: [const { AtomicU64::new(0) }; SIZE],
+            attack_slots: [const { AtomicU64::new(0) }; SIZE],
         }
     }
 
     pub(super) fn attacks(&self, square: Square, occupied: Bitboard) -> Bitboard {
-        let slot = &self.slots[self.magics[square].index(occupied)];
+        let slot = &self.attack_slots[self.magics[square].index(occupied)];
         match slot.load(Ordering::Relaxed) {
             0 => {
                 let attacks = self.rays.attacks_by_ray(square, occupied);
