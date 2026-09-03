@@ -1,9 +1,11 @@
 use core::ops::Not;
 
 use enum_map::Enum;
-use strum::{Enum, EnumCount, EnumIter, FromRepr, VariantArray};
+use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, Enum, EnumCount, EnumIter, FromRepr, VariantArray,
+)]
 #[repr(u8)]
 pub enum Color {
     White,

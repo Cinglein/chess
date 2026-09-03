@@ -1,5 +1,5 @@
 use enum_map::Enum;
-use strum::{Enum, EnumCount, EnumIter, FromRepr, VariantArray};
+use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
 
 #[derive(
     Clone,
@@ -10,6 +10,7 @@ use strum::{Enum, EnumCount, EnumIter, FromRepr, VariantArray};
     Hash,
     PartialOrd,
     Ord,
+    Enum,
     EnumCount,
     EnumIter,
     FromRepr,
