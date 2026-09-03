@@ -23,6 +23,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Delete a branch as soon as its PR is merged or closed. GitHub deletes the remote branch on
   merge and the Cleanup workflow deletes it when a PR is closed unmerged. After either, sync
   `main` and delete the local branch. Never leave stale branches.
+- When a PR lands, merge main into every other open PR branch, run `cargo xtask ci`, and push, so
+  each open PR is always tested against current main. Never rebase or force push.
 - One struct, enum, or trait per file, named after it in snake case, across the whole repo.
   Its impls and its tests live in the same file. Modules are flat: `crates/board/src/square.rs`,
   not a `square/` directory. Never name a type or module after a
