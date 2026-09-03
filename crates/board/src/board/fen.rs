@@ -4,14 +4,20 @@ use core::str::FromStr;
 use fen::{Fen, FenError};
 
 use super::Board;
+use crate::color::Color;
+use crate::file::File;
 use crate::square::Square;
 
 impl Board {
-    fn parse_en_passant(text: &str) -> Result<Option<Square>, FenError> {
-        match text {
-            "-" => Ok(None),
-            square => square.parse().map(Some).map_err(|_| FenError::EnPassant),
+    fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
+        if text == "-" {
+            return Ok(None);
         }
+        text.parse::<Square>()
+            .ok()
+            .filter(|square| square.rank() == Self::en_passant_rank(side_to_move))
+            .map(|square| Some(square.file()))
+            .ok_or(FenError::EnPassant)
     }
 }
 
@@ -24,7 +30,7 @@ impl fmt::Display for Board {
             "{} {} {}",
             self.placement, self.side_to_move, self.castling_rights
         )?;
-        match self.en_passant {
+        match self.en_passant_square() {
             Some(square) => write!(formatter, " {square}")?,
             None => formatter.write_str(" -")?,
         }
@@ -45,7 +51,7 @@ impl FromStr for Board {
         let placement = field()?.parse()?;
         let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
         let castling_rights = field()?.parse()?;
-        let en_passant = Self::parse_en_passant(field()?)?;
+        let en_passant_file = Self::parse_en_passant(side_to_move, field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
         let fullmove_number = field()?.parse().map_err(|_| FenError::FullmoveNumber)?;
         if fields.next().is_some() {
@@ -55,7 +61,7 @@ impl FromStr for Board {
             placement,
             side_to_move,
             castling_rights,
-            en_passant,
+            en_passant_file,
             halfmove_clock,
             fullmove_number,
         })
