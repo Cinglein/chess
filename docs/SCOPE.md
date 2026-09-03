@@ -29,7 +29,9 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
   `wasm32-unknown-unknown` in CI.
 - The web frontend uses Dioxus and runs the engine single-threaded in the browser with a
   host-provided clock.
-- The TUI and web frontend talk to the engine in-process. UCI is a separate binary for testing and GUIs.
+- The TUI and web frontend talk to the engine in-process. The `chess` binary speaks UCI for GUIs
+  and the arena. Notations (FEN, long algebraic moves, SAN) belong to `board`; protocol messages
+  belong to `uci`; I/O belongs to the binaries.
 - Sliding-piece attack tables are built at compile time by const evaluation from checked-in
   magic numbers. `cargo xtask magics` regenerates the numbers, so the finder stays readable
   and the tables need no runtime initialisation.
@@ -44,11 +46,12 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
 | `board` | lib | no | Bitboards, move generation, FEN, Zobrist hashing, perft |
 | `eval` | lib | no | Hand-crafted evaluation and NNUE inference |
 | `search` | lib | no, `alloc` | Single-threaded alpha-beta search over caller-provided tables and clock |
+| `uci` | lib | no | UCI protocol messages as types with `FromStr` and `Display`, both directions |
 | `engine` | lib | yes | Threads, time management, table allocation, one API for all frontends |
-| `uci` | bin | yes | UCI protocol over stdin/stdout |
+| `chess` | bin | yes | The engine executable: stdin and stdout wired to `uci` and `engine` |
 | `tui` | bin | yes | Terminal UI built on ratatui and crossterm |
 | `web` | bin | wasm | Dioxus frontend compiled to WebAssembly |
-| `arena` | bin | yes | Parallel UCI match runner with Elo estimates and error bars |
+| `arena` | bin | yes | Parallel match runner, a `uci` client driving engines as child processes, with Elo estimates and error bars |
 | `datagen` | bin | yes | Parallel self-play data generation in a bullet-readable format |
 | `trainer` | bin | yes | bullet training run definition, emits the quantised network |
 | `xtask` | bin | yes | Repository tooling and CI checks |
@@ -102,8 +105,8 @@ Each milestone is one or more pull requests, each small enough to read as a less
 
 1. `board`: bitboards and attack tables, then board state with FEN and Zobrist, then legal
    move generation with perft. Three PRs.
-2. `eval` and `search` with hand-crafted evaluation, `engine` orchestration, and the `uci`
-   binary. Playable in any GUI.
+2. `eval` and `search` with hand-crafted evaluation, `engine` orchestration, the `uci` protocol
+   crate, and the `chess` binary. Playable in any GUI.
 3. Minimal TUI: visual board, algebraic notation move entry, `/exit`, engine replies. Polish comes later.
 4. Arena with Stockfish anchors. First Elo measurement. Every later change is measured.
 5. Lazy SMP multithreading with a shared transposition table.
