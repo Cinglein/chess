@@ -27,15 +27,6 @@ mod tests {
     use crate::square::Square;
 
     #[test]
-    fn a_knight_in_the_corner_attacks_two_squares_and_in_the_centre_eight() {
-        let corner: Bitboard = [Square::B3, Square::C2].into_iter().collect();
-        assert_eq!(Knight::attacks(Square::A1), corner);
-        assert_eq!(Knight::attacks(Square::D4).count(), 8);
-        assert!(Knight::attacks(Square::D4).contains(Square::E6));
-        assert!(!Knight::attacks(Square::D4).contains(Square::D5));
-    }
-
-    #[test]
     fn every_knight_entry_agrees_with_stepping_two_then_one() {
         let north = Orthogonal::North;
         let south = Orthogonal::South;

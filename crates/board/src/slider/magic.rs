@@ -54,24 +54,17 @@ mod tests {
     use crate::square::Square;
 
     #[test]
-    fn indices_stay_inside_the_table_for_every_subset_of_the_mask() {
+    fn the_index_depends_only_on_the_mask_and_stays_inside_the_table() {
         let mask: Bitboard = [Square::B1, Square::C1, Square::A2, Square::A3]
             .into_iter()
             .collect();
+        let noise: Bitboard = [Square::D4, Square::H8].into_iter().collect();
         let magic = Magic::new(mask, 0x9E37_79B9_7F4A_7C15, 100);
         assert_eq!(magic.table_size(), 16);
         for occupied in mask.subsets() {
             let index = magic.index(occupied);
             assert!((100..116).contains(&index), "{index}");
+            assert_eq!(magic.index(occupied | noise), index);
         }
-    }
-
-    #[test]
-    fn squares_outside_the_mask_do_not_change_the_index() {
-        let mask = Bitboard::from_square(Square::E4);
-        let magic = Magic::new(mask, 0x9E37_79B9_7F4A_7C15, 0);
-        let noise: Bitboard = [Square::A1, Square::H8, Square::D4].into_iter().collect();
-        assert_eq!(magic.index(noise), magic.index(Bitboard::EMPTY));
-        assert_eq!(magic.index(noise | mask), magic.index(mask));
     }
 }

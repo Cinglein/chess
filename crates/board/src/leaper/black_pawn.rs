@@ -18,13 +18,6 @@ mod tests {
     use crate::square::Square;
 
     #[test]
-    fn black_pawns_attack_diagonally_down_the_board() {
-        let expected: Bitboard = [Square::D3, Square::F3].into_iter().collect();
-        assert_eq!(BlackPawn::attacks(Square::E4), expected);
-        assert_eq!(BlackPawn::attacks(Square::A1), Bitboard::EMPTY);
-    }
-
-    #[test]
     fn every_black_pawn_entry_agrees_with_stepping_diagonally_south() {
         for square in Square::iter() {
             let expected: Bitboard = [square + Diagonal::SouthEast, square + Diagonal::SouthWest]

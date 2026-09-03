@@ -38,7 +38,7 @@ mod tests {
     use crate::bitboard::Bitboard;
     use crate::square::Square;
 
-    fn lookups_match_ray_walking_for_every_relevant_occupancy<S: Slider>() {
+    fn lookups_match_ray_walking_for_every_relevant_occupancy_of<S: Slider>() {
         for square in Square::iter() {
             for occupied in S::relevant_occupancy(square).subsets() {
                 assert_eq!(
@@ -50,7 +50,7 @@ mod tests {
         }
     }
 
-    fn lookups_ignore_pieces_outside_the_relevant_occupancy<S: Slider>() {
+    fn lookups_ignore_pieces_outside_the_relevant_occupancy_of<S: Slider>() {
         let mut state = 0x2545_F491_4F6C_DD1D_u64;
         for _ in 0..2000 {
             state ^= state << 13;
@@ -66,35 +66,27 @@ mod tests {
         }
     }
 
-    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot<S: Slider>() {
+    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of<S: Slider>() {
         for square in Square::iter() {
             assert!(!S::attacks_by_ray(square, Bitboard::FULL).is_empty());
         }
     }
 
     #[test]
-    fn rook_lookups_match_ray_walking_for_every_relevant_occupancy() {
-        lookups_match_ray_walking_for_every_relevant_occupancy::<Rook>();
+    fn lookups_match_ray_walking_for_every_relevant_occupancy() {
+        lookups_match_ray_walking_for_every_relevant_occupancy_of::<Rook>();
+        lookups_match_ray_walking_for_every_relevant_occupancy_of::<Bishop>();
     }
 
     #[test]
-    fn bishop_lookups_match_ray_walking_for_every_relevant_occupancy() {
-        lookups_match_ray_walking_for_every_relevant_occupancy::<Bishop>();
+    fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
+        lookups_ignore_pieces_outside_the_relevant_occupancy_of::<Rook>();
+        lookups_ignore_pieces_outside_the_relevant_occupancy_of::<Bishop>();
     }
 
     #[test]
-    fn rook_lookups_ignore_pieces_outside_the_relevant_occupancy() {
-        lookups_ignore_pieces_outside_the_relevant_occupancy::<Rook>();
-    }
-
-    #[test]
-    fn bishop_lookups_ignore_pieces_outside_the_relevant_occupancy() {
-        lookups_ignore_pieces_outside_the_relevant_occupancy::<Bishop>();
-    }
-
-    #[test]
-    fn sliding_attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
-        attacks_are_never_empty_so_zero_marks_an_unfilled_slot::<Rook>();
-        attacks_are_never_empty_so_zero_marks_an_unfilled_slot::<Bishop>();
+    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
+        attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of::<Rook>();
+        attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of::<Bishop>();
     }
 }

@@ -68,6 +68,7 @@ mod tests {
     use super::Rays;
     use crate::bitboard::Bitboard;
     use crate::direction::Direction;
+    use crate::slider::{Bishop, Rook, Slider};
     use crate::square::Square;
 
     #[test]
@@ -76,6 +77,19 @@ mod tests {
         let blocker = Bitboard::from_square(Square::D6);
         let expected: Bitboard = [Square::D5, Square::D6].into_iter().collect();
         assert_eq!(Rays::cast(origin, Direction::NORTH, blocker), expected);
+    }
+
+    #[test]
+    fn relevant_occupancy_drops_the_edge_squares() {
+        assert_eq!(Rook::RAYS.relevant_occupancy(Square::A1).count(), 12);
+        assert_eq!(Rook::RAYS.relevant_occupancy(Square::D4).count(), 10);
+        assert!(
+            !Rook::RAYS
+                .relevant_occupancy(Square::D4)
+                .contains(Square::D8)
+        );
+        assert_eq!(Bishop::RAYS.relevant_occupancy(Square::A1).count(), 6);
+        assert_eq!(Bishop::RAYS.relevant_occupancy(Square::D4).count(), 9);
     }
 
     #[test]

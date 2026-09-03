@@ -27,15 +27,6 @@ mod tests {
     use crate::square::Square;
 
     #[test]
-    fn a_king_attacks_only_adjacent_squares() {
-        let corner: Bitboard = [Square::D1, Square::F1, Square::D2, Square::E2, Square::F2]
-            .into_iter()
-            .collect();
-        assert_eq!(King::attacks(Square::E1), corner);
-        assert_eq!(King::attacks(Square::E4).count(), 8);
-    }
-
-    #[test]
     fn every_king_entry_agrees_with_stepping_one_in_each_direction() {
         for square in Square::iter() {
             let expected: Bitboard = Direction::iter()
