@@ -32,9 +32,11 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
 - The TUI and web frontend talk to the engine in-process. The `chess` binary speaks UCI for GUIs
   and the arena. Notations (FEN, long algebraic moves, SAN) belong to `board`; protocol messages
   belong to `uci`; I/O belongs to the binaries.
-- Sliding-piece attack tables are built at compile time by const evaluation from checked-in
-  magic numbers. `cargo xtask magics` regenerates the numbers, so the finder stays readable
-  and the tables need no runtime initialisation.
+- Leaper attack tables are built at compile time by const evaluation. Sliding-piece tables use
+  checked-in magic numbers (`cargo xtask magics` regenerates them) and are memoised at runtime
+  in zeroed `AtomicU64` arrays: const evaluation of the 102,400-entry rook table was measured
+  at 39 seconds per compile and rejected. A build script generating the tables is the fallback
+  if the memoisation branch ever shows in a profile. See `docs/notes/01-bitboards.md`.
 - The trained network is embedded in the engine binary with `include_bytes!`.
 - `bullet_lib` is pinned to a git revision and built with the `metal` feature.
   Development machine: Apple M5 Max, 18 CPU cores, 40 GPU cores, 48 GB RAM.
@@ -103,8 +105,13 @@ the page. No server component.
 
 Each milestone is one or more pull requests, each small enough to read as a lesson.
 
-1. `board`: bitboards and attack tables, then board state with FEN and Zobrist, then legal
-   move generation with perft. Three PRs.
+1. `board`, three PRs:
+   1. Bitboards, squares, pieces, the 16-bit `Move`, leaper tables, magic bitboards, and
+      `cargo xtask magics`. Note: `docs/notes/01-bitboards.md`.
+   2. Board state: piece bitboards, castling rights, en passant, FEN via `FromStr` and
+      `Display`, `Board::START`, copy-make `make_move`, Zobrist hashing.
+   3. Fully legal move generation from checker and pin masks, perft against the six standard
+      positions with deep counts marked ignored so CI stays fast.
 2. `eval` and `search` with hand-crafted evaluation, `engine` orchestration, the `uci` protocol
    crate, and the `chess` binary. Playable in any GUI.
 3. Minimal TUI: visual board, algebraic notation move entry, `/exit`, engine replies. Polish comes later.

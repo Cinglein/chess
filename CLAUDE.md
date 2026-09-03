@@ -8,7 +8,8 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
 - `crates/engine`: `std` orchestration: threads, time management, table allocation.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Crates are `no_std` unless the feature they exist for needs `std`. See `docs/SCOPE.md`.
-- `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask no-comments`).
+- `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask no-comments`, `cargo xtask wasm`,
+  `cargo xtask magics`).
 
 ## Rules
 

@@ -1,3 +1,5 @@
+mod magics;
+
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -9,10 +11,11 @@ fn main() -> ExitCode {
     let task = env::args().nth(1);
     let result = match task.as_deref() {
         Some("ci") => ci(),
+        Some("magics") => regenerate_magics(),
         Some("no-comments") => no_comments(),
         Some("wasm") => wasm(),
         _ => {
-            eprintln!("usage: cargo xtask <ci|no-comments|wasm>");
+            eprintln!("usage: cargo xtask <ci|magics|no-comments|wasm>");
             return ExitCode::FAILURE;
         }
     };
@@ -46,6 +49,11 @@ fn ci() -> Result<(), String> {
     wasm()?;
     cargo(&["test", "--workspace", "--all-features"])?;
     no_comments()
+}
+
+fn regenerate_magics() -> Result<(), String> {
+    magics::regenerate(&workspace_root())?;
+    cargo(&["fmt", "--package", "board"])
 }
 
 const WASM_CRATES: &[&str] = &["board"];
