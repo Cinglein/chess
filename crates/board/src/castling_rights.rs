@@ -38,25 +38,14 @@ impl FromStr for CastlingRights {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<CastlingRights, FenError> {
-        if text.is_empty() {
-            return Err(FenError::CastlingRights);
-        }
-        text.chars()
-            .try_fold(
-                EnumSet::empty(),
-                |rights: EnumSet<CastlingRight>, letter| {
-                    let right = letter
-                        .encode_utf8(&mut [0; 4])
-                        .parse::<CastlingRight>()
-                        .map_err(|_| FenError::CastlingRights)?;
-                    if rights.contains(right) {
-                        Err(FenError::CastlingRights)
-                    } else {
-                        Ok(rights | right)
-                    }
-                },
-            )
-            .map(CastlingRights)
+        let rights: EnumSet<CastlingRight> = text
+            .chars()
+            .map(|letter| letter.encode_utf8(&mut [0; 4]).parse::<CastlingRight>())
+            .collect::<Result<_, _>>()
+            .map_err(|_| FenError::CastlingRights)?;
+        (rights.len() == text.len() && !rights.is_empty())
+            .then_some(CastlingRights(rights))
+            .ok_or(FenError::CastlingRights)
     }
 }
 
