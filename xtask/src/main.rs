@@ -1,4 +1,6 @@
-mod magics;
+mod hex_literal;
+mod magic_search;
+mod magic_tables;
 mod xor_shift;
 
 use std::env;
@@ -7,6 +9,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
 use rustc_lexer::{FrontmatterAllowed, TokenKind, tokenize};
+
+use crate::magic_tables::MagicTables;
+use crate::xor_shift::XorShift;
 
 fn main() -> ExitCode {
     let task = env::args().nth(1);
@@ -53,7 +58,7 @@ fn ci() -> Result<(), String> {
 }
 
 fn regenerate_magics() -> Result<(), String> {
-    magics::regenerate(&workspace_root())?;
+    MagicTables::find(&mut XorShift::new(MagicTables::SEED)).write(&workspace_root())?;
     cargo(&["fmt", "--package", "board"])
 }
 
