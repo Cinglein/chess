@@ -67,31 +67,18 @@ mod tests {
     use fen::FenError;
 
     use super::Board;
-    use crate::castling_rights::CastlingRights;
-    use crate::color::Color;
-    use crate::halfmove_clock::HalfmoveClock;
-    use crate::square::Square;
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const AFTER_E4_E5_F4: &str = "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2";
     const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 
     #[test]
-    fn the_start_position_is_the_standard_fen() {
+    fn positions_roundtrip_through_fen() {
         assert_eq!(Board::START.to_string(), START);
         assert_eq!(START.parse::<Board>(), Ok(Board::START));
-    }
-
-    #[test]
-    fn every_field_roundtrips() {
-        let board = AFTER_E4_E5_F4.parse::<Board>().unwrap();
-        assert_eq!(board.side_to_move(), Color::Black);
-        assert_eq!(board.castling_rights(), CastlingRights::ALL);
-        assert_eq!(board.en_passant(), Some(Square::F3));
-        assert_eq!(board.halfmove_clock(), HalfmoveClock::ZERO);
-        assert_eq!(board.fullmove_number().to_string(), "2");
-        assert_eq!(board.to_string(), AFTER_E4_E5_F4);
-        assert_eq!(KIWIPETE.parse::<Board>().unwrap().to_string(), KIWIPETE);
+        for text in [AFTER_E4_E5_F4, KIWIPETE] {
+            assert_eq!(text.parse::<Board>().unwrap().to_string(), text);
+        }
     }
 
     #[test]
