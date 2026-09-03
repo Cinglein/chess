@@ -11,30 +11,12 @@ use crate::square::Square;
 
 impl Board {
     fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
-        let target = text
-            .parse::<DashOr<Square>>()
-            .map_err(|_| FenError::EnPassant)?;
-        Option::<Square>::from(target)
-            .map(|square| {
-                (square.rank() == Self::en_passant_rank(side_to_move))
-                    .then(|| square.file())
-                    .ok_or(FenError::EnPassant)
-            })
-            .transpose()
-    }
-
-    fn parse_castling_rights(text: &str) -> Result<CastlingRights, FenError> {
-        match text.parse::<DashOr<CastlingRights>>()? {
-            DashOr::Dash => Ok(CastlingRights::NONE),
-            DashOr::Value(rights) => Ok(rights),
-        }
-    }
-
-    fn castling_rights_field(&self) -> DashOr<CastlingRights> {
-        if self.castling_rights.is_none() {
-            DashOr::Dash
-        } else {
-            DashOr::Value(self.castling_rights)
+        match text.parse::<DashOr<Square>>() {
+            Ok(DashOr::Dash) => Ok(None),
+            Ok(DashOr::Value(square)) if square.rank() == Self::en_passant_rank(side_to_move) => {
+                Ok(Some(square.file()))
+            }
+            _ => Err(FenError::EnPassant),
         }
     }
 }
@@ -48,7 +30,7 @@ impl fmt::Display for Board {
             "{} {} {} {} {} {}",
             self.placement,
             self.side_to_move,
-            self.castling_rights_field(),
+            DashOr::from(self.castling_rights),
             DashOr::from(self.en_passant_square()),
             self.halfmove_clock,
             self.fullmove_number
@@ -64,7 +46,7 @@ impl FromStr for Board {
         let mut field = || fields.next().ok_or(FenError::FieldCount);
         let placement = field()?.parse()?;
         let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
-        let castling_rights = Self::parse_castling_rights(field()?)?;
+        let castling_rights = CastlingRights::from(field()?.parse::<DashOr<CastlingRights>>()?);
         let en_passant_file = Self::parse_en_passant(side_to_move, field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
         let fullmove_number = field()?.parse().map_err(|_| FenError::FullmoveNumber)?;

@@ -2,7 +2,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use enumset::EnumSet;
-use fen::{Fen, FenError};
+use fen::{DashOr, Fen, FenError};
 
 use crate::castling_right::CastlingRight;
 
@@ -25,6 +25,25 @@ impl CastlingRights {
 }
 
 impl Fen for CastlingRights {}
+
+impl From<CastlingRights> for DashOr<CastlingRights> {
+    fn from(rights: CastlingRights) -> Self {
+        if rights.is_none() {
+            DashOr::Dash
+        } else {
+            DashOr::Value(rights)
+        }
+    }
+}
+
+impl From<DashOr<CastlingRights>> for CastlingRights {
+    fn from(field: DashOr<CastlingRights>) -> Self {
+        match field {
+            DashOr::Dash => CastlingRights::NONE,
+            DashOr::Value(rights) => rights,
+        }
+    }
+}
 
 impl fmt::Display for CastlingRights {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
