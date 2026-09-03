@@ -2,7 +2,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use enum_map::Enum;
-use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
+use strum::{Enum, EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
 use crate::direction::Direction;
 use crate::file::File;
@@ -10,7 +10,6 @@ use crate::rank::Rank;
 
 #[derive(
     Clone,
-    Enum,
     Copy,
     Debug,
     PartialEq,

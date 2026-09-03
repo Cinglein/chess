@@ -1,9 +1,8 @@
 use enum_map::Enum;
-use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
+use strum::{Display, Enum, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
 #[derive(
     Clone,
-    Enum,
     Copy,
     Debug,
     PartialEq,

@@ -26,6 +26,8 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
   not a `square/` directory.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
+- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. The
+  only `as usize` casts on enums live inside `const fn` table construction.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
   group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask no-comments`. Run `cargo xtask ci`
