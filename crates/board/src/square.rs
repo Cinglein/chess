@@ -1,6 +1,7 @@
 use core::fmt;
 use core::str::FromStr;
 
+use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
 use crate::direction::Direction;
@@ -9,6 +10,7 @@ use crate::rank::Rank;
 
 #[derive(
     Clone,
+    Enum,
     Copy,
     Debug,
     PartialEq,
@@ -37,22 +39,17 @@ pub enum Square {
 impl Square {
     #[must_use]
     pub const fn new(file: File, rank: Rank) -> Square {
-        Self::VARIANTS[rank.index() * File::COUNT + file.index()]
-    }
-
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
+        Self::VARIANTS[rank as usize * File::COUNT + file as usize]
     }
 
     #[must_use]
     pub const fn file(self) -> File {
-        File::VARIANTS[self.index() % File::COUNT]
+        File::VARIANTS[self as usize % File::COUNT]
     }
 
     #[must_use]
     pub const fn rank(self) -> Rank {
-        Rank::VARIANTS[self.index() / File::COUNT]
+        Rank::VARIANTS[self as usize / File::COUNT]
     }
 
     #[must_use]
@@ -94,6 +91,7 @@ impl FromStr for Square {
 
 #[cfg(test)]
 mod tests {
+    use enum_map::Enum;
     use strum::{EnumCount, IntoEnumIterator};
 
     use super::Square;
@@ -103,10 +101,10 @@ mod tests {
 
     #[test]
     fn squares_are_numbered_rank_by_rank_from_a1() {
-        assert_eq!(Square::A1.index(), 0);
-        assert_eq!(Square::H1.index(), 7);
-        assert_eq!(Square::A2.index(), 8);
-        assert_eq!(Square::H8.index(), 63);
+        assert_eq!(Square::A1.into_usize(), 0);
+        assert_eq!(Square::H1.into_usize(), 7);
+        assert_eq!(Square::A2.into_usize(), 8);
+        assert_eq!(Square::H8.into_usize(), 63);
         assert_eq!(Square::COUNT, 64);
         assert_eq!(Square::new(File::E, Rank::Four), Square::E4);
         assert_eq!(Square::E4.file(), File::E);
@@ -116,7 +114,7 @@ mod tests {
     #[test]
     fn every_square_roundtrips_through_its_index_and_coordinates() {
         for (index, square) in (0u8..).zip(Square::iter()) {
-            assert_eq!(square.index(), usize::from(index));
+            assert_eq!(square.into_usize(), usize::from(index));
             assert_eq!(Square::from_repr(index), Some(square));
             assert_eq!(Square::new(square.file(), square.rank()), square);
         }

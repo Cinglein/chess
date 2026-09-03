@@ -1,7 +1,9 @@
+use enum_map::Enum;
 use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
 #[derive(
     Clone,
+    Enum,
     Copy,
     Debug,
     PartialEq,
@@ -27,11 +29,4 @@ pub enum File {
     F,
     G,
     H,
-}
-
-impl File {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
 }

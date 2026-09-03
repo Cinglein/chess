@@ -1,7 +1,9 @@
+use enum_map::Enum;
 use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
 #[derive(
     Clone,
+    Enum,
     Copy,
     Debug,
     PartialEq,
@@ -34,11 +36,4 @@ pub enum Rank {
     Seven,
     #[strum(serialize = "8")]
     Eight,
-}
-
-impl Rank {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
 }

@@ -1,6 +1,7 @@
+use enum_map::Enum;
 use strum::{EnumCount, EnumIter, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, VariantArray)]
+#[derive(Clone, Enum, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, VariantArray)]
 #[repr(u8)]
 pub enum Direction {
     North,

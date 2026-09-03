@@ -1,7 +1,9 @@
+use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
 
 #[derive(
     Clone,
+    Enum,
     Copy,
     Debug,
     PartialEq,
@@ -25,11 +27,6 @@ pub enum PieceKind {
 }
 
 impl PieceKind {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-
     #[must_use]
     pub const fn letter(self) -> char {
         match self {

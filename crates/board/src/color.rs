@@ -1,8 +1,11 @@
 use core::ops::Not;
 
+use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray)]
+#[derive(
+    Clone, Enum, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray,
+)]
 #[repr(u8)]
 pub enum Color {
     White,
@@ -10,11 +13,6 @@ pub enum Color {
 }
 
 impl Color {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-
     #[must_use]
     pub const fn opposite(self) -> Color {
         match self {
