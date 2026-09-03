@@ -2,6 +2,7 @@
 
 mod bitboard;
 mod board;
+mod castling_right;
 mod castling_rights;
 mod chess_move;
 mod color;
@@ -25,6 +26,7 @@ mod subset_iter;
 
 pub use bitboard::Bitboard;
 pub use board::Board;
+pub use castling_right::CastlingRight;
 pub use castling_rights::CastlingRights;
 pub use chess_move::ChessMove;
 pub use color::Color;

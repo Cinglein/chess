@@ -30,7 +30,7 @@ impl Board {
         }
     }
 
-    const fn castling_rights_field(&self) -> DashOr<CastlingRights> {
+    fn castling_rights_field(&self) -> DashOr<CastlingRights> {
         if self.castling_rights.is_none() {
             DashOr::Dash
         } else {

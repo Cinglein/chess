@@ -1,48 +1,26 @@
 use core::fmt;
 use core::str::FromStr;
 
-use bitfield_struct::bitfield;
+use enumset::EnumSet;
 use fen::{Fen, FenError};
 
-#[bitfield(u8, new = false, default = false)]
-#[derive(PartialEq, Eq, Hash)]
-pub struct CastlingRights {
-    pub white_kingside: bool,
-    pub white_queenside: bool,
-    pub black_kingside: bool,
-    pub black_queenside: bool,
-    #[bits(4)]
-    __: u8,
-}
+use crate::castling_right::CastlingRight;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct CastlingRights(EnumSet<CastlingRight>);
 
 impl CastlingRights {
-    pub const NONE: CastlingRights = CastlingRights(0);
-    pub const ALL: CastlingRights = CastlingRights::NONE
-        .with_white_kingside(true)
-        .with_white_queenside(true)
-        .with_black_kingside(true)
-        .with_black_queenside(true);
-
-    const LETTERS: [(char, CastlingRights); 4] = [
-        ('K', CastlingRights::NONE.with_white_kingside(true)),
-        ('Q', CastlingRights::NONE.with_white_queenside(true)),
-        ('k', CastlingRights::NONE.with_black_kingside(true)),
-        ('q', CastlingRights::NONE.with_black_queenside(true)),
-    ];
+    pub const NONE: CastlingRights = CastlingRights(EnumSet::empty());
+    pub const ALL: CastlingRights = CastlingRights(EnumSet::all());
 
     #[must_use]
-    pub const fn is_none(self) -> bool {
-        self.0 == 0
+    pub fn is_none(self) -> bool {
+        self.0.is_empty()
     }
 
     #[must_use]
-    pub const fn contains(self, other: CastlingRights) -> bool {
-        self.0 & other.0 == other.0
-    }
-
-    #[must_use]
-    pub const fn union(self, other: CastlingRights) -> CastlingRights {
-        CastlingRights(self.0 | other.0)
+    pub fn contains(self, right: CastlingRight) -> bool {
+        self.0.contains(right)
     }
 }
 
@@ -50,10 +28,9 @@ impl Fen for CastlingRights {}
 
 impl fmt::Display for CastlingRights {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Self::LETTERS
+        self.0
             .iter()
-            .filter(|(_, right)| self.contains(*right))
-            .try_for_each(|(letter, _)| write!(formatter, "{letter}"))
+            .try_for_each(|right| write!(formatter, "{right}"))
     }
 }
 
@@ -65,15 +42,21 @@ impl FromStr for CastlingRights {
             return Err(FenError::CastlingRights);
         }
         text.chars()
-            .try_fold(CastlingRights::NONE, |rights, letter| {
-                Self::LETTERS
-                    .iter()
-                    .find(|(candidate, _)| *candidate == letter)
-                    .map(|(_, right)| *right)
-                    .filter(|right| !rights.contains(*right))
-                    .map(|right| rights.union(right))
-                    .ok_or(FenError::CastlingRights)
-            })
+            .try_fold(
+                EnumSet::empty(),
+                |rights: EnumSet<CastlingRight>, letter| {
+                    let right = letter
+                        .encode_utf8(&mut [0; 4])
+                        .parse::<CastlingRight>()
+                        .map_err(|_| FenError::CastlingRights)?;
+                    if rights.contains(right) {
+                        Err(FenError::CastlingRights)
+                    } else {
+                        Ok(rights | right)
+                    }
+                },
+            )
+            .map(CastlingRights)
     }
 }
 
@@ -82,26 +65,25 @@ mod tests {
     use fen::FenError;
 
     use super::CastlingRights;
+    use crate::castling_right::CastlingRight;
 
     #[test]
     fn rights_display_and_parse_as_fen_letters() {
         assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
-        let partial = "Kq".parse::<CastlingRights>().unwrap();
-        assert!(partial.white_kingside());
-        assert!(!partial.white_queenside());
-        assert!(!partial.black_kingside());
-        assert!(partial.black_queenside());
+        let partial = "qK".parse::<CastlingRights>().unwrap();
+        assert!(partial.contains(CastlingRight::WhiteKingside));
+        assert!(!partial.contains(CastlingRight::WhiteQueenside));
         assert_eq!(partial.to_string(), "Kq");
-        assert_eq!("qK".parse::<CastlingRights>(), Ok(partial));
     }
 
     #[test]
     fn repeated_unknown_or_missing_letters_are_rejected() {
-        assert_eq!(
-            "KK".parse::<CastlingRights>(),
-            Err(FenError::CastlingRights)
-        );
-        assert_eq!("x".parse::<CastlingRights>(), Err(FenError::CastlingRights));
-        assert_eq!("".parse::<CastlingRights>(), Err(FenError::CastlingRights));
+        for text in ["KK", "x", ""] {
+            assert_eq!(
+                text.parse::<CastlingRights>(),
+                Err(FenError::CastlingRights),
+                "{text}"
+            );
+        }
     }
 }
