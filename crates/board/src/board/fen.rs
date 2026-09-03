@@ -11,10 +11,10 @@ use crate::square::Square;
 
 impl Board {
     fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
-        let DashOr(target) = text
+        let target = text
             .parse::<DashOr<Square>>()
             .map_err(|_| FenError::EnPassant)?;
-        target
+        Option::<Square>::from(target)
             .map(|square| {
                 (square.rank() == Self::en_passant_rank(side_to_move))
                     .then(|| square.file())
@@ -24,15 +24,17 @@ impl Board {
     }
 
     fn parse_castling_rights(text: &str) -> Result<CastlingRights, FenError> {
-        let DashOr(rights) = text.parse::<DashOr<CastlingRights>>()?;
-        Ok(rights.unwrap_or(CastlingRights::NONE))
+        match text.parse::<DashOr<CastlingRights>>()? {
+            DashOr::Dash => Ok(CastlingRights::NONE),
+            DashOr::Value(rights) => Ok(rights),
+        }
     }
 
     const fn castling_rights_field(&self) -> DashOr<CastlingRights> {
         if self.castling_rights.is_none() {
-            DashOr(None)
+            DashOr::Dash
         } else {
-            DashOr(Some(self.castling_rights))
+            DashOr::Value(self.castling_rights)
         }
     }
 }
@@ -47,7 +49,7 @@ impl fmt::Display for Board {
             self.placement,
             self.side_to_move,
             self.castling_rights_field(),
-            DashOr(self.en_passant_square()),
+            DashOr::from(self.en_passant_square()),
             self.halfmove_clock,
             self.fullmove_number
         )
