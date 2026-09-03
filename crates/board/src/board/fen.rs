@@ -1,4 +1,5 @@
 use core::fmt;
+use core::str::FromStr;
 
 use fen::{Fen, FenError};
 
@@ -14,11 +15,15 @@ impl Board {
     }
 }
 
-impl Fen for Board {
-    fn fmt_fen(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.placement.fmt_fen(formatter)?;
-        write!(formatter, " {} ", self.side_to_move)?;
-        self.castling_rights.fmt_fen(formatter)?;
+impl Fen for Board {}
+
+impl fmt::Display for Board {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "{} {} {}",
+            self.placement, self.side_to_move, self.castling_rights
+        )?;
         match self.en_passant {
             Some(square) => write!(formatter, " {square}")?,
             None => formatter.write_str(" -")?,
@@ -29,13 +34,17 @@ impl Fen for Board {
             self.halfmove_clock, self.fullmove_number
         )
     }
+}
 
-    fn from_fen(text: &str) -> Result<Board, FenError> {
+impl FromStr for Board {
+    type Err = FenError;
+
+    fn from_str(text: &str) -> Result<Board, FenError> {
         let mut fields = text.split_whitespace();
         let mut field = || fields.next().ok_or(FenError::FieldCount);
-        let placement = Fen::from_fen(field()?)?;
+        let placement = field()?.parse()?;
         let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
-        let castling_rights = Fen::from_fen(field()?)?;
+        let castling_rights = field()?.parse()?;
         let en_passant = Self::parse_en_passant(field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
         let fullmove_number = field()?
@@ -72,7 +81,7 @@ mod tests {
 
     #[test]
     fn the_start_position_is_the_standard_fen() {
-        assert_eq!(Board::START.fen().to_string(), START);
+        assert_eq!(Board::START.to_string(), START);
         assert_eq!(Board::from_fen(START), Ok(Board::START));
     }
 
@@ -84,11 +93,8 @@ mod tests {
         assert_eq!(board.en_passant(), Some(Square::F3));
         assert_eq!(board.halfmove_clock(), 0);
         assert_eq!(board.fullmove_number(), 2);
-        assert_eq!(board.fen().to_string(), AFTER_E4_E5_F4);
-        assert_eq!(
-            Board::from_fen(KIWIPETE).unwrap().fen().to_string(),
-            KIWIPETE
-        );
+        assert_eq!(board.to_string(), AFTER_E4_E5_F4);
+        assert_eq!(Board::from_fen(KIWIPETE).unwrap().to_string(), KIWIPETE);
     }
 
     #[test]

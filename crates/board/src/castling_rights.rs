@@ -1,4 +1,5 @@
 use core::fmt;
+use core::str::FromStr;
 
 use bitfield_struct::bitfield;
 use fen::{Fen, FenError};
@@ -45,8 +46,10 @@ impl CastlingRights {
     }
 }
 
-impl Fen for CastlingRights {
-    fn fmt_fen(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Fen for CastlingRights {}
+
+impl fmt::Display for CastlingRights {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_none() {
             return formatter.write_str("-");
         }
@@ -55,8 +58,12 @@ impl Fen for CastlingRights {
             .filter(|(_, right)| self.contains(*right))
             .try_for_each(|(letter, _)| write!(formatter, "{letter}"))
     }
+}
 
-    fn from_fen(text: &str) -> Result<CastlingRights, FenError> {
+impl FromStr for CastlingRights {
+    type Err = FenError;
+
+    fn from_str(text: &str) -> Result<CastlingRights, FenError> {
         match text {
             "-" => return Ok(CastlingRights::NONE),
             "" => return Err(FenError::CastlingRights),
@@ -83,14 +90,14 @@ mod tests {
 
     #[test]
     fn rights_display_and_parse_as_fen_letters() {
-        assert_eq!(CastlingRights::ALL.fen().to_string(), "KQkq");
-        assert_eq!(CastlingRights::NONE.fen().to_string(), "-");
+        assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
+        assert_eq!(CastlingRights::NONE.to_string(), "-");
         let partial = CastlingRights::from_fen("Kq").unwrap();
         assert!(partial.white_kingside());
         assert!(!partial.white_queenside());
         assert!(!partial.black_kingside());
         assert!(partial.black_queenside());
-        assert_eq!(partial.fen().to_string(), "Kq");
+        assert_eq!(partial.to_string(), "Kq");
         assert_eq!(CastlingRights::from_fen("qK"), Ok(partial));
     }
 
