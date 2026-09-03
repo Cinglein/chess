@@ -1,16 +1,20 @@
 #![cfg_attr(not(test), no_std)]
 
 mod bitboard;
+mod board;
+mod castling_rights;
 mod chess_move;
 mod color;
 mod diagonal;
 mod direction;
+mod fen_error;
 mod file;
 mod leaper;
 mod move_kind;
 mod orthogonal;
 mod piece;
 mod piece_kind;
+mod piece_placement;
 mod promotion;
 mod rank;
 mod slider;
@@ -19,16 +23,20 @@ mod square_iter;
 mod subset_iter;
 
 pub use bitboard::Bitboard;
+pub use board::Board;
+pub use castling_rights::CastlingRights;
 pub use chess_move::ChessMove;
 pub use color::Color;
 pub use diagonal::Diagonal;
 pub use direction::Direction;
+pub use fen_error::FenError;
 pub use file::File;
 pub use leaper::{BlackPawn, King, Knight, Leaper, Leaps, WhitePawn};
 pub use move_kind::MoveKind;
 pub use orthogonal::Orthogonal;
 pub use piece::Piece;
 pub use piece_kind::PieceKind;
+pub use piece_placement::PiecePlacement;
 pub use promotion::Promotion;
 pub use rank::Rank;
 pub use slider::{Bishop, Magic, Rays, Rook, Slider};
