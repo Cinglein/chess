@@ -47,11 +47,7 @@ impl FromStr for Board {
         let castling_rights = field()?.parse()?;
         let en_passant = Self::parse_en_passant(field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
-        let fullmove_number = field()?
-            .parse()
-            .ok()
-            .filter(|number| *number > 0)
-            .ok_or(FenError::FullmoveNumber)?;
+        let fullmove_number = field()?.parse().map_err(|_| FenError::FullmoveNumber)?;
         if fields.next().is_some() {
             return Err(FenError::FieldCount);
         }
@@ -73,6 +69,7 @@ mod tests {
     use super::Board;
     use crate::castling_rights::CastlingRights;
     use crate::color::Color;
+    use crate::halfmove_clock::HalfmoveClock;
     use crate::square::Square;
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -91,8 +88,8 @@ mod tests {
         assert_eq!(board.side_to_move(), Color::Black);
         assert_eq!(board.castling_rights(), CastlingRights::ALL);
         assert_eq!(board.en_passant(), Some(Square::F3));
-        assert_eq!(board.halfmove_clock(), 0);
-        assert_eq!(board.fullmove_number(), 2);
+        assert_eq!(board.halfmove_clock(), HalfmoveClock::ZERO);
+        assert_eq!(board.fullmove_number().to_string(), "2");
         assert_eq!(board.to_string(), AFTER_E4_E5_F4);
         assert_eq!(KIWIPETE.parse::<Board>().unwrap().to_string(), KIWIPETE);
     }

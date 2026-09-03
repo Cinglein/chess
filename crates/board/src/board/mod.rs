@@ -2,6 +2,8 @@ mod fen;
 
 use crate::castling_rights::CastlingRights;
 use crate::color::Color;
+use crate::fullmove_number::FullmoveNumber;
+use crate::halfmove_clock::HalfmoveClock;
 use crate::piece_placement::PiecePlacement;
 use crate::square::Square;
 
@@ -11,8 +13,8 @@ pub struct Board {
     side_to_move: Color,
     castling_rights: CastlingRights,
     en_passant: Option<Square>,
-    halfmove_clock: u8,
-    fullmove_number: u16,
+    halfmove_clock: HalfmoveClock,
+    fullmove_number: FullmoveNumber,
 }
 
 impl Board {
@@ -21,8 +23,8 @@ impl Board {
         side_to_move: Color::White,
         castling_rights: CastlingRights::ALL,
         en_passant: None,
-        halfmove_clock: 0,
-        fullmove_number: 1,
+        halfmove_clock: HalfmoveClock::ZERO,
+        fullmove_number: FullmoveNumber::FIRST,
     };
 
     #[must_use]
@@ -46,12 +48,12 @@ impl Board {
     }
 
     #[must_use]
-    pub const fn halfmove_clock(&self) -> u8 {
+    pub const fn halfmove_clock(&self) -> HalfmoveClock {
         self.halfmove_clock
     }
 
     #[must_use]
-    pub const fn fullmove_number(&self) -> u16 {
+    pub const fn fullmove_number(&self) -> FullmoveNumber {
         self.fullmove_number
     }
 }
