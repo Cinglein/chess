@@ -40,6 +40,14 @@ pub enum Square {
 }
 
 impl Square {
+    pub(crate) const fn from_bits(bits: u8) -> Square {
+        Self::VARIANTS[bits as usize]
+    }
+
+    pub(crate) const fn into_bits(self) -> u8 {
+        self as u8
+    }
+
     #[must_use]
     pub const fn new(file: File, rank: Rank) -> Square {
         Self::VARIANTS[rank as usize * File::COUNT + file as usize]
