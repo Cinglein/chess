@@ -13,6 +13,14 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
 ## Rules
 
 - All changes land through pull requests. `main` is protected; never push to it directly.
+- Never merge or approve a PR. Open it, wait for CI, report the link, and stop. The owner reads,
+  comments, requests edits, and merges on GitHub. A PreToolUse hook in `.claude/settings.json`
+  denies merge, approve, branch protection, repo settings, and push-to-main commands. It matches
+  on command text, so keep those strings out of shell commands and use the Write tool for files
+  that mention them.
+- Delete a branch as soon as its PR is merged or closed. GitHub deletes the remote branch on
+  merge and the Cleanup workflow deletes it when a PR is closed unmerged. After either, sync
+  `main` and delete the local branch. Never leave stale branches.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, `cargo xtask no-comments`. Run `cargo xtask ci` locally before opening a PR.
 - Everything is Rust. No Python, shell, or other languages for tooling; add tasks to `xtask` instead.
