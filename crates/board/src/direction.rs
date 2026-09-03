@@ -10,6 +10,15 @@ pub enum Direction {
 }
 
 impl Direction {
+    pub const NORTH: Direction = Direction::Orthogonal(Orthogonal::North);
+    pub const EAST: Direction = Direction::Orthogonal(Orthogonal::East);
+    pub const SOUTH: Direction = Direction::Orthogonal(Orthogonal::South);
+    pub const WEST: Direction = Direction::Orthogonal(Orthogonal::West);
+    pub const NORTH_EAST: Direction = Direction::Diagonal(Diagonal::NorthEast);
+    pub const SOUTH_EAST: Direction = Direction::Diagonal(Diagonal::SouthEast);
+    pub const SOUTH_WEST: Direction = Direction::Diagonal(Diagonal::SouthWest);
+    pub const NORTH_WEST: Direction = Direction::Diagonal(Diagonal::NorthWest);
+
     pub fn iter() -> impl Iterator<Item = Direction> {
         Orthogonal::iter()
             .map(Direction::Orthogonal)

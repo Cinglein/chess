@@ -26,8 +26,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - When a PR lands, merge main into every other open PR branch, run `cargo xtask ci`, and push, so
   each open PR is always tested against current main. Never rebase or force push.
 - One struct, enum, or trait per file, named after it in snake case, across the whole repo.
-  Its impls and its tests live in the same file. Modules are flat: `crates/board/src/square.rs`,
-  not a `square/` directory. Never name a type or module after a
+  Its impls and its tests live in the same file. A type whose logic has several parts becomes a
+  module: `leaper.rs` holds the type, `leaper/knight.rs`, `leaper/king.rs`, and so on hold one
+  piece of logic each, private to the module. Never name a type or module after a
   keyword; `ChessMove` in `chess_move.rs`, not `Move` behind `r#move`.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
