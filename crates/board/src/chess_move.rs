@@ -7,23 +7,23 @@ use crate::promotion::Promotion;
 use crate::square::Square;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Move(u16);
+pub struct ChessMove(u16);
 
-impl Move {
+impl ChessMove {
     const SQUARE_MASK: u16 = 0b11_1111;
     const TO_SHIFT: u16 = 6;
     const KIND_SHIFT: u16 = 12;
     const PROMOTION_SHIFT: u16 = 14;
 
     #[must_use]
-    pub const fn new(from: Square, to: Square, kind: MoveKind) -> Move {
+    pub const fn new(from: Square, to: Square, kind: MoveKind) -> ChessMove {
         let (kind_code, promotion_code) = match kind {
             MoveKind::Normal => (0, 0),
             MoveKind::Promotion(promotion) => (1, promotion as u16),
             MoveKind::EnPassant => (2, 0),
             MoveKind::Castling => (3, 0),
         };
-        Move(
+        ChessMove(
             from as u16
                 | (to as u16) << Self::TO_SHIFT
                 | kind_code << Self::KIND_SHIFT
@@ -62,13 +62,13 @@ impl Move {
     }
 }
 
-impl fmt::Debug for Move {
+impl fmt::Debug for ChessMove {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "Move({self}, {:?})", self.kind())
+        write!(formatter, "ChessMove({self}, {:?})", self.kind())
     }
 }
 
-impl fmt::Display for Move {
+impl fmt::Display for ChessMove {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "{}{}", self.from(), self.to())?;
         if let Some(promotion) = self.promotion() {
@@ -82,19 +82,19 @@ impl fmt::Display for Move {
 mod tests {
     use strum::IntoEnumIterator;
 
-    use super::Move;
+    use super::ChessMove;
     use crate::move_kind::MoveKind;
     use crate::promotion::Promotion;
     use crate::square::Square;
 
     #[test]
     fn a_move_packs_into_sixteen_bits_and_unpacks_unchanged() {
-        assert_eq!(size_of::<Move>(), 2);
+        assert_eq!(size_of::<ChessMove>(), 2);
         let kinds = [MoveKind::Normal, MoveKind::EnPassant, MoveKind::Castling]
             .into_iter()
             .chain(Promotion::iter().map(MoveKind::Promotion));
         for kind in kinds {
-            let mv = Move::new(Square::H8, Square::A1, kind);
+            let mv = ChessMove::new(Square::H8, Square::A1, kind);
             assert_eq!(mv.from(), Square::H8);
             assert_eq!(mv.to(), Square::A1);
             assert_eq!(mv.kind(), kind);
@@ -104,15 +104,15 @@ mod tests {
     #[test]
     fn moves_display_in_long_algebraic_notation() {
         assert_eq!(
-            Move::new(Square::E2, Square::E4, MoveKind::Normal).to_string(),
+            ChessMove::new(Square::E2, Square::E4, MoveKind::Normal).to_string(),
             "e2e4"
         );
         assert_eq!(
-            Move::new(Square::E1, Square::G1, MoveKind::Castling).to_string(),
+            ChessMove::new(Square::E1, Square::G1, MoveKind::Castling).to_string(),
             "e1g1"
         );
         assert_eq!(
-            Move::new(
+            ChessMove::new(
                 Square::E7,
                 Square::E8,
                 MoveKind::Promotion(Promotion::Queen)
