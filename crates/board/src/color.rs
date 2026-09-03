@@ -1,14 +1,28 @@
 use core::ops::Not;
 
 use enum_map::Enum;
-use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
+use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, Enum, EnumCount, EnumIter, FromRepr, VariantArray,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    Enum,
+    Display,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    FromRepr,
+    VariantArray,
 )]
 #[repr(u8)]
 pub enum Color {
+    #[strum(serialize = "w")]
     White,
+    #[strum(serialize = "b")]
     Black,
 }
 

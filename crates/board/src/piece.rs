@@ -1,4 +1,7 @@
 use core::fmt;
+use core::str::FromStr;
+
+use strum::ParseError;
 
 use crate::color::Color;
 use crate::piece_kind::PieceKind;
@@ -14,32 +17,32 @@ impl Piece {
     pub const fn new(color: Color, kind: PieceKind) -> Piece {
         Piece { color, kind }
     }
-
-    #[must_use]
-    pub const fn letter(self) -> char {
-        match self.color {
-            Color::White => self.kind.letter().to_ascii_uppercase(),
-            Color::Black => self.kind.letter(),
-        }
-    }
-
-    #[must_use]
-    pub const fn from_letter(letter: char) -> Option<Piece> {
-        let color = if letter.is_ascii_uppercase() {
-            Color::White
-        } else {
-            Color::Black
-        };
-        match PieceKind::from_letter(letter) {
-            Some(kind) => Some(Piece::new(color, kind)),
-            None => None,
-        }
-    }
 }
 
 impl fmt::Display for Piece {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}", self.letter())
+        for letter in self.kind.as_ref().chars() {
+            let letter = match self.color {
+                Color::White => letter.to_ascii_uppercase(),
+                Color::Black => letter,
+            };
+            write!(formatter, "{letter}")?;
+        }
+        Ok(())
+    }
+}
+
+impl FromStr for Piece {
+    type Err = ParseError;
+
+    fn from_str(text: &str) -> Result<Piece, ParseError> {
+        let kind = text.parse()?;
+        let color = if text.bytes().all(|byte| byte.is_ascii_uppercase()) {
+            Color::White
+        } else {
+            Color::Black
+        };
+        Ok(Piece::new(color, kind))
     }
 }
 
@@ -52,26 +55,21 @@ mod tests {
     use crate::piece_kind::PieceKind;
 
     #[test]
-    fn white_pieces_use_uppercase_letters_and_black_lowercase() {
-        assert_eq!(Piece::new(Color::White, PieceKind::Knight).letter(), 'N');
-        assert_eq!(Piece::new(Color::Black, PieceKind::Knight).letter(), 'n');
-        assert_eq!(
-            Piece::from_letter('Q'),
-            Some(Piece::new(Color::White, PieceKind::Queen))
-        );
-        assert_eq!(
-            Piece::from_letter('k'),
-            Some(Piece::new(Color::Black, PieceKind::King))
-        );
-        assert_eq!(Piece::from_letter('x'), None);
+    fn white_pieces_are_uppercase_letters_and_black_lowercase() {
+        assert_eq!(Piece::new(Color::White, PieceKind::Knight).to_string(), "N");
+        assert_eq!(Piece::new(Color::Black, PieceKind::Knight).to_string(), "n");
+        assert_eq!("Q".parse(), Ok(Piece::new(Color::White, PieceKind::Queen)));
+        assert_eq!("k".parse(), Ok(Piece::new(Color::Black, PieceKind::King)));
+        assert!("x".parse::<Piece>().is_err());
+        assert!("".parse::<Piece>().is_err());
     }
 
     #[test]
-    fn every_piece_letter_roundtrips() {
+    fn every_piece_roundtrips_through_its_letter() {
         for color in Color::iter() {
             for kind in PieceKind::iter() {
                 let piece = Piece::new(color, kind);
-                assert_eq!(Piece::from_letter(piece.letter()), Some(piece));
+                assert_eq!(piece.to_string().parse(), Ok(piece));
             }
         }
     }
