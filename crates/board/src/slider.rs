@@ -32,6 +32,8 @@ pub trait Slider {
 
 #[cfg(test)]
 mod tests {
+    use core::iter;
+
     use strum::IntoEnumIterator;
 
     use super::{Bishop, Rook, Slider};
@@ -52,19 +54,20 @@ mod tests {
         }
 
         fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
-            let mut state = 0x2545_F491_4F6C_DD1D_u64;
-            for _ in 0..2000 {
-                state ^= state << 13;
-                state ^= state >> 7;
-                state ^= state << 17;
-                let occupied = Bitboard::from_bits(state);
-                for square in Square::iter() {
-                    assert_eq!(
-                        Self::attacks(square, occupied),
-                        Self::attacks_by_ray(square, occupied)
-                    );
-                }
-            }
+            iter::successors(Some(0x2545_F491_4F6C_DD1D_u64), |&state| {
+                let shaken = state ^ (state << 13);
+                let stirred = shaken ^ (shaken >> 7);
+                Some(stirred ^ (stirred << 17))
+            })
+            .take(2000)
+            .map(Bitboard::from_bits)
+            .flat_map(|occupied| Square::iter().map(move |square| (square, occupied)))
+            .for_each(|(square, occupied)| {
+                assert_eq!(
+                    Self::attacks(square, occupied),
+                    Self::attacks_by_ray(square, occupied)
+                );
+            });
         }
 
         fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
