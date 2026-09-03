@@ -32,61 +32,68 @@ pub trait Slider {
 
 #[cfg(test)]
 mod tests {
+    use core::iter;
+
     use strum::IntoEnumIterator;
 
     use super::{Bishop, Rook, Slider};
     use crate::bitboard::Bitboard;
     use crate::square::Square;
 
-    fn lookups_match_ray_walking_for_every_relevant_occupancy_of<S: Slider>() {
-        for square in Square::iter() {
-            for occupied in S::relevant_occupancy(square).subsets() {
-                assert_eq!(
-                    S::attacks(square, occupied),
-                    S::attacks_by_ray(square, occupied),
-                    "{square} {occupied}"
-                );
-            }
-        }
-    }
-
-    fn lookups_ignore_pieces_outside_the_relevant_occupancy_of<S: Slider>() {
-        let mut state = 0x2545_F491_4F6C_DD1D_u64;
-        for _ in 0..2000 {
-            state ^= state << 13;
-            state ^= state >> 7;
-            state ^= state << 17;
-            let occupied = Bitboard::from_bits(state);
+    trait Checks: Slider {
+        fn lookups_match_ray_walking_for_every_relevant_occupancy() {
             for square in Square::iter() {
+                for occupied in Self::relevant_occupancy(square).subsets() {
+                    assert_eq!(
+                        Self::attacks(square, occupied),
+                        Self::attacks_by_ray(square, occupied),
+                        "{square} {occupied}"
+                    );
+                }
+            }
+        }
+
+        fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
+            iter::successors(Some(0x2545_F491_4F6C_DD1D_u64), |&state| {
+                let shaken = state ^ (state << 13);
+                let stirred = shaken ^ (shaken >> 7);
+                Some(stirred ^ (stirred << 17))
+            })
+            .take(2000)
+            .map(Bitboard::from_bits)
+            .flat_map(|occupied| Square::iter().map(move |square| (square, occupied)))
+            .for_each(|(square, occupied)| {
                 assert_eq!(
-                    S::attacks(square, occupied),
-                    S::attacks_by_ray(square, occupied)
+                    Self::attacks(square, occupied),
+                    Self::attacks_by_ray(square, occupied)
                 );
+            });
+        }
+
+        fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
+            for square in Square::iter() {
+                assert!(!Self::attacks_by_ray(square, Bitboard::FULL).is_empty());
             }
         }
     }
 
-    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of<S: Slider>() {
-        for square in Square::iter() {
-            assert!(!S::attacks_by_ray(square, Bitboard::FULL).is_empty());
-        }
-    }
+    impl<S: Slider> Checks for S {}
 
     #[test]
     fn lookups_match_ray_walking_for_every_relevant_occupancy() {
-        lookups_match_ray_walking_for_every_relevant_occupancy_of::<Rook>();
-        lookups_match_ray_walking_for_every_relevant_occupancy_of::<Bishop>();
+        Rook::lookups_match_ray_walking_for_every_relevant_occupancy();
+        Bishop::lookups_match_ray_walking_for_every_relevant_occupancy();
     }
 
     #[test]
     fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
-        lookups_ignore_pieces_outside_the_relevant_occupancy_of::<Rook>();
-        lookups_ignore_pieces_outside_the_relevant_occupancy_of::<Bishop>();
+        Rook::lookups_ignore_pieces_outside_the_relevant_occupancy();
+        Bishop::lookups_ignore_pieces_outside_the_relevant_occupancy();
     }
 
     #[test]
     fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
-        attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of::<Rook>();
-        attacks_are_never_empty_so_zero_marks_an_unfilled_slot_of::<Bishop>();
+        Rook::attacks_are_never_empty_so_zero_marks_an_unfilled_slot();
+        Bishop::attacks_are_never_empty_so_zero_marks_an_unfilled_slot();
     }
 }

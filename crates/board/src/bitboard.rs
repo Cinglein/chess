@@ -20,7 +20,7 @@ impl Bitboard {
     pub const FULL: Bitboard = Bitboard(u64::MAX);
 
     #[must_use]
-    pub const fn from_bits(bits: u64) -> Bitboard {
+    pub const fn from_bits(bits: u64) -> Self {
         Bitboard(bits)
     }
 

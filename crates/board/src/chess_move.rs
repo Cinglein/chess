@@ -1,7 +1,6 @@
 use core::fmt;
 
 use bitfield_struct::bitfield;
-use strum::VariantArray;
 
 use crate::move_kind::MoveKind;
 use crate::promotion::Promotion;
@@ -10,30 +9,14 @@ use crate::square::Square;
 #[bitfield(u16, new = false, debug = false, default = false)]
 #[derive(PartialEq, Eq, Hash)]
 pub struct ChessMove {
-    #[bits(6, from = variant, into = square_bits)]
+    #[bits(6)]
     pub from: Square,
-    #[bits(6, from = variant, into = square_bits)]
+    #[bits(6)]
     pub to: Square,
-    #[bits(2, from = variant, into = kind_bits)]
+    #[bits(2)]
     pub kind: MoveKind,
-    #[bits(2, from = variant, into = promotion_bits)]
+    #[bits(2)]
     piece: Promotion,
-}
-
-const fn variant<T: VariantArray + Copy>(bits: u8) -> T {
-    T::VARIANTS[bits as usize]
-}
-
-const fn square_bits(square: Square) -> u8 {
-    square as u8
-}
-
-const fn kind_bits(kind: MoveKind) -> u8 {
-    kind as u8
-}
-
-const fn promotion_bits(promotion: Promotion) -> u8 {
-    promotion as u8
 }
 
 impl ChessMove {

@@ -152,5 +152,8 @@ version = "0.1.0"
 dependencies = [
  "board",
  "enum-map",
+ "proc-macro2",
  "ra-ap-rustc_lexer",
+ "strum",
+ "syn 2.0.119",
 ]

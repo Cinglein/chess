@@ -10,7 +10,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `eval`, `search`
   (`no_std`), `uci` (`no_std` message types), `chess` binary, `web` (Dioxus, wasm), `arena`,
   `datagen`, `trainer`. Crates are added when their milestone starts.
-- `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask no-comments`, `cargo xtask wasm`).
+- `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask no-comments`, `cargo xtask no-free-fns`,
+  `cargo xtask wasm`, `cargo xtask magics`).
 
 ## Rules
 
@@ -38,10 +39,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   runtime: `Rook: Slider`, `Knight: Leaper`. Per-implementor data is an associated const.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
+- No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
+  the only exceptions are `main` and `#[test]` functions. `cargo xtask no-free-fns` enforces it.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
-  group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask no-comments`. Run `cargo xtask ci`
+  group enabled, `cargo test`, `cargo xtask wasm`, `cargo xtask no-comments`, and `cargo xtask no-free-fns`. Run `cargo xtask ci`
   locally before opening a PR.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the

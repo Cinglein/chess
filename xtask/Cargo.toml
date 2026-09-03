@@ -10,7 +10,10 @@ publish = false
 [dependencies]
 board = { path = "../crates/board" }
 enum-map = "3"
+proc-macro2 = { version = "1", features = ["span-locations"] }
 rustc_lexer = { package = "ra-ap-rustc_lexer", version = "0.174.0" }
+strum = { version = "0.28", features = ["derive"] }
+syn = { version = "2", features = ["full", "parsing", "visit"] }
 
 [lints]
 workspace = true
