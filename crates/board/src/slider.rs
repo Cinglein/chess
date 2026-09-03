@@ -1,9 +1,11 @@
+mod attack_table;
 mod magic;
 mod magics;
 mod ray;
-mod table;
 
 pub use magic::Magic;
+
+use attack_table::AttackTable;
 
 use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
@@ -13,6 +15,11 @@ use crate::direction::Direction;
 use crate::file::File;
 use crate::rank::Rank;
 use crate::square::Square;
+
+static ROOK_TABLE: AttackTable<{ Slider::Rook.table_size() }> =
+    AttackTable::new(Slider::Rook, &magics::ROOK);
+static BISHOP_TABLE: AttackTable<{ Slider::Bishop.table_size() }> =
+    AttackTable::new(Slider::Bishop, &magics::BISHOP);
 
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, Hash, Enum, EnumCount, EnumIter, FromRepr, VariantArray,
@@ -26,7 +33,10 @@ pub enum Slider {
 impl Slider {
     #[must_use]
     pub fn attacks(self, square: Square, occupied: Bitboard) -> Bitboard {
-        table::lookup(self, square, occupied)
+        match self {
+            Slider::Rook => ROOK_TABLE.attacks(square, occupied),
+            Slider::Bishop => BISHOP_TABLE.attacks(square, occupied),
+        }
     }
 
     #[must_use]
