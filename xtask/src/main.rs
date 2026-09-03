@@ -10,8 +10,9 @@ fn main() -> ExitCode {
     let result = match task.as_deref() {
         Some("ci") => ci(),
         Some("no-comments") => no_comments(),
+        Some("wasm") => wasm(),
         _ => {
-            eprintln!("usage: cargo xtask <ci|no-comments>");
+            eprintln!("usage: cargo xtask <ci|no-comments|wasm>");
             return ExitCode::FAILURE;
         }
     };
@@ -42,8 +43,27 @@ fn ci() -> Result<(), String> {
         "-D",
         "warnings",
     ])?;
+    wasm()?;
     cargo(&["test", "--workspace", "--all-features"])?;
     no_comments()
+}
+
+const WASM_CRATES: &[&str] = &["board"];
+
+fn wasm() -> Result<(), String> {
+    for crate_name in WASM_CRATES {
+        cargo(&[
+            "clippy",
+            "--package",
+            crate_name,
+            "--target",
+            "wasm32-unknown-unknown",
+            "--",
+            "-D",
+            "warnings",
+        ])?;
+    }
+    Ok(())
 }
 
 fn cargo(args: &[&str]) -> Result<(), String> {

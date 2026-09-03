@@ -4,7 +4,8 @@
 
 A chess engine written in Rust, with a neural network evaluation trained using
 [bullet](https://github.com/jw1912/bullet), that plays at or above 1000 Elo and
-can be played against from a terminal UI. Everything, including tooling, is Rust.
+can be played against from a terminal UI and from a browser. Everything, including
+tooling and the web frontend, is Rust.
 
 ## Definition of done
 
@@ -14,6 +15,7 @@ can be played against from a terminal UI. Everything, including tooling, is Rust
   `UCI_LimitStrength true, UCI_Elo 1320` with error bars that exclude 50%.
   Stockfish cannot be limited below 1320, so this proves a comfortable margin over 1000.
 - The TUI supports a full game against the engine from the terminal.
+- The Dioxus web frontend plays a full game against the engine in the browser.
 
 Stronger than 1000 is fine. There is no strength limiter in scope.
 
@@ -21,32 +23,51 @@ Stronger than 1000 is fine. There is no strength limiter in scope.
 
 - Elo is measured locally against Stockfish anchors. No Lichess integration.
 - The reference time control for all Elo measurements is 10 seconds plus 0.1 second increment per side.
-- The TUI talks to the engine in-process. UCI is a separate binary for testing and GUIs.
+- Crates are `no_std` unless the feature they exist for needs `std`. Threads, wall-clock
+  time, files, and processes live only in `std` crates. The `no_std` attribute makes this
+  self-enforcing, and `cargo xtask wasm` clippy-checks every `no_std` crate for
+  `wasm32-unknown-unknown` in CI.
+- The web frontend uses Dioxus and runs the engine single-threaded in the browser with a
+  host-provided clock.
+- The TUI and web frontend talk to the engine in-process. The `chess` binary speaks UCI for GUIs
+  and the arena. Notations (FEN, long algebraic moves, SAN) belong to `board`; protocol messages
+  belong to `uci`; I/O belongs to the binaries.
+- Sliding-piece attack tables are built at compile time by const evaluation from checked-in
+  magic numbers. `cargo xtask magics` regenerates the numbers, so the finder stays readable
+  and the tables need no runtime initialisation.
 - The trained network is embedded in the engine binary with `include_bytes!`.
 - `bullet_lib` is pinned to a git revision and built with the `metal` feature.
   Development machine: Apple M5 Max, 18 CPU cores, 40 GPU cores, 48 GB RAM.
 
 ## Crates
 
-| Crate | Kind | Purpose |
-| --- | --- | --- |
-| `engine` | lib | Board, move generation, search, evaluation, threading |
-| `uci` | bin | UCI protocol over stdin/stdout |
-| `tui` | bin | Terminal UI built on ratatui and crossterm |
-| `arena` | bin | Parallel UCI match runner with Elo estimates and error bars |
-| `datagen` | bin | Parallel self-play data generation in a bullet-readable format |
-| `trainer` | bin | bullet training run definition, emits the quantised network |
-| `xtask` | bin | Repository tooling and CI checks |
+| Crate | Kind | `std` | Purpose |
+| --- | --- | --- | --- |
+| `board` | lib | no | Bitboards, move generation, FEN, Zobrist hashing, perft |
+| `eval` | lib | no | Hand-crafted evaluation and NNUE inference |
+| `search` | lib | no, `alloc` | Single-threaded alpha-beta search over caller-provided tables and clock |
+| `uci` | lib | no | UCI protocol messages as types with `FromStr` and `Display`, both directions |
+| `engine` | lib | yes | Threads, time management, table allocation, one API for all frontends |
+| `chess` | bin | yes | The engine executable: stdin and stdout wired to `uci` and `engine` |
+| `tui` | bin | yes | Terminal UI built on ratatui and crossterm |
+| `web` | bin | wasm | Dioxus frontend compiled to WebAssembly |
+| `arena` | bin | yes | Parallel match runner, a `uci` client driving engines as child processes, with Elo estimates and error bars |
+| `datagen` | bin | yes | Parallel self-play data generation in a bullet-readable format |
+| `trainer` | bin | yes | bullet training run definition, emits the quantised network |
+| `xtask` | bin | yes | Repository tooling and CI checks |
+
+Crates are added when their milestone starts, not before.
 
 ## Engine design
 
-- Bitboards with magic bitboard sliding attacks, Zobrist hashing, FEN parsing, make and unmake.
-- Legal move generation validated by perft against published node counts.
+- Bitboards with magic bitboard sliding attacks, Zobrist hashing, FEN parsing, copy-make.
+- Legal move generation from checker and pin masks, validated by perft against published node counts.
 - Iterative deepening, alpha-beta with principal variation search, aspiration windows.
 - Transposition table shared between threads with lock-free atomic entries.
 - Quiescence search, MVV-LVA capture ordering, killer and history heuristics.
 - Null-move pruning, late-move reductions, check extensions.
 - Lazy SMP: independent searcher threads sharing the table, main thread reports.
+- Search limits go through a clock trait so `std`, tests, and the browser each supply time.
 - Hand-crafted evaluation (material and piece-square tables) used only to bootstrap datagen.
 - NNUE: perspective network, 768 inputs per side, one hidden layer with SCReLU,
   incrementally updated accumulators, int16 quantised weights from bullet.
@@ -61,6 +82,12 @@ start with a slash: `/exit` quits. Further commands planned under the same conve
 are `/new`, `/undo`, `/flip`, and `/pgn`. The engine replies on its own after each
 legal move and its reply is shown in algebraic notation.
 
+## Web
+
+A Dioxus application compiled to WebAssembly. Click or drag to move, the same slash
+commands as the TUI where they make sense, and the engine running single-threaded in
+the page. No server component.
+
 ## Training pipeline
 
 1. Datagen plays self-play games across all cores using the current best engine,
@@ -74,15 +101,18 @@ legal move and its reply is shown in algebraic notation.
 
 ## Milestones
 
-Each milestone is one pull request unless it grows too large to review.
+Each milestone is one or more pull requests, each small enough to read as a lesson.
 
-1. Board, move generation, FEN, perft tests.
-2. Search with hand-crafted evaluation and the UCI binary. Playable in any GUI.
+1. `board`: bitboards and attack tables, then board state with FEN and Zobrist, then legal
+   move generation with perft. Three PRs.
+2. `eval` and `search` with hand-crafted evaluation, `engine` orchestration, the `uci` protocol
+   crate, and the `chess` binary. Playable in any GUI.
 3. Minimal TUI: visual board, algebraic notation move entry, `/exit`, engine replies. Polish comes later.
 4. Arena with Stockfish anchors. First Elo measurement. Every later change is measured.
 5. Lazy SMP multithreading with a shared transposition table.
 6. Datagen, bullet trainer, NNUE inference. Arena confirms the gain over the hand-crafted evaluation.
 7. TUI polish: eval and principal variation display, undo, flip, PGN export, optional node-limited difficulty levels.
+8. Dioxus web frontend. Can move earlier if wanted, since it depends only on milestone 2.
 
 ## Learning
 
@@ -93,7 +123,7 @@ adds a note under `docs/notes/` explaining the concept it introduces.
 
 - Opening books, endgame tablebases, pondering, advanced time management.
 - Strength limiting or human-like play.
-- Online play.
+- Online play or any server component.
 
 ## Risks
 
@@ -102,5 +132,7 @@ adds a note under `docs/notes/` explaining the concept it introduces.
 - Stockfish is not installed on the development machine yet. Milestone 4 needs `brew install stockfish`.
 - Stockfish's `UCI_Elo` scale is approximate. Mitigation: the done criterion leaves a
   wide margin above 1000, and the arena reports error bars.
+- Compile-time attack tables add a few seconds to a clean build. Mitigation: CI caches
+  builds and the tables change only when the magics do.
 - The no-comments rule is hardest on engine code full of bit tricks and tables.
   Mitigation: named constants, small functions, and tests that document behaviour.
