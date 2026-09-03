@@ -165,7 +165,7 @@ impl FromStr for PiecePlacement {
 
 #[cfg(test)]
 mod tests {
-    use fen::{Fen, FenError};
+    use fen::FenError;
 
     use super::PiecePlacement;
     use crate::color::Color;
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn the_start_position_roundtrips_through_fen() {
         assert_eq!(PiecePlacement::START.to_string(), START);
-        assert_eq!(PiecePlacement::from_fen(START), Ok(PiecePlacement::START));
+        assert_eq!(START.parse::<PiecePlacement>(), Ok(PiecePlacement::START));
         assert_eq!(PiecePlacement::START.occupied().count(), 32);
         assert_eq!(
             PiecePlacement::START.piece_at(Square::E1),
@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn empty_squares_inside_a_rank_are_counted_in_both_directions() {
         let text = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
-        let placement = PiecePlacement::from_fen(text).unwrap();
+        let placement = text.parse::<PiecePlacement>().unwrap();
         assert_eq!(placement.to_string(), text);
         assert_eq!(placement.occupied().count(), 8);
         assert_eq!(
@@ -202,19 +202,19 @@ mod tests {
     #[test]
     fn malformed_placements_are_rejected() {
         assert_eq!(
-            PiecePlacement::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP"),
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP".parse::<PiecePlacement>(),
             Err(FenError::RankCount)
         );
         assert_eq!(
-            PiecePlacement::from_fen("rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR"),
+            "rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR".parse::<PiecePlacement>(),
             Err(FenError::RankWidth)
         );
         assert_eq!(
-            PiecePlacement::from_fen("rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
+            "rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".parse::<PiecePlacement>(),
             Err(FenError::RankWidth)
         );
         assert_eq!(
-            PiecePlacement::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNX"),
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNX".parse::<PiecePlacement>(),
             Err(FenError::Piece('X'))
         );
     }

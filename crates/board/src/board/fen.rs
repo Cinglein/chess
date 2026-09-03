@@ -68,7 +68,7 @@ impl FromStr for Board {
 
 #[cfg(test)]
 mod tests {
-    use fen::{Fen, FenError};
+    use fen::FenError;
 
     use super::Board;
     use crate::castling_rights::CastlingRights;
@@ -82,19 +82,19 @@ mod tests {
     #[test]
     fn the_start_position_is_the_standard_fen() {
         assert_eq!(Board::START.to_string(), START);
-        assert_eq!(Board::from_fen(START), Ok(Board::START));
+        assert_eq!(START.parse::<Board>(), Ok(Board::START));
     }
 
     #[test]
     fn every_field_roundtrips() {
-        let board = Board::from_fen(AFTER_E4_E5_F4).unwrap();
+        let board = AFTER_E4_E5_F4.parse::<Board>().unwrap();
         assert_eq!(board.side_to_move(), Color::Black);
         assert_eq!(board.castling_rights(), CastlingRights::ALL);
         assert_eq!(board.en_passant(), Some(Square::F3));
         assert_eq!(board.halfmove_clock(), 0);
         assert_eq!(board.fullmove_number(), 2);
         assert_eq!(board.to_string(), AFTER_E4_E5_F4);
-        assert_eq!(Board::from_fen(KIWIPETE).unwrap().to_string(), KIWIPETE);
+        assert_eq!(KIWIPETE.parse::<Board>().unwrap().to_string(), KIWIPETE);
     }
 
     #[test]
@@ -130,7 +130,7 @@ mod tests {
             ),
         ];
         for (text, error) in cases {
-            assert_eq!(Board::from_fen(text), Err(error), "{text}");
+            assert_eq!(text.parse::<Board>(), Err(error), "{text}");
         }
     }
 }

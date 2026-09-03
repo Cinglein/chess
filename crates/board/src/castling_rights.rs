@@ -84,7 +84,7 @@ impl FromStr for CastlingRights {
 
 #[cfg(test)]
 mod tests {
-    use fen::{Fen, FenError};
+    use fen::FenError;
 
     use super::CastlingRights;
 
@@ -92,22 +92,22 @@ mod tests {
     fn rights_display_and_parse_as_fen_letters() {
         assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
         assert_eq!(CastlingRights::NONE.to_string(), "-");
-        let partial = CastlingRights::from_fen("Kq").unwrap();
+        let partial = "Kq".parse::<CastlingRights>().unwrap();
         assert!(partial.white_kingside());
         assert!(!partial.white_queenside());
         assert!(!partial.black_kingside());
         assert!(partial.black_queenside());
         assert_eq!(partial.to_string(), "Kq");
-        assert_eq!(CastlingRights::from_fen("qK"), Ok(partial));
+        assert_eq!("qK".parse::<CastlingRights>(), Ok(partial));
     }
 
     #[test]
     fn repeated_or_unknown_letters_are_rejected() {
         assert_eq!(
-            CastlingRights::from_fen("KK"),
+            "KK".parse::<CastlingRights>(),
             Err(FenError::CastlingRights)
         );
-        assert_eq!(CastlingRights::from_fen("x"), Err(FenError::CastlingRights));
-        assert_eq!(CastlingRights::from_fen(""), Err(FenError::CastlingRights));
+        assert_eq!("x".parse::<CastlingRights>(), Err(FenError::CastlingRights));
+        assert_eq!("".parse::<CastlingRights>(), Err(FenError::CastlingRights));
     }
 }
