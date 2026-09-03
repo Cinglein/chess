@@ -32,7 +32,7 @@ pub enum Promotion {
 }
 
 impl Promotion {
-    pub(crate) const fn from_bits(bits: u8) -> Promotion {
+    pub(crate) const fn from_bits(bits: u8) -> Self {
         Self::VARIANTS[bits as usize]
     }
 

@@ -13,7 +13,7 @@ pub enum MoveKind {
 }
 
 impl MoveKind {
-    pub(crate) const fn from_bits(bits: u8) -> MoveKind {
+    pub(crate) const fn from_bits(bits: u8) -> Self {
         Self::VARIANTS[bits as usize]
     }
 

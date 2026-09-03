@@ -40,7 +40,7 @@ pub enum Square {
 }
 
 impl Square {
-    pub(crate) const fn from_bits(bits: u8) -> Square {
+    pub(crate) const fn from_bits(bits: u8) -> Self {
         Self::VARIANTS[bits as usize]
     }
 
