@@ -1,4 +1,5 @@
 use core::fmt;
+use core::ops::Add;
 use core::str::FromStr;
 
 use enum_map::Enum;
@@ -51,24 +52,33 @@ impl Square {
     pub const fn rank(self) -> Rank {
         Rank::VARIANTS[self as usize / File::COUNT]
     }
+}
 
-    #[must_use]
-    pub const fn translate(self, file_delta: i8, rank_delta: i8) -> Option<Square> {
-        let Some(file) = (self.file() as u8).checked_add_signed(file_delta) else {
-            return None;
+impl Add<Direction> for Square {
+    type Output = Option<Square>;
+
+    fn add(self, direction: Direction) -> Option<Square> {
+        let (file_step, rank_step): (i8, i8) = match direction {
+            Direction::North => (0, 1),
+            Direction::NorthEast => (1, 1),
+            Direction::East => (1, 0),
+            Direction::SouthEast => (1, -1),
+            Direction::South => (0, -1),
+            Direction::SouthWest => (-1, -1),
+            Direction::West => (-1, 0),
+            Direction::NorthWest => (-1, 1),
         };
-        let Some(rank) = (self.rank() as u8).checked_add_signed(rank_delta) else {
-            return None;
-        };
-        match (File::from_repr(file), Rank::from_repr(rank)) {
-            (Some(file), Some(rank)) => Some(Self::new(file, rank)),
-            _ => None,
-        }
+        let file = File::from_repr((self.file() as u8).checked_add_signed(file_step)?)?;
+        let rank = Rank::from_repr((self.rank() as u8).checked_add_signed(rank_step)?)?;
+        Some(Square::new(file, rank))
     }
+}
 
-    #[must_use]
-    pub const fn offset(self, direction: Direction) -> Option<Square> {
-        self.translate(direction.file_delta(), direction.rank_delta())
+impl Add<Direction> for Option<Square> {
+    type Output = Option<Square>;
+
+    fn add(self, direction: Direction) -> Option<Square> {
+        self.and_then(|square| square + direction)
     }
 }
 
@@ -135,12 +145,20 @@ mod tests {
 
     #[test]
     fn stepping_off_the_board_yields_none() {
-        assert_eq!(Square::E4.offset(Direction::North), Some(Square::E5));
-        assert_eq!(Square::E4.offset(Direction::SouthWest), Some(Square::D3));
-        assert_eq!(Square::A1.offset(Direction::West), None);
-        assert_eq!(Square::A1.offset(Direction::South), None);
-        assert_eq!(Square::H8.offset(Direction::NorthEast), None);
-        assert_eq!(Square::H4.translate(1, 2), None);
-        assert_eq!(Square::B1.translate(1, 2), Some(Square::C3));
+        assert_eq!(Square::E4 + Direction::North, Some(Square::E5));
+        assert_eq!(Square::E4 + Direction::SouthWest, Some(Square::D3));
+        assert_eq!(Square::A1 + Direction::West, None);
+        assert_eq!(Square::A1 + Direction::South, None);
+        assert_eq!(Square::H8 + Direction::NorthEast, None);
+    }
+
+    #[test]
+    fn steps_chain_through_option_so_a_knight_jump_is_two_additions() {
+        assert_eq!(
+            Square::B1 + Direction::North + Direction::NorthEast,
+            Some(Square::C3)
+        );
+        assert_eq!(Square::H4 + Direction::North + Direction::NorthEast, None);
+        assert_eq!(Square::A1 + Direction::West + Direction::North, None);
     }
 }

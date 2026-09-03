@@ -28,22 +28,4 @@ impl Direction {
         Direction::SouthWest,
         Direction::NorthWest,
     ];
-
-    #[must_use]
-    pub const fn file_delta(self) -> i8 {
-        match self {
-            Direction::North | Direction::South => 0,
-            Direction::NorthEast | Direction::East | Direction::SouthEast => 1,
-            Direction::SouthWest | Direction::West | Direction::NorthWest => -1,
-        }
-    }
-
-    #[must_use]
-    pub const fn rank_delta(self) -> i8 {
-        match self {
-            Direction::East | Direction::West => 0,
-            Direction::North | Direction::NorthEast | Direction::NorthWest => 1,
-            Direction::South | Direction::SouthEast | Direction::SouthWest => -1,
-        }
-    }
 }
