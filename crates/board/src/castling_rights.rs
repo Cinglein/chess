@@ -1,9 +1,7 @@
 use core::fmt;
-use core::str::FromStr;
 
 use bitfield_struct::bitfield;
-
-use crate::fen_error::FenError;
+use fen::{Fen, FenError};
 
 #[bitfield(u8, new = false, default = false)]
 #[derive(PartialEq, Eq, Hash)]
@@ -47,8 +45,8 @@ impl CastlingRights {
     }
 }
 
-impl fmt::Display for CastlingRights {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Fen for CastlingRights {
+    fn fmt_fen(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_none() {
             return formatter.write_str("-");
         }
@@ -57,12 +55,8 @@ impl fmt::Display for CastlingRights {
             .filter(|(_, right)| self.contains(*right))
             .try_for_each(|(letter, _)| write!(formatter, "{letter}"))
     }
-}
 
-impl FromStr for CastlingRights {
-    type Err = FenError;
-
-    fn from_str(text: &str) -> Result<CastlingRights, FenError> {
+    fn from_fen(text: &str) -> Result<CastlingRights, FenError> {
         match text {
             "-" => return Ok(CastlingRights::NONE),
             "" => return Err(FenError::CastlingRights),
@@ -83,29 +77,30 @@ impl FromStr for CastlingRights {
 
 #[cfg(test)]
 mod tests {
+    use fen::{Fen, FenError};
+
     use super::CastlingRights;
-    use crate::fen_error::FenError;
 
     #[test]
     fn rights_display_and_parse_as_fen_letters() {
-        assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
-        assert_eq!(CastlingRights::NONE.to_string(), "-");
-        let partial: CastlingRights = "Kq".parse().unwrap();
+        assert_eq!(CastlingRights::ALL.fen().to_string(), "KQkq");
+        assert_eq!(CastlingRights::NONE.fen().to_string(), "-");
+        let partial = CastlingRights::from_fen("Kq").unwrap();
         assert!(partial.white_kingside());
         assert!(!partial.white_queenside());
         assert!(!partial.black_kingside());
         assert!(partial.black_queenside());
-        assert_eq!(partial.to_string(), "Kq");
-        assert_eq!("qK".parse::<CastlingRights>(), Ok(partial));
+        assert_eq!(partial.fen().to_string(), "Kq");
+        assert_eq!(CastlingRights::from_fen("qK"), Ok(partial));
     }
 
     #[test]
     fn repeated_or_unknown_letters_are_rejected() {
         assert_eq!(
-            "KK".parse::<CastlingRights>(),
+            CastlingRights::from_fen("KK"),
             Err(FenError::CastlingRights)
         );
-        assert_eq!("x".parse::<CastlingRights>(), Err(FenError::CastlingRights));
-        assert_eq!("".parse::<CastlingRights>(), Err(FenError::CastlingRights));
+        assert_eq!(CastlingRights::from_fen("x"), Err(FenError::CastlingRights));
+        assert_eq!(CastlingRights::from_fen(""), Err(FenError::CastlingRights));
     }
 }

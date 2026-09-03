@@ -1,11 +1,8 @@
 use core::fmt;
-use core::str::FromStr;
+
+use fen::{Fen, FenError};
 
 use super::Board;
-use crate::castling_rights::CastlingRights;
-use crate::color::Color;
-use crate::fen_error::FenError;
-use crate::piece_placement::PiecePlacement;
 use crate::square::Square;
 
 impl Board {
@@ -17,16 +14,14 @@ impl Board {
     }
 }
 
-impl fmt::Display for Board {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "{} {} {} ",
-            self.placement, self.side_to_move, self.castling_rights
-        )?;
+impl Fen for Board {
+    fn fmt_fen(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.placement.fmt_fen(formatter)?;
+        write!(formatter, " {} ", self.side_to_move)?;
+        self.castling_rights.fmt_fen(formatter)?;
         match self.en_passant {
-            Some(square) => write!(formatter, "{square}")?,
-            None => formatter.write_str("-")?,
+            Some(square) => write!(formatter, " {square}")?,
+            None => formatter.write_str(" -")?,
         }
         write!(
             formatter,
@@ -34,17 +29,13 @@ impl fmt::Display for Board {
             self.halfmove_clock, self.fullmove_number
         )
     }
-}
 
-impl FromStr for Board {
-    type Err = FenError;
-
-    fn from_str(text: &str) -> Result<Board, FenError> {
+    fn from_fen(text: &str) -> Result<Board, FenError> {
         let mut fields = text.split_whitespace();
         let mut field = || fields.next().ok_or(FenError::FieldCount);
-        let placement: PiecePlacement = field()?.parse()?;
-        let side_to_move: Color = field()?.parse().map_err(|_| FenError::SideToMove)?;
-        let castling_rights: CastlingRights = field()?.parse()?;
+        let placement = Fen::from_fen(field()?)?;
+        let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
+        let castling_rights = Fen::from_fen(field()?)?;
         let en_passant = Self::parse_en_passant(field()?)?;
         let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
         let fullmove_number = field()?
@@ -68,10 +59,11 @@ impl FromStr for Board {
 
 #[cfg(test)]
 mod tests {
+    use fen::{Fen, FenError};
+
     use super::Board;
     use crate::castling_rights::CastlingRights;
     use crate::color::Color;
-    use crate::fen_error::FenError;
     use crate::square::Square;
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -80,20 +72,23 @@ mod tests {
 
     #[test]
     fn the_start_position_is_the_standard_fen() {
-        assert_eq!(Board::START.to_string(), START);
-        assert_eq!(START.parse(), Ok(Board::START));
+        assert_eq!(Board::START.fen().to_string(), START);
+        assert_eq!(Board::from_fen(START), Ok(Board::START));
     }
 
     #[test]
     fn every_field_roundtrips() {
-        let board: Board = AFTER_E4_E5_F4.parse().unwrap();
+        let board = Board::from_fen(AFTER_E4_E5_F4).unwrap();
         assert_eq!(board.side_to_move(), Color::Black);
         assert_eq!(board.castling_rights(), CastlingRights::ALL);
         assert_eq!(board.en_passant(), Some(Square::F3));
         assert_eq!(board.halfmove_clock(), 0);
         assert_eq!(board.fullmove_number(), 2);
-        assert_eq!(board.to_string(), AFTER_E4_E5_F4);
-        assert_eq!(KIWIPETE.parse::<Board>().unwrap().to_string(), KIWIPETE);
+        assert_eq!(board.fen().to_string(), AFTER_E4_E5_F4);
+        assert_eq!(
+            Board::from_fen(KIWIPETE).unwrap().fen().to_string(),
+            KIWIPETE
+        );
     }
 
     #[test]
@@ -129,7 +124,7 @@ mod tests {
             ),
         ];
         for (text, error) in cases {
-            assert_eq!(text.parse::<Board>(), Err(error), "{text}");
+            assert_eq!(Board::from_fen(text), Err(error), "{text}");
         }
     }
 }

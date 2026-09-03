@@ -1,12 +1,11 @@
 use core::fmt;
-use core::str::FromStr;
 
 use enum_map::EnumMap;
+use fen::{Fen, FenError};
 use strum::{EnumCount, IntoEnumIterator};
 
 use crate::bitboard::Bitboard;
 use crate::color::Color;
-use crate::fen_error::FenError;
 use crate::file::File;
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
@@ -132,8 +131,8 @@ impl PiecePlacement {
     }
 }
 
-impl fmt::Display for PiecePlacement {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Fen for PiecePlacement {
+    fn fmt_fen(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut ranks = Rank::iter().rev();
         if let Some(rank) = ranks.next() {
             self.fmt_rank(formatter, rank)?;
@@ -143,12 +142,8 @@ impl fmt::Display for PiecePlacement {
             self.fmt_rank(formatter, rank)
         })
     }
-}
 
-impl FromStr for PiecePlacement {
-    type Err = FenError;
-
-    fn from_str(text: &str) -> Result<PiecePlacement, FenError> {
+    fn from_fen(text: &str) -> Result<PiecePlacement, FenError> {
         if text.split('/').count() != Rank::COUNT {
             return Err(FenError::RankCount);
         }
@@ -163,9 +158,10 @@ impl FromStr for PiecePlacement {
 
 #[cfg(test)]
 mod tests {
+    use fen::{Fen, FenError};
+
     use super::PiecePlacement;
     use crate::color::Color;
-    use crate::fen_error::FenError;
     use crate::piece::Piece;
     use crate::piece_kind::PieceKind;
     use crate::square::Square;
@@ -174,8 +170,8 @@ mod tests {
 
     #[test]
     fn the_start_position_roundtrips_through_fen() {
-        assert_eq!(PiecePlacement::START.to_string(), START);
-        assert_eq!(START.parse(), Ok(PiecePlacement::START));
+        assert_eq!(PiecePlacement::START.fen().to_string(), START);
+        assert_eq!(PiecePlacement::from_fen(START), Ok(PiecePlacement::START));
         assert_eq!(PiecePlacement::START.occupied().count(), 32);
         assert_eq!(
             PiecePlacement::START.piece_at(Square::E1),
@@ -187,8 +183,8 @@ mod tests {
     #[test]
     fn empty_squares_inside_a_rank_are_counted_in_both_directions() {
         let text = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
-        let placement: PiecePlacement = text.parse().unwrap();
-        assert_eq!(placement.to_string(), text);
+        let placement = PiecePlacement::from_fen(text).unwrap();
+        assert_eq!(placement.fen().to_string(), text);
         assert_eq!(placement.occupied().count(), 8);
         assert_eq!(
             placement.piece_at(Square::D5),
@@ -199,19 +195,19 @@ mod tests {
     #[test]
     fn malformed_placements_are_rejected() {
         assert_eq!(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP".parse::<PiecePlacement>(),
+            PiecePlacement::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP"),
             Err(FenError::RankCount)
         );
         assert_eq!(
-            "rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR".parse::<PiecePlacement>(),
+            PiecePlacement::from_fen("rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR"),
             Err(FenError::RankWidth)
         );
         assert_eq!(
-            "rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".parse::<PiecePlacement>(),
+            PiecePlacement::from_fen("rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
             Err(FenError::RankWidth)
         );
         assert_eq!(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNX".parse::<PiecePlacement>(),
+            PiecePlacement::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNX"),
             Err(FenError::Piece('X'))
         );
     }

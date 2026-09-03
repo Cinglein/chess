@@ -19,6 +19,7 @@ version = "0.1.0"
 dependencies = [
  "bitfield-struct",
  "enum-map",
+ "fen",
  "strum",
 ]
 
@@ -45,6 +46,10 @@ dependencies = [
  "quote",
  "syn 3.0.4",
 ]
+
+[[package]]
+name = "fen"
+version = "0.1.0"
 
 [[package]]
 name = "heck"

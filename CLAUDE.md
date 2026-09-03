@@ -4,7 +4,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 
 ## Layout
 
-- `crates/board`: `no_std` board representation, move generation, FEN, Zobrist, perft.
+- `crates/board`: `no_std` board representation, move generation, Zobrist, perft.
+- `crates/fen`: `no_std` FEN notation as a trait; `board` implements it for its types.
 - `crates/engine`: `std` orchestration: threads, time management, table allocation.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `eval`, `search`
@@ -55,7 +56,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 
 - Elo is measured only against Stockfish anchors (`UCI_LimitStrength`, `UCI_Elo 1320`) by our own
   arena at 10s+0.1s. Done means scoring above 50% with error bars that exclude 50%.
-- Notations (FEN, long algebraic, SAN) belong to `board`; protocol messages to `uci`; I/O to binaries.
+- Interop notations are their own `no_std` crates exposing traits that `board` implements: `fen`
+  for positions, `uci` for protocol messages. Square, piece, and move text forms stay on their
+  types. I/O belongs to binaries.
 - TUI: visual board, standard algebraic notation for moves, slash commands starting with `/exit`.
 - Sliding attack tables use checked-in magic numbers. Const evaluation of the rook table was
   measured at 39 seconds per compile and rejected in favour of runtime memoisation.
