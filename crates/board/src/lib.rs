@@ -10,7 +10,7 @@ mod piece;
 mod piece_kind;
 mod rank;
 mod square;
-mod squares;
+mod square_iter;
 
 pub use bitboard::Bitboard;
 pub use color::Color;
@@ -22,4 +22,4 @@ pub use piece::Piece;
 pub use piece_kind::PieceKind;
 pub use rank::Rank;
 pub use square::Square;
-pub use squares::Squares;
+pub use square_iter::SquareIter;

@@ -7,7 +7,7 @@ use crate::file::File;
 use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 use crate::square::Square;
-use crate::squares::Squares;
+use crate::square_iter::SquareIter;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Bitboard(u64);
@@ -179,10 +179,10 @@ impl FromIterator<Square> for Bitboard {
 
 impl IntoIterator for Bitboard {
     type Item = Square;
-    type IntoIter = Squares;
+    type IntoIter = SquareIter;
 
-    fn into_iter(self) -> Squares {
-        Squares::new(self)
+    fn into_iter(self) -> SquareIter {
+        SquareIter::new(self)
     }
 }
 

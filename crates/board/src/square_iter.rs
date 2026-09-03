@@ -2,16 +2,16 @@ use crate::bitboard::Bitboard;
 use crate::square::Square;
 
 #[derive(Clone, Debug)]
-pub struct Squares(Bitboard);
+pub struct SquareIter(Bitboard);
 
-impl Squares {
+impl SquareIter {
     #[must_use]
-    pub const fn new(bitboard: Bitboard) -> Squares {
-        Squares(bitboard)
+    pub const fn new(bitboard: Bitboard) -> SquareIter {
+        SquareIter(bitboard)
     }
 }
 
-impl Iterator for Squares {
+impl Iterator for SquareIter {
     type Item = Square;
 
     fn next(&mut self) -> Option<Square> {
@@ -26,4 +26,4 @@ impl Iterator for Squares {
     }
 }
 
-impl ExactSizeIterator for Squares {}
+impl ExactSizeIterator for SquareIter {}
