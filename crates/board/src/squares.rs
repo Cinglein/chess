@@ -15,8 +15,8 @@ impl Iterator for Squares {
     type Item = Square;
 
     fn next(&mut self) -> Option<Square> {
-        let square = self.0.first()?;
-        self.0 = self.0.without_first();
+        let square = self.0.least_significant_bit()?;
+        self.0 = self.0.without_least_significant_bit();
         Some(square)
     }
 

@@ -87,14 +87,14 @@ impl Bitboard {
     }
 
     #[must_use]
-    pub fn first(self) -> Option<Square> {
+    pub fn least_significant_bit(self) -> Option<Square> {
         u8::try_from(self.0.trailing_zeros())
             .ok()
             .and_then(Square::from_repr)
     }
 
     #[must_use]
-    pub const fn without_first(self) -> Bitboard {
+    pub const fn without_least_significant_bit(self) -> Bitboard {
         Bitboard(self.0 & self.0.wrapping_sub(1))
     }
 
@@ -244,7 +244,7 @@ mod tests {
         let squares: Vec<Square> = set.into_iter().collect();
         assert_eq!(squares, vec![Square::A1, Square::E4, Square::H8]);
         assert_eq!(set.into_iter().len(), 3);
-        assert_eq!(Bitboard::EMPTY.first(), None);
+        assert_eq!(Bitboard::EMPTY.least_significant_bit(), None);
     }
 
     #[test]
