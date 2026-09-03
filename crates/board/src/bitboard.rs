@@ -1,4 +1,4 @@
-use core::fmt;
+use core::fmt::{self, Write};
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
 use strum::IntoEnumIterator;
@@ -197,14 +197,8 @@ impl fmt::Debug for Bitboard {
 impl fmt::Display for Bitboard {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for rank in Rank::iter().rev() {
-            for file in File::iter() {
-                let marker = if self.contains(Square::new(file, rank)) {
-                    'X'
-                } else {
-                    '.'
-                };
-                formatter.write_str(if file == File::A { "" } else { " " })?;
-                write!(formatter, "{marker}")?;
+            for square in Bitboard::rank(rank) {
+                formatter.write_char(if self.contains(square) { 'X' } else { '.' })?;
             }
             writeln!(formatter)?;
         }
@@ -288,7 +282,7 @@ mod tests {
         let text = set.to_string();
         let lines: Vec<&str> = text.lines().collect();
         assert_eq!(lines.len(), 8);
-        assert_eq!(lines[0], "X . . . . . . .");
-        assert_eq!(lines[7], ". . . . . . . X");
+        assert_eq!(lines[0], "X.......");
+        assert_eq!(lines[7], ".......X");
     }
 }
