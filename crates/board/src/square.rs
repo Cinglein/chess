@@ -1,130 +1,11 @@
 use core::fmt;
 use core::str::FromStr;
 
-use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, ParseError, VariantArray};
+use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    Display,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    FromRepr,
-    VariantArray,
-)]
-#[strum(serialize_all = "lowercase")]
-pub enum File {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-}
-
-impl File {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-}
-
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    Display,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    FromRepr,
-    VariantArray,
-)]
-pub enum Rank {
-    #[strum(serialize = "1")]
-    One,
-    #[strum(serialize = "2")]
-    Two,
-    #[strum(serialize = "3")]
-    Three,
-    #[strum(serialize = "4")]
-    Four,
-    #[strum(serialize = "5")]
-    Five,
-    #[strum(serialize = "6")]
-    Six,
-    #[strum(serialize = "7")]
-    Seven,
-    #[strum(serialize = "8")]
-    Eight,
-}
-
-impl Rank {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, VariantArray)]
-pub enum Direction {
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
-    NorthWest,
-}
-
-impl Direction {
-    pub const ORTHOGONAL: [Direction; 4] = [
-        Direction::North,
-        Direction::East,
-        Direction::South,
-        Direction::West,
-    ];
-
-    pub const DIAGONAL: [Direction; 4] = [
-        Direction::NorthEast,
-        Direction::SouthEast,
-        Direction::SouthWest,
-        Direction::NorthWest,
-    ];
-
-    #[must_use]
-    pub const fn file_delta(self) -> isize {
-        match self {
-            Direction::North | Direction::South => 0,
-            Direction::NorthEast | Direction::East | Direction::SouthEast => 1,
-            Direction::SouthWest | Direction::West | Direction::NorthWest => -1,
-        }
-    }
-
-    #[must_use]
-    pub const fn rank_delta(self) -> isize {
-        match self {
-            Direction::East | Direction::West => 0,
-            Direction::North | Direction::NorthEast | Direction::NorthWest => 1,
-            Direction::South | Direction::SouthEast | Direction::SouthWest => -1,
-        }
-    }
-}
+use crate::direction::Direction;
+use crate::file::File;
+use crate::rank::Rank;
 
 #[derive(
     Clone,
@@ -269,7 +150,10 @@ impl FromStr for Square {
 mod tests {
     use strum::{EnumCount, IntoEnumIterator};
 
-    use super::{Direction, File, Rank, Square};
+    use super::Square;
+    use crate::direction::Direction;
+    use crate::file::File;
+    use crate::rank::Rank;
 
     #[test]
     fn squares_are_numbered_rank_by_rank_from_a1() {

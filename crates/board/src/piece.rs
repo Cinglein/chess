@@ -1,91 +1,7 @@
 use core::fmt;
-use core::ops::Not;
 
-use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray)]
-pub enum Color {
-    White,
-    Black,
-}
-
-impl Color {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-
-    #[must_use]
-    pub const fn opposite(self) -> Color {
-        match self {
-            Color::White => Color::Black,
-            Color::Black => Color::White,
-        }
-    }
-}
-
-impl Not for Color {
-    type Output = Color;
-
-    fn not(self) -> Color {
-        self.opposite()
-    }
-}
-
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    EnumCount,
-    EnumIter,
-    FromRepr,
-    VariantArray,
-)]
-pub enum PieceKind {
-    Pawn,
-    Knight,
-    Bishop,
-    Rook,
-    Queen,
-    King,
-}
-
-impl PieceKind {
-    #[must_use]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-
-    #[must_use]
-    pub const fn letter(self) -> char {
-        match self {
-            PieceKind::Pawn => 'p',
-            PieceKind::Knight => 'n',
-            PieceKind::Bishop => 'b',
-            PieceKind::Rook => 'r',
-            PieceKind::Queen => 'q',
-            PieceKind::King => 'k',
-        }
-    }
-
-    #[must_use]
-    pub const fn from_letter(letter: char) -> Option<PieceKind> {
-        match letter.to_ascii_lowercase() {
-            'p' => Some(PieceKind::Pawn),
-            'n' => Some(PieceKind::Knight),
-            'b' => Some(PieceKind::Bishop),
-            'r' => Some(PieceKind::Rook),
-            'q' => Some(PieceKind::Queen),
-            'k' => Some(PieceKind::King),
-            _ => None,
-        }
-    }
-}
+use crate::color::Color;
+use crate::piece_kind::PieceKind;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Piece {
@@ -131,13 +47,9 @@ impl fmt::Display for Piece {
 mod tests {
     use strum::IntoEnumIterator;
 
-    use super::{Color, Piece, PieceKind};
-
-    #[test]
-    fn each_color_is_the_opposite_of_the_other() {
-        assert_eq!(Color::White.opposite(), Color::Black);
-        assert_eq!(!Color::Black, Color::White);
-    }
+    use super::Piece;
+    use crate::color::Color;
+    use crate::piece_kind::PieceKind;
 
     #[test]
     fn white_pieces_use_uppercase_letters_and_black_lowercase() {

@@ -21,6 +21,11 @@ Rust chess engine trained with `bullet`, targeting ~1000 Elo, with a terminal UI
 - Delete a branch as soon as its PR is merged or closed. GitHub deletes the remote branch on
   merge and the Cleanup workflow deletes it when a PR is closed unmerged. After either, sync
   `main` and delete the local branch. Never leave stale branches.
+- One struct, enum, or trait per file, named after it in snake case, across the whole repo.
+  Its impls and its tests live in the same file. Modules are flat: `crates/board/src/square.rs`,
+  not a `square/` directory.
+- Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
+  `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
   group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask no-comments`. Run `cargo xtask ci`
