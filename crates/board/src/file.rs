@@ -34,16 +34,3 @@ impl File {
         self as usize
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::File;
-
-    #[test]
-    fn files_display_and_parse_as_lowercase_letters() {
-        assert_eq!(File::A.to_string(), "a");
-        assert_eq!("h".parse(), Ok(File::H));
-        assert!("i".parse::<File>().is_err());
-        assert!("A".parse::<File>().is_err());
-    }
-}

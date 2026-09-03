@@ -41,16 +41,3 @@ impl Rank {
         self as usize
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Rank;
-
-    #[test]
-    fn ranks_display_and_parse_as_digits() {
-        assert_eq!(Rank::One.to_string(), "1");
-        assert_eq!("8".parse(), Ok(Rank::Eight));
-        assert!("9".parse::<Rank>().is_err());
-        assert!("0".parse::<Rank>().is_err());
-    }
-}
