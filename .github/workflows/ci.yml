@@ -28,7 +28,7 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - run: cargo clippy --package engine --target wasm32-unknown-unknown --no-default-features -- -D warnings
+      - run: cargo xtask wasm
 
   test:
     runs-on: ubuntu-latest
