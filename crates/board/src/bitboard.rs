@@ -1,7 +1,5 @@
-use core::fmt::{self, Write};
+use core::fmt;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
-
-use strum::IntoEnumIterator;
 
 use crate::diagonal::Diagonal;
 use crate::direction::Direction;
@@ -196,11 +194,12 @@ impl fmt::Debug for Bitboard {
 
 impl fmt::Display for Bitboard {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for rank in Rank::iter().rev() {
-            for square in Bitboard::rank(rank) {
-                formatter.write_char(if self.contains(square) { 'X' } else { '.' })?;
-            }
-            writeln!(formatter)?;
+        let mut squares = self.into_iter();
+        if let Some(first) = squares.next() {
+            write!(formatter, "{first}")?;
+        }
+        for square in squares {
+            write!(formatter, " {square}")?;
         }
         Ok(())
     }
@@ -277,12 +276,11 @@ mod tests {
     }
 
     #[test]
-    fn display_prints_the_eighth_rank_first() {
-        let set = Bitboard::from_square(Square::A8).with(Square::H1);
-        let text = set.to_string();
-        let lines: Vec<&str> = text.lines().collect();
-        assert_eq!(lines.len(), 8);
-        assert_eq!(lines[0], "X.......");
-        assert_eq!(lines[7], ".......X");
+    fn display_lists_the_squares_in_iteration_order() {
+        let set = Bitboard::from_square(Square::A8)
+            .with(Square::H1)
+            .with(Square::E4);
+        assert_eq!(set.to_string(), "h1 e4 a8");
+        assert_eq!(Bitboard::EMPTY.to_string(), "");
     }
 }
