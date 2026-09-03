@@ -13,8 +13,10 @@ mod piece;
 mod piece_kind;
 mod promotion;
 mod rank;
+mod slider;
 mod square;
 mod square_iter;
+mod subset_iter;
 
 pub use bitboard::Bitboard;
 pub use chess_move::ChessMove;
@@ -29,5 +31,7 @@ pub use piece::Piece;
 pub use piece_kind::PieceKind;
 pub use promotion::Promotion;
 pub use rank::Rank;
+pub use slider::{Magic, Slider};
 pub use square::Square;
 pub use square_iter::SquareIter;
+pub use subset_iter::SubsetIter;

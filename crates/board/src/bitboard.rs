@@ -10,6 +10,7 @@ use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::square_iter::SquareIter;
+use crate::subset_iter::SubsetIter;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Bitboard(u64);
@@ -110,6 +111,16 @@ impl Bitboard {
     #[must_use]
     pub const fn without_least_significant_bit(self) -> Bitboard {
         Bitboard(self.0 & self.0.wrapping_sub(1))
+    }
+
+    #[must_use]
+    pub const fn subset_after(self, subset: Bitboard) -> Bitboard {
+        Bitboard(subset.0.wrapping_sub(self.0) & self.0)
+    }
+
+    #[must_use]
+    pub const fn subsets(self) -> SubsetIter {
+        SubsetIter::new(self)
     }
 
     #[must_use]
@@ -287,6 +298,20 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn subsets_enumerate_every_combination_of_a_mask_once() {
+        let mask: Bitboard = [Square::A1, Square::D4, Square::H8].into_iter().collect();
+        let subsets: Vec<Bitboard> = mask.subsets().collect();
+        assert_eq!(subsets.len(), 8);
+        assert_eq!(subsets[0], Bitboard::EMPTY);
+        assert_eq!(subsets[7], mask);
+        for (index, subset) in subsets.iter().enumerate() {
+            assert_eq!(subset.difference(mask), Bitboard::EMPTY);
+            assert!(!subsets[..index].contains(subset));
+        }
+        assert_eq!(Bitboard::EMPTY.subsets().count(), 1);
     }
 
     #[test]
