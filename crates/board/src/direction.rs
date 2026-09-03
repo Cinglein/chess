@@ -1,6 +1,7 @@
 use strum::{EnumCount, EnumIter, VariantArray};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, VariantArray)]
+#[repr(u8)]
 pub enum Direction {
     North,
     NorthEast,
@@ -28,7 +29,7 @@ impl Direction {
     ];
 
     #[must_use]
-    pub const fn file_delta(self) -> isize {
+    pub const fn file_delta(self) -> i8 {
         match self {
             Direction::North | Direction::South => 0,
             Direction::NorthEast | Direction::East | Direction::SouthEast => 1,
@@ -37,7 +38,7 @@ impl Direction {
     }
 
     #[must_use]
-    pub const fn rank_delta(self) -> isize {
+    pub const fn rank_delta(self) -> i8 {
         match self {
             Direction::East | Direction::West => 0,
             Direction::North | Direction::NorthEast | Direction::NorthWest => 1,

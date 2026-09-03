@@ -3,6 +3,7 @@ use core::ops::Not;
 use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray)]
+#[repr(u8)]
 pub enum Color {
     White,
     Black,

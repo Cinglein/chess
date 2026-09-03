@@ -16,6 +16,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
     FromRepr,
     VariantArray,
 )]
+#[repr(u8)]
 pub enum Rank {
     #[strum(serialize = "1")]
     One,

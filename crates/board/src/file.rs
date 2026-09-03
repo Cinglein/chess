@@ -17,6 +17,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
     VariantArray,
 )]
 #[strum(serialize_all = "lowercase")]
+#[repr(u8)]
 pub enum File {
     A,
     B,

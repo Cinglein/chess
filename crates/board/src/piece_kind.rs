@@ -14,6 +14,7 @@ use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
     FromRepr,
     VariantArray,
 )]
+#[repr(u8)]
 pub enum PieceKind {
     Pawn,
     Knight,

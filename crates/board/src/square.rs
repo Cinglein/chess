@@ -21,6 +21,7 @@ use crate::rank::Rank;
     FromRepr,
     VariantArray,
 )]
+#[repr(u8)]
 pub enum Square {
     A1,
     B1,
@@ -110,11 +111,11 @@ impl Square {
     }
 
     #[must_use]
-    pub const fn translate(self, file_delta: isize, rank_delta: isize) -> Option<Square> {
-        let Some(file) = self.file().index().checked_add_signed(file_delta) else {
+    pub const fn translate(self, file_delta: i8, rank_delta: i8) -> Option<Square> {
+        let Some(file) = (self.file() as u8).checked_add_signed(file_delta) else {
             return None;
         };
-        let Some(rank) = self.rank().index().checked_add_signed(rank_delta) else {
+        let Some(rank) = (self.rank() as u8).checked_add_signed(rank_delta) else {
             return None;
         };
         match (File::from_repr(file), Rank::from_repr(rank)) {
@@ -169,8 +170,8 @@ mod tests {
 
     #[test]
     fn every_square_roundtrips_through_its_index_and_coordinates() {
-        for (index, square) in Square::iter().enumerate() {
-            assert_eq!(square.index(), index);
+        for (index, square) in (0u8..).zip(Square::iter()) {
+            assert_eq!(square.index(), usize::from(index));
             assert_eq!(Square::from_repr(index), Some(square));
             assert_eq!(Square::new(square.file(), square.rank()), square);
         }
