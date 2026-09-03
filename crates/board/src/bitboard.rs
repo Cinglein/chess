@@ -1,6 +1,8 @@
 use core::fmt;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
+use strum::{EnumCount, VariantArray};
+
 use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
@@ -28,12 +30,24 @@ impl Bitboard {
 
     #[must_use]
     pub const fn file(file: File) -> Bitboard {
-        Bitboard(0x0101_0101_0101_0101 << file as u8)
+        let mut squares = Bitboard::EMPTY;
+        let mut index = 0;
+        while index < Rank::COUNT {
+            squares = squares.with(Square::new(file, Rank::VARIANTS[index]));
+            index += 1;
+        }
+        squares
     }
 
     #[must_use]
     pub const fn rank(rank: Rank) -> Bitboard {
-        Bitboard(0xFF << (rank as u8 * 8))
+        let mut squares = Bitboard::EMPTY;
+        let mut index = 0;
+        while index < File::COUNT {
+            squares = squares.with(Square::new(File::VARIANTS[index], rank));
+            index += 1;
+        }
+        squares
     }
 
     #[must_use]
@@ -103,14 +117,14 @@ impl Bitboard {
         let not_file_a = self.difference(Self::file(File::A)).0;
         let not_file_h = self.difference(Self::file(File::H)).0;
         Bitboard(match direction {
-            Direction::Orthogonal(Orthogonal::North) => self.0 << 8,
-            Direction::Orthogonal(Orthogonal::South) => self.0 >> 8,
+            Direction::Orthogonal(Orthogonal::North) => self.0 << File::COUNT,
+            Direction::Orthogonal(Orthogonal::South) => self.0 >> File::COUNT,
             Direction::Orthogonal(Orthogonal::East) => not_file_h << 1,
             Direction::Orthogonal(Orthogonal::West) => not_file_a >> 1,
-            Direction::Diagonal(Diagonal::NorthEast) => not_file_h << 9,
-            Direction::Diagonal(Diagonal::NorthWest) => not_file_a << 7,
-            Direction::Diagonal(Diagonal::SouthEast) => not_file_h >> 7,
-            Direction::Diagonal(Diagonal::SouthWest) => not_file_a >> 9,
+            Direction::Diagonal(Diagonal::NorthEast) => not_file_h << (File::COUNT + 1),
+            Direction::Diagonal(Diagonal::NorthWest) => not_file_a << (File::COUNT - 1),
+            Direction::Diagonal(Diagonal::SouthEast) => not_file_h >> (File::COUNT - 1),
+            Direction::Diagonal(Diagonal::SouthWest) => not_file_a >> (File::COUNT + 1),
         })
     }
 }
