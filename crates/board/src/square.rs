@@ -5,8 +5,10 @@ use core::str::FromStr;
 use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
+use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
+use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 
 #[derive(
@@ -54,19 +56,19 @@ impl Square {
     }
 }
 
-impl Add<Direction> for Square {
+impl<D: Into<Direction>> Add<D> for Square {
     type Output = Option<Square>;
 
-    fn add(self, direction: Direction) -> Option<Square> {
-        let (file_step, rank_step): (i8, i8) = match direction {
-            Direction::North => (0, 1),
-            Direction::NorthEast => (1, 1),
-            Direction::East => (1, 0),
-            Direction::SouthEast => (1, -1),
-            Direction::South => (0, -1),
-            Direction::SouthWest => (-1, -1),
-            Direction::West => (-1, 0),
-            Direction::NorthWest => (-1, 1),
+    fn add(self, direction: D) -> Option<Square> {
+        let (file_step, rank_step): (i8, i8) = match direction.into() {
+            Direction::Orthogonal(Orthogonal::North) => (0, 1),
+            Direction::Orthogonal(Orthogonal::East) => (1, 0),
+            Direction::Orthogonal(Orthogonal::South) => (0, -1),
+            Direction::Orthogonal(Orthogonal::West) => (-1, 0),
+            Direction::Diagonal(Diagonal::NorthEast) => (1, 1),
+            Direction::Diagonal(Diagonal::SouthEast) => (1, -1),
+            Direction::Diagonal(Diagonal::SouthWest) => (-1, -1),
+            Direction::Diagonal(Diagonal::NorthWest) => (-1, 1),
         };
         let file = File::from_repr((self.file() as u8).checked_add_signed(file_step)?)?;
         let rank = Rank::from_repr((self.rank() as u8).checked_add_signed(rank_step)?)?;
@@ -78,6 +80,22 @@ impl Add<Direction> for Option<Square> {
     type Output = Option<Square>;
 
     fn add(self, direction: Direction) -> Option<Square> {
+        self.and_then(|square| square + direction)
+    }
+}
+
+impl Add<Orthogonal> for Option<Square> {
+    type Output = Option<Square>;
+
+    fn add(self, direction: Orthogonal) -> Option<Square> {
+        self.and_then(|square| square + direction)
+    }
+}
+
+impl Add<Diagonal> for Option<Square> {
+    type Output = Option<Square>;
+
+    fn add(self, direction: Diagonal) -> Option<Square> {
         self.and_then(|square| square + direction)
     }
 }
@@ -105,8 +123,9 @@ mod tests {
     use strum::{EnumCount, IntoEnumIterator};
 
     use super::Square;
-    use crate::direction::Direction;
+    use crate::diagonal::Diagonal;
     use crate::file::File;
+    use crate::orthogonal::Orthogonal;
     use crate::rank::Rank;
 
     #[test]
@@ -145,20 +164,20 @@ mod tests {
 
     #[test]
     fn stepping_off_the_board_yields_none() {
-        assert_eq!(Square::E4 + Direction::North, Some(Square::E5));
-        assert_eq!(Square::E4 + Direction::SouthWest, Some(Square::D3));
-        assert_eq!(Square::A1 + Direction::West, None);
-        assert_eq!(Square::A1 + Direction::South, None);
-        assert_eq!(Square::H8 + Direction::NorthEast, None);
+        assert_eq!(Square::E4 + Orthogonal::North, Some(Square::E5));
+        assert_eq!(Square::E4 + Diagonal::SouthWest, Some(Square::D3));
+        assert_eq!(Square::A1 + Orthogonal::West, None);
+        assert_eq!(Square::A1 + Orthogonal::South, None);
+        assert_eq!(Square::H8 + Diagonal::NorthEast, None);
     }
 
     #[test]
     fn steps_chain_through_option_so_a_knight_jump_is_two_additions() {
         assert_eq!(
-            Square::B1 + Direction::North + Direction::NorthEast,
+            Square::B1 + Orthogonal::North + Diagonal::NorthEast,
             Some(Square::C3)
         );
-        assert_eq!(Square::H4 + Direction::North + Direction::NorthEast, None);
-        assert_eq!(Square::A1 + Direction::West + Direction::North, None);
+        assert_eq!(Square::H4 + Orthogonal::North + Diagonal::NorthEast, None);
+        assert_eq!(Square::A1 + Orthogonal::West + Orthogonal::North, None);
     }
 }

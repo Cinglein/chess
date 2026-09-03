@@ -1,31 +1,30 @@
-use enum_map::Enum;
-use strum::{EnumCount, EnumIter, VariantArray};
+use strum::IntoEnumIterator;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Enum, EnumCount, EnumIter, VariantArray)]
-#[repr(u8)]
+use crate::diagonal::Diagonal;
+use crate::orthogonal::Orthogonal;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Direction {
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
-    NorthWest,
+    Orthogonal(Orthogonal),
+    Diagonal(Diagonal),
 }
 
 impl Direction {
-    pub const ORTHOGONAL: [Direction; 4] = [
-        Direction::North,
-        Direction::East,
-        Direction::South,
-        Direction::West,
-    ];
+    pub fn iter() -> impl Iterator<Item = Direction> {
+        Orthogonal::iter()
+            .map(Direction::Orthogonal)
+            .chain(Diagonal::iter().map(Direction::Diagonal))
+    }
+}
 
-    pub const DIAGONAL: [Direction; 4] = [
-        Direction::NorthEast,
-        Direction::SouthEast,
-        Direction::SouthWest,
-        Direction::NorthWest,
-    ];
+impl From<Orthogonal> for Direction {
+    fn from(orthogonal: Orthogonal) -> Direction {
+        Direction::Orthogonal(orthogonal)
+    }
+}
+
+impl From<Diagonal> for Direction {
+    fn from(diagonal: Diagonal) -> Direction {
+        Direction::Diagonal(diagonal)
+    }
 }
