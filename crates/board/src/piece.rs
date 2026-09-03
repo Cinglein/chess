@@ -1,16 +1,15 @@
 use core::fmt;
 use core::ops::Not;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[repr(u8)]
+use strum::{EnumCount, EnumIter, FromRepr, VariantArray};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, FromRepr, VariantArray)]
 pub enum Color {
     White,
     Black,
 }
 
 impl Color {
-    pub const ALL: [Color; 2] = [Color::White, Color::Black];
-
     #[must_use]
     pub const fn index(self) -> usize {
         self as usize
@@ -33,8 +32,20 @@ impl Not for Color {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(u8)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    EnumCount,
+    EnumIter,
+    FromRepr,
+    VariantArray,
+)]
 pub enum PieceKind {
     Pawn,
     Knight,
@@ -45,27 +56,9 @@ pub enum PieceKind {
 }
 
 impl PieceKind {
-    pub const ALL: [PieceKind; 6] = [
-        PieceKind::Pawn,
-        PieceKind::Knight,
-        PieceKind::Bishop,
-        PieceKind::Rook,
-        PieceKind::Queen,
-        PieceKind::King,
-    ];
-
     #[must_use]
     pub const fn index(self) -> usize {
         self as usize
-    }
-
-    #[must_use]
-    pub const fn from_index(index: usize) -> Option<PieceKind> {
-        if index < Self::ALL.len() {
-            Some(Self::ALL[index])
-        } else {
-            None
-        }
     }
 
     #[must_use]
@@ -82,13 +75,13 @@ impl PieceKind {
 
     #[must_use]
     pub const fn from_letter(letter: char) -> Option<PieceKind> {
-        match letter {
-            'p' | 'P' => Some(PieceKind::Pawn),
-            'n' | 'N' => Some(PieceKind::Knight),
-            'b' | 'B' => Some(PieceKind::Bishop),
-            'r' | 'R' => Some(PieceKind::Rook),
-            'q' | 'Q' => Some(PieceKind::Queen),
-            'k' | 'K' => Some(PieceKind::King),
+        match letter.to_ascii_lowercase() {
+            'p' => Some(PieceKind::Pawn),
+            'n' => Some(PieceKind::Knight),
+            'b' => Some(PieceKind::Bishop),
+            'r' => Some(PieceKind::Rook),
+            'q' => Some(PieceKind::Queen),
+            'k' => Some(PieceKind::King),
             _ => None,
         }
     }
@@ -136,6 +129,8 @@ impl fmt::Display for Piece {
 
 #[cfg(test)]
 mod tests {
+    use strum::IntoEnumIterator;
+
     use super::{Color, Piece, PieceKind};
 
     #[test]
@@ -161,8 +156,8 @@ mod tests {
 
     #[test]
     fn every_piece_letter_roundtrips() {
-        for color in Color::ALL {
-            for kind in PieceKind::ALL {
+        for color in Color::iter() {
+            for kind in PieceKind::iter() {
                 let piece = Piece::new(color, kind);
                 assert_eq!(Piece::from_letter(piece.letter()), Some(piece));
             }

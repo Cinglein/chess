@@ -1,8 +1,25 @@
 use core::fmt;
 use core::str::FromStr;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(u8)]
+use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, ParseError, VariantArray};
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Display,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    FromRepr,
+    VariantArray,
+)]
+#[strum(serialize_all = "lowercase")]
 pub enum File {
     A,
     B,
@@ -15,131 +32,55 @@ pub enum File {
 }
 
 impl File {
-    pub const ALL: [File; 8] = [
-        File::A,
-        File::B,
-        File::C,
-        File::D,
-        File::E,
-        File::F,
-        File::G,
-        File::H,
-    ];
-
     #[must_use]
     pub const fn index(self) -> usize {
         self as usize
     }
-
-    #[must_use]
-    pub const fn from_index(index: usize) -> Option<File> {
-        if index < Self::ALL.len() {
-            Some(Self::ALL[index])
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn from_char(letter: char) -> Option<File> {
-        match letter {
-            'a' => Some(File::A),
-            'b' => Some(File::B),
-            'c' => Some(File::C),
-            'd' => Some(File::D),
-            'e' => Some(File::E),
-            'f' => Some(File::F),
-            'g' => Some(File::G),
-            'h' => Some(File::H),
-            _ => None,
-        }
-    }
-
-    #[must_use]
-    pub const fn char(self) -> char {
-        match self {
-            File::A => 'a',
-            File::B => 'b',
-            File::C => 'c',
-            File::D => 'd',
-            File::E => 'e',
-            File::F => 'f',
-            File::G => 'g',
-            File::H => 'h',
-        }
-    }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(u8)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Display,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    FromRepr,
+    VariantArray,
+)]
 pub enum Rank {
+    #[strum(serialize = "1")]
     One,
+    #[strum(serialize = "2")]
     Two,
+    #[strum(serialize = "3")]
     Three,
+    #[strum(serialize = "4")]
     Four,
+    #[strum(serialize = "5")]
     Five,
+    #[strum(serialize = "6")]
     Six,
+    #[strum(serialize = "7")]
     Seven,
+    #[strum(serialize = "8")]
     Eight,
 }
 
 impl Rank {
-    pub const ALL: [Rank; 8] = [
-        Rank::One,
-        Rank::Two,
-        Rank::Three,
-        Rank::Four,
-        Rank::Five,
-        Rank::Six,
-        Rank::Seven,
-        Rank::Eight,
-    ];
-
     #[must_use]
     pub const fn index(self) -> usize {
         self as usize
     }
-
-    #[must_use]
-    pub const fn from_index(index: usize) -> Option<Rank> {
-        if index < Self::ALL.len() {
-            Some(Self::ALL[index])
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn from_char(digit: char) -> Option<Rank> {
-        match digit {
-            '1' => Some(Rank::One),
-            '2' => Some(Rank::Two),
-            '3' => Some(Rank::Three),
-            '4' => Some(Rank::Four),
-            '5' => Some(Rank::Five),
-            '6' => Some(Rank::Six),
-            '7' => Some(Rank::Seven),
-            '8' => Some(Rank::Eight),
-            _ => None,
-        }
-    }
-
-    #[must_use]
-    pub const fn char(self) -> char {
-        match self {
-            Rank::One => '1',
-            Rank::Two => '2',
-            Rank::Three => '3',
-            Rank::Four => '4',
-            Rank::Five => '5',
-            Rank::Six => '6',
-            Rank::Seven => '7',
-            Rank::Eight => '8',
-        }
-    }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter, VariantArray)]
 pub enum Direction {
     North,
     NorthEast,
@@ -152,17 +93,6 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub const ALL: [Direction; 8] = [
-        Direction::North,
-        Direction::NorthEast,
-        Direction::East,
-        Direction::SouthEast,
-        Direction::South,
-        Direction::SouthWest,
-        Direction::West,
-        Direction::NorthWest,
-    ];
-
     pub const ORTHOGONAL: [Direction; 4] = [
         Direction::North,
         Direction::East,
@@ -196,8 +126,20 @@ impl Direction {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(u8)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    EnumCount,
+    EnumIter,
+    FromRepr,
+    VariantArray,
+)]
 pub enum Square {
     A1,
     B1,
@@ -266,78 +208,9 @@ pub enum Square {
 }
 
 impl Square {
-    pub const COUNT: usize = 64;
-
-    pub const ALL: [Square; Self::COUNT] = [
-        Square::A1,
-        Square::B1,
-        Square::C1,
-        Square::D1,
-        Square::E1,
-        Square::F1,
-        Square::G1,
-        Square::H1,
-        Square::A2,
-        Square::B2,
-        Square::C2,
-        Square::D2,
-        Square::E2,
-        Square::F2,
-        Square::G2,
-        Square::H2,
-        Square::A3,
-        Square::B3,
-        Square::C3,
-        Square::D3,
-        Square::E3,
-        Square::F3,
-        Square::G3,
-        Square::H3,
-        Square::A4,
-        Square::B4,
-        Square::C4,
-        Square::D4,
-        Square::E4,
-        Square::F4,
-        Square::G4,
-        Square::H4,
-        Square::A5,
-        Square::B5,
-        Square::C5,
-        Square::D5,
-        Square::E5,
-        Square::F5,
-        Square::G5,
-        Square::H5,
-        Square::A6,
-        Square::B6,
-        Square::C6,
-        Square::D6,
-        Square::E6,
-        Square::F6,
-        Square::G6,
-        Square::H6,
-        Square::A7,
-        Square::B7,
-        Square::C7,
-        Square::D7,
-        Square::E7,
-        Square::F7,
-        Square::G7,
-        Square::H7,
-        Square::A8,
-        Square::B8,
-        Square::C8,
-        Square::D8,
-        Square::E8,
-        Square::F8,
-        Square::G8,
-        Square::H8,
-    ];
-
     #[must_use]
     pub const fn new(file: File, rank: Rank) -> Square {
-        Self::ALL[rank.index() * 8 + file.index()]
+        Self::VARIANTS[rank.index() * File::COUNT + file.index()]
     }
 
     #[must_use]
@@ -346,22 +219,13 @@ impl Square {
     }
 
     #[must_use]
-    pub const fn from_index(index: usize) -> Option<Square> {
-        if index < Self::COUNT {
-            Some(Self::ALL[index])
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
     pub const fn file(self) -> File {
-        File::ALL[self.index() % 8]
+        File::VARIANTS[self.index() % File::COUNT]
     }
 
     #[must_use]
     pub const fn rank(self) -> Rank {
-        Rank::ALL[self.index() / 8]
+        Rank::VARIANTS[self.index() / File::COUNT]
     }
 
     #[must_use]
@@ -372,7 +236,7 @@ impl Square {
         let Some(rank) = self.rank().index().checked_add_signed(rank_delta) else {
             return None;
         };
-        match (File::from_index(file), Rank::from_index(rank)) {
+        match (File::from_repr(file), Rank::from_repr(rank)) {
             (Some(file), Some(rank)) => Some(Self::new(file, rank)),
             _ => None,
         }
@@ -384,29 +248,6 @@ impl Square {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ParseSquareError;
-
-impl fmt::Display for ParseSquareError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("expected a file letter a-h followed by a rank digit 1-8")
-    }
-}
-
-impl core::error::Error for ParseSquareError {}
-
-impl fmt::Display for File {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}", self.char())
-    }
-}
-
-impl fmt::Display for Rank {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}", self.char())
-    }
-}
-
 impl fmt::Display for Square {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "{}{}", self.file(), self.rank())
@@ -414,21 +255,20 @@ impl fmt::Display for Square {
 }
 
 impl FromStr for Square {
-    type Err = ParseSquareError;
+    type Err = ParseError;
 
-    fn from_str(text: &str) -> Result<Square, ParseSquareError> {
-        let mut chars = text.chars();
-        let file = chars.next().and_then(File::from_char);
-        let rank = chars.next().and_then(Rank::from_char);
-        match (file, rank, chars.next()) {
-            (Some(file), Some(rank), None) => Ok(Square::new(file, rank)),
-            _ => Err(ParseSquareError),
-        }
+    fn from_str(text: &str) -> Result<Square, ParseError> {
+        let (file, rank) = text
+            .split_at_checked(1)
+            .ok_or(ParseError::VariantNotFound)?;
+        Ok(Square::new(file.parse()?, rank.parse()?))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use strum::{EnumCount, IntoEnumIterator};
+
     use super::{Direction, File, Rank, Square};
 
     #[test]
@@ -437,6 +277,7 @@ mod tests {
         assert_eq!(Square::H1.index(), 7);
         assert_eq!(Square::A2.index(), 8);
         assert_eq!(Square::H8.index(), 63);
+        assert_eq!(Square::COUNT, 64);
         assert_eq!(Square::new(File::E, Rank::Four), Square::E4);
         assert_eq!(Square::E4.file(), File::E);
         assert_eq!(Square::E4.rank(), Rank::Four);
@@ -444,12 +285,12 @@ mod tests {
 
     #[test]
     fn every_square_roundtrips_through_its_index_and_coordinates() {
-        for (index, square) in Square::ALL.iter().enumerate() {
+        for (index, square) in Square::iter().enumerate() {
             assert_eq!(square.index(), index);
-            assert_eq!(Square::from_index(index), Some(*square));
-            assert_eq!(Square::new(square.file(), square.rank()), *square);
+            assert_eq!(Square::from_repr(index), Some(square));
+            assert_eq!(Square::new(square.file(), square.rank()), square);
         }
-        assert_eq!(Square::from_index(64), None);
+        assert_eq!(Square::from_repr(64), None);
     }
 
     #[test]
@@ -460,6 +301,7 @@ mod tests {
         assert!("e9".parse::<Square>().is_err());
         assert!("i1".parse::<Square>().is_err());
         assert!("e".parse::<Square>().is_err());
+        assert!("".parse::<Square>().is_err());
         assert!("e44".parse::<Square>().is_err());
     }
 

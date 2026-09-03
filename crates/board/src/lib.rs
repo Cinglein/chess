@@ -4,4 +4,4 @@ mod piece;
 mod square;
 
 pub use piece::{Color, Piece, PieceKind};
-pub use square::{Direction, File, ParseSquareError, Rank, Square};
+pub use square::{Direction, File, Rank, Square};
