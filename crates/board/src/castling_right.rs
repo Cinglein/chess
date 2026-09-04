@@ -1,8 +1,8 @@
 use enumset::EnumSetType;
 use strum::{Display, EnumString, VariantArray};
 
+use crate::castling::Castling;
 use crate::color::Color;
-use crate::file::File;
 use crate::square::Square;
 
 #[derive(Debug, Hash, Display, EnumString, EnumSetType, VariantArray)]
@@ -27,34 +27,18 @@ impl CastlingRight {
     }
 
     #[must_use]
-    pub const fn king_square(self) -> Square {
-        Square::new(File::E, self.color().back_rank())
-    }
-
-    #[must_use]
-    pub const fn king_destination(self) -> Square {
-        let file = match self {
-            CastlingRight::WhiteKingside | CastlingRight::BlackKingside => File::G,
-            CastlingRight::WhiteQueenside | CastlingRight::BlackQueenside => File::C,
+    pub const fn castling(self) -> Castling {
+        let (king_from, king_to, rook_from, rook_to) = match self {
+            CastlingRight::WhiteKingside => (Square::E1, Square::G1, Square::H1, Square::F1),
+            CastlingRight::WhiteQueenside => (Square::E1, Square::C1, Square::A1, Square::D1),
+            CastlingRight::BlackKingside => (Square::E8, Square::G8, Square::H8, Square::F8),
+            CastlingRight::BlackQueenside => (Square::E8, Square::C8, Square::A8, Square::D8),
         };
-        Square::new(file, self.color().back_rank())
-    }
-
-    #[must_use]
-    pub const fn rook_square(self) -> Square {
-        let file = match self {
-            CastlingRight::WhiteKingside | CastlingRight::BlackKingside => File::H,
-            CastlingRight::WhiteQueenside | CastlingRight::BlackQueenside => File::A,
-        };
-        Square::new(file, self.color().back_rank())
-    }
-
-    #[must_use]
-    pub const fn rook_destination(self) -> Square {
-        let file = match self {
-            CastlingRight::WhiteKingside | CastlingRight::BlackKingside => File::F,
-            CastlingRight::WhiteQueenside | CastlingRight::BlackQueenside => File::D,
-        };
-        Square::new(file, self.color().back_rank())
+        Castling {
+            king_from,
+            king_to,
+            rook_from,
+            rook_to,
+        }
     }
 }

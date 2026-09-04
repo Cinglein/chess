@@ -29,7 +29,7 @@ impl CastlingRights {
         CastlingRights(
             self.0
                 .iter()
-                .filter(|right| right.king_square() != square && right.rook_square() != square)
+                .filter(|right| !right.castling().touches(square))
                 .collect(),
         )
     }

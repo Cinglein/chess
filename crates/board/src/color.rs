@@ -4,7 +4,6 @@ use enum_map::Enum;
 use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
 use crate::orthogonal::Orthogonal;
-use crate::rank::Rank;
 
 #[derive(
     Clone,
@@ -30,14 +29,6 @@ pub enum Color {
 }
 
 impl Color {
-    #[must_use]
-    pub const fn back_rank(self) -> Rank {
-        match self {
-            Color::White => Rank::One,
-            Color::Black => Rank::Eight,
-        }
-    }
-
     #[must_use]
     pub const fn pawn_push_direction(self) -> Orthogonal {
         match self {
