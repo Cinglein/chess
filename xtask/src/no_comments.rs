@@ -1,25 +1,19 @@
-use std::fs;
-
 use rustc_lexer::{FrontmatterAllowed, TokenKind, tokenize};
 
-use crate::workspace::Workspace;
+use crate::source_file::SourceFile;
 
 pub struct NoComments;
 
 impl NoComments {
-    pub fn check(workspace: &Workspace) -> Result<(), String> {
-        let files = workspace.rust_files()?;
-        let mut violations = Vec::new();
-        for file in &files {
-            let source =
-                fs::read_to_string(file).map_err(|error| format!("{}: {error}", file.display()))?;
-            let relative = workspace.relative(file);
-            violations.extend(
-                Self::comment_lines(&source)
+    pub fn check(files: &[SourceFile]) -> Result<(), String> {
+        let violations: Vec<String> = files
+            .iter()
+            .flat_map(|file| {
+                Self::comment_lines(&file.text)
                     .into_iter()
-                    .map(|line| format!("{relative}:{line}")),
-            );
-        }
+                    .map(move |line| format!("{}:{line}", file.path))
+            })
+            .collect();
         if violations.is_empty() {
             println!("no comments found in {} rust files", files.len());
             Ok(())
@@ -32,18 +26,20 @@ impl NoComments {
     }
 
     fn comment_lines(source: &str) -> Vec<usize> {
-        let mut lines = Vec::new();
-        let mut offset = 0;
-        for token in tokenize(source, FrontmatterAllowed::Yes) {
-            if matches!(
-                token.kind,
-                TokenKind::LineComment { .. } | TokenKind::BlockComment { .. }
-            ) {
-                lines.push(source[..offset].matches('\n').count() + 1);
-            }
-            offset += token.len as usize;
-        }
-        lines
+        tokenize(source, FrontmatterAllowed::Yes)
+            .scan(0, |offset, token| {
+                let start = *offset;
+                *offset += token.len as usize;
+                Some((start, token.kind))
+            })
+            .filter(|(_, kind)| {
+                matches!(
+                    kind,
+                    TokenKind::LineComment { .. } | TokenKind::BlockComment { .. }
+                )
+            })
+            .map(|(start, _)| source[..start].matches('\n').count() + 1)
+            .collect()
     }
 }
 

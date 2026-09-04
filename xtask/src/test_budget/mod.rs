@@ -1,9 +1,7 @@
-use std::fs;
 use std::iter::Sum;
 use std::ops::Add;
-use std::path::Path;
 
-use crate::workspace::Workspace;
+use crate::source_file::SourceFile;
 
 mod test_counts;
 mod test_scan;
@@ -28,30 +26,16 @@ impl TestBudget {
     const MAX_AVERAGE_TESTS_PER_FILE: usize = 1;
     const MAX_TEST_LINE_PERCENT: usize = 20;
 
-    pub fn check(workspace: &Workspace) -> Result<(), String> {
-        workspace
-            .rust_files()?
-            .iter()
-            .map(|file| Self::measure(workspace, file))
-            .sum::<Result<Self, String>>()?
-            .verdict()
+    pub fn check(files: &[SourceFile]) -> Result<(), String> {
+        files.iter().map(Self::measure).sum::<Self>().verdict()
     }
 
-    fn measure(workspace: &Workspace, file: &Path) -> Result<Self, String> {
-        let source =
-            fs::read_to_string(file).map_err(|error| format!("{}: {error}", file.display()))?;
-        let scanned = source
-            .contains("test")
-            .then(|| syn::parse_file(&source))
-            .transpose()
-            .map_err(|error| format!("{}: {error}", file.display()))?
-            .map(|parsed| TestScan::budget(&workspace.relative(file), &parsed))
-            .unwrap_or_default();
-        Ok(Self {
+    fn measure(file: &SourceFile) -> Self {
+        Self {
             files: 1,
-            lines: source.lines().count(),
-            ..scanned
-        })
+            lines: file.text.lines().count(),
+            ..TestScan::budget(&file.path, &file.syntax)
+        }
     }
 
     fn verdict(&self) -> Result<(), String> {
