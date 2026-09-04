@@ -4,7 +4,7 @@ use core::str::FromStr;
 
 use enum_map::EnumMap;
 use fen::FenError;
-use strum::IntoEnumIterator;
+use itertools::{Itertools, process_results};
 
 use crate::file::File;
 use crate::piece::Piece;
@@ -21,6 +21,21 @@ impl RankPlacement {
         self.0
             .iter()
             .filter_map(|(file, piece)| piece.map(|piece| (file, piece)))
+    }
+
+    fn squares_for(letter: char) -> impl Iterator<Item = Result<Option<Piece>, FenError>> {
+        let (square, count) = match letter.to_digit(10) {
+            Some(empties) => (Ok(None), empties as usize),
+            None => (
+                letter
+                    .encode_utf8(&mut [0; 4])
+                    .parse::<Piece>()
+                    .map(Some)
+                    .map_err(|_| FenError::Piece(letter)),
+                1,
+            ),
+        };
+        iter::repeat_n(square, count)
     }
 }
 
@@ -40,24 +55,11 @@ impl FromStr for RankPlacement {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<Self, FenError> {
-        let mut squares = text.chars().flat_map(|letter| match letter.to_digit(10) {
-            Some(empties) => iter::repeat_n(Ok(None), empties as usize),
-            None => iter::repeat_n(
-                letter
-                    .encode_utf8(&mut [0; 4])
-                    .parse::<Piece>()
-                    .map(Some)
-                    .map_err(|_| FenError::Piece(letter)),
-                1,
-            ),
-        });
-        let placement = File::iter()
-            .map(|file| Ok((file, squares.next().ok_or(FenError::RankWidth)??)))
-            .collect::<Result<EnumMap<File, Option<Piece>>, FenError>>()?;
-        match squares.next() {
-            Some(_) => Err(FenError::RankWidth),
-            None => Ok(RankPlacement(placement)),
-        }
+        process_results(text.chars().flat_map(Self::squares_for), |squares| {
+            squares.collect_array()
+        })?
+        .map(|squares| RankPlacement(EnumMap::from_array(squares)))
+        .ok_or(FenError::RankWidth)
     }
 }
 
