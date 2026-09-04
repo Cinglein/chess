@@ -26,22 +26,13 @@ impl RankPlacement {
 
 impl fmt::Display for RankPlacement {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let empties = self
-            .0
-            .values()
-            .try_fold(0, |empties, square| match square {
-                Some(piece) => {
-                    if empties > 0 {
-                        write!(formatter, "{empties}")?;
-                    }
-                    write!(formatter, "{piece}").map(|()| 0)
-                }
-                None => Ok(empties + 1),
-            })?;
-        if empties > 0 {
-            write!(formatter, "{empties}")?;
-        }
-        Ok(())
+        self.0
+            .as_slice()
+            .chunk_by(|left, right| left.is_none() && right.is_none())
+            .try_for_each(|run| match run {
+                [Some(piece)] => write!(formatter, "{piece}"),
+                empties => write!(formatter, "{}", empties.len()),
+            })
     }
 }
 
