@@ -1,7 +1,9 @@
 use core::fmt;
 
 use bitfield_struct::bitfield;
+use strum::VariantArray;
 
+use crate::castling_right::CastlingRight;
 use crate::move_kind::MoveKind;
 use crate::promotion::Promotion;
 use crate::square::Square;
@@ -33,8 +35,12 @@ impl ChessMove {
     }
 
     #[must_use]
-    pub const fn castling(from: Square, to: Square) -> ChessMove {
-        Self::of_kind(from, to, MoveKind::Castling)
+    pub const fn castling(right: CastlingRight) -> ChessMove {
+        Self::of_kind(
+            right.king_square(),
+            right.king_destination(),
+            MoveKind::Castling,
+        )
     }
 
     #[must_use]
@@ -46,6 +52,17 @@ impl ChessMove {
     pub const fn promotion_piece(&self) -> Option<Promotion> {
         match self.kind() {
             MoveKind::Promotion => Some(self.piece()),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn castling_right(&self) -> Option<CastlingRight> {
+        match self.kind() {
+            MoveKind::Castling => CastlingRight::VARIANTS
+                .iter()
+                .copied()
+                .find(|right| right.king_destination() == self.to()),
             _ => None,
         }
     }
@@ -78,13 +95,14 @@ mod tests {
     use strum::VariantArray;
 
     use super::ChessMove;
+    use crate::castling_right::CastlingRight;
     use crate::move_kind::MoveKind;
     use crate::promotion::Promotion;
     use crate::square::Square;
 
     const DISPLAYED: [(ChessMove, &str); 3] = [
         (ChessMove::normal(Square::E2, Square::E4), "e2e4"),
-        (ChessMove::castling(Square::E1, Square::G1), "e1g1"),
+        (ChessMove::castling(CastlingRight::WhiteKingside), "e1g1"),
         (
             ChessMove::promotion(Square::E7, Square::E8, Promotion::Queen),
             "e7e8q",
@@ -94,15 +112,16 @@ mod tests {
     #[test]
     fn every_move_unpacks_to_what_it_was_built_from() {
         let squares = || select(Square::VARIANTS);
-        proptest!(|(from in squares(), to in squares(), kind in select(MoveKind::VARIANTS), piece in select(Promotion::VARIANTS))| {
-            let chess_move = match kind {
-                MoveKind::Normal => ChessMove::normal(from, to),
-                MoveKind::Promotion => ChessMove::promotion(from, to, piece),
-                MoveKind::EnPassant => ChessMove::en_passant(from, to),
-                MoveKind::Castling => ChessMove::castling(from, to),
+        proptest!(|(from in squares(), to in squares(), kind in select(MoveKind::VARIANTS), piece in select(Promotion::VARIANTS), right in select(CastlingRight::VARIANTS))| {
+            let (chess_move, from, to) = match kind {
+                MoveKind::Normal => (ChessMove::normal(from, to), from, to),
+                MoveKind::Promotion => (ChessMove::promotion(from, to, piece), from, to),
+                MoveKind::EnPassant => (ChessMove::en_passant(from, to), from, to),
+                MoveKind::Castling => (ChessMove::castling(right), right.king_square(), right.king_destination()),
             };
             prop_assert_eq!((chess_move.from(), chess_move.to(), chess_move.kind()), (from, to, kind));
             prop_assert_eq!(chess_move.promotion_piece(), (kind == MoveKind::Promotion).then_some(piece));
+            prop_assert_eq!(chess_move.castling_right(), (kind == MoveKind::Castling).then_some(right));
         });
     }
 

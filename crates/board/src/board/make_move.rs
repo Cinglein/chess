@@ -1,6 +1,4 @@
 use super::Board;
-use crate::castling_right::CastlingRight;
-use crate::castling_side::CastlingSide;
 use crate::chess_move::ChessMove;
 use crate::color::Color;
 use crate::file::File;
@@ -70,8 +68,9 @@ impl Board {
             .with(arriving, chess_move.to());
         match chess_move.kind() {
             MoveKind::Castling => {
-                let side = CastlingSide::from_king_destination_file(chess_move.to().file())?;
-                let right = CastlingRight::new(piece.color, side);
+                let right = chess_move
+                    .castling_right()
+                    .filter(|right| right.color() == piece.color)?;
                 let rook = Piece::new(piece.color, PieceKind::Rook);
                 Some(
                     placement
@@ -97,6 +96,7 @@ mod tests {
     use strum::VariantArray;
 
     use super::Board;
+    use crate::castling_right::CastlingRight;
     use crate::chess_move::ChessMove;
     use crate::color::Color;
     use crate::promotion::Promotion;
@@ -115,12 +115,12 @@ mod tests {
         ),
         (
             "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
-            ChessMove::castling(Square::E1, Square::G1),
+            ChessMove::castling(CastlingRight::WhiteKingside),
             "r3k2r/8/8/8/8/8/8/R4RK1 b kq - 1 1",
         ),
         (
             "r3k2r/8/8/8/8/8/8/R4RK1 b kq - 1 1",
-            ChessMove::castling(Square::E8, Square::C8),
+            ChessMove::castling(CastlingRight::BlackQueenside),
             "2kr3r/8/8/8/8/8/8/R4RK1 w - - 2 2",
         ),
         (
