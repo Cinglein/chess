@@ -10,4 +10,9 @@ impl HalfmoveClock {
     pub const fn new(plies: u8) -> Self {
         HalfmoveClock(plies)
     }
+
+    #[must_use]
+    pub const fn incremented(self) -> Self {
+        HalfmoveClock(self.0.saturating_add(1))
+    }
 }

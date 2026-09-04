@@ -3,6 +3,8 @@ use core::ops::Not;
 use enum_map::Enum;
 use strum::{Display, EnumCount, EnumIter, EnumString, FromRepr, VariantArray};
 
+use crate::orthogonal::Orthogonal;
+
 #[derive(
     Clone,
     Copy,
@@ -27,6 +29,14 @@ pub enum Color {
 }
 
 impl Color {
+    #[must_use]
+    pub const fn pawn_push_direction(self) -> Orthogonal {
+        match self {
+            Color::White => Orthogonal::North,
+            Color::Black => Orthogonal::South,
+        }
+    }
+
     #[must_use]
     pub const fn opposite(self) -> Color {
         match self {

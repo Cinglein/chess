@@ -5,6 +5,7 @@ use enumset::EnumSet;
 use fen::{DashOr, Fen, FenError};
 
 use crate::castling_right::CastlingRight;
+use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct CastlingRights(EnumSet<CastlingRight>);
@@ -21,6 +22,16 @@ impl CastlingRights {
     #[must_use]
     pub fn contains(self, right: CastlingRight) -> bool {
         self.0.contains(right)
+    }
+
+    #[must_use]
+    pub fn without_touching(self, square: Square) -> CastlingRights {
+        CastlingRights(
+            self.0
+                .iter()
+                .filter(|right| !right.castling().touches(square))
+                .collect(),
+        )
     }
 }
 

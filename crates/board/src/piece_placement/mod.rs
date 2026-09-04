@@ -74,6 +74,12 @@ impl PiecePlacement {
         self.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
         self
     }
+
+    #[must_use]
+    pub fn without(mut self, piece: Piece, square: Square) -> PiecePlacement {
+        self.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
+        self
+    }
 }
 
 #[cfg(test)]

@@ -2,6 +2,7 @@
 
 mod bitboard;
 mod board;
+mod castling;
 mod castling_right;
 mod castling_rights;
 mod chess_move;
@@ -12,7 +13,6 @@ mod file;
 mod fullmove_number;
 mod halfmove_clock;
 mod leaper;
-mod move_kind;
 mod orthogonal;
 mod piece;
 mod piece_kind;
@@ -26,6 +26,7 @@ mod subset_iter;
 
 pub use bitboard::Bitboard;
 pub use board::Board;
+pub use castling::Castling;
 pub use castling_right::CastlingRight;
 pub use castling_rights::CastlingRights;
 pub use chess_move::ChessMove;
@@ -36,7 +37,6 @@ pub use file::File;
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
 pub use leaper::{BlackPawn, King, Knight, Leaper, Leaps, WhitePawn};
-pub use move_kind::MoveKind;
 pub use orthogonal::Orthogonal;
 pub use piece::Piece;
 pub use piece_kind::PieceKind;

@@ -31,15 +31,7 @@ pub enum Promotion {
     Queen,
 }
 
-impl Promotion {
-    pub(crate) const fn from_bits(bits: u8) -> Self {
-        Self::VARIANTS[bits as usize]
-    }
-
-    pub(crate) const fn into_bits(self) -> u8 {
-        self as u8
-    }
-}
+impl Promotion {}
 
 impl From<Promotion> for PieceKind {
     fn from(promotion: Promotion) -> PieceKind {
