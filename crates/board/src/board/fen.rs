@@ -71,51 +71,34 @@ mod tests {
     use super::Board;
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    const AFTER_E4_E5_F4: &str = "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2";
-    const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    const ROUNDTRIPS: [&str; 2] = [
+        "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2",
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+    ];
+    const REJECTED: [(&str, &str, FenError); 8] = [
+        (" 0 1", " 0", FenError::FieldCount),
+        (" 0 1", " 0 1 extra", FenError::FieldCount),
+        (" w ", " x ", FenError::SideToMove),
+        ("KQkq", "KQkx", FenError::CastlingRights),
+        (" - ", " z9 ", FenError::EnPassant),
+        (" - ", " e3 ", FenError::EnPassant),
+        (" 0 1", " -1 1", FenError::HalfmoveClock),
+        (" 0 1", " 0 0", FenError::FullmoveNumber),
+    ];
 
     #[test]
     fn positions_roundtrip_through_fen() {
         assert_eq!(Board::START.to_string(), START);
         assert_eq!(START.parse::<Board>(), Ok(Board::START));
-        for text in [AFTER_E4_E5_F4, KIWIPETE] {
+        for text in ROUNDTRIPS {
             assert_eq!(text.parse::<Board>().unwrap().to_string(), text);
         }
     }
 
     #[test]
     fn malformed_fields_are_rejected_with_the_field_named() {
-        let cases = [
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0",
-                FenError::FieldCount,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 extra",
-                FenError::FieldCount,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1",
-                FenError::SideToMove,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkx - 0 1",
-                FenError::CastlingRights,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq z9 0 1",
-                FenError::EnPassant,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - -1 1",
-                FenError::HalfmoveClock,
-            ),
-            (
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0",
-                FenError::FullmoveNumber,
-            ),
-        ];
-        for (text, error) in cases {
+        for (valid, broken, error) in REJECTED {
+            let text = START.replace(valid, broken);
             assert_eq!(text.parse::<Board>(), Err(error), "{text}");
         }
     }

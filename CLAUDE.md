@@ -12,7 +12,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   (`no_std`), `uci` (`no_std` message types), `chess` binary, `web` (Dioxus, wasm), `arena`,
   `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask no-comments`, `cargo xtask no-free-fns`,
-  `cargo xtask wasm`, `cargo xtask magics`).
+  `cargo xtask test-budget`, `cargo xtask wasm`, `cargo xtask magics`).
 
 ## Rules
 
@@ -43,10 +43,17 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
   the only exceptions are `main` and `#[test]` functions. `cargo xtask no-free-fns` enforces it.
+- Invariants live as high as possible: a type that cannot represent the invalid state, else a
+  `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
+  const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most
+  3 tests per file, 3 assertion sites, 20 lines, and 4 literals per test, no integer literal
+  above 64 in test code, on average at most 1 test per file, and test code at most 20% of all
+  lines. Prefer one exhaustive or oracle test over examples; randomness comes from `proptest`;
+  deep checks are `#[ignore]` and run outside the PR gate.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
-  group enabled, `cargo test`, `cargo xtask wasm`, `cargo xtask no-comments`, and `cargo xtask no-free-fns`. Run `cargo xtask ci`
+  group enabled, `cargo test`, `cargo xtask wasm`, `cargo xtask no-comments`, `cargo xtask no-free-fns`, and `cargo xtask test-budget`. Run `cargo xtask ci`
   locally before opening a PR.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the

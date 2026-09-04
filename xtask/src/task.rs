@@ -3,6 +3,7 @@ use strum::{EnumIter, EnumString, IntoEnumIterator, VariantNames};
 use crate::magic_tables::MagicTables;
 use crate::no_comments::NoComments;
 use crate::no_free_fns::NoFreeFns;
+use crate::test_budget::TestBudget;
 use crate::workspace::Workspace;
 use crate::xor_shift::XorShift;
 
@@ -13,6 +14,7 @@ pub enum Task {
     Magics,
     NoComments,
     NoFreeFns,
+    TestBudget,
     Wasm,
 }
 
@@ -30,6 +32,7 @@ impl Task {
             Task::Magics => Self::magics(&workspace),
             Task::NoComments => NoComments::check(&workspace),
             Task::NoFreeFns => NoFreeFns::check(&workspace),
+            Task::TestBudget => TestBudget::check(&workspace),
             Task::Wasm => Self::wasm(&workspace),
         }
     }
@@ -48,7 +51,7 @@ impl Task {
         Self::wasm(workspace)?;
         workspace.cargo(&["test", "--workspace", "--all-features"])?;
         Task::iter()
-            .filter(|task| matches!(task, Task::NoComments | Task::NoFreeFns))
+            .filter(|task| matches!(task, Task::NoComments | Task::NoFreeFns | Task::TestBudget))
             .try_for_each(Task::run)
     }
 
