@@ -1,4 +1,5 @@
 mod fen;
+mod make_move;
 
 use crate::castling_rights::CastlingRights;
 use crate::color::Color;
