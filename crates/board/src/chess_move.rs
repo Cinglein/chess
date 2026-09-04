@@ -19,6 +19,8 @@ pub struct ChessMove {
     piece: Promotion,
 }
 
+const _: () = assert!(size_of::<ChessMove>() == 2);
+
 impl ChessMove {
     #[must_use]
     pub const fn normal(from: Square, to: Square) -> ChessMove {
@@ -71,47 +73,43 @@ impl fmt::Display for ChessMove {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
+    use proptest::prelude::*;
+    use proptest::sample::select;
+    use strum::VariantArray;
 
     use super::ChessMove;
     use crate::move_kind::MoveKind;
     use crate::promotion::Promotion;
     use crate::square::Square;
 
+    const DISPLAYED: [(ChessMove, &str); 3] = [
+        (ChessMove::normal(Square::E2, Square::E4), "e2e4"),
+        (ChessMove::castling(Square::E1, Square::G1), "e1g1"),
+        (
+            ChessMove::promotion(Square::E7, Square::E8, Promotion::Queen),
+            "e7e8q",
+        ),
+    ];
+
     #[test]
-    fn a_move_packs_into_sixteen_bits_and_unpacks_unchanged() {
-        assert_eq!(size_of::<ChessMove>(), 2);
-        let plain = [
-            ChessMove::normal(Square::H8, Square::A1),
-            ChessMove::en_passant(Square::H8, Square::A1),
-            ChessMove::castling(Square::H8, Square::A1),
-        ];
-        let promotions =
-            Promotion::iter().map(|piece| ChessMove::promotion(Square::H8, Square::A1, piece));
-        for mv in plain.into_iter().chain(promotions) {
-            assert_eq!(mv.from(), Square::H8);
-            assert_eq!(mv.to(), Square::A1);
-        }
-        assert_eq!(plain[1].kind(), MoveKind::EnPassant);
-        assert_eq!(plain[1].promotion_piece(), None);
-        let queening = ChessMove::promotion(Square::E7, Square::E8, Promotion::Queen);
-        assert_eq!(queening.kind(), MoveKind::Promotion);
-        assert_eq!(queening.promotion_piece(), Some(Promotion::Queen));
+    fn every_move_unpacks_to_what_it_was_built_from() {
+        let squares = || select(Square::VARIANTS);
+        proptest!(|(from in squares(), to in squares(), kind in select(MoveKind::VARIANTS), piece in select(Promotion::VARIANTS))| {
+            let chess_move = match kind {
+                MoveKind::Normal => ChessMove::normal(from, to),
+                MoveKind::Promotion => ChessMove::promotion(from, to, piece),
+                MoveKind::EnPassant => ChessMove::en_passant(from, to),
+                MoveKind::Castling => ChessMove::castling(from, to),
+            };
+            prop_assert_eq!((chess_move.from(), chess_move.to(), chess_move.kind()), (from, to, kind));
+            prop_assert_eq!(chess_move.promotion_piece(), (kind == MoveKind::Promotion).then_some(piece));
+        });
     }
 
     #[test]
     fn moves_display_in_long_algebraic_notation() {
-        assert_eq!(
-            ChessMove::normal(Square::E2, Square::E4).to_string(),
-            "e2e4"
-        );
-        assert_eq!(
-            ChessMove::castling(Square::E1, Square::G1).to_string(),
-            "e1g1"
-        );
-        assert_eq!(
-            ChessMove::promotion(Square::E7, Square::E8, Promotion::Queen).to_string(),
-            "e7e8q"
-        );
+        for (chess_move, text) in DISPLAYED {
+            assert_eq!(chess_move.to_string(), text);
+        }
     }
 }

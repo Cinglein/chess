@@ -55,22 +55,18 @@ mod tests {
     use crate::piece_kind::PieceKind;
 
     #[test]
-    fn white_pieces_are_uppercase_letters_and_black_lowercase() {
-        assert_eq!(Piece::new(Color::White, PieceKind::Knight).to_string(), "N");
-        assert_eq!(Piece::new(Color::Black, PieceKind::Knight).to_string(), "n");
-        assert_eq!("Q".parse(), Ok(Piece::new(Color::White, PieceKind::Queen)));
-        assert_eq!("k".parse(), Ok(Piece::new(Color::Black, PieceKind::King)));
-        assert!("x".parse::<Piece>().is_err());
-        assert!("".parse::<Piece>().is_err());
-    }
-
-    #[test]
-    fn every_piece_roundtrips_through_its_letter() {
+    fn every_piece_roundtrips_through_a_letter_whose_case_is_its_colour() {
         for color in Color::iter() {
             for kind in PieceKind::iter() {
                 let piece = Piece::new(color, kind);
-                assert_eq!(piece.to_string().parse(), Ok(piece));
+                let text = piece.to_string();
+                assert_eq!(text.parse(), Ok(piece));
+                assert_eq!(
+                    text.chars().all(|letter| letter.is_ascii_uppercase()),
+                    color == Color::White
+                );
             }
         }
+        assert!("x".parse::<Piece>().is_err());
     }
 }

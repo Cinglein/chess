@@ -3,6 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::source_file::SourceFile;
+
 pub struct Workspace {
     root: PathBuf,
 }
@@ -34,7 +36,14 @@ impl Workspace {
         }
     }
 
-    pub fn rust_files(&self) -> Result<Vec<PathBuf>, String> {
+    pub fn source_files(&self) -> Result<Vec<SourceFile>, String> {
+        self.rust_files()?
+            .iter()
+            .map(|file| SourceFile::read(self, file))
+            .collect()
+    }
+
+    fn rust_files(&self) -> Result<Vec<PathBuf>, String> {
         let mut files = Vec::new();
         Self::collect_rust_files(&self.root, &mut files)?;
         files.sort();

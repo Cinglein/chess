@@ -71,40 +71,40 @@ mod tests {
     use crate::slider::{Bishop, Rook, Slider};
     use crate::square::Square;
 
-    #[test]
-    fn a_ray_stops_at_the_first_occupied_square_and_includes_it() {
-        let origin = Bitboard::from_square(Square::D4);
-        let blocker = Bitboard::from_square(Square::D6);
-        let expected: Bitboard = [Square::D5, Square::D6].into_iter().collect();
-        assert_eq!(Rays::cast(origin, Direction::NORTH, blocker), expected);
-    }
+    const RELEVANT_SQUARES: [(Square, u32, u32); 2] = [(Square::A1, 12, 6), (Square::D4, 10, 9)];
 
     #[test]
     fn relevant_occupancy_drops_the_edge_squares() {
-        assert_eq!(Rook::RAYS.relevant_occupancy(Square::A1).count(), 12);
-        assert_eq!(Rook::RAYS.relevant_occupancy(Square::D4).count(), 10);
-        assert!(
-            !Rook::RAYS
-                .relevant_occupancy(Square::D4)
-                .contains(Square::D8)
-        );
-        assert_eq!(Bishop::RAYS.relevant_occupancy(Square::A1).count(), 6);
-        assert_eq!(Bishop::RAYS.relevant_occupancy(Square::D4).count(), 9);
+        for (square, rook, bishop) in RELEVANT_SQUARES {
+            assert_eq!(
+                Rook::RAYS.relevant_occupancy(square).count(),
+                rook,
+                "{square}"
+            );
+            assert_eq!(
+                Bishop::RAYS.relevant_occupancy(square).count(),
+                bishop,
+                "{square}"
+            );
+        }
     }
 
     #[test]
-    fn every_ray_on_an_empty_board_agrees_with_stepping_to_the_edge() {
+    fn every_ray_agrees_with_stepping_until_the_first_blocker() {
         for square in Square::iter() {
             for direction in Direction::iter() {
+                let blockers = Bitboard::rank(square.rank()) ^ Bitboard::file(square.file());
                 let mut expected = Bitboard::EMPTY;
                 let mut current = square + direction;
                 while let Some(next) = current {
                     expected = expected.with(next);
-                    current = next + direction;
+                    current = (!blockers.contains(next))
+                        .then(|| next + direction)
+                        .flatten();
                 }
                 let origin = Bitboard::from_square(square);
                 assert_eq!(
-                    Rays::cast(origin, direction, Bitboard::EMPTY),
+                    Rays::cast(origin, direction, blockers),
                     expected,
                     "{square} {direction:?}"
                 );

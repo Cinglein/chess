@@ -1,27 +1,19 @@
-use std::fs;
-
 use syn::{Item, ItemFn};
 
-use crate::workspace::Workspace;
+use crate::source_file::SourceFile;
 
 pub struct NoFreeFns;
 
 impl NoFreeFns {
-    pub fn check(workspace: &Workspace) -> Result<(), String> {
-        let files = workspace.rust_files()?;
-        let mut violations = Vec::new();
-        for file in &files {
-            let source =
-                fs::read_to_string(file).map_err(|error| format!("{}: {error}", file.display()))?;
-            let parsed =
-                syn::parse_file(&source).map_err(|error| format!("{}: {error}", file.display()))?;
-            let relative = workspace.relative(file);
-            violations.extend(
-                Self::free_fns(&parsed.items)
+    pub fn check(files: &[SourceFile]) -> Result<(), String> {
+        let violations: Vec<String> = files
+            .iter()
+            .flat_map(|file| {
+                Self::free_fns(&file.syntax.items)
                     .into_iter()
-                    .map(|(line, name)| format!("{relative}:{line}: fn {name}")),
-            );
-        }
+                    .map(move |(line, name)| format!("{}:{line}: fn {name}", file.path))
+            })
+            .collect();
         if violations.is_empty() {
             println!("no free functions found in {} rust files", files.len());
             Ok(())
@@ -63,9 +55,7 @@ impl NoFreeFns {
 mod tests {
     use super::NoFreeFns;
 
-    #[test]
-    fn flags_module_level_functions_but_not_methods_main_or_tests() {
-        let source = "
+    const SOURCE: &str = "
 fn main() {}
 fn helper() {}
 struct S;
@@ -81,11 +71,15 @@ mod inner {
     }
 }
 ";
-        let parsed = syn::parse_file(source).expect("valid rust");
+    const FLAGGED: [&str; 3] = ["helper", "nested", "test_helper"];
+
+    #[test]
+    fn flags_module_level_functions_but_not_methods_main_or_tests() {
+        let parsed = syn::parse_file(SOURCE).expect("valid rust");
         let names: Vec<String> = NoFreeFns::free_fns(&parsed.items)
             .into_iter()
             .map(|(_, name)| name)
             .collect();
-        assert_eq!(names, ["helper", "nested", "test_helper"]);
+        assert_eq!(names, FLAGGED);
     }
 }

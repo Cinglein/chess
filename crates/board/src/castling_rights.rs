@@ -73,20 +73,21 @@ mod tests {
     use fen::FenError;
 
     use super::CastlingRights;
-    use crate::castling_right::CastlingRight;
+
+    const ROUNDTRIPS: [&str; 4] = ["KQkq", "Kq", "K", "q"];
+    const REJECTED: [&str; 3] = ["KK", "x", ""];
 
     #[test]
-    fn rights_display_and_parse_as_fen_letters() {
-        assert_eq!(CastlingRights::ALL.to_string(), "KQkq");
-        let partial = "qK".parse::<CastlingRights>().unwrap();
-        assert!(partial.contains(CastlingRight::WhiteKingside));
-        assert!(!partial.contains(CastlingRight::WhiteQueenside));
-        assert_eq!(partial.to_string(), "Kq");
+    fn rights_display_and_parse_as_fen_letters_in_canonical_order() {
+        for text in ROUNDTRIPS {
+            assert_eq!(text.parse::<CastlingRights>().unwrap().to_string(), text);
+        }
+        assert_eq!("qK".parse::<CastlingRights>().unwrap().to_string(), "Kq");
     }
 
     #[test]
     fn repeated_unknown_or_missing_letters_are_rejected() {
-        for text in ["KK", "x", ""] {
+        for text in REJECTED {
             assert_eq!(
                 text.parse::<CastlingRights>(),
                 Err(FenError::CastlingRights),

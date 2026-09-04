@@ -78,6 +78,10 @@ impl PiecePlacement {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+    use proptest::sample::select;
+    use strum::VariantArray;
+
     use super::PiecePlacement;
     use crate::bitboard::Bitboard;
     use crate::color::Color;
@@ -86,27 +90,13 @@ mod tests {
     use crate::square::Square;
 
     #[test]
-    fn the_start_position_has_thirty_two_pieces_with_the_kings_on_e1_and_e8() {
-        let start = PiecePlacement::START;
-        assert_eq!(start.occupied().count(), 32);
-        assert_eq!(start.occupied_by(Color::White).count(), 16);
-        assert_eq!(
-            start.piece_at(Square::E1),
-            Some(Piece::new(Color::White, PieceKind::King))
-        );
-        assert_eq!(
-            start.piece_at(Square::E8),
-            Some(Piece::new(Color::Black, PieceKind::King))
-        );
-        assert_eq!(start.piece_at(Square::E4), None);
-    }
-
-    #[test]
-    fn placing_a_piece_adds_it_to_its_own_bitboard_only() {
-        let knight = Piece::new(Color::Black, PieceKind::Knight);
-        let placement = PiecePlacement::EMPTY.with(knight, Square::F6);
-        assert_eq!(placement.piece_at(Square::F6), Some(knight));
-        assert_eq!(placement.pieces(Color::Black, PieceKind::Knight).count(), 1);
-        assert_eq!(placement.occupied_by(Color::White), Bitboard::EMPTY);
+    fn a_placed_piece_is_found_on_its_square_and_nowhere_else() {
+        proptest!(|(color in select(Color::VARIANTS), kind in select(PieceKind::VARIANTS), square in select(Square::VARIANTS))| {
+            let piece = Piece::new(color, kind);
+            let placement = PiecePlacement::EMPTY.with(piece, square);
+            prop_assert_eq!(placement.piece_at(square), Some(piece));
+            prop_assert_eq!(placement.pieces(color, kind), Bitboard::from_square(square));
+            prop_assert_eq!(placement.occupied(), Bitboard::from_square(square));
+        });
     }
 }

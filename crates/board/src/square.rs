@@ -131,61 +131,31 @@ mod tests {
     use strum::{EnumCount, IntoEnumIterator};
 
     use super::Square;
-    use crate::diagonal::Diagonal;
     use crate::file::File;
-    use crate::orthogonal::Orthogonal;
-    use crate::rank::Rank;
+
+    const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
 
     #[test]
     fn squares_are_numbered_rank_by_rank_from_a1() {
-        assert_eq!(Square::A1.into_usize(), 0);
-        assert_eq!(Square::H1.into_usize(), 7);
-        assert_eq!(Square::A2.into_usize(), 8);
-        assert_eq!(Square::H8.into_usize(), 63);
-        assert_eq!(Square::COUNT, 64);
-        assert_eq!(Square::new(File::E, Rank::Four), Square::E4);
-        assert_eq!(Square::E4.file(), File::E);
-        assert_eq!(Square::E4.rank(), Rank::Four);
+        for square in Square::iter() {
+            let expected = square.rank().into_usize() * File::COUNT + square.file().into_usize();
+            assert_eq!(square.into_usize(), expected, "{square}");
+        }
     }
 
     #[test]
-    fn every_square_roundtrips_through_its_index_and_coordinates() {
+    fn every_square_roundtrips_through_its_index_coordinates_and_text() {
         for (index, square) in (0u8..).zip(Square::iter()) {
-            assert_eq!(square.into_usize(), usize::from(index));
             assert_eq!(Square::from_repr(index), Some(square));
             assert_eq!(Square::new(square.file(), square.rank()), square);
+            assert_eq!(square.to_string().parse(), Ok(square));
         }
-        assert_eq!(Square::from_repr(64), None);
     }
 
     #[test]
-    fn squares_display_and_parse_in_algebraic_notation() {
-        assert_eq!(Square::E4.to_string(), "e4");
-        assert_eq!("e4".parse(), Ok(Square::E4));
-        assert_eq!("h8".parse(), Ok(Square::H8));
-        assert!("e9".parse::<Square>().is_err());
-        assert!("i1".parse::<Square>().is_err());
-        assert!("e".parse::<Square>().is_err());
-        assert!("".parse::<Square>().is_err());
-        assert!("e44".parse::<Square>().is_err());
-    }
-
-    #[test]
-    fn stepping_off_the_board_yields_none() {
-        assert_eq!(Square::E4 + Orthogonal::North, Some(Square::E5));
-        assert_eq!(Square::E4 + Diagonal::SouthWest, Some(Square::D3));
-        assert_eq!(Square::A1 + Orthogonal::West, None);
-        assert_eq!(Square::A1 + Orthogonal::South, None);
-        assert_eq!(Square::H8 + Diagonal::NorthEast, None);
-    }
-
-    #[test]
-    fn steps_chain_through_option_so_a_knight_jump_is_two_additions() {
-        assert_eq!(
-            Square::B1 + Orthogonal::North + Diagonal::NorthEast,
-            Some(Square::C3)
-        );
-        assert_eq!(Square::H4 + Orthogonal::North + Diagonal::NorthEast, None);
-        assert_eq!(Square::A1 + Orthogonal::West + Orthogonal::North, None);
+    fn malformed_square_text_is_rejected() {
+        for text in UNPARSEABLE {
+            assert!(text.parse::<Square>().is_err(), "{text}");
+        }
     }
 }

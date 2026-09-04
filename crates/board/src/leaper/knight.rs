@@ -26,26 +26,28 @@ mod tests {
     use crate::orthogonal::Orthogonal;
     use crate::square::Square;
 
+    const JUMPS: [[Orthogonal; 3]; 8] = [
+        [Orthogonal::North, Orthogonal::North, Orthogonal::East],
+        [Orthogonal::North, Orthogonal::North, Orthogonal::West],
+        [Orthogonal::South, Orthogonal::South, Orthogonal::East],
+        [Orthogonal::South, Orthogonal::South, Orthogonal::West],
+        [Orthogonal::East, Orthogonal::East, Orthogonal::North],
+        [Orthogonal::East, Orthogonal::East, Orthogonal::South],
+        [Orthogonal::West, Orthogonal::West, Orthogonal::North],
+        [Orthogonal::West, Orthogonal::West, Orthogonal::South],
+    ];
+
     #[test]
     fn every_knight_entry_agrees_with_stepping_two_then_one() {
-        let north = Orthogonal::North;
-        let south = Orthogonal::South;
-        let east = Orthogonal::East;
-        let west = Orthogonal::West;
         for square in Square::iter() {
-            let expected: Bitboard = [
-                square + north + north + east,
-                square + north + north + west,
-                square + south + south + east,
-                square + south + south + west,
-                square + east + east + north,
-                square + east + east + south,
-                square + west + west + north,
-                square + west + west + south,
-            ]
-            .into_iter()
-            .flatten()
-            .collect();
+            let expected: Bitboard = JUMPS
+                .iter()
+                .filter_map(|steps| {
+                    steps
+                        .iter()
+                        .try_fold(square, |current, &step| current + step)
+                })
+                .collect();
             assert_eq!(Knight::attacks(square), expected, "{square}");
         }
     }

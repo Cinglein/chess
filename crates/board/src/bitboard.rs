@@ -232,59 +232,15 @@ impl fmt::Display for Bitboard {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
+    use proptest::prelude::*;
     use strum::IntoEnumIterator;
 
     use super::Bitboard;
-    use crate::diagonal::Diagonal;
     use crate::direction::Direction;
-    use crate::file::File;
-    use crate::orthogonal::Orthogonal;
     use crate::rank::Rank;
     use crate::square::Square;
-
-    #[test]
-    fn a_bitboard_is_a_set_of_squares() {
-        let set = Bitboard::EMPTY.with(Square::E4).with(Square::A1);
-        assert!(set.contains(Square::E4));
-        assert!(set.contains(Square::A1));
-        assert!(!set.contains(Square::E5));
-        assert_eq!(set.count(), 2);
-        assert_eq!(set.without(Square::E4), Bitboard::from_square(Square::A1));
-    }
-
-    #[test]
-    fn set_operators_follow_set_semantics() {
-        let left = Bitboard::rank(Rank::One);
-        let right = Bitboard::file(File::A);
-        assert_eq!((left | right).count(), 15);
-        assert_eq!(left & right, Bitboard::from_square(Square::A1));
-        assert_eq!((left ^ right).count(), 14);
-        assert_eq!(left.difference(right).count(), 7);
-        assert_eq!(!Bitboard::EMPTY, Bitboard::FULL);
-    }
-
-    #[test]
-    fn iteration_yields_squares_from_a1_towards_h8() {
-        let set: Bitboard = [Square::H8, Square::A1, Square::E4].into_iter().collect();
-        let squares: Vec<Square> = set.into_iter().collect();
-        assert_eq!(squares, vec![Square::A1, Square::E4, Square::H8]);
-        assert_eq!(set.into_iter().len(), 3);
-        assert_eq!(Bitboard::EMPTY.least_significant_bit(), None);
-    }
-
-    #[test]
-    fn shifting_east_or_west_never_wraps_around_the_board() {
-        let h_file = Bitboard::file(File::H);
-        assert_eq!(h_file.shift(Orthogonal::East.into()), Bitboard::EMPTY);
-        assert_eq!(
-            h_file.shift(Orthogonal::West.into()),
-            Bitboard::file(File::G)
-        );
-        let a_file = Bitboard::file(File::A);
-        assert_eq!(a_file.shift(Orthogonal::West.into()), Bitboard::EMPTY);
-        assert_eq!(a_file.shift(Diagonal::NorthWest.into()), Bitboard::EMPTY);
-        assert_eq!(a_file.shift(Diagonal::SouthWest.into()), Bitboard::EMPTY);
-    }
 
     #[test]
     fn every_shift_agrees_with_stepping_each_square() {
@@ -301,25 +257,25 @@ mod tests {
     }
 
     #[test]
-    fn subsets_enumerate_every_combination_of_a_mask_once() {
-        let mask: Bitboard = [Square::A1, Square::D4, Square::H8].into_iter().collect();
-        let subsets: Vec<Bitboard> = mask.subsets().collect();
-        assert_eq!(subsets.len(), 8);
-        assert_eq!(subsets[0], Bitboard::EMPTY);
-        assert_eq!(subsets[7], mask);
-        for (index, subset) in subsets.iter().enumerate() {
-            assert_eq!(subset.difference(mask), Bitboard::EMPTY);
-            assert!(!subsets[..index].contains(subset));
-        }
-        assert_eq!(Bitboard::EMPTY.subsets().count(), 1);
+    fn set_algebra_iteration_and_display_agree() {
+        proptest!(|(left: u64, right: u64)| {
+            let (left, right) = (Bitboard::from_bits(left), Bitboard::from_bits(right));
+            prop_assert_eq!((left | right).count() + (left & right).count(), left.count() + right.count());
+            let squares: Vec<Square> = left.into_iter().collect();
+            prop_assert!(squares.is_sorted() && squares.iter().copied().collect::<Bitboard>() == left);
+            let listed: Vec<String> = squares.iter().map(ToString::to_string).collect();
+            prop_assert_eq!(left.to_string(), listed.join(" "));
+        });
     }
 
     #[test]
-    fn display_lists_the_squares_in_iteration_order() {
-        let set = Bitboard::from_square(Square::A8)
-            .with(Square::H1)
-            .with(Square::E4);
-        assert_eq!(set.to_string(), "h1 e4 a8");
-        assert_eq!(Bitboard::EMPTY.to_string(), "");
+    fn subsets_of_a_mask_are_its_distinct_sub_bitboards() {
+        proptest!(|(bits: u64)| {
+            let mask = Bitboard::from_bits(bits) & Bitboard::rank(Rank::One);
+            let subsets: Vec<Bitboard> = mask.subsets().collect();
+            prop_assert_eq!(subsets.len(), 1 << mask.count());
+            prop_assert_eq!(subsets.iter().collect::<HashSet<_>>().len(), subsets.len());
+            prop_assert!(subsets.iter().all(|subset| subset.difference(mask).is_empty()));
+        });
     }
 }

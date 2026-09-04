@@ -3,7 +3,9 @@ mod magic_search;
 mod magic_tables;
 mod no_comments;
 mod no_free_fns;
+mod source_file;
 mod task;
+mod test_budget;
 mod workspace;
 mod xor_shift;
 
