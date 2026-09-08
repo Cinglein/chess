@@ -80,6 +80,12 @@ impl PiecePlacement {
         self.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
         self
     }
+
+    #[must_use]
+    pub fn cleared(self, square: Square) -> PiecePlacement {
+        self.piece_at(square)
+            .map_or(self, |piece| self.without(piece, square))
+    }
 }
 
 #[cfg(test)]

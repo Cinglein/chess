@@ -12,23 +12,21 @@ use crate::square::Square;
 impl Board {
     #[must_use]
     pub fn make_move(self, chess_move: ChessMove) -> Option<Board> {
-        let from = chess_move.from();
-        let to = chess_move.to();
         let piece = self
             .placement
-            .piece_at(from)
+            .piece_at(chess_move.from())
             .filter(|piece| piece.color == self.side_to_move)?;
-        let captured = self.captured_by(chess_move);
-        let irreversible = piece.kind == PieceKind::Pawn || captured.is_some();
+        let placement = self.placement_after(chess_move, piece);
+        let captured = placement.occupied().count() < self.placement.occupied().count();
         Some(Board {
-            placement: self.placement_after(chess_move, piece, captured),
+            placement,
             side_to_move: !self.side_to_move,
             castling_rights: self
                 .castling_rights
-                .without_touching(from)
-                .without_touching(to),
-            en_passant_file: Self::double_push_file(piece, from, to),
-            halfmove_clock: if irreversible {
+                .without_touching(chess_move.from())
+                .without_touching(chess_move.to()),
+            en_passant_file: Self::double_push_file(piece, chess_move),
+            halfmove_clock: if piece.kind == PieceKind::Pawn || captured {
                 HalfmoveClock::ZERO
             } else {
                 self.halfmove_clock.incremented()
@@ -40,54 +38,38 @@ impl Board {
         })
     }
 
-    fn captured_by(&self, chess_move: ChessMove) -> Option<(Piece, Square)> {
-        let square = match chess_move {
-            ChessMove::Normal { to, .. } | ChessMove::Promotion { to, .. } => to,
-            ChessMove::EnPassant { from, to } => Square::new(to.file(), from.rank()),
-            ChessMove::Castling(_) => return None,
-        };
-        self.placement
-            .piece_at(square)
-            .filter(|piece| piece.color != self.side_to_move)
-            .map(|piece| (piece, square))
-    }
-
-    fn placement_after(
-        &self,
-        chess_move: ChessMove,
-        piece: Piece,
-        captured: Option<(Piece, Square)>,
-    ) -> PiecePlacement {
-        let arriving = match chess_move {
-            ChessMove::Promotion {
-                piece: promotion, ..
-            } => Piece::new(piece.color, promotion.into()),
-            _ => piece,
-        };
-        let placement = captured
-            .map_or(self.placement, |(captured, square)| {
-                self.placement.without(captured, square)
-            })
-            .without(piece, chess_move.from())
-            .with(arriving, chess_move.to());
+    fn placement_after(&self, chess_move: ChessMove, piece: Piece) -> PiecePlacement {
+        let lifted = self.placement.without(piece, chess_move.from());
         match chess_move {
+            ChessMove::Normal { to, .. } => lifted.cleared(to).with(piece, to),
+            ChessMove::Promotion {
+                to,
+                piece: promotion,
+                ..
+            } => lifted
+                .cleared(to)
+                .with(Piece::new(piece.color, promotion.into()), to),
+            ChessMove::EnPassant { from, to } => lifted
+                .cleared(Square::new(to.file(), from.rank()))
+                .with(piece, to),
             ChessMove::Castling(right) => {
                 let castling = right.castling();
                 let rook = Piece::new(piece.color, PieceKind::Rook);
-                placement
+                lifted
+                    .with(piece, castling.king_to)
                     .without(rook, castling.rook_from)
                     .with(rook, castling.rook_to)
             }
-            _ => placement,
         }
     }
 
-    fn double_push_file(piece: Piece, from: Square, to: Square) -> Option<File> {
+    fn double_push_file(piece: Piece, chess_move: ChessMove) -> Option<File> {
         let forward = match piece.color {
             Color::White => WhitePawn::PUSH,
             Color::Black => BlackPawn::PUSH,
         };
-        (piece.kind == PieceKind::Pawn && (from + forward) + forward == Some(to))
+        let from = chess_move.from();
+        (piece.kind == PieceKind::Pawn && (from + forward) + forward == Some(chess_move.to()))
             .then_some(from.file())
     }
 }
