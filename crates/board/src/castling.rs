@@ -7,10 +7,3 @@ pub struct Castling {
     pub rook_from: Square,
     pub rook_to: Square,
 }
-
-impl Castling {
-    #[must_use]
-    pub fn touches(self, square: Square) -> bool {
-        self.king_from == square || self.rook_from == square
-    }
-}

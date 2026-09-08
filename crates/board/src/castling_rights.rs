@@ -1,8 +1,10 @@
 use core::fmt;
 use core::str::FromStr;
 
-use enumset::EnumSet;
+use enum_map::EnumMap;
+use enumset::{EnumSet, enum_set_union};
 use fen::{DashOr, Fen, FenError};
+use strum::{EnumCount, VariantArray};
 
 use crate::castling_right::CastlingRight;
 use crate::square::Square;
@@ -13,6 +15,7 @@ pub struct CastlingRights(EnumSet<CastlingRight>);
 impl CastlingRights {
     pub const NONE: CastlingRights = CastlingRights(EnumSet::empty());
     pub const ALL: CastlingRights = CastlingRights(EnumSet::all());
+    const REVOKED_BY: EnumMap<Square, CastlingRights> = Self::revocations();
 
     #[must_use]
     pub fn is_none(self) -> bool {
@@ -26,12 +29,26 @@ impl CastlingRights {
 
     #[must_use]
     pub fn without_touching(self, square: Square) -> CastlingRights {
-        CastlingRights(
-            self.0
-                .iter()
-                .filter(|right| !right.castling().touches(square))
-                .collect(),
-        )
+        CastlingRights(self.0.difference(Self::REVOKED_BY[square].0))
+    }
+
+    const fn granting(self, right: CastlingRight) -> CastlingRights {
+        let rights = self.0;
+        CastlingRights(enum_set_union!(rights, right))
+    }
+
+    const fn revocations() -> EnumMap<Square, CastlingRights> {
+        let mut table = [CastlingRights::NONE; Square::COUNT];
+        let mut rights = CastlingRight::VARIANTS;
+        while let [right, rest @ ..] = rights {
+            let castling = right.castling();
+            table[castling.king_from as usize] =
+                table[castling.king_from as usize].granting(*right);
+            table[castling.rook_from as usize] =
+                table[castling.rook_from as usize].granting(*right);
+            rights = rest;
+        }
+        EnumMap::from_array(table)
     }
 }
 
