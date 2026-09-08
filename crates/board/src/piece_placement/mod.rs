@@ -1,5 +1,8 @@
 mod fen;
+mod lifted;
 mod rank_placement;
+
+pub use lifted::Lifted;
 
 use enum_map::EnumMap;
 use strum::{EnumCount, IntoEnumIterator};
@@ -70,19 +73,24 @@ impl PiecePlacement {
     }
 
     #[must_use]
-    pub fn with(mut self, piece: Piece, square: Square) -> PiecePlacement {
+    pub fn lift(self, square: Square) -> Option<Lifted> {
+        self.piece_at(square).map(|piece| Lifted {
+            placement: self.without(piece, square),
+            piece,
+        })
+    }
+
+    fn with(mut self, piece: Piece, square: Square) -> PiecePlacement {
         self.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
         self
     }
 
-    #[must_use]
-    pub fn without(mut self, piece: Piece, square: Square) -> PiecePlacement {
+    fn without(mut self, piece: Piece, square: Square) -> PiecePlacement {
         self.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
         self
     }
 
-    #[must_use]
-    pub fn cleared(self, square: Square) -> PiecePlacement {
+    fn cleared(self, square: Square) -> PiecePlacement {
         self.piece_at(square)
             .map_or(self, |piece| self.without(piece, square))
     }

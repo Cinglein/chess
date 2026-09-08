@@ -40,7 +40,7 @@ pub use leaper::{BlackPawn, King, Knight, Leaper, Leaps, Pawn, WhitePawn};
 pub use orthogonal::Orthogonal;
 pub use piece::Piece;
 pub use piece_kind::PieceKind;
-pub use piece_placement::PiecePlacement;
+pub use piece_placement::{Lifted, PiecePlacement};
 pub use promotion::Promotion;
 pub use rank::Rank;
 pub use slider::{Bishop, Magic, Rays, Rook, Slider};

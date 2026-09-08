@@ -6,17 +6,18 @@ use crate::halfmove_clock::HalfmoveClock;
 use crate::leaper::{BlackPawn, Pawn, WhitePawn};
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
-use crate::piece_placement::PiecePlacement;
+use crate::piece_placement::{Lifted, PiecePlacement};
 use crate::square::Square;
 
 impl Board {
     #[must_use]
     pub fn make_move(self, chess_move: ChessMove) -> Option<Board> {
-        let piece = self
+        let lifted = self
             .placement
-            .piece_at(chess_move.origin())
-            .filter(|piece| piece.color == self.side_to_move)?;
-        let placement = self.placement_after(chess_move, piece);
+            .lift(chess_move.origin())
+            .filter(|lifted| lifted.piece().color == self.side_to_move)?;
+        let piece = lifted.piece();
+        let placement = Self::landed(lifted, chess_move)?;
         let captured = placement.occupied().count() < self.placement.occupied().count();
         Some(Board {
             placement,
@@ -38,34 +39,26 @@ impl Board {
         })
     }
 
-    fn placement_after(&self, chess_move: ChessMove, piece: Piece) -> PiecePlacement {
-        let lifted = self.placement.without(piece, chess_move.origin());
-        match chess_move {
-            ChessMove::Normal { destination, .. } => {
-                lifted.cleared(destination).with(piece, destination)
-            }
+    fn landed(lifted: Lifted, chess_move: ChessMove) -> Option<PiecePlacement> {
+        Some(match chess_move {
+            ChessMove::Normal { destination, .. } => lifted.capture(destination).land(destination),
             ChessMove::Promotion {
-                destination,
-                piece: promotion,
-                ..
-            } => lifted
-                .cleared(destination)
-                .with(Piece::new(piece.color, promotion.into()), destination),
+                destination, piece, ..
+            } => lifted.promote(piece).capture(destination).land(destination),
             ChessMove::EnPassant {
                 origin,
                 destination,
             } => lifted
-                .cleared(Square::new(destination.file(), origin.rank()))
-                .with(piece, destination),
+                .capture(Square::new(destination.file(), origin.rank()))
+                .land(destination),
             ChessMove::Castling(right) => {
                 let castling = right.castling();
-                let rook = Piece::new(piece.color, PieceKind::Rook);
                 lifted
-                    .with(piece, castling.king_destination)
-                    .without(rook, castling.rook_origin)
-                    .with(rook, castling.rook_destination)
+                    .land(castling.king_destination)
+                    .lift(castling.rook_origin)?
+                    .land(castling.rook_destination)
             }
-        }
+        })
     }
 
     fn double_push_file(piece: Piece, chess_move: ChessMove) -> Option<File> {
