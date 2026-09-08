@@ -36,7 +36,7 @@ pub use direction::Direction;
 pub use file::File;
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
-pub use leaper::{BlackPawn, King, Knight, Leaper, Leaps, WhitePawn};
+pub use leaper::{BlackPawn, King, Knight, Leaper, Leaps, Pawn, WhitePawn};
 pub use orthogonal::Orthogonal;
 pub use piece::Piece;
 pub use piece_kind::PieceKind;

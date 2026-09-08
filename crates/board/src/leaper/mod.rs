@@ -2,12 +2,14 @@ mod black_pawn;
 mod king;
 mod knight;
 mod leaps;
+mod pawn;
 mod white_pawn;
 
 pub use black_pawn::BlackPawn;
 pub use king::King;
 pub use knight::Knight;
 pub use leaps::Leaps;
+pub use pawn::Pawn;
 pub use white_pawn::WhitePawn;
 
 use enum_map::EnumMap;

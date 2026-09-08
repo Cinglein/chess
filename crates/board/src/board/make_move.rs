@@ -3,6 +3,7 @@ use crate::chess_move::ChessMove;
 use crate::color::Color;
 use crate::file::File;
 use crate::halfmove_clock::HalfmoveClock;
+use crate::leaper::{BlackPawn, Pawn, WhitePawn};
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
 use crate::piece_placement::PiecePlacement;
@@ -82,7 +83,10 @@ impl Board {
     }
 
     fn double_push_file(piece: Piece, from: Square, to: Square) -> Option<File> {
-        let forward = piece.color.pawn_push_direction();
+        let forward = match piece.color {
+            Color::White => WhitePawn::PUSH,
+            Color::Black => BlackPawn::PUSH,
+        };
         (piece.kind == PieceKind::Pawn && (from + forward) + forward == Some(to))
             .then_some(from.file())
     }
