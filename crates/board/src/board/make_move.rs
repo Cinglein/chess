@@ -14,7 +14,7 @@ impl Board {
     pub fn make_move(self, chess_move: ChessMove) -> Option<Board> {
         let piece = self
             .placement
-            .piece_at(chess_move.from())
+            .piece_at(chess_move.origin())
             .filter(|piece| piece.color == self.side_to_move)?;
         let placement = self.placement_after(chess_move, piece);
         let captured = placement.occupied().count() < self.placement.occupied().count();
@@ -23,8 +23,8 @@ impl Board {
             side_to_move: !self.side_to_move,
             castling_rights: self
                 .castling_rights
-                .without_touching(chess_move.from())
-                .without_touching(chess_move.to()),
+                .without_touching(chess_move.origin())
+                .without_touching(chess_move.destination()),
             en_passant_file: Self::double_push_file(piece, chess_move),
             halfmove_clock: if piece.kind == PieceKind::Pawn || captured {
                 HalfmoveClock::ZERO
@@ -39,26 +39,31 @@ impl Board {
     }
 
     fn placement_after(&self, chess_move: ChessMove, piece: Piece) -> PiecePlacement {
-        let lifted = self.placement.without(piece, chess_move.from());
+        let lifted = self.placement.without(piece, chess_move.origin());
         match chess_move {
-            ChessMove::Normal { to, .. } => lifted.cleared(to).with(piece, to),
+            ChessMove::Normal { destination, .. } => {
+                lifted.cleared(destination).with(piece, destination)
+            }
             ChessMove::Promotion {
-                to,
+                destination,
                 piece: promotion,
                 ..
             } => lifted
-                .cleared(to)
-                .with(Piece::new(piece.color, promotion.into()), to),
-            ChessMove::EnPassant { from, to } => lifted
-                .cleared(Square::new(to.file(), from.rank()))
-                .with(piece, to),
+                .cleared(destination)
+                .with(Piece::new(piece.color, promotion.into()), destination),
+            ChessMove::EnPassant {
+                origin,
+                destination,
+            } => lifted
+                .cleared(Square::new(destination.file(), origin.rank()))
+                .with(piece, destination),
             ChessMove::Castling(right) => {
                 let castling = right.castling();
                 let rook = Piece::new(piece.color, PieceKind::Rook);
                 lifted
-                    .with(piece, castling.king_to)
-                    .without(rook, castling.rook_from)
-                    .with(rook, castling.rook_to)
+                    .with(piece, castling.king_destination)
+                    .without(rook, castling.rook_origin)
+                    .with(rook, castling.rook_destination)
             }
         }
     }
@@ -68,9 +73,10 @@ impl Board {
             Color::White => WhitePawn::PUSH,
             Color::Black => BlackPawn::PUSH,
         };
-        let from = chess_move.from();
-        (piece.kind == PieceKind::Pawn && (from + forward) + forward == Some(chess_move.to()))
-            .then_some(from.file())
+        let origin = chess_move.origin();
+        (piece.kind == PieceKind::Pawn
+            && (origin + forward) + forward == Some(chess_move.destination()))
+        .then_some(origin.file())
     }
 }
 
@@ -91,16 +97,16 @@ mod tests {
         (
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             ChessMove::Normal {
-                from: Square::E2,
-                to: Square::E4,
+                origin: Square::E2,
+                destination: Square::E4,
             },
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
         ),
         (
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
             ChessMove::Normal {
-                from: Square::G8,
-                to: Square::F6,
+                origin: Square::G8,
+                destination: Square::F6,
             },
             "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
         ),
@@ -117,24 +123,24 @@ mod tests {
         (
             "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
             ChessMove::Normal {
-                from: Square::A1,
-                to: Square::A8,
+                origin: Square::A1,
+                destination: Square::A8,
             },
             "R3k2r/8/8/8/8/8/8/4K2R b Kk - 0 1",
         ),
         (
             "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3",
             ChessMove::EnPassant {
-                from: Square::E5,
-                to: Square::D6,
+                origin: Square::E5,
+                destination: Square::D6,
             },
             "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3",
         ),
         (
             "r3k3/1P6/8/8/8/8/8/4K3 w q - 0 1",
             ChessMove::Promotion {
-                from: Square::B7,
-                to: Square::A8,
+                origin: Square::B7,
+                destination: Square::A8,
                 piece: Promotion::Queen,
             },
             "Q3k3/8/8/8/8/8/8/4K3 b - - 0 1",
@@ -152,9 +158,9 @@ mod tests {
 
     #[test]
     fn a_move_is_applied_exactly_when_the_side_to_move_owns_the_origin() {
-        proptest!(|(from in select(Square::VARIANTS), to in select(Square::VARIANTS))| {
-            let owned = Board::START.placement().occupied_by(Color::White).contains(from);
-            prop_assert_eq!(Board::START.make_move(ChessMove::Normal { from, to }).is_some(), owned);
+        proptest!(|(origin in select(Square::VARIANTS), destination in select(Square::VARIANTS))| {
+            let owned = Board::START.placement().occupied_by(Color::White).contains(origin);
+            prop_assert_eq!(Board::START.make_move(ChessMove::Normal { origin, destination }).is_some(), owned);
         });
     }
 }

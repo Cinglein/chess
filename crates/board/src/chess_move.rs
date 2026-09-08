@@ -8,46 +8,46 @@ use crate::square::Square;
 #[repr(u8)]
 pub enum ChessMove {
     Normal {
-        from: Square,
-        to: Square,
+        origin: Square,
+        destination: Square,
     },
     Promotion {
-        from: Square,
-        to: Square,
+        origin: Square,
+        destination: Square,
         piece: Promotion,
     },
     EnPassant {
-        from: Square,
-        to: Square,
+        origin: Square,
+        destination: Square,
     },
     Castling(CastlingRight),
 }
 
 impl ChessMove {
     #[must_use]
-    pub const fn from(self) -> Square {
+    pub const fn origin(self) -> Square {
         match self {
-            ChessMove::Normal { from, .. }
-            | ChessMove::Promotion { from, .. }
-            | ChessMove::EnPassant { from, .. } => from,
-            ChessMove::Castling(right) => right.castling().king_from,
+            ChessMove::Normal { origin, .. }
+            | ChessMove::Promotion { origin, .. }
+            | ChessMove::EnPassant { origin, .. } => origin,
+            ChessMove::Castling(right) => right.castling().king_origin,
         }
     }
 
     #[must_use]
-    pub const fn to(self) -> Square {
+    pub const fn destination(self) -> Square {
         match self {
-            ChessMove::Normal { to, .. }
-            | ChessMove::Promotion { to, .. }
-            | ChessMove::EnPassant { to, .. } => to,
-            ChessMove::Castling(right) => right.castling().king_to,
+            ChessMove::Normal { destination, .. }
+            | ChessMove::Promotion { destination, .. }
+            | ChessMove::EnPassant { destination, .. } => destination,
+            ChessMove::Castling(right) => right.castling().king_destination,
         }
     }
 }
 
 impl fmt::Display for ChessMove {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}{}", self.from(), self.to())?;
+        write!(formatter, "{}{}", self.origin(), self.destination())?;
         match self {
             ChessMove::Promotion { piece, .. } => write!(formatter, "{piece}"),
             _ => Ok(()),
@@ -66,8 +66,8 @@ mod tests {
         (ChessMove::Castling(CastlingRight::WhiteKingside), "e1g1"),
         (
             ChessMove::Promotion {
-                from: Square::E7,
-                to: Square::E8,
+                origin: Square::E7,
+                destination: Square::E8,
                 piece: Promotion::Queen,
             },
             "e7e8q",

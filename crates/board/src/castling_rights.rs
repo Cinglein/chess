@@ -42,10 +42,10 @@ impl CastlingRights {
         let mut rights = CastlingRight::VARIANTS;
         while let [right, rest @ ..] = rights {
             let castling = right.castling();
-            table[castling.king_from as usize] =
-                table[castling.king_from as usize].granting(*right);
-            table[castling.rook_from as usize] =
-                table[castling.rook_from as usize].granting(*right);
+            table[castling.king_origin as usize] =
+                table[castling.king_origin as usize].granting(*right);
+            table[castling.rook_origin as usize] =
+                table[castling.rook_origin as usize].granting(*right);
             rights = rest;
         }
         EnumMap::from_array(table)
