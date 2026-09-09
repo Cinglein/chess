@@ -1,7 +1,11 @@
 use enumset::EnumSetType;
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, VariantArray};
 
-#[derive(Debug, Hash, Display, EnumString, EnumSetType)]
+use crate::castling_squares::CastlingSquares;
+use crate::color::Color;
+use crate::square::Square;
+
+#[derive(Debug, Hash, Display, EnumString, EnumSetType, VariantArray)]
 pub enum CastlingRight {
     #[strum(serialize = "K")]
     WhiteKingside,
@@ -11,4 +15,30 @@ pub enum CastlingRight {
     BlackKingside,
     #[strum(serialize = "q")]
     BlackQueenside,
+}
+
+impl CastlingRight {
+    #[must_use]
+    pub const fn color(self) -> Color {
+        match self {
+            CastlingRight::WhiteKingside | CastlingRight::WhiteQueenside => Color::White,
+            CastlingRight::BlackKingside | CastlingRight::BlackQueenside => Color::Black,
+        }
+    }
+
+    #[must_use]
+    pub const fn squares(self) -> CastlingSquares {
+        let (king_origin, king_destination, rook_origin, rook_destination) = match self {
+            CastlingRight::WhiteKingside => (Square::E1, Square::G1, Square::H1, Square::F1),
+            CastlingRight::WhiteQueenside => (Square::E1, Square::C1, Square::A1, Square::D1),
+            CastlingRight::BlackKingside => (Square::E8, Square::G8, Square::H8, Square::F8),
+            CastlingRight::BlackQueenside => (Square::E8, Square::C8, Square::A8, Square::D8),
+        };
+        CastlingSquares {
+            king_origin,
+            king_destination,
+            rook_origin,
+            rook_destination,
+        }
+    }
 }

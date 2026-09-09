@@ -26,20 +26,13 @@ pub enum Color {
     Black,
 }
 
-impl Color {
-    #[must_use]
-    pub const fn opposite(self) -> Color {
-        match self {
-            Color::White => Color::Black,
-            Color::Black => Color::White,
-        }
-    }
-}
-
 impl Not for Color {
     type Output = Color;
 
     fn not(self) -> Color {
-        self.opposite()
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
     }
 }

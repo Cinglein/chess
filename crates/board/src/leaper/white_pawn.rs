@@ -1,10 +1,15 @@
-use super::{Leaper, Leaps};
+use super::{Leaper, Leaps, Pawn};
 use crate::direction::Direction;
+use crate::orthogonal::Orthogonal;
 
 pub struct WhitePawn;
 
 impl Leaper for WhitePawn {
     const LEAPS: Leaps = Leaps::new(&[&[Direction::NORTH_EAST], &[Direction::NORTH_WEST]]);
+}
+
+impl Pawn for WhitePawn {
+    const PUSH: Orthogonal = Orthogonal::North;
 }
 
 #[cfg(test)]
