@@ -74,25 +74,22 @@ impl PiecePlacement {
 
     #[must_use]
     pub fn lift(self, square: Square) -> Option<Lifted> {
-        self.piece_at(square).map(|piece| Lifted {
-            placement: self.without(piece, square),
-            piece,
+        self.piece_at(square).map(|piece| {
+            let mut placement = self;
+            placement.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
+            Lifted { placement, piece }
         })
     }
+}
 
-    fn with(mut self, piece: Piece, square: Square) -> PiecePlacement {
-        self.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
-        self
-    }
-
-    fn without(mut self, piece: Piece, square: Square) -> PiecePlacement {
-        self.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
-        self
-    }
-
-    fn cleared(self, square: Square) -> PiecePlacement {
-        self.piece_at(square)
-            .map_or(self, |piece| self.without(piece, square))
+impl FromIterator<(Square, Piece)> for PiecePlacement {
+    fn from_iter<I: IntoIterator<Item = (Square, Piece)>>(pieces: I) -> PiecePlacement {
+        pieces
+            .into_iter()
+            .fold(PiecePlacement::EMPTY, |mut placement, (square, piece)| {
+                placement.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
+                placement
+            })
     }
 }
 
@@ -113,7 +110,7 @@ mod tests {
     fn a_placed_piece_is_found_on_its_square_and_nowhere_else() {
         proptest!(|(color in select(Color::VARIANTS), kind in select(PieceKind::VARIANTS), square in select(Square::VARIANTS))| {
             let piece = Piece::new(color, kind);
-            let placement = PiecePlacement::EMPTY.with(piece, square);
+            let placement: PiecePlacement = [(square, piece)].into_iter().collect();
             prop_assert_eq!(placement.piece_at(square), Some(piece));
             prop_assert_eq!(placement.pieces(color, kind), Bitboard::from_square(square));
             prop_assert_eq!(placement.occupied(), Bitboard::from_square(square));

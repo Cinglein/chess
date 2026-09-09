@@ -1,4 +1,5 @@
 use super::PiecePlacement;
+use crate::bitboard::Bitboard;
 use crate::piece::Piece;
 use crate::promotion::Promotion;
 use crate::square::Square;
@@ -24,15 +25,17 @@ impl Lifted {
     }
 
     #[must_use]
-    pub fn capture(self, square: Square) -> Lifted {
-        Lifted {
-            placement: self.placement.cleared(square),
-            ..self
-        }
+    pub fn land(self, square: Square) -> PiecePlacement {
+        let mut placement = self
+            .placement
+            .lift(square)
+            .map_or(self.placement, Lifted::discard);
+        placement.pieces[self.piece.color][self.piece.kind] |= Bitboard::from_square(square);
+        placement
     }
 
     #[must_use]
-    pub fn land(self, square: Square) -> PiecePlacement {
-        self.placement.with(self.piece, square)
+    pub fn discard(self) -> PiecePlacement {
+        self.placement
     }
 }

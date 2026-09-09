@@ -3,6 +3,7 @@ use core::str::FromStr;
 
 use enum_map::EnumMap;
 use fen::{Fen, FenError};
+use itertools::process_results;
 use strum::{EnumCount, IntoEnumIterator};
 
 use super::PiecePlacement;
@@ -17,12 +18,6 @@ impl PiecePlacement {
         RankPlacement::new(EnumMap::from_fn(|file| {
             self.piece_at(Square::new(file, rank))
         }))
-    }
-
-    fn with_rank(self, rank: Rank, placement: &RankPlacement) -> PiecePlacement {
-        placement.pieces().fold(self, |board, (file, piece)| {
-            board.with(piece, Square::new(file, rank))
-        })
     }
 }
 
@@ -43,12 +38,19 @@ impl FromStr for PiecePlacement {
         if text.split('/').count() != Rank::COUNT {
             return Err(FenError::RankCount);
         }
-        Rank::iter()
-            .rev()
-            .zip(text.split('/'))
-            .try_fold(PiecePlacement::EMPTY, |placement, (rank, text)| {
-                Ok(placement.with_rank(rank, &text.parse()?))
-            })
+        let ranks = Rank::iter().rev().zip(text.split('/')).map(|(rank, text)| {
+            text.parse::<RankPlacement>()
+                .map(|placement| (rank, placement))
+        });
+        process_results(ranks, |ranks| {
+            ranks
+                .flat_map(|(rank, placement)| {
+                    placement
+                        .pieces()
+                        .map(move |(file, piece)| (Square::new(file, rank), piece))
+                })
+                .collect()
+        })
     }
 }
 

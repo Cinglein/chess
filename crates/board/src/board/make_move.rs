@@ -41,16 +41,17 @@ impl Board {
 
     fn landed(lifted: Lifted, chess_move: ChessMove) -> Option<PiecePlacement> {
         Some(match chess_move {
-            ChessMove::Normal { destination, .. } => lifted.capture(destination).land(destination),
+            ChessMove::Normal { destination, .. } => lifted.land(destination),
             ChessMove::Promotion {
                 destination, piece, ..
-            } => lifted.promote(piece).capture(destination).land(destination),
+            } => lifted.promote(piece).land(destination),
             ChessMove::EnPassant {
                 origin,
                 destination,
             } => lifted
-                .capture(Square::new(destination.file(), origin.rank()))
-                .land(destination),
+                .land(destination)
+                .lift(Square::new(destination.file(), origin.rank()))?
+                .discard(),
             ChessMove::Castling(right) => {
                 let castling = right.castling();
                 lifted

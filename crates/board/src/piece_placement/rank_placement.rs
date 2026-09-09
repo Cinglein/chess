@@ -17,9 +17,9 @@ impl RankPlacement {
         RankPlacement(squares)
     }
 
-    pub fn pieces(&self) -> impl Iterator<Item = (File, Piece)> + '_ {
+    pub fn pieces(self) -> impl Iterator<Item = (File, Piece)> {
         self.0
-            .iter()
+            .into_iter()
             .filter_map(|(file, piece)| piece.map(|piece| (file, piece)))
     }
 
