@@ -8,12 +8,9 @@ use strum::{EnumCount, VariantArray};
 
 use crate::castling_right::CastlingRight;
 use crate::square::Square;
-use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct CastlingRights(EnumSet<CastlingRight>);
-
-impl State for CastlingRights {}
 
 impl CastlingRights {
     pub const NONE: CastlingRights = CastlingRights(EnumSet::empty());

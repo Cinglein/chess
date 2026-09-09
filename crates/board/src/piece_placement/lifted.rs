@@ -3,15 +3,12 @@ use crate::bitboard::Bitboard;
 use crate::piece::Piece;
 use crate::promotion::Promotion;
 use crate::square::Square;
-use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Lifted {
     pub(super) placement: PiecePlacement,
     pub(super) piece: Piece,
 }
-
-impl State for Lifted {}
 
 impl Lifted {
     #[must_use]

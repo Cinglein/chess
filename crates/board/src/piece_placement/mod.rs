@@ -14,14 +14,11 @@ use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
 use crate::rank::Rank;
 use crate::square::Square;
-use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PiecePlacement {
     pieces: EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
 }
-
-impl State for PiecePlacement {}
 
 impl PiecePlacement {
     pub const EMPTY: PiecePlacement = PiecePlacement {
