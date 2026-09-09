@@ -9,6 +9,7 @@ use crate::halfmove_clock::HalfmoveClock;
 use crate::piece_placement::PiecePlacement;
 use crate::rank::Rank;
 use crate::square::Square;
+use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -19,6 +20,8 @@ pub struct Board {
     halfmove_clock: HalfmoveClock,
     fullmove_number: FullmoveNumber,
 }
+
+impl State for Board {}
 
 impl Board {
     pub const START: Board = Board {

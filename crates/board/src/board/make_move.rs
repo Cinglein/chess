@@ -6,18 +6,15 @@ use crate::halfmove_clock::HalfmoveClock;
 use crate::leaper::{BlackPawn, Pawn, WhitePawn};
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
-use crate::piece_placement::{Lifted, PiecePlacement};
-use crate::square::Square;
 
 impl Board {
     #[must_use]
     pub fn make_move(self, chess_move: ChessMove) -> Option<Board> {
-        let lifted = self
+        let piece = self
             .placement
-            .lift(chess_move.origin())
-            .filter(|lifted| lifted.piece().color == self.side_to_move)?;
-        let piece = lifted.piece();
-        let placement = Self::landed(lifted, chess_move)?;
+            .piece_at(chess_move.origin())
+            .filter(|piece| piece.color == self.side_to_move)?;
+        let placement = self.placement.apply(chess_move)?;
         let captured = placement.occupied().count() < self.placement.occupied().count();
         Some(Board {
             placement,
@@ -36,29 +33,6 @@ impl Board {
                 Color::White => self.fullmove_number,
                 Color::Black => self.fullmove_number.incremented(),
             },
-        })
-    }
-
-    fn landed(lifted: Lifted, chess_move: ChessMove) -> Option<PiecePlacement> {
-        Some(match chess_move {
-            ChessMove::Normal { destination, .. } => lifted.land(destination),
-            ChessMove::Promotion {
-                destination, piece, ..
-            } => lifted.promote(piece).land(destination),
-            ChessMove::EnPassant {
-                origin,
-                destination,
-            } => lifted
-                .land(destination)
-                .lift(Square::new(destination.file(), origin.rank()))?
-                .discard(),
-            ChessMove::Castling(right) => {
-                let castling = right.castling();
-                lifted
-                    .land(castling.king_destination)
-                    .lift(castling.rook_origin)?
-                    .land(castling.rook_destination)
-            }
         })
     }
 

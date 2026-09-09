@@ -22,6 +22,7 @@ mod rank;
 mod slider;
 mod square;
 mod square_iter;
+mod state;
 mod subset_iter;
 
 pub use bitboard::Bitboard;
@@ -46,4 +47,5 @@ pub use rank::Rank;
 pub use slider::{Bishop, Magic, Rays, Rook, Slider};
 pub use square::Square;
 pub use square_iter::SquareIter;
+pub use state::State;
 pub use subset_iter::SubsetIter;
