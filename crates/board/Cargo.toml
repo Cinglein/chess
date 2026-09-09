@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 derive_more = { version = "2", default-features = false, features = ["display", "from_str"] }
 enum-map = "3"
+enum_dispatch = "0.3"
 enumset = { version = "1", default-features = false }
 fen = { version = "0.1.0", path = "../fen" }
 itertools = { version = "0.14", default-features = false }

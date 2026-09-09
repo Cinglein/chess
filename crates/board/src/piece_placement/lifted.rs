@@ -1,7 +1,7 @@
 use super::PiecePlacement;
 use crate::bitboard::Bitboard;
 use crate::piece::Piece;
-use crate::promotion::Promotion;
+use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -17,7 +17,7 @@ impl Lifted {
     }
 
     #[must_use]
-    pub fn promote(self, promotion: Promotion) -> Lifted {
+    pub fn promote(self, promotion: PromotionPiece) -> Lifted {
         Lifted {
             piece: Piece::new(self.piece.color, promotion.into()),
             ..self

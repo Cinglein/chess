@@ -20,7 +20,7 @@ use crate::piece_kind::PieceKind;
 )]
 #[repr(u8)]
 #[strum(ascii_case_insensitive)]
-pub enum Promotion {
+pub enum PromotionPiece {
     #[strum(serialize = "n")]
     Knight,
     #[strum(serialize = "b")]
@@ -31,15 +31,15 @@ pub enum Promotion {
     Queen,
 }
 
-impl Promotion {}
+impl PromotionPiece {}
 
-impl From<Promotion> for PieceKind {
-    fn from(promotion: Promotion) -> PieceKind {
+impl From<PromotionPiece> for PieceKind {
+    fn from(promotion: PromotionPiece) -> PieceKind {
         match promotion {
-            Promotion::Knight => PieceKind::Knight,
-            Promotion::Bishop => PieceKind::Bishop,
-            Promotion::Rook => PieceKind::Rook,
-            Promotion::Queen => PieceKind::Queen,
+            PromotionPiece::Knight => PieceKind::Knight,
+            PromotionPiece::Bishop => PieceKind::Bishop,
+            PromotionPiece::Rook => PieceKind::Rook,
+            PromotionPiece::Queen => PieceKind::Queen,
         }
     }
 }

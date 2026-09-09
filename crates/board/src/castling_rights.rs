@@ -21,7 +21,7 @@ impl CastlingRights {
         while let [square, rest @ ..] = squares {
             let mut rights = CastlingRight::VARIANTS;
             while let [right, tail @ ..] = rights {
-                if right.castling().footprint().contains(*square) {
+                if right.squares().footprint().contains(*square) {
                     let (revoked, right) = (table[*square as usize].0, *right);
                     table[*square as usize] = CastlingRights(enum_set_union!(revoked, right));
                 }
