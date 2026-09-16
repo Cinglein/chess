@@ -1,5 +1,5 @@
 use super::MoveKind;
-use crate::piece_placement::PiecePlacement;
+use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;
 

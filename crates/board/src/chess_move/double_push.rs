@@ -1,6 +1,6 @@
 use super::MoveKind;
 use crate::file::File;
-use crate::piece_placement::PiecePlacement;
+use crate::placement::PiecePlacement;
 use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

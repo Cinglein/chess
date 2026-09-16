@@ -1,7 +1,11 @@
-mod lifted;
+mod empty;
+mod hand;
+mod holding;
 mod rank_placement;
 
-pub use lifted::Lifted;
+pub use empty::Empty;
+pub use hand::Hand;
+pub use holding::Holding;
 
 use core::fmt;
 use core::str::FromStr;
@@ -15,44 +19,20 @@ use crate::bitboard::Bitboard;
 use crate::color::Color;
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
+use crate::promotion_piece::PromotionPiece;
 use crate::rank::Rank;
 use crate::square::Square;
 use rank_placement::RankPlacement;
 
+pub type PiecePlacement = Placement<Empty>;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct PiecePlacement {
+pub struct Placement<H: Hand> {
     pieces: EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
+    hand: H,
 }
 
-impl PiecePlacement {
-    pub const EMPTY: PiecePlacement = PiecePlacement {
-        pieces: EnumMap::from_array([
-            EnumMap::from_array([Bitboard::EMPTY; PieceKind::COUNT]),
-            EnumMap::from_array([Bitboard::EMPTY; PieceKind::COUNT]),
-        ]),
-    };
-
-    pub const START: PiecePlacement = PiecePlacement {
-        pieces: EnumMap::from_array([
-            EnumMap::from_array([
-                Bitboard::rank(Rank::Two),
-                Bitboard::from_square(Square::B1).with(Square::G1),
-                Bitboard::from_square(Square::C1).with(Square::F1),
-                Bitboard::from_square(Square::A1).with(Square::H1),
-                Bitboard::from_square(Square::D1),
-                Bitboard::from_square(Square::E1),
-            ]),
-            EnumMap::from_array([
-                Bitboard::rank(Rank::Seven),
-                Bitboard::from_square(Square::B8).with(Square::G8),
-                Bitboard::from_square(Square::C8).with(Square::F8),
-                Bitboard::from_square(Square::A8).with(Square::H8),
-                Bitboard::from_square(Square::D8),
-                Bitboard::from_square(Square::E8),
-            ]),
-        ]),
-    };
-
+impl<H: Hand> Placement<H> {
     #[must_use]
     pub fn pieces(&self, color: Color, kind: PieceKind) -> Bitboard {
         self.pieces[color][kind]
@@ -77,19 +57,83 @@ impl PiecePlacement {
             .find(|piece| self.pieces[piece.color][piece.kind].contains(square))
     }
 
-    #[must_use]
-    pub fn lift(self, square: Square) -> Option<Lifted> {
-        self.piece_at(square).map(|piece| {
-            let mut placement = self;
-            placement.pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
-            Lifted { placement, piece }
-        })
-    }
-
     fn rank_placement(&self, rank: Rank) -> RankPlacement {
         RankPlacement::new(EnumMap::from_fn(|file| {
             self.piece_at(Square::new(file, rank))
         }))
+    }
+}
+
+impl Placement<Empty> {
+    pub const EMPTY: PiecePlacement = Placement {
+        pieces: EnumMap::from_array([
+            EnumMap::from_array([Bitboard::EMPTY; PieceKind::COUNT]),
+            EnumMap::from_array([Bitboard::EMPTY; PieceKind::COUNT]),
+        ]),
+        hand: Empty,
+    };
+
+    pub const START: PiecePlacement = Placement {
+        pieces: EnumMap::from_array([
+            EnumMap::from_array([
+                Bitboard::rank(Rank::Two),
+                Bitboard::from_square(Square::B1).with(Square::G1),
+                Bitboard::from_square(Square::C1).with(Square::F1),
+                Bitboard::from_square(Square::A1).with(Square::H1),
+                Bitboard::from_square(Square::D1),
+                Bitboard::from_square(Square::E1),
+            ]),
+            EnumMap::from_array([
+                Bitboard::rank(Rank::Seven),
+                Bitboard::from_square(Square::B8).with(Square::G8),
+                Bitboard::from_square(Square::C8).with(Square::F8),
+                Bitboard::from_square(Square::A8).with(Square::H8),
+                Bitboard::from_square(Square::D8),
+                Bitboard::from_square(Square::E8),
+            ]),
+        ]),
+        hand: Empty,
+    };
+
+    #[must_use]
+    pub fn lift(self, square: Square) -> Option<Placement<Holding>> {
+        self.piece_at(square).map(|piece| {
+            let mut pieces = self.pieces;
+            pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
+            Placement {
+                pieces,
+                hand: Holding::new(piece),
+            }
+        })
+    }
+}
+
+impl Placement<Holding> {
+    #[must_use]
+    pub const fn piece(&self) -> Piece {
+        self.hand.piece()
+    }
+
+    #[must_use]
+    pub fn promote(self, promotion: PromotionPiece) -> Placement<Holding> {
+        Placement {
+            hand: Holding::new(Piece::new(self.piece().color, promotion.into())),
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn land(self, square: Square) -> PiecePlacement {
+        let piece = self.piece();
+        let mut placement = Placement {
+            pieces: self.pieces,
+            hand: Empty,
+        };
+        if let Some(occupant) = placement.lift(square) {
+            placement.pieces = occupant.pieces;
+        }
+        placement.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
+        placement
     }
 }
 

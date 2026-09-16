@@ -1,7 +1,7 @@
 use enum_dispatch::enum_dispatch;
 
 use crate::file::File;
-use crate::piece_placement::PiecePlacement;
+use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;
 

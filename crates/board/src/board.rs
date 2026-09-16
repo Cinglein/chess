@@ -10,7 +10,7 @@ use crate::file::File;
 use crate::fullmove_number::FullmoveNumber;
 use crate::halfmove_clock::HalfmoveClock;
 use crate::piece_kind::PieceKind;
-use crate::piece_placement::PiecePlacement;
+use crate::placement::PiecePlacement;
 use crate::rank::Rank;
 use crate::square::Square;
 
