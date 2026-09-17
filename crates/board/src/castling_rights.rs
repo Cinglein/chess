@@ -1,10 +1,13 @@
 use core::fmt;
 use core::str::FromStr;
 
-use enumset::EnumSet;
+use enum_map::EnumMap;
+use enumset::{EnumSet, enum_set_union};
 use fen::{DashOr, Fen, FenError};
+use strum::{EnumCount, VariantArray};
 
 use crate::castling_right::CastlingRight;
+use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct CastlingRights(EnumSet<CastlingRight>);
@@ -12,6 +15,22 @@ pub struct CastlingRights(EnumSet<CastlingRight>);
 impl CastlingRights {
     pub const NONE: CastlingRights = CastlingRights(EnumSet::empty());
     pub const ALL: CastlingRights = CastlingRights(EnumSet::all());
+    const REVOKED_BY: EnumMap<Square, CastlingRights> = {
+        let mut table = [CastlingRights::NONE; Square::COUNT];
+        let mut squares = Square::VARIANTS;
+        while let [square, rest @ ..] = squares {
+            let mut rights = CastlingRight::VARIANTS;
+            while let [right, tail @ ..] = rights {
+                if right.squares().footprint().contains(*square) {
+                    let (revoked, right) = (table[*square as usize].0, *right);
+                    table[*square as usize] = CastlingRights(enum_set_union!(revoked, right));
+                }
+                rights = tail;
+            }
+            squares = rest;
+        }
+        EnumMap::from_array(table)
+    };
 
     #[must_use]
     pub fn is_none(self) -> bool {
@@ -21,6 +40,11 @@ impl CastlingRights {
     #[must_use]
     pub fn contains(self, right: CastlingRight) -> bool {
         self.0.contains(right)
+    }
+
+    #[must_use]
+    pub fn without_touching(self, square: Square) -> CastlingRights {
+        CastlingRights(self.0.difference(Self::REVOKED_BY[square].0))
     }
 }
 

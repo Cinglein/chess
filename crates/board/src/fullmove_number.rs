@@ -12,4 +12,9 @@ impl FullmoveNumber {
     pub const fn new(number: NonZeroU16) -> Self {
         FullmoveNumber(number)
     }
+
+    #[must_use]
+    pub const fn incremented(self) -> Self {
+        FullmoveNumber(self.0.saturating_add(1))
+    }
 }
