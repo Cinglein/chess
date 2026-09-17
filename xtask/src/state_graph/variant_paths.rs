@@ -1,0 +1,36 @@
+use syn::visit::Visit;
+use syn::{ExprPath, Pat, PatStruct, PatTupleStruct, Path};
+
+#[derive(Default)]
+pub struct VariantPaths(Vec<String>);
+
+impl VariantPaths {
+    pub fn in_pat(pat: &Pat) -> Vec<String> {
+        let mut paths = VariantPaths::default();
+        paths.visit_pat(pat);
+        paths.0
+    }
+
+    fn record(&mut self, path: &Path) {
+        let mut segments = path.segments.iter().rev();
+        if let (Some(_variant), Some(parent)) = (segments.next(), segments.next()) {
+            self.0.push(parent.ident.to_string());
+        }
+    }
+}
+
+impl<'ast> Visit<'ast> for VariantPaths {
+    fn visit_expr_path(&mut self, pat: &'ast ExprPath) {
+        self.record(&pat.path);
+    }
+
+    fn visit_pat_tuple_struct(&mut self, pat: &'ast PatTupleStruct) {
+        self.record(&pat.path);
+        syn::visit::visit_pat_tuple_struct(self, pat);
+    }
+
+    fn visit_pat_struct(&mut self, pat: &'ast PatStruct) {
+        self.record(&pat.path);
+        syn::visit::visit_pat_struct(self, pat);
+    }
+}

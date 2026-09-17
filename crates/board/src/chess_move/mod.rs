@@ -49,15 +49,15 @@ mod tests {
 
     const DISPLAYED: [(ChessMove, &str); 2] = [
         (
-            ChessMove::Castling(Castling(CastlingRight::WhiteKingside)),
+            ChessMove::Castling(Castling::new(CastlingRight::WhiteKingside)),
             "e1g1",
         ),
         (
-            ChessMove::Promotion(Promotion {
-                origin: Square::E7,
-                destination: Square::E8,
-                piece: PromotionPiece::Queen,
-            }),
+            ChessMove::Promotion(Promotion::new(
+                Square::E7,
+                Square::E8,
+                PromotionPiece::Queen,
+            )),
             "e7e8q",
         ),
     ];

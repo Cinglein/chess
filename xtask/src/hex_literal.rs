@@ -1,6 +1,12 @@
 use std::fmt;
 
-pub struct HexLiteral(pub u64);
+pub struct HexLiteral(u64);
+
+impl From<u64> for HexLiteral {
+    fn from(value: u64) -> HexLiteral {
+        HexLiteral(value)
+    }
+}
 
 impl fmt::Display for HexLiteral {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20,7 +26,10 @@ mod tests {
 
     #[test]
     fn hex_literals_are_grouped_in_fours_for_readability() {
-        assert_eq!(HexLiteral(u64::MAX).to_string(), "0xffff_ffff_ffff_ffff");
-        assert_eq!(HexLiteral(1).to_string(), "0x0000_0000_0000_0001");
+        assert_eq!(
+            HexLiteral::from(u64::MAX).to_string(),
+            "0xffff_ffff_ffff_ffff"
+        );
+        assert_eq!(HexLiteral::from(1).to_string(), "0x0000_0000_0000_0001");
     }
 }

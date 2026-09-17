@@ -24,6 +24,28 @@ impl Direction {
             .map(Direction::Orthogonal)
             .chain(Diagonal::iter().map(Direction::Diagonal))
     }
+
+    #[must_use]
+    pub const fn file_step(self) -> i8 {
+        match self {
+            Direction::Orthogonal(Orthogonal::North | Orthogonal::South) => 0,
+            Direction::Orthogonal(Orthogonal::East)
+            | Direction::Diagonal(Diagonal::NorthEast | Diagonal::SouthEast) => 1,
+            Direction::Orthogonal(Orthogonal::West)
+            | Direction::Diagonal(Diagonal::NorthWest | Diagonal::SouthWest) => -1,
+        }
+    }
+
+    #[must_use]
+    pub const fn rank_step(self) -> i8 {
+        match self {
+            Direction::Orthogonal(Orthogonal::East | Orthogonal::West) => 0,
+            Direction::Orthogonal(Orthogonal::North)
+            | Direction::Diagonal(Diagonal::NorthEast | Diagonal::NorthWest) => 1,
+            Direction::Orthogonal(Orthogonal::South)
+            | Direction::Diagonal(Diagonal::SouthEast | Diagonal::SouthWest) => -1,
+        }
+    }
 }
 
 impl From<Orthogonal> for Direction {

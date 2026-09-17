@@ -5,8 +5,18 @@ use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct DoublePush {
-    pub origin: Square,
-    pub destination: Square,
+    origin: Square,
+    destination: Square,
+}
+
+impl DoublePush {
+    #[must_use]
+    pub const fn new(origin: Square, destination: Square) -> DoublePush {
+        DoublePush {
+            origin,
+            destination,
+        }
+    }
 }
 
 impl MoveKind for DoublePush {

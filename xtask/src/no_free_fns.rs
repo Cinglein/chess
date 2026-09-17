@@ -9,9 +9,9 @@ impl NoFreeFns {
         let violations: Vec<String> = files
             .iter()
             .flat_map(|file| {
-                Self::free_fns(&file.syntax.items)
+                Self::free_fns(&file.syntax().items)
                     .into_iter()
-                    .map(move |(line, name)| format!("{}:{line}: fn {name}", file.path))
+                    .map(move |(line, name)| format!("{}:{line}: fn {name}", file.path()))
             })
             .collect();
         if violations.is_empty() {

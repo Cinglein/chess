@@ -3,6 +3,7 @@ use strum::{EnumString, VariantNames};
 use crate::magic_tables::MagicTables;
 use crate::no_comments::NoComments;
 use crate::no_free_fns::NoFreeFns;
+use crate::state_graph::StateGraph;
 use crate::test_budget::TestBudget;
 use crate::workspace::Workspace;
 use crate::xor_shift::XorShift;
@@ -15,6 +16,7 @@ pub enum Task {
     Magics,
     NoComments,
     NoFreeFns,
+    StateGraph,
     TestBudget,
     Wasm,
 }
@@ -34,6 +36,7 @@ impl Task {
             Task::Magics => Self::magics(&workspace),
             Task::NoComments => NoComments::check(&workspace.source_files()?),
             Task::NoFreeFns => NoFreeFns::check(&workspace.source_files()?),
+            Task::StateGraph => StateGraph::check(&workspace.source_files()?),
             Task::TestBudget => TestBudget::check(&workspace.source_files()?),
             Task::Wasm => Self::wasm(&workspace),
         }
@@ -60,6 +63,7 @@ impl Task {
         let failures: Vec<String> = [
             NoComments::check(&files),
             NoFreeFns::check(&files),
+            StateGraph::check(&files),
             TestBudget::check(&files),
         ]
         .into_iter()

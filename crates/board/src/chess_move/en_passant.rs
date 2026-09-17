@@ -4,8 +4,18 @@ use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct EnPassant {
-    pub origin: Square,
-    pub destination: Square,
+    origin: Square,
+    destination: Square,
+}
+
+impl EnPassant {
+    #[must_use]
+    pub const fn new(origin: Square, destination: Square) -> EnPassant {
+        EnPassant {
+            origin,
+            destination,
+        }
+    }
 }
 
 impl MoveKind for EnPassant {

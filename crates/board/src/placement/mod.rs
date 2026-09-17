@@ -22,6 +22,7 @@ use crate::piece_kind::PieceKind;
 use crate::promotion_piece::PromotionPiece;
 use crate::rank::Rank;
 use crate::square::Square;
+use crate::state::State;
 use rank_placement::RankPlacement;
 
 pub type PiecePlacement = Placement<Empty>;
@@ -31,6 +32,10 @@ pub struct Placement<H: Hand> {
     pieces: EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
     hand: H,
 }
+
+impl State for Placement<Empty> {}
+
+impl State for Placement<Holding> {}
 
 impl<H: Hand> Placement<H> {
     #[must_use]
@@ -54,7 +59,7 @@ impl<H: Hand> Placement<H> {
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
         Color::iter()
             .flat_map(|color| PieceKind::iter().map(move |kind| Piece::new(color, kind)))
-            .find(|piece| self.pieces[piece.color][piece.kind].contains(square))
+            .find(|piece| self.pieces[piece.color()][piece.kind()].contains(square))
     }
 
     fn rank_placement(&self, rank: Rank) -> RankPlacement {
@@ -99,7 +104,7 @@ impl Placement<Empty> {
     pub fn lift(self, square: Square) -> Option<Placement<Holding>> {
         self.piece_at(square).map(|piece| {
             let mut pieces = self.pieces;
-            pieces[piece.color][piece.kind] &= !Bitboard::from_square(square);
+            pieces[piece.color()][piece.kind()] &= !Bitboard::from_square(square);
             Placement {
                 pieces,
                 hand: Holding::new(piece),
@@ -117,7 +122,7 @@ impl Placement<Holding> {
     #[must_use]
     pub fn promote(self, promotion: PromotionPiece) -> Placement<Holding> {
         Placement {
-            hand: Holding::new(Piece::new(self.piece().color, promotion.into())),
+            hand: Holding::new(Piece::new(self.piece().color(), promotion.into())),
             ..self
         }
     }
@@ -132,7 +137,7 @@ impl Placement<Holding> {
         if let Some(occupant) = placement.lift(square) {
             placement.pieces = occupant.pieces;
         }
-        placement.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
+        placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
         placement
     }
 }
@@ -142,7 +147,7 @@ impl FromIterator<(Square, Piece)> for PiecePlacement {
         pieces
             .into_iter()
             .fold(PiecePlacement::EMPTY, |mut placement, (square, piece)| {
-                placement.pieces[piece.color][piece.kind] |= Bitboard::from_square(square);
+                placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
                 placement
             })
     }

@@ -60,19 +60,13 @@ impl<D: Into<Direction>> Add<D> for Square {
     type Output = Option<Square>;
 
     fn add(self, direction: D) -> Option<Square> {
-        let (file_step, rank_step): (i8, i8) = match direction.into() {
-            Direction::Orthogonal(Orthogonal::North) => (0, 1),
-            Direction::Orthogonal(Orthogonal::East) => (1, 0),
-            Direction::Orthogonal(Orthogonal::South) => (0, -1),
-            Direction::Orthogonal(Orthogonal::West) => (-1, 0),
-            Direction::Diagonal(Diagonal::NorthEast) => (1, 1),
-            Direction::Diagonal(Diagonal::SouthEast) => (1, -1),
-            Direction::Diagonal(Diagonal::SouthWest) => (-1, -1),
-            Direction::Diagonal(Diagonal::NorthWest) => (-1, 1),
-        };
-        let file = File::from_repr((self.file() as u8).checked_add_signed(file_step)?)?;
-        let rank = Rank::from_repr((self.rank() as u8).checked_add_signed(rank_step)?)?;
-        Some(Square::new(file, rank))
+        let direction = direction.into();
+        let file_index = (self.file() as u8).checked_add_signed(direction.file_step())?;
+        let rank_index = (self.rank() as u8).checked_add_signed(direction.rank_step())?;
+        Some(Square::new(
+            File::from_repr(file_index)?,
+            Rank::from_repr(rank_index)?,
+        ))
     }
 }
 

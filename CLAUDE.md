@@ -12,7 +12,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   (`no_std`), `uci` (`no_std` message types), `chess` binary, `web` (Dioxus, wasm), `arena`,
   `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `no-comments`, `no-free-fns`, and `test-budget`, `cargo xtask wasm`, `cargo xtask magics`).
+  and runs `no-comments`, `no-free-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`,
+  `cargo xtask magics`).
 
 ## Rules
 
@@ -39,6 +40,15 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   only `as usize` casts on enums live inside `const fn` table construction.
 - A family of behaviours is a trait with zero-sized implementors, not an enum matched on at
   runtime: `Rook: Slider`, `Knight: Leaper`. Per-implementor data is an associated const.
+- Game logic is a state transition graph, and `cargo xtask state-graph` enforces its shape. A
+  vertex is a type with `impl State for T {}`. An edge is a `pub` method that takes `self` by
+  value and returns a vertex, or a trait whose implementors do so with the vertex as a parameter;
+  it lives on its source vertex, there is at most one edge per (source, target) pair, and at most
+  4 edges leave a vertex. A `&self` method returns a vertex only as a plain field projection,
+  nothing takes `&mut self` on a vertex, and no tuple return holds a vertex. A `match` that names
+  variants of a data-carrying enum outside that enum's file may only fill a table of literals,
+  paths, and tuples; anything else dispatches through a trait. Every struct field is private,
+  including `pub(crate)` and `pub(super)`, so values are built by constructors alone.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
@@ -53,8 +63,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
-  group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job. Run
-  `cargo xtask ci` locally before opening a PR.
+  group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job covering
+  comments, free functions, the test budget, and the state graph. Run `cargo xtask ci` locally
+  before opening a PR.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the
   lint stops firing. Prefer fixing the code, for example `usize::from` or `u8::try_from` over `as`.
