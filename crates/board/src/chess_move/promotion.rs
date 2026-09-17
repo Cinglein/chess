@@ -5,9 +5,20 @@ use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Promotion {
-    pub origin: Square,
-    pub destination: Square,
-    pub piece: PromotionPiece,
+    origin: Square,
+    destination: Square,
+    piece: PromotionPiece,
+}
+
+impl Promotion {
+    #[must_use]
+    pub const fn new(origin: Square, destination: Square, piece: PromotionPiece) -> Promotion {
+        Promotion {
+            origin,
+            destination,
+            piece,
+        }
+    }
 }
 
 impl MoveKind for Promotion {

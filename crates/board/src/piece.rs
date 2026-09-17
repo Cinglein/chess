@@ -8,14 +8,24 @@ use crate::piece_kind::PieceKind;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Piece {
-    pub color: Color,
-    pub kind: PieceKind,
+    color: Color,
+    kind: PieceKind,
 }
 
 impl Piece {
     #[must_use]
     pub const fn new(color: Color, kind: PieceKind) -> Piece {
         Piece { color, kind }
+    }
+
+    #[must_use]
+    pub const fn color(self) -> Color {
+        self.color
+    }
+
+    #[must_use]
+    pub const fn kind(self) -> PieceKind {
+        self.kind
     }
 }
 

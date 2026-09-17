@@ -43,7 +43,7 @@ impl<'a> TestScan<'a> {
         [
             (
                 "assertions",
-                counts.assertions,
+                counts.assertions(),
                 TestBudget::MAX_ASSERTIONS_PER_TEST,
             ),
             (
@@ -53,7 +53,7 @@ impl<'a> TestScan<'a> {
             ),
             (
                 "literals",
-                counts.literals,
+                counts.literals(),
                 TestBudget::MAX_LITERALS_PER_TEST,
             ),
         ]

@@ -4,11 +4,19 @@ use syn::{Block, Expr, ExprLit, ExprPath, Macro, Token};
 
 #[derive(Default)]
 pub(super) struct TestCounts {
-    pub(super) assertions: usize,
-    pub(super) literals: usize,
+    assertions: usize,
+    literals: usize,
 }
 
 impl TestCounts {
+    pub(super) fn assertions(&self) -> usize {
+        self.assertions
+    }
+
+    pub(super) fn literals(&self) -> usize {
+        self.literals
+    }
+
     const ASSERTIONS: [&str; 6] = [
         "assert",
         "assert_eq",

@@ -4,8 +4,18 @@ use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Normal {
-    pub origin: Square,
-    pub destination: Square,
+    origin: Square,
+    destination: Square,
+}
+
+impl Normal {
+    #[must_use]
+    pub const fn new(origin: Square, destination: Square) -> Normal {
+        Normal {
+            origin,
+            destination,
+        }
+    }
 }
 
 impl MoveKind for Normal {

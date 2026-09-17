@@ -33,8 +33,8 @@ impl TestBudget {
     fn measure(file: &SourceFile) -> Self {
         Self {
             files: 1,
-            lines: file.text.lines().count(),
-            ..TestScan::budget(&file.path, &file.syntax)
+            lines: file.text().lines().count(),
+            ..TestScan::budget(file.path(), file.syntax())
         }
     }
 

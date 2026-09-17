@@ -3,10 +3,8 @@ use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, 
 
 use strum::{EnumCount, VariantArray};
 
-use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
-use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::square_iter::SquareIter;
@@ -125,18 +123,17 @@ impl Bitboard {
 
     #[must_use]
     pub const fn shift(self, direction: Direction) -> Bitboard {
-        let not_file_a = self.difference(Self::file(File::A)).0;
-        let not_file_h = self.difference(Self::file(File::H)).0;
-        Bitboard(match direction {
-            Direction::Orthogonal(Orthogonal::North) => self.0 << File::COUNT,
-            Direction::Orthogonal(Orthogonal::South) => self.0 >> File::COUNT,
-            Direction::Orthogonal(Orthogonal::East) => not_file_h << 1,
-            Direction::Orthogonal(Orthogonal::West) => not_file_a >> 1,
-            Direction::Diagonal(Diagonal::NorthEast) => not_file_h << (File::COUNT + 1),
-            Direction::Diagonal(Diagonal::NorthWest) => not_file_a << (File::COUNT - 1),
-            Direction::Diagonal(Diagonal::SouthEast) => not_file_h >> (File::COUNT - 1),
-            Direction::Diagonal(Diagonal::SouthWest) => not_file_a >> (File::COUNT + 1),
-        })
+        let vertical = match direction.rank_step() {
+            1 => self.0 << File::COUNT,
+            -1 => self.0 >> File::COUNT,
+            _ => self.0,
+        };
+        let horizontal = match direction.file_step() {
+            1 => (vertical & !Self::file(File::H).0) << 1,
+            -1 => (vertical & !Self::file(File::A).0) >> 1,
+            _ => vertical,
+        };
+        Bitboard(horizontal)
     }
 }
 

@@ -7,10 +7,14 @@ use fen::{DashOr, Fen, FenError};
 use strum::{EnumCount, VariantArray};
 
 use crate::castling_right::CastlingRight;
+use crate::castling_squares::CastlingSquares;
 use crate::square::Square;
+use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct CastlingRights(EnumSet<CastlingRight>);
+
+impl State for CastlingRights {}
 
 impl CastlingRights {
     pub const NONE: CastlingRights = CastlingRights(EnumSet::empty());
@@ -21,7 +25,7 @@ impl CastlingRights {
         while let [square, rest @ ..] = squares {
             let mut rights = CastlingRight::VARIANTS;
             while let [right, tail @ ..] = rights {
-                if right.squares().footprint().contains(*square) {
+                if CastlingSquares::new(*right).footprint().contains(*square) {
                     let (revoked, right) = (table[*square as usize].0, *right);
                     table[*square as usize] = CastlingRights(enum_set_union!(revoked, right));
                 }

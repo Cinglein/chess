@@ -9,9 +9,9 @@ impl NoComments {
         let violations: Vec<String> = files
             .iter()
             .flat_map(|file| {
-                Self::comment_lines(&file.text)
+                Self::comment_lines(file.text())
                     .into_iter()
-                    .map(move |line| format!("{}:{line}", file.path))
+                    .map(move |line| format!("{}:{line}", file.path()))
             })
             .collect();
         if violations.is_empty() {

@@ -46,7 +46,7 @@ impl MagicTables {
             "pub(super) const {name}: EnumMap<Square, u64> = EnumMap::from_array(["
         )?;
         for value in values.values() {
-            writeln!(formatter, "    {},", HexLiteral(*value))?;
+            writeln!(formatter, "    {},", HexLiteral::from(*value))?;
         }
         writeln!(formatter, "]);")
     }
