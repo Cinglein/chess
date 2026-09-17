@@ -1,9 +1,10 @@
+use enum_map::Enum;
 use enumset::EnumSetType;
 use strum::{Display, EnumString, VariantArray};
 
 use crate::color::Color;
 
-#[derive(Debug, Hash, Display, EnumString, EnumSetType, VariantArray)]
+#[derive(Debug, Hash, Enum, Display, EnumString, EnumSetType, VariantArray)]
 pub enum CastlingRight {
     #[strum(serialize = "K")]
     WhiteKingside,

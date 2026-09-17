@@ -23,6 +23,8 @@ use crate::promotion_piece::PromotionPiece;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::state::State;
+use crate::zobrist::Zobrist;
+use crate::zobrist_keys::ZobristKeys;
 use rank_placement::RankPlacement;
 
 pub type PiecePlacement = Placement<Empty>;
@@ -31,6 +33,7 @@ pub type PiecePlacement = Placement<Empty>;
 pub struct Placement<H: Hand> {
     pieces: EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
     hand: H,
+    hash: Zobrist,
 }
 
 impl State for Placement<Empty> {}
@@ -41,6 +44,11 @@ impl<H: Hand> Placement<H> {
     #[must_use]
     pub fn pieces(&self, color: Color, kind: PieceKind) -> Bitboard {
         self.pieces[color][kind]
+    }
+
+    #[must_use]
+    pub const fn hash(&self) -> Zobrist {
+        self.hash
     }
 
     #[must_use]
@@ -76,29 +84,33 @@ impl Placement<Empty> {
             EnumMap::from_array([Bitboard::EMPTY; PieceKind::COUNT]),
         ]),
         hand: Empty,
+        hash: Zobrist::EMPTY,
     };
 
     pub const START: PiecePlacement = Placement {
-        pieces: EnumMap::from_array([
-            EnumMap::from_array([
-                Bitboard::rank(Rank::Two),
-                Bitboard::from_square(Square::B1).with(Square::G1),
-                Bitboard::from_square(Square::C1).with(Square::F1),
-                Bitboard::from_square(Square::A1).with(Square::H1),
-                Bitboard::from_square(Square::D1),
-                Bitboard::from_square(Square::E1),
-            ]),
-            EnumMap::from_array([
-                Bitboard::rank(Rank::Seven),
-                Bitboard::from_square(Square::B8).with(Square::G8),
-                Bitboard::from_square(Square::C8).with(Square::F8),
-                Bitboard::from_square(Square::A8).with(Square::H8),
-                Bitboard::from_square(Square::D8),
-                Bitboard::from_square(Square::E8),
-            ]),
-        ]),
+        pieces: Self::START_PIECES,
         hand: Empty,
+        hash: ZobristKeys::KEYS.hash_of(&Self::START_PIECES),
     };
+
+    const START_PIECES: EnumMap<Color, EnumMap<PieceKind, Bitboard>> = EnumMap::from_array([
+        EnumMap::from_array([
+            Bitboard::rank(Rank::Two),
+            Bitboard::from_square(Square::B1).with(Square::G1),
+            Bitboard::from_square(Square::C1).with(Square::F1),
+            Bitboard::from_square(Square::A1).with(Square::H1),
+            Bitboard::from_square(Square::D1),
+            Bitboard::from_square(Square::E1),
+        ]),
+        EnumMap::from_array([
+            Bitboard::rank(Rank::Seven),
+            Bitboard::from_square(Square::B8).with(Square::G8),
+            Bitboard::from_square(Square::C8).with(Square::F8),
+            Bitboard::from_square(Square::A8).with(Square::H8),
+            Bitboard::from_square(Square::D8),
+            Bitboard::from_square(Square::E8),
+        ]),
+    ]);
 
     #[must_use]
     pub fn lift(self, square: Square) -> Option<Placement<Holding>> {
@@ -108,6 +120,7 @@ impl Placement<Empty> {
             Placement {
                 pieces,
                 hand: Holding::new(piece),
+                hash: self.hash ^ ZobristKeys::KEYS.piece(piece, square),
             }
         })
     }
@@ -133,11 +146,14 @@ impl Placement<Holding> {
         let mut placement = Placement {
             pieces: self.pieces,
             hand: Empty,
+            hash: self.hash,
         };
         if let Some(occupant) = placement.lift(square) {
             placement.pieces = occupant.pieces;
+            placement.hash = occupant.hash;
         }
         placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
+        placement.hash ^= ZobristKeys::KEYS.piece(piece, square);
         placement
     }
 }
@@ -148,6 +164,7 @@ impl FromIterator<(Square, Piece)> for PiecePlacement {
             .into_iter()
             .fold(PiecePlacement::EMPTY, |mut placement, (square, piece)| {
                 placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
+                placement.hash ^= ZobristKeys::KEYS.piece(piece, square);
                 placement
             })
     }
