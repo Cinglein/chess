@@ -20,10 +20,13 @@ mod placement;
 mod promotion_piece;
 mod rank;
 mod slider;
+mod split_mix;
 mod square;
 mod square_iter;
 mod state;
 mod subset_iter;
+mod zobrist;
+mod zobrist_keys;
 
 pub use bitboard::Bitboard;
 pub use board::Board;
@@ -49,3 +52,4 @@ pub use square::Square;
 pub use square_iter::SquareIter;
 pub use state::State;
 pub use subset_iter::SubsetIter;
+pub use zobrist::Zobrist;

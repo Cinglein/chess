@@ -14,6 +14,8 @@ use crate::placement::PiecePlacement;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::state::State;
+use crate::zobrist::Zobrist;
+use crate::zobrist_keys::ZobristKeys;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -71,6 +73,14 @@ impl Board {
     #[must_use]
     pub const fn fullmove_number(&self) -> FullmoveNumber {
         self.fullmove_number
+    }
+
+    #[must_use]
+    pub fn hash(&self) -> Zobrist {
+        self.placement.hash()
+            ^ ZobristKeys::KEYS.castling(self.castling_rights)
+            ^ ZobristKeys::KEYS.en_passant(self.en_passant_file)
+            ^ ZobristKeys::KEYS.side_to_move(self.side_to_move)
     }
 
     #[must_use]
@@ -250,9 +260,13 @@ mod tests {
     #[test]
     fn making_a_move_produces_the_position_fen_describes() {
         for (before, chess_move, after) in TRANSITIONS {
-            let board = before.parse::<Board>().unwrap().make_move(chess_move);
-            let played = board.map(|board| board.to_string());
-            assert_eq!(played.as_deref(), Some(after), "{before} {chess_move}");
+            let played = before
+                .parse::<Board>()
+                .unwrap()
+                .make_move(chess_move)
+                .unwrap();
+            assert_eq!(played.to_string(), after, "{before} {chess_move}");
+            assert_eq!(played.hash(), after.parse::<Board>().unwrap().hash());
         }
     }
 
