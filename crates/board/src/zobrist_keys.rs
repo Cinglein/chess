@@ -12,7 +12,7 @@ use crate::split_mix::SplitMix64;
 use crate::square::Square;
 use crate::zobrist::Zobrist;
 
-pub struct ZobristKeys {
+pub(crate) struct ZobristKeys {
     pieces: EnumMap<Color, EnumMap<PieceKind, EnumMap<Square, Zobrist>>>,
     castling: EnumMap<CastlingRight, Zobrist>,
     en_passant: EnumMap<File, Zobrist>,
@@ -21,36 +21,34 @@ pub struct ZobristKeys {
 
 impl ZobristKeys {
     const SEED: u64 = 0x0C4E_55B0_A4D6_4C10;
-    pub const KEYS: ZobristKeys = Self::generate(SplitMix64::new(Self::SEED));
+    pub(crate) const KEYS: ZobristKeys = Self::generate(SplitMix64::new(Self::SEED));
 
-    #[must_use]
-    pub fn piece(&self, piece: Piece, square: Square) -> Zobrist {
+    pub(crate) fn piece(&self, piece: Piece, square: Square) -> Zobrist {
         self.pieces[piece.color()][piece.kind()][square]
     }
 
-    #[must_use]
-    pub fn castling(&self, rights: CastlingRights) -> Zobrist {
+    pub(crate) fn castling(&self, rights: CastlingRights) -> Zobrist {
         CastlingRight::VARIANTS
             .iter()
             .filter(|right| rights.contains(**right))
             .fold(Zobrist::EMPTY, |hash, right| hash ^ self.castling[*right])
     }
 
-    #[must_use]
-    pub fn en_passant(&self, file: Option<File>) -> Zobrist {
+    pub(crate) fn en_passant(&self, file: Option<File>) -> Zobrist {
         file.map_or(Zobrist::EMPTY, |file| self.en_passant[file])
     }
 
-    #[must_use]
-    pub const fn side_to_move(&self, color: Color) -> Zobrist {
+    pub(crate) const fn side_to_move(&self, color: Color) -> Zobrist {
         match color {
             Color::White => Zobrist::EMPTY,
             Color::Black => self.black_to_move,
         }
     }
 
-    #[must_use]
-    pub const fn hash_of(&self, pieces: &EnumMap<Color, EnumMap<PieceKind, Bitboard>>) -> Zobrist {
+    pub(crate) const fn hash_of(
+        &self,
+        pieces: &EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
+    ) -> Zobrist {
         let mut hash = Zobrist::EMPTY;
         let mut color = 0;
         while color < Color::COUNT {

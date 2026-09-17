@@ -6,8 +6,7 @@ pub struct Zobrist(u64);
 impl Zobrist {
     pub const EMPTY: Zobrist = Zobrist(0);
 
-    #[must_use]
-    pub const fn from_bits(bits: u64) -> Zobrist {
+    pub(crate) const fn from_bits(bits: u64) -> Zobrist {
         Zobrist(bits)
     }
 
@@ -16,8 +15,7 @@ impl Zobrist {
         self.0
     }
 
-    #[must_use]
-    pub const fn xor(self, other: Zobrist) -> Zobrist {
+    pub(crate) const fn xor(self, other: Zobrist) -> Zobrist {
         Zobrist(self.0 ^ other.0)
     }
 }
