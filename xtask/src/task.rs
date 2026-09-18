@@ -1,6 +1,7 @@
 use strum::{EnumString, VariantNames};
 
 use crate::magic_tables::MagicTables;
+use crate::named_lifetimes::NamedLifetimes;
 use crate::no_comments::NoComments;
 use crate::no_free_fns::NoFreeFns;
 use crate::state_graph::StateGraph;
@@ -14,6 +15,7 @@ pub enum Task {
     Ci,
     Lint,
     Magics,
+    NamedLifetimes,
     NoComments,
     NoFreeFns,
     StateGraph,
@@ -34,6 +36,7 @@ impl Task {
             Task::Ci => Self::ci(&workspace),
             Task::Lint => Self::lint(&workspace),
             Task::Magics => Self::magics(&workspace),
+            Task::NamedLifetimes => NamedLifetimes::check(&workspace.source_files()?),
             Task::NoComments => NoComments::check(&workspace.source_files()?),
             Task::NoFreeFns => NoFreeFns::check(&workspace.source_files()?),
             Task::StateGraph => StateGraph::check(&workspace.source_files()?),
@@ -61,6 +64,7 @@ impl Task {
     fn lint(workspace: &Workspace) -> Result<(), String> {
         let files = workspace.source_files()?;
         let failures: Vec<String> = [
+            NamedLifetimes::check(&files),
             NoComments::check(&files),
             NoFreeFns::check(&files),
             StateGraph::check(&files),

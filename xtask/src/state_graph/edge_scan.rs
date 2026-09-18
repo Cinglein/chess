@@ -8,15 +8,15 @@ use super::impl_context::ImplContext;
 use super::type_name::TypeName;
 use crate::source_file::SourceFile;
 
-pub struct EdgeScan<'a> {
-    declarations: &'a Declarations,
+pub struct EdgeScan<'scan> {
+    declarations: &'scan Declarations,
     path: String,
     edges: BTreeMap<(TypeName, TypeName), BTreeMap<String, String>>,
     violations: Vec<String>,
 }
 
-impl<'a> EdgeScan<'a> {
-    pub fn new(declarations: &'a Declarations) -> Self {
+impl<'scan> EdgeScan<'scan> {
+    pub fn new(declarations: &'scan Declarations) -> Self {
         EdgeScan {
             declarations,
             path: String::new(),

@@ -14,8 +14,8 @@ use crate::promotion_piece::PromotionPiece;
 use crate::slider::{Bishop, Rook, Slider};
 use crate::square::Square;
 
-pub struct MoveGenerator<'a, P: Pawn> {
-    board: &'a Board,
+pub struct MoveGenerator<'board, P: Pawn> {
+    board: &'board Board,
     king: Square,
     occupied: Bitboard,
     ours: Bitboard,
@@ -27,9 +27,9 @@ pub struct MoveGenerator<'a, P: Pawn> {
     side: PhantomData<P>,
 }
 
-impl<'a, P: Pawn> MoveGenerator<'a, P> {
+impl<'board, P: Pawn> MoveGenerator<'board, P> {
     #[must_use]
-    pub fn new(board: &'a Board) -> Option<Self> {
+    pub fn new(board: &'board Board) -> Option<Self> {
         let placement = board.placement();
         let king = placement
             .pieces(P::COLOR, PieceKind::King)

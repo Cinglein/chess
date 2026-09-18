@@ -7,14 +7,14 @@ use syn::{Expr, ItemFn, ItemMod, LitInt, Macro, Token};
 use super::TestBudget;
 use super::test_counts::TestCounts;
 
-pub(super) struct TestScan<'a> {
-    path: &'a str,
+pub(super) struct TestScan<'scan> {
+    path: &'scan str,
     inside_test_module: bool,
     budget: TestBudget,
 }
 
-impl<'a> TestScan<'a> {
-    pub(super) fn budget(path: &'a str, file: &syn::File) -> TestBudget {
+impl<'scan> TestScan<'scan> {
+    pub(super) fn budget(path: &'scan str, file: &syn::File) -> TestBudget {
         let mut scan = TestScan {
             path,
             inside_test_module: false,

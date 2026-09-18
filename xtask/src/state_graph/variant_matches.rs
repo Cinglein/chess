@@ -6,14 +6,14 @@ use super::declarations::Declarations;
 use super::variant_paths::VariantPaths;
 use crate::source_file::SourceFile;
 
-pub struct VariantMatches<'a> {
-    declarations: &'a Declarations,
-    path: &'a str,
+pub struct VariantMatches<'scan> {
+    declarations: &'scan Declarations,
+    path: &'scan str,
     violations: Vec<String>,
 }
 
-impl<'a> VariantMatches<'a> {
-    pub fn violations(file: &'a SourceFile, declarations: &'a Declarations) -> Vec<String> {
+impl<'scan> VariantMatches<'scan> {
+    pub fn violations(file: &'scan SourceFile, declarations: &'scan Declarations) -> Vec<String> {
         let mut matches = VariantMatches {
             declarations,
             path: file.path(),

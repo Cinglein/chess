@@ -5,13 +5,13 @@ use syn::{ItemStruct, Visibility};
 
 use crate::source_file::SourceFile;
 
-pub struct FieldVisibility<'a> {
-    path: &'a str,
+pub struct FieldVisibility<'scan> {
+    path: &'scan str,
     violations: Vec<String>,
 }
 
-impl<'a> FieldVisibility<'a> {
-    pub fn violations(file: &'a SourceFile) -> Vec<String> {
+impl<'scan> FieldVisibility<'scan> {
+    pub fn violations(file: &'scan SourceFile) -> Vec<String> {
         let mut fields = FieldVisibility {
             path: file.path(),
             violations: Vec::new(),
