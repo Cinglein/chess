@@ -1,6 +1,7 @@
 use core::fmt;
 use core::str::FromStr;
 
+use arrayvec::ArrayVec;
 use fen::{DashOr, Fen, FenError};
 
 use crate::castling_rights::CastlingRights;
@@ -9,6 +10,8 @@ use crate::color::Color;
 use crate::file::File;
 use crate::fullmove_number::FullmoveNumber;
 use crate::halfmove_clock::HalfmoveClock;
+use crate::leaper::{BlackPawn, Pawn, WhitePawn};
+use crate::move_generator::MoveGenerator;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
 use crate::rank::Rank;
@@ -16,6 +19,8 @@ use crate::square::Square;
 use crate::state::State;
 use crate::zobrist::Zobrist;
 use crate::zobrist_keys::ZobristKeys;
+
+pub type MoveList = ArrayVec<ChessMove, { Board::MAX_LEGAL_MOVES }>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -30,6 +35,7 @@ pub struct Board {
 impl State for Board {}
 
 impl Board {
+    pub const MAX_LEGAL_MOVES: usize = 218;
     pub const START: Board = Board {
         placement: PiecePlacement::START,
         side_to_move: Color::White,
@@ -81,6 +87,34 @@ impl Board {
             ^ ZobristKeys::KEYS.castling(self.castling_rights)
             ^ ZobristKeys::KEYS.en_passant(self.en_passant_file)
             ^ ZobristKeys::KEYS.side_to_move(self.side_to_move)
+    }
+
+    #[must_use]
+    pub fn legal_moves(&self) -> MoveList {
+        match self.side_to_move {
+            Color::White => self.generated::<WhitePawn>(),
+            Color::Black => self.generated::<BlackPawn>(),
+        }
+    }
+
+    #[must_use]
+    pub fn perft(self, depth: u8) -> u64 {
+        let Some(remaining) = depth.checked_sub(1) else {
+            return 1;
+        };
+        let moves = self.legal_moves();
+        if remaining == 0 {
+            return moves.len().try_into().unwrap_or(u64::MAX);
+        }
+        moves
+            .into_iter()
+            .filter_map(|chess_move| self.make_move(chess_move))
+            .map(|board| board.perft(remaining))
+            .sum()
+    }
+
+    fn generated<P: Pawn>(&self) -> MoveList {
+        MoveGenerator::<P>::new(self).map_or_else(MoveList::new, MoveGenerator::legal_moves)
     }
 
     #[must_use]
