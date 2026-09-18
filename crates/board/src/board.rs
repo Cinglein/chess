@@ -10,7 +10,7 @@ use crate::color::Color;
 use crate::file::File;
 use crate::fullmove_number::FullmoveNumber;
 use crate::halfmove_clock::HalfmoveClock;
-use crate::leaper::{BlackPawn, Pawn, WhitePawn};
+use crate::leaper::{BlackPawn, WhitePawn};
 use crate::move_generator::MoveGenerator;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
@@ -92,8 +92,10 @@ impl Board {
     #[must_use]
     pub fn legal_moves(&self) -> MoveList {
         match self.side_to_move {
-            Color::White => self.generated::<WhitePawn>(),
-            Color::Black => self.generated::<BlackPawn>(),
+            Color::White => MoveGenerator::<WhitePawn>::new(self)
+                .map_or_else(MoveList::new, MoveGenerator::legal_moves),
+            Color::Black => MoveGenerator::<BlackPawn>::new(self)
+                .map_or_else(MoveList::new, MoveGenerator::legal_moves),
         }
     }
 
@@ -111,10 +113,6 @@ impl Board {
             .filter_map(|chess_move| self.make_move(chess_move))
             .map(|board| board.perft(remaining))
             .sum()
-    }
-
-    fn generated<P: Pawn>(&self) -> MoveList {
-        MoveGenerator::<P>::new(self).map_or_else(MoveList::new, MoveGenerator::legal_moves)
     }
 
     #[must_use]
