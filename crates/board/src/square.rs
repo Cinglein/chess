@@ -5,11 +5,13 @@ use core::str::FromStr;
 use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
+use crate::bitboard::Bitboard;
 use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
 use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
+use crate::slider::{Bishop, Rook, Slider};
 
 #[derive(
     Clone,
@@ -53,6 +55,35 @@ impl Square {
     #[must_use]
     pub const fn rank(self) -> Rank {
         Rank::VARIANTS[self as usize / File::COUNT]
+    }
+
+    #[must_use]
+    pub fn between(self, other: Square) -> Bitboard {
+        let (origin, target) = (Bitboard::from_square(self), Bitboard::from_square(other));
+        if self.aligned_by::<Rook>(other) {
+            Rook::attacks(self, target) & Rook::attacks(other, origin)
+        } else if self.aligned_by::<Bishop>(other) {
+            Bishop::attacks(self, target) & Bishop::attacks(other, origin)
+        } else {
+            Bitboard::EMPTY
+        }
+    }
+
+    #[must_use]
+    pub fn line_through(self, other: Square) -> Bitboard {
+        let ends = Bitboard::from_square(self) | Bitboard::from_square(other);
+        if self.aligned_by::<Rook>(other) {
+            (Rook::attacks(self, Bitboard::EMPTY) & Rook::attacks(other, Bitboard::EMPTY)) | ends
+        } else if self.aligned_by::<Bishop>(other) {
+            (Bishop::attacks(self, Bitboard::EMPTY) & Bishop::attacks(other, Bitboard::EMPTY))
+                | ends
+        } else {
+            Bitboard::EMPTY
+        }
+    }
+
+    fn aligned_by<S: Slider>(self, other: Square) -> bool {
+        S::attacks(self, Bitboard::EMPTY).contains(other)
     }
 }
 

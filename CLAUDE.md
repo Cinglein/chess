@@ -12,8 +12,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   (`no_std`), `uci` (`no_std` message types), `chess` binary, `web` (Dioxus, wasm), `arena`,
   `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `no-comments`, `no-free-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`,
-  `cargo xtask magics`).
+  and runs `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`, `test-budget`, and
+  `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
 
 ## Rules
 
@@ -53,6 +53,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
   the only exceptions are `main` and `#[test]` functions. `cargo xtask no-free-fns` enforces it.
+- Lifetimes are named with a word (`'board`, `'scan`, `'ast`), never a single letter.
+  `cargo xtask named-lifetimes` enforces it; `'_` and `'static` are exempt.
+- At most 4 private functions per type, counted across all its inherent impl blocks; trait impl
+  methods do not count. More than that means a second type is hiding inside the first.
+  `cargo xtask private-fns` enforces it.
 - Invariants live as high as possible: a type that cannot represent the invalid state, else a
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most

@@ -17,10 +17,12 @@ use strum::{EnumCount, IntoEnumIterator};
 
 use crate::bitboard::Bitboard;
 use crate::color::Color;
+use crate::leaper::{BlackPawn, King, Knight, Leaper, WhitePawn};
 use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
 use crate::promotion_piece::PromotionPiece;
 use crate::rank::Rank;
+use crate::slider::{Bishop, Rook, Slider};
 use crate::square::Square;
 use crate::state::State;
 use crate::zobrist::Zobrist;
@@ -68,6 +70,20 @@ impl<H: Hand> Placement<H> {
         Color::iter()
             .flat_map(|color| PieceKind::iter().map(move |kind| Piece::new(color, kind)))
             .find(|piece| self.pieces[piece.color()][piece.kind()].contains(square))
+    }
+
+    #[must_use]
+    pub fn attackers(&self, square: Square, by: Color, occupied: Bitboard) -> Bitboard {
+        let pawn_attacks = match by {
+            Color::White => BlackPawn::attacks(square),
+            Color::Black => WhitePawn::attacks(square),
+        };
+        let queens = self.pieces(by, PieceKind::Queen);
+        (pawn_attacks & self.pieces(by, PieceKind::Pawn))
+            | (Knight::attacks(square) & self.pieces(by, PieceKind::Knight))
+            | (King::attacks(square) & self.pieces(by, PieceKind::King))
+            | (Bishop::attacks(square, occupied) & (self.pieces(by, PieceKind::Bishop) | queens))
+            | (Rook::attacks(square, occupied) & (self.pieces(by, PieceKind::Rook) | queens))
     }
 
     fn rank_placement(&self, rank: Rank) -> RankPlacement {

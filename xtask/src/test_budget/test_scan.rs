@@ -7,33 +7,28 @@ use syn::{Expr, ItemFn, ItemMod, LitInt, Macro, Token};
 use super::TestBudget;
 use super::test_counts::TestCounts;
 
-pub(super) struct TestScan<'a> {
-    path: &'a str,
+pub(super) struct TestScan<'scan> {
+    path: &'scan str,
     inside_test_module: bool,
     budget: TestBudget,
 }
 
-impl<'a> TestScan<'a> {
-    pub(super) fn budget(path: &'a str, file: &syn::File) -> TestBudget {
+impl<'scan> TestScan<'scan> {
+    pub(super) fn budget(path: &'scan str, file: &syn::File) -> TestBudget {
         let mut scan = TestScan {
             path,
             inside_test_module: false,
             budget: TestBudget::default(),
         };
         scan.visit_file(file);
-        scan.budget.violations.extend(scan.file_violation());
-        scan.budget
-    }
-
-    fn file_violation(&self) -> Option<String> {
-        (self.budget.tests > TestBudget::MAX_TESTS_PER_FILE).then(|| {
-            format!(
-                "{}: {} tests, at most {} allowed",
-                self.path,
-                self.budget.tests,
+        if scan.budget.tests > TestBudget::MAX_TESTS_PER_FILE {
+            scan.budget.violations.push(format!(
+                "{path}: {} tests, at most {} allowed",
+                scan.budget.tests,
                 TestBudget::MAX_TESTS_PER_FILE
-            )
-        })
+            ));
+        }
+        scan.budget
     }
 
     fn test_violations(&self, function: &ItemFn) -> Vec<String> {

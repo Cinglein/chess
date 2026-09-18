@@ -1,22 +1,23 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use syn::visit::Visit;
-use syn::{Block, Expr, FnArg, ImplItem, ImplItemFn, ItemImpl, Receiver, ReturnType, Stmt, Type};
+use syn::{ImplItem, ImplItemFn, ItemImpl, Receiver};
 
 use super::declarations::Declarations;
+use super::function_shape::FunctionShape;
 use super::impl_context::ImplContext;
 use super::type_name::TypeName;
 use crate::source_file::SourceFile;
 
-pub struct EdgeScan<'a> {
-    declarations: &'a Declarations,
+pub struct EdgeScan<'scan> {
+    declarations: &'scan Declarations,
     path: String,
     edges: BTreeMap<(TypeName, TypeName), BTreeMap<String, String>>,
     violations: Vec<String>,
 }
 
-impl<'a> EdgeScan<'a> {
-    pub fn new(declarations: &'a Declarations) -> Self {
+impl<'scan> EdgeScan<'scan> {
+    pub fn new(declarations: &'scan Declarations) -> Self {
         EdgeScan {
             declarations,
             path: String::new(),
@@ -67,25 +68,24 @@ impl<'a> EdgeScan<'a> {
     }
 
     fn check_function(&mut self, context: &ImplContext, function: &ImplItemFn) {
-        let name = &function.sig.ident;
-        let site = format!("{}:{}: fn {name}", self.path, name.span().start().line);
-        let target = self.return_vertex(&function.sig.output, context, &site);
-        match function.sig.receiver() {
-            None => {
-                if let Some(target) = target
-                    && !self.vertex_parameters(function, context).is_empty()
-                {
-                    self.violations.push(format!(
-                        "{site} takes a vertex and returns {target}; make it a method on its source"
-                    ));
-                }
+        let shape = FunctionShape::of(&self.path, function, context, self.declarations);
+        let site = shape.site();
+        if shape.tuple_holds_vertex() {
+            self.violations.push(format!(
+                "{site} returns a tuple holding a vertex; return the vertex"
+            ));
+        }
+        match (function.sig.receiver(), shape.target()) {
+            (None, Some(target)) if !shape.vertex_parameters().is_empty() => {
+                self.violations.push(format!(
+                    "{site} takes a vertex and returns {target}; make it a method on its source"
+                ));
             }
-            Some(receiver) if receiver.reference.is_none() => {
-                if let Some(target) = target {
-                    self.check_edge(context, function, target, &site);
-                }
+            (Some(receiver), _) if receiver.reference.is_some() => {
+                self.check_view(context, receiver, &shape);
             }
-            Some(receiver) => self.check_view(context, function, receiver, target, &site),
+            (Some(_), Some(target)) => self.check_edge(context, function, &shape, target.clone()),
+            _ => {}
         }
     }
 
@@ -93,13 +93,14 @@ impl<'a> EdgeScan<'a> {
         &mut self,
         context: &ImplContext,
         function: &ImplItemFn,
+        shape: &FunctionShape,
         target: TypeName,
-        site: &str,
     ) {
+        let site = shape.site();
         let source = if context.is_vertex() {
             Some(context.self_type().clone())
         } else if context.in_trait() {
-            self.vertex_parameters(function, context).into_iter().next()
+            shape.vertex_parameters().first().cloned()
         } else {
             None
         };
@@ -121,14 +122,8 @@ impl<'a> EdgeScan<'a> {
         }
     }
 
-    fn check_view(
-        &mut self,
-        context: &ImplContext,
-        function: &ImplItemFn,
-        receiver: &Receiver,
-        target: Option<TypeName>,
-        site: &str,
-    ) {
+    fn check_view(&mut self, context: &ImplContext, receiver: &Receiver, shape: &FunctionShape) {
+        let site = shape.site();
         if receiver.mutability.is_some() {
             if context.is_vertex() && !context.in_trait() {
                 self.violations.push(format!(
@@ -136,69 +131,13 @@ impl<'a> EdgeScan<'a> {
                     context.self_type()
                 ));
             }
-        } else if let Some(target) = target
-            && !Self::is_field_projection(&function.block)
+        } else if let Some(target) = shape.target()
+            && !shape.projects_field()
         {
             self.violations.push(format!(
                 "{site} is a view returning vertex {target}; take self by value or return a reference"
             ));
         }
-    }
-
-    fn return_vertex(
-        &mut self,
-        output: &ReturnType,
-        context: &ImplContext,
-        site: &str,
-    ) -> Option<TypeName> {
-        let ReturnType::Type(_, ty) = output else {
-            return None;
-        };
-        match &**ty {
-            Type::Reference(_) => None,
-            Type::Tuple(tuple) => {
-                if tuple
-                    .elems
-                    .iter()
-                    .any(|element| self.declarations.is_vertex(&self.resolve(element, context)))
-                {
-                    self.violations.push(format!(
-                        "{site} returns a tuple holding a vertex; return the vertex"
-                    ));
-                }
-                None
-            }
-            other => {
-                let name = self.resolve(other, context);
-                self.declarations.is_vertex(&name).then_some(name)
-            }
-        }
-    }
-
-    fn vertex_parameters(&self, function: &ImplItemFn, context: &ImplContext) -> Vec<TypeName> {
-        function
-            .sig
-            .inputs
-            .iter()
-            .filter_map(|argument| match argument {
-                FnArg::Typed(typed) => Some(self.resolve(&typed.ty, context)),
-                FnArg::Receiver(_) => None,
-            })
-            .filter(|parameter| self.declarations.is_vertex(parameter))
-            .collect()
-    }
-
-    fn resolve(&self, ty: &Type, context: &ImplContext) -> TypeName {
-        self.declarations
-            .resolve(TypeName::of(ty).or_self(context.self_type()))
-    }
-
-    fn is_field_projection(block: &Block) -> bool {
-        matches!(
-            block.stmts.as_slice(),
-            [Stmt::Expr(Expr::Field(field), None)]
-                if matches!(&*field.base, Expr::Path(base) if base.path.is_ident("self"))
-        )
     }
 }
 
