@@ -7,22 +7,19 @@ use crate::board::{Board, MoveList};
 use crate::castling_right::CastlingRight;
 use crate::castling_squares::CastlingSquares;
 use crate::chess_move::{Castling, ChessMove, DoublePush, EnPassant, MoveKind, Normal, Promotion};
+use crate::king_safety::KingSafety;
 use crate::leaper::{King, Knight, Leaper, Pawn};
 use crate::piece_kind::PieceKind;
-use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
 use crate::slider::{Bishop, Rook, Slider};
 use crate::square::Square;
 
 pub struct MoveGenerator<'board, P: Pawn> {
     board: &'board Board,
-    king: Square,
+    safety: KingSafety,
     occupied: Bitboard,
     ours: Bitboard,
     theirs: Bitboard,
-    checkers: Bitboard,
-    pinned: Bitboard,
-    targets: Bitboard,
     moves: MoveList,
     side: PhantomData<P>,
 }
@@ -31,25 +28,12 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
     #[must_use]
     pub fn new(board: &'board Board) -> Option<Self> {
         let placement = board.placement();
-        let king = placement
-            .pieces(P::COLOR, PieceKind::King)
-            .least_significant_bit()?;
-        let occupied = placement.occupied();
-        let ours = placement.occupied_by(P::COLOR);
-        let checkers = Self::attackers(placement, king, occupied);
         Some(MoveGenerator {
             board,
-            king,
-            occupied,
-            ours,
+            safety: KingSafety::new(placement, P::COLOR)?,
+            occupied: placement.occupied(),
+            ours: placement.occupied_by(P::COLOR),
             theirs: placement.occupied_by(!P::COLOR),
-            checkers,
-            pinned: Self::pins(placement, king, occupied, ours),
-            targets: match checkers.least_significant_bit() {
-                None => !ours,
-                Some(checker) if checkers.count() == 1 => king.between(checker) | checkers,
-                Some(_) => Bitboard::EMPTY,
-            },
             moves: MoveList::new(),
             side: PhantomData,
         })
@@ -78,7 +62,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
 
     fn pawns(&mut self, pawns: Bitboard) {
         for from in pawns {
-            let allowed = self.allowed(from);
+            let allowed = self.safety.allowed(from);
             let push = (from + P::PUSH).filter(|to| !self.occupied.contains(*to));
             let double = push
                 .filter(|_| from.rank() == P::START_RANK)
@@ -106,7 +90,9 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
                 let safe = en_passant
                     .play(*self.board.placement())
                     .is_some_and(|after| {
-                        Self::attackers(&after, self.king, after.occupied()).is_empty()
+                        after
+                            .attackers(self.safety.king(), !P::COLOR, after.occupied())
+                            .is_empty()
                     });
                 if safe {
                     self.moves.push(en_passant);
@@ -117,7 +103,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
 
     fn pieces(&mut self, pieces: Bitboard, attacks: impl Fn(Square) -> Bitboard) {
         for from in pieces {
-            for to in attacks(from) & self.allowed(from) {
+            for to in attacks(from) & self.safety.allowed(from) {
                 self.moves.push(ChessMove::Normal(Normal::new(from, to)));
             }
         }
@@ -125,14 +111,14 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
 
     fn king_moves(&mut self) {
         let placement = self.board.placement();
-        let without_king = self.occupied ^ Bitboard::from_square(self.king);
-        for to in King::attacks(self.king) & !self.ours {
-            if Self::attackers(placement, to, without_king).is_empty() {
-                self.moves
-                    .push(ChessMove::Normal(Normal::new(self.king, to)));
+        let king = self.safety.king();
+        let without_king = self.occupied ^ Bitboard::from_square(king);
+        for to in King::attacks(king) & !self.ours {
+            if placement.attackers(to, !P::COLOR, without_king).is_empty() {
+                self.moves.push(ChessMove::Normal(Normal::new(king, to)));
             }
         }
-        if !self.checkers.is_empty() {
+        if self.safety.in_check() {
             return;
         }
         for right in CastlingRight::VARIANTS.iter().copied() {
@@ -141,53 +127,20 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
                 | Bitboard::from_square(squares.king_destination());
             let may_castle = right.color() == P::COLOR
                 && self.board.castling_rights().contains(right)
-                && self.king == squares.king_origin()
+                && king == squares.king_origin()
                 && placement
                     .pieces(P::COLOR, PieceKind::Rook)
                     .contains(squares.rook_origin())
                 && (squares.king_origin().between(squares.rook_origin()) & self.occupied)
                     .is_empty()
-                && king_path
-                    .into_iter()
-                    .all(|square| Self::attackers(placement, square, self.occupied).is_empty());
+                && king_path.into_iter().all(|square| {
+                    placement
+                        .attackers(square, !P::COLOR, self.occupied)
+                        .is_empty()
+                });
             if may_castle {
                 self.moves.push(ChessMove::Castling(Castling::new(right)));
             }
         }
-    }
-
-    fn allowed(&self, from: Square) -> Bitboard {
-        if self.pinned.contains(from) {
-            self.targets & self.king.line_through(from)
-        } else {
-            self.targets
-        }
-    }
-
-    fn attackers(placement: &PiecePlacement, square: Square, occupied: Bitboard) -> Bitboard {
-        let theirs = |kind| placement.pieces(!P::COLOR, kind);
-        let queens = theirs(PieceKind::Queen);
-        (P::attacks(square) & theirs(PieceKind::Pawn))
-            | (Knight::attacks(square) & theirs(PieceKind::Knight))
-            | (King::attacks(square) & theirs(PieceKind::King))
-            | (Bishop::attacks(square, occupied) & (theirs(PieceKind::Bishop) | queens))
-            | (Rook::attacks(square, occupied) & (theirs(PieceKind::Rook) | queens))
-    }
-
-    fn pins(
-        placement: &PiecePlacement,
-        king: Square,
-        occupied: Bitboard,
-        ours: Bitboard,
-    ) -> Bitboard {
-        let theirs = |kind| placement.pieces(!P::COLOR, kind);
-        let queens = theirs(PieceKind::Queen);
-        let snipers = (Rook::attacks(king, Bitboard::EMPTY) & (theirs(PieceKind::Rook) | queens))
-            | (Bishop::attacks(king, Bitboard::EMPTY) & (theirs(PieceKind::Bishop) | queens));
-        snipers
-            .into_iter()
-            .map(|sniper| king.between(sniper) & occupied)
-            .filter(|blockers| blockers.count() == 1 && !(*blockers & ours).is_empty())
-            .fold(Bitboard::EMPTY, |pinned, blocker| pinned | blocker)
     }
 }

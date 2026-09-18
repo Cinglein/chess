@@ -4,6 +4,7 @@ use crate::magic_tables::MagicTables;
 use crate::named_lifetimes::NamedLifetimes;
 use crate::no_comments::NoComments;
 use crate::no_free_fns::NoFreeFns;
+use crate::private_fns::PrivateFns;
 use crate::state_graph::StateGraph;
 use crate::test_budget::TestBudget;
 use crate::workspace::Workspace;
@@ -18,6 +19,7 @@ pub enum Task {
     NamedLifetimes,
     NoComments,
     NoFreeFns,
+    PrivateFns,
     StateGraph,
     TestBudget,
     Wasm,
@@ -39,6 +41,7 @@ impl Task {
             Task::NamedLifetimes => NamedLifetimes::check(&workspace.source_files()?),
             Task::NoComments => NoComments::check(&workspace.source_files()?),
             Task::NoFreeFns => NoFreeFns::check(&workspace.source_files()?),
+            Task::PrivateFns => PrivateFns::check(&workspace.source_files()?),
             Task::StateGraph => StateGraph::check(&workspace.source_files()?),
             Task::TestBudget => TestBudget::check(&workspace.source_files()?),
             Task::Wasm => Self::wasm(&workspace),
@@ -67,6 +70,7 @@ impl Task {
             NamedLifetimes::check(&files),
             NoComments::check(&files),
             NoFreeFns::check(&files),
+            PrivateFns::check(&files),
             StateGraph::check(&files),
             TestBudget::check(&files),
         ]

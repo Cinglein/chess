@@ -1,6 +1,7 @@
 mod declarations;
 mod edge_scan;
 mod field_visibility;
+mod function_shape;
 mod impl_context;
 mod type_name;
 mod variant_matches;
