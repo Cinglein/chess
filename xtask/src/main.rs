@@ -1,3 +1,4 @@
+mod fn_shape;
 mod hex_literal;
 mod magic_search;
 mod magic_tables;

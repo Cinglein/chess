@@ -6,6 +6,7 @@ use syn::{Expr, ItemFn, ItemMod, LitInt, Macro, Token};
 
 use super::TestBudget;
 use super::test_counts::TestCounts;
+use crate::source_file::SourceFile;
 
 pub(super) struct TestScan<'scan> {
     path: &'scan str,
@@ -73,21 +74,12 @@ impl<'scan> TestScan<'scan> {
             .iter()
             .any(|attribute| attribute.path().is_ident("test"))
     }
-
-    fn is_cfg_test(module: &ItemMod) -> bool {
-        module.attrs.iter().any(|attribute| {
-            attribute.path().is_ident("cfg")
-                && attribute
-                    .parse_args::<syn::Ident>()
-                    .is_ok_and(|ident| ident == "test")
-        })
-    }
 }
 
 impl<'ast> Visit<'ast> for TestScan<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
         let outside = self.inside_test_module;
-        if Self::is_cfg_test(module) {
+        if SourceFile::is_test_module(module) {
             self.inside_test_module = true;
             self.budget.test_lines += Self::line_count(module.span());
         }
@@ -106,10 +98,11 @@ impl<'ast> Visit<'ast> for TestScan<'_> {
     }
 
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
-        let too_large = integer
-            .base10_parse::<u64>()
-            .is_ok_and(|value| value > TestBudget::MAX_INTEGER_LITERAL);
-        if self.inside_test_module && too_large {
+        if self.inside_test_module
+            && integer
+                .base10_parse::<u64>()
+                .is_ok_and(|value| value > TestBudget::MAX_INTEGER_LITERAL)
+        {
             self.budget.violations.push(format!(
                 "{}:{}: integer literal {integer} in test code, at most {} allowed",
                 self.path,

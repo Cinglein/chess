@@ -22,27 +22,27 @@ impl FunctionShape {
         let name = &function.sig.ident;
         let resolve =
             |ty: &Type| declarations.resolve(TypeName::of(ty).or_self(context.self_type()));
-        let (target, tuple_holds_vertex) = match &function.sig.output {
-            ReturnType::Type(_, ty) => match &**ty {
-                Type::Reference(_) => (None, false),
-                Type::Tuple(tuple) => (
-                    None,
-                    tuple
-                        .elems
-                        .iter()
-                        .any(|element| declarations.is_vertex(&resolve(element))),
-                ),
-                other => {
-                    let returned = resolve(other);
-                    (declarations.is_vertex(&returned).then_some(returned), false)
-                }
-            },
-            ReturnType::Default => (None, false),
+        let returned = match &function.sig.output {
+            ReturnType::Type(_, ty) => Some(&**ty),
+            ReturnType::Default => None,
         };
+        let target = returned.and_then(|ty| match ty {
+            Type::Reference(_) | Type::Tuple(_) => None,
+            other => {
+                let returned = resolve(other);
+                declarations.is_vertex(&returned).then_some(returned)
+            }
+        });
         FunctionShape {
             site: format!("{path}:{}: fn {name}", name.span().start().line),
             target,
-            tuple_holds_vertex,
+            tuple_holds_vertex: returned.is_some_and(|ty| {
+                matches!(
+                    ty,
+                    Type::Tuple(tuple)
+                        if tuple.elems.iter().any(|element| declarations.is_vertex(&resolve(element)))
+                )
+            }),
             vertex_parameters: function
                 .sig
                 .inputs

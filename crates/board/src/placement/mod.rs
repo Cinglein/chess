@@ -211,11 +211,7 @@ impl FromStr for PiecePlacement {
         });
         process_results(ranks, |ranks| {
             ranks
-                .flat_map(|(rank, placement)| {
-                    placement
-                        .pieces()
-                        .map(move |(file, piece)| (Square::new(file, rank), piece))
-                })
+                .flat_map(|(rank, placement)| placement.pieces(rank))
                 .collect()
         })
     }

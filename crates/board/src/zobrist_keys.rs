@@ -54,18 +54,24 @@ impl ZobristKeys {
         while color < Color::COUNT {
             let mut kind = 0;
             while kind < PieceKind::COUNT {
-                let bitboard = pieces.as_array()[color].as_array()[kind];
                 let keys = self.pieces.as_array()[color].as_array()[kind].as_array();
-                let mut square = 0;
-                while square < Square::COUNT {
-                    if bitboard.contains(Square::VARIANTS[square]) {
-                        hash = hash.xor(keys[square]);
-                    }
-                    square += 1;
-                }
+                let bitboard = pieces.as_array()[color].as_array()[kind];
+                hash = hash.xor(Self::hash_bitboard(keys, bitboard));
                 kind += 1;
             }
             color += 1;
+        }
+        hash
+    }
+
+    const fn hash_bitboard(keys: &[Zobrist; Square::COUNT], bitboard: Bitboard) -> Zobrist {
+        let mut hash = Zobrist::EMPTY;
+        let mut square = 0;
+        while square < Square::COUNT {
+            if bitboard.contains(Square::VARIANTS[square]) {
+                hash = hash.xor(keys[square]);
+            }
+            square += 1;
         }
         hash
     }

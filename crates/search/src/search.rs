@@ -5,7 +5,7 @@ use eval::{Evaluator, Score};
 
 use crate::depth::Depth;
 use crate::negamax::Negamax;
-use crate::window::Window;
+use crate::principal::Principal;
 
 pub struct Search<E: Evaluator> {
     board: Board,
@@ -49,7 +49,7 @@ impl<E: Evaluator> Search<E> {
         let depth = self.depth.incremented();
         let remaining = depth.decremented().unwrap_or_default();
         let mut negamax = Negamax::<E>::new();
-        let (best_move, score) = self
+        let principal = self
             .board
             .legal_moves()
             .into_iter()
@@ -58,26 +58,17 @@ impl<E: Evaluator> Search<E> {
                     .make_move(chess_move)
                     .map(|child| (chess_move, child))
             })
-            .fold(
-                (None, -Score::INFINITY),
-                |(best_move, alpha), (chess_move, child)| {
-                    let window = Window::FULL.below(-alpha);
-                    let score = -negamax.score(&child, remaining, 1, window);
-                    if score > alpha {
-                        (Some(chess_move), score)
-                    } else {
-                        (best_move, alpha)
-                    }
-                },
-            );
+            .fold(Principal::NONE, |principal, (chess_move, child)| {
+                let score = -negamax.score(&child, remaining, 1, principal.window());
+                principal.improved(chess_move, score)
+            });
         Search {
             depth,
-            best_move,
-            score: if best_move.is_some() {
-                score
-            } else {
-                Negamax::<E>::terminal(&self.board, 0)
-            },
+            best_move: principal.chess_move(),
+            score: principal.chess_move().map_or_else(
+                || Negamax::<E>::terminal(&self.board, 0),
+                |_| principal.score(),
+            ),
             nodes: self.nodes + negamax.nodes(),
             ..self
         }

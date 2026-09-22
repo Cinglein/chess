@@ -1,4 +1,4 @@
-use syn::{Item, ItemFn};
+use syn::{Item, ItemFn, ItemMod};
 
 use crate::source_file::SourceFile;
 
@@ -29,17 +29,21 @@ impl NoFreeFns {
         items
             .iter()
             .flat_map(|item| match item {
-                Item::Fn(function) if !Self::is_exempt(function) => {
-                    let name = function.sig.ident.to_string();
-                    vec![(function.sig.ident.span().start().line, name)]
-                }
-                Item::Mod(module) => module
-                    .content
-                    .as_ref()
-                    .map_or_else(Vec::new, |(_, items)| Self::free_fns(items)),
+                Item::Fn(function) if !Self::is_exempt(function) => vec![(
+                    function.sig.ident.span().start().line,
+                    function.sig.ident.to_string(),
+                )],
+                Item::Mod(module) => Self::nested(module),
                 _ => Vec::new(),
             })
             .collect()
+    }
+
+    fn nested(module: &ItemMod) -> Vec<(usize, String)> {
+        module
+            .content
+            .as_ref()
+            .map_or_else(Vec::new, |(_, items)| Self::free_fns(items))
     }
 
     fn is_exempt(function: &ItemFn) -> bool {

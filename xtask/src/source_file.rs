@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::Path;
 
+use syn::ItemMod;
+
 use crate::workspace::Workspace;
 
 pub struct SourceFile {
@@ -31,5 +33,14 @@ impl SourceFile {
 
     pub fn syntax(&self) -> &syn::File {
         &self.syntax
+    }
+
+    pub fn is_test_module(module: &ItemMod) -> bool {
+        module.attrs.iter().any(|attribute| {
+            attribute.path().is_ident("cfg")
+                && attribute
+                    .parse_args::<syn::Ident>()
+                    .is_ok_and(|ident| ident == "test")
+        })
     }
 }

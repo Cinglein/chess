@@ -23,14 +23,7 @@ impl CastlingRights {
         let mut table = [CastlingRights::NONE; Square::COUNT];
         let mut squares = Square::VARIANTS;
         while let [square, rest @ ..] = squares {
-            let mut rights = CastlingRight::VARIANTS;
-            while let [right, tail @ ..] = rights {
-                if CastlingSquares::new(*right).footprint().contains(*square) {
-                    let (revoked, right) = (table[*square as usize].0, *right);
-                    table[*square as usize] = CastlingRights(enum_set_union!(revoked, right));
-                }
-                rights = tail;
-            }
+            table[*square as usize] = Self::revoked_by(*square);
             squares = rest;
         }
         EnumMap::from_array(table)
@@ -49,6 +42,19 @@ impl CastlingRights {
     #[must_use]
     pub fn without_touching(self, square: Square) -> CastlingRights {
         CastlingRights(self.0.difference(Self::REVOKED_BY[square].0))
+    }
+
+    const fn revoked_by(square: Square) -> CastlingRights {
+        let mut revoked: EnumSet<CastlingRight> = EnumSet::empty();
+        let mut rights = CastlingRight::VARIANTS;
+        while let [right, rest @ ..] = rights {
+            if CastlingSquares::new(*right).footprint().contains(square) {
+                let right = *right;
+                revoked = enum_set_union!(revoked, right);
+            }
+            rights = rest;
+        }
+        CastlingRights(revoked)
     }
 }
 

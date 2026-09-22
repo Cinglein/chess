@@ -54,12 +54,12 @@ impl Declarations {
 
 impl<'ast> Visit<'ast> for Declarations {
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        let declares_state = item
+        if item
             .trait_
             .as_ref()
             .and_then(|(_, path, _)| path.segments.last())
-            .is_some_and(|segment| segment.ident == "State");
-        if declares_state {
+            .is_some_and(|segment| segment.ident == "State")
+        {
             self.vertices.insert(TypeName::of(&item.self_ty));
         }
         syn::visit::visit_item_impl(self, item);
@@ -71,11 +71,11 @@ impl<'ast> Visit<'ast> for Declarations {
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        let carries_data = item
+        if item
             .variants
             .iter()
-            .any(|variant| !matches!(variant.fields, Fields::Unit));
-        if carries_data {
+            .any(|variant| !matches!(variant.fields, Fields::Unit))
+        {
             self.sum_types
                 .insert(item.ident.to_string(), self.path.clone());
         }

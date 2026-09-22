@@ -38,15 +38,20 @@ impl MagicSearch {
         }
         let magic = Magic::new(self.mask, candidate, 0);
         self.table.fill(Bitboard::EMPTY);
-        self.expected.iter().all(|&(subset, attacks)| {
-            let slot = &mut self.table[magic.index(subset)];
-            if slot.is_empty() {
-                *slot = attacks;
-                true
-            } else {
-                *slot == attacks
-            }
-        })
+        let table = &mut self.table;
+        self.expected
+            .iter()
+            .all(|&(subset, attacks)| Self::fills(table, magic.index(subset), attacks))
+    }
+
+    fn fills(table: &mut [Bitboard], index: usize, attacks: Bitboard) -> bool {
+        let Some(slot) = table.get_mut(index) else {
+            return false;
+        };
+        if slot.is_empty() {
+            *slot = attacks;
+        }
+        *slot == attacks
     }
 
     fn spreads_well(&self, candidate: u64) -> bool {

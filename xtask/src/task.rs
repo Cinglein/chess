@@ -1,5 +1,6 @@
 use strum::{EnumString, VariantNames};
 
+use crate::fn_shape::FnShape;
 use crate::magic_tables::MagicTables;
 use crate::named_lifetimes::NamedLifetimes;
 use crate::no_comments::NoComments;
@@ -14,6 +15,7 @@ use crate::xor_shift::XorShift;
 #[strum(serialize_all = "kebab-case")]
 pub enum Task {
     Ci,
+    FnShape,
     Lint,
     Magics,
     NamedLifetimes,
@@ -36,6 +38,7 @@ impl Task {
         let workspace = Workspace::locate();
         match self {
             Task::Ci => Self::ci(&workspace),
+            Task::FnShape => FnShape::check(&workspace.source_files()?),
             Task::Lint => Self::lint(&workspace),
             Task::Magics => Self::magics(&workspace),
             Task::NamedLifetimes => NamedLifetimes::check(&workspace.source_files()?),
@@ -67,6 +70,7 @@ impl Task {
     fn lint(workspace: &Workspace) -> Result<(), String> {
         let files = workspace.source_files()?;
         let failures: Vec<String> = [
+            FnShape::check(&files),
             NamedLifetimes::check(&files),
             NoComments::check(&files),
             NoFreeFns::check(&files),

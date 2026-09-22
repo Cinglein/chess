@@ -128,7 +128,6 @@ impl Board {
             .piece_at(chess_move.origin())
             .filter(|piece| piece.color() == self.side_to_move)?;
         let placement = chess_move.play(self.placement)?;
-        let captured = placement.occupied().count() < self.placement.occupied().count();
         Some(Board {
             placement,
             side_to_move: !self.side_to_move,
@@ -137,7 +136,9 @@ impl Board {
                 .without_touching(chess_move.origin())
                 .without_touching(chess_move.destination()),
             en_passant_file: chess_move.en_passant_file(),
-            halfmove_clock: if piece.kind() == PieceKind::Pawn || captured {
+            halfmove_clock: if piece.kind() == PieceKind::Pawn
+                || placement.occupied().count() < self.placement.occupied().count()
+            {
                 HalfmoveClock::ZERO
             } else {
                 self.halfmove_clock.incremented()

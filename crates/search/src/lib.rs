@@ -4,6 +4,7 @@ mod bounds;
 mod depth;
 mod full_width;
 mod negamax;
+mod principal;
 mod quiescence;
 mod regime;
 mod search;

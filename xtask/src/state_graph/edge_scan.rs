@@ -36,33 +36,36 @@ impl<'scan> EdgeScan<'scan> {
     }
 
     pub fn violations(mut self, max_edges_per_vertex: usize) -> Vec<String> {
-        let mut fan_out: BTreeMap<&TypeName, BTreeSet<&String>> = BTreeMap::new();
-        let mut structural = Vec::new();
-        for ((source, target), names) in &self.edges {
-            if names.len() > 1 {
+        let duplicates = self.edges.iter().filter(|(_, names)| names.len() > 1).map(
+            |((source, target), names)| {
                 let sites: Vec<String> = names
                     .iter()
                     .map(|(name, site)| format!("{name} at {site}"))
                     .collect();
-                structural.push(format!(
+                format!(
                     "{source} -> {target} has {} edges, at most one allowed: {}",
                     names.len(),
                     sites.join(", ")
-                ));
-            }
-            fan_out.entry(source).or_default().extend(names.keys());
-        }
-        structural.extend(
-            fan_out
-                .into_iter()
-                .filter(|(_, names)| names.len() > max_edges_per_vertex)
-                .map(|(source, names)| {
-                    format!(
-                        "{source} has {} edges leaving it, at most {max_edges_per_vertex} allowed",
-                        names.len()
-                    )
-                }),
+                )
+            },
         );
+        let fan_out = self.edges.iter().fold(
+            BTreeMap::<&TypeName, BTreeSet<&String>>::new(),
+            |mut fan_out, ((source, _), names)| {
+                fan_out.entry(source).or_default().extend(names.keys());
+                fan_out
+            },
+        );
+        let crowded = fan_out
+            .into_iter()
+            .filter(|(_, names)| names.len() > max_edges_per_vertex)
+            .map(|(source, names)| {
+                format!(
+                    "{source} has {} edges leaving it, at most {max_edges_per_vertex} allowed",
+                    names.len()
+                )
+            });
+        let structural: Vec<String> = duplicates.chain(crowded).collect();
         self.violations.extend(structural);
         self.violations
     }
@@ -75,23 +78,20 @@ impl<'scan> EdgeScan<'scan> {
                 "{site} returns a tuple holding a vertex; return the vertex"
             ));
         }
-        match (function.sig.receiver(), shape.target().cloned()) {
-            (None, Some(target)) => {
-                let Some(parameter) = shape.vertex_parameters().first().cloned() else {
-                    return;
-                };
-                if context.in_trait() {
-                    self.check_edge(context, function, &shape, Some(parameter), target);
-                } else {
-                    self.violations.push(format!(
-                        "{site} takes a vertex and returns {target}; make it a method on its source"
-                    ));
-                }
+        match (function.sig.receiver(), shape.target()) {
+            (None, Some(_)) if context.in_trait() && !shape.vertex_parameters().is_empty() => {
+                let source = shape.vertex_parameters().first().cloned();
+                self.check_edge(context, function, &shape, source);
+            }
+            (None, Some(target)) if !shape.vertex_parameters().is_empty() => {
+                self.violations.push(format!(
+                    "{site} takes a vertex and returns {target}; make it a method on its source"
+                ));
             }
             (Some(receiver), _) if receiver.reference.is_some() => {
                 self.check_view(context, receiver, &shape);
             }
-            (Some(_), Some(target)) => {
+            (Some(_), Some(_)) => {
                 let source = if context.is_vertex() {
                     Some(context.self_type().clone())
                 } else if context.in_trait() {
@@ -99,7 +99,7 @@ impl<'scan> EdgeScan<'scan> {
                 } else {
                     None
                 };
-                self.check_edge(context, function, &shape, source, target);
+                self.check_edge(context, function, &shape, source);
             }
             _ => {}
         }
@@ -111,9 +111,11 @@ impl<'scan> EdgeScan<'scan> {
         function: &ImplItemFn,
         shape: &FunctionShape,
         source: Option<TypeName>,
-        target: TypeName,
     ) {
         let site = shape.site();
+        let Some(target) = shape.target().cloned() else {
+            return;
+        };
         match source {
             None => self.violations.push(format!(
                 "{site} returns vertex {target} from non-vertex {}; declare the vertex or move the edge",

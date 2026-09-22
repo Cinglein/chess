@@ -8,6 +8,8 @@ use itertools::{Itertools, process_results};
 
 use crate::file::File;
 use crate::piece::Piece;
+use crate::rank::Rank;
+use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RankPlacement(EnumMap<File, Option<Piece>>);
@@ -17,10 +19,10 @@ impl RankPlacement {
         RankPlacement(squares)
     }
 
-    pub fn pieces(self) -> impl Iterator<Item = (File, Piece)> {
+    pub fn pieces(self, rank: Rank) -> impl Iterator<Item = (Square, Piece)> {
         self.0
             .into_iter()
-            .filter_map(|(file, piece)| piece.map(|piece| (file, piece)))
+            .filter_map(move |(file, piece)| piece.map(|piece| (Square::new(file, rank), piece)))
     }
 
     fn squares_for(letter: char) -> impl Iterator<Item = Result<Option<Piece>, FenError>> {

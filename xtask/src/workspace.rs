@@ -43,13 +43,6 @@ impl Workspace {
             .collect()
     }
 
-    fn rust_files(&self) -> Result<Vec<PathBuf>, String> {
-        let mut files = Vec::new();
-        Self::collect_rust_files(&self.root, &mut files)?;
-        files.sort();
-        Ok(files)
-    }
-
     pub fn relative(&self, path: &Path) -> String {
         path.strip_prefix(&self.root)
             .unwrap_or(path)
@@ -57,16 +50,20 @@ impl Workspace {
             .to_string()
     }
 
+    fn rust_files(&self) -> Result<Vec<PathBuf>, String> {
+        let mut files = Vec::new();
+        Self::collect_rust_files(&self.root, &mut files)?;
+        files.sort();
+        Ok(files)
+    }
+
     fn collect_rust_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
         let entries = fs::read_dir(dir).map_err(|error| format!("{}: {error}", dir.display()))?;
         for entry in entries {
             let entry = entry.map_err(|error| format!("{}: {error}", dir.display()))?;
             let path = entry.path();
-            if path.is_dir() {
-                let name = entry.file_name();
-                if name != "target" && name != ".git" {
-                    Self::collect_rust_files(&path, out)?;
-                }
+            if path.is_dir() && entry.file_name() != "target" && entry.file_name() != ".git" {
+                Self::collect_rust_files(&path, out)?;
             } else if path.extension().is_some_and(|extension| extension == "rs") {
                 out.push(path);
             }
