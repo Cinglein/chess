@@ -75,16 +75,32 @@ impl<'scan> EdgeScan<'scan> {
                 "{site} returns a tuple holding a vertex; return the vertex"
             ));
         }
-        match (function.sig.receiver(), shape.target()) {
-            (None, Some(target)) if !shape.vertex_parameters().is_empty() => {
-                self.violations.push(format!(
-                    "{site} takes a vertex and returns {target}; make it a method on its source"
-                ));
+        match (function.sig.receiver(), shape.target().cloned()) {
+            (None, Some(target)) => {
+                let Some(parameter) = shape.vertex_parameters().first().cloned() else {
+                    return;
+                };
+                if context.in_trait() {
+                    self.check_edge(context, function, &shape, Some(parameter), target);
+                } else {
+                    self.violations.push(format!(
+                        "{site} takes a vertex and returns {target}; make it a method on its source"
+                    ));
+                }
             }
             (Some(receiver), _) if receiver.reference.is_some() => {
                 self.check_view(context, receiver, &shape);
             }
-            (Some(_), Some(target)) => self.check_edge(context, function, &shape, target.clone()),
+            (Some(_), Some(target)) => {
+                let source = if context.is_vertex() {
+                    Some(context.self_type().clone())
+                } else if context.in_trait() {
+                    shape.vertex_parameters().first().cloned()
+                } else {
+                    None
+                };
+                self.check_edge(context, function, &shape, source, target);
+            }
             _ => {}
         }
     }
@@ -94,16 +110,10 @@ impl<'scan> EdgeScan<'scan> {
         context: &ImplContext,
         function: &ImplItemFn,
         shape: &FunctionShape,
+        source: Option<TypeName>,
         target: TypeName,
     ) {
         let site = shape.site();
-        let source = if context.is_vertex() {
-            Some(context.self_type().clone())
-        } else if context.in_trait() {
-            shape.vertex_parameters().first().cloned()
-        } else {
-            None
-        };
         match source {
             None => self.violations.push(format!(
                 "{site} returns vertex {target} from non-vertex {}; declare the vertex or move the edge",

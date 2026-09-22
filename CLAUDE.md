@@ -8,11 +8,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/fen`: `no_std` FEN notation as a trait; `board` implements it for its types.
 - `crates/eval`: `no_std` evaluation: the `Evaluator` trait, `Score`, and `PieceSquareTables`;
   the trained network becomes a second implementor.
+- `crates/search`: `no_std` search: `Search<E: Evaluator>` deepens one ply per `deepen` edge
+  with alpha-beta negamax; `Depth` newtype.
 - `crates/engine`: `std` orchestration: threads, time management, table allocation.
 - `crates/tui`: terminal UI binary for playing against the engine.
-- Crates are `no_std` unless the feature they exist for needs `std`. Planned: `search`
-  (`no_std`), `uci` (`no_std` message types), `chess` binary, `web` (Dioxus, wasm), `arena`,
-  `datagen`, `trainer`. Crates are added when their milestone starts.
+- Crates are `no_std` unless the feature they exist for needs `std`. Planned: `uci` (`no_std`
+  message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
+  are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`, `test-budget`, and
   `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
