@@ -5,6 +5,7 @@ use eval::{Evaluator, Score};
 
 use crate::depth::Depth;
 use crate::negamax::Negamax;
+use crate::window::Window;
 
 pub struct Search<E: Evaluator> {
     board: Board,
@@ -60,7 +61,8 @@ impl<E: Evaluator> Search<E> {
             .fold(
                 (None, -Score::INFINITY),
                 |(best_move, alpha), (chess_move, child)| {
-                    let score = -negamax.score(&child, remaining, 1, -Score::INFINITY, -alpha);
+                    let window = Window::FULL.below(-alpha);
+                    let score = -negamax.score(&child, remaining, 1, window);
                     if score > alpha {
                         (Some(chess_move), score)
                     } else {
