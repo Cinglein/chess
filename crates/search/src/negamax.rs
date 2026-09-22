@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 use core::ops::ControlFlow;
 
-use board::Board;
+use board::{Board, MoveKind};
 use eval::{Evaluator, Score};
 
 use crate::depth::Depth;
@@ -32,18 +32,33 @@ impl<E: Evaluator> Negamax<E> {
         beta: Score,
     ) -> Score {
         self.nodes += 1;
-        let Some(remaining) = depth.decremented() else {
-            return E::evaluate(board);
+        let remaining = depth.decremented();
+        let quiescent = remaining.is_none();
+        let evading = quiescent && board.in_check();
+        let stand_pat = if quiescent && !evading {
+            E::evaluate(board)
+        } else {
+            -Score::INFINITY
         };
+        if stand_pat >= beta {
+            return stand_pat;
+        }
         let moves = board.legal_moves();
         if moves.is_empty() {
             return Self::terminal(board, ply);
         }
         let searched = moves
             .into_iter()
+            .filter(|chess_move| !quiescent || evading || chess_move.captures(board.placement()))
             .filter_map(|chess_move| board.make_move(chess_move))
-            .try_fold((alpha, -Score::INFINITY), |(alpha, best), child| {
-                let score = -self.score(&child, remaining, ply.saturating_add(1), -beta, -alpha);
+            .try_fold((alpha.max(stand_pat), stand_pat), |(alpha, best), child| {
+                let score = -self.score(
+                    &child,
+                    remaining.unwrap_or_default(),
+                    ply.saturating_add(1),
+                    -beta,
+                    -alpha,
+                );
                 let best = best.max(score);
                 if score >= beta {
                     ControlFlow::Break(best)

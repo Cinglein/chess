@@ -104,6 +104,7 @@ mod tests {
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
+    const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
 
     #[test]
     fn a_mate_in_one_is_found_at_depth_two() {
@@ -112,6 +113,15 @@ mod tests {
         let best = search.best_move().map(|chess_move| chess_move.to_string());
         assert_eq!(best.as_deref(), Some("a1a8"));
         assert_eq!(search.score(), Score::mate_in(1));
+    }
+
+    #[test]
+    fn a_defended_pawn_is_not_taken_at_depth_one_because_the_recapture_is_seen() {
+        let board: Board = DEFENDED_PAWN.parse().unwrap();
+        let search = Search::<PieceSquareTables>::from(board).deepen();
+        let best = search.best_move().map(|chess_move| chess_move.to_string());
+        assert_ne!(best.as_deref(), Some("d1d5"));
+        assert!(search.score() > Score::DRAW);
     }
 
     #[test]

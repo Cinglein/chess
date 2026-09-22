@@ -9,7 +9,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/eval`: `no_std` evaluation: the `Evaluator` trait, `Score`, and `PieceSquareTables`;
   the trained network becomes a second implementor.
 - `crates/search`: `no_std` search: `Search<E: Evaluator>` deepens one ply per `deepen` edge
-  with alpha-beta negamax; `Depth` newtype.
+  with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
+  newtype.
 - `crates/engine`: `std` orchestration: threads, time management, table allocation.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `uci` (`no_std`

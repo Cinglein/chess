@@ -23,6 +23,10 @@ impl MoveKind for EnPassant {
         self.origin
     }
 
+    fn captures(&self, _: &PiecePlacement) -> bool {
+        true
+    }
+
     fn destination(&self) -> Square {
         self.destination
     }

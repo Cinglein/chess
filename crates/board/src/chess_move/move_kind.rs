@@ -13,6 +13,10 @@ pub trait MoveKind {
 
     fn play(self, placement: PiecePlacement) -> Option<PiecePlacement>;
 
+    fn captures(&self, placement: &PiecePlacement) -> bool {
+        placement.piece_at(self.destination()).is_some()
+    }
+
     fn en_passant_file(&self) -> Option<File> {
         None
     }
