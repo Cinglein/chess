@@ -2,20 +2,23 @@ use core::ops::ControlFlow;
 
 use eval::Score;
 
+use crate::bound::Bound;
+use crate::lower::Lower;
+use crate::upper::Upper;
 use crate::window::Window;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Bounds {
-    alpha: Score,
-    beta: Score,
+    lower: Bound<Lower>,
+    upper: Bound<Upper>,
     best: Score,
 }
 
 impl Bounds {
     pub(crate) fn new(window: Window, floor: Score) -> Bounds {
         Bounds {
-            alpha: window.alpha().max(floor),
-            beta: window.beta(),
+            lower: window.lower().raised(floor),
+            upper: window.upper(),
             best: floor,
         }
     }
@@ -24,17 +27,17 @@ impl Bounds {
         self.best
     }
 
-    pub(crate) const fn child_window(self) -> Window {
-        Window::new(self.beta.negated(), self.alpha.negated())
+    pub(crate) fn child_window(self) -> Window {
+        Window::new(-self.upper, -self.lower)
     }
 
     pub(crate) fn admit(self, score: Score) -> ControlFlow<Score, Bounds> {
         let best = self.best.max(score);
-        if score >= self.beta {
+        if self.upper.excludes(score) {
             ControlFlow::Break(best)
         } else {
             ControlFlow::Continue(Bounds {
-                alpha: self.alpha.max(score),
+                lower: self.lower.raised(score),
                 best,
                 ..self
             })

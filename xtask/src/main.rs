@@ -1,7 +1,11 @@
+mod ci;
+mod distinct_signatures;
 mod fn_shape;
 mod hex_literal;
+mod lint;
 mod magic_search;
 mod magic_tables;
+mod magics;
 mod named_lifetimes;
 mod no_comments;
 mod no_free_fns;
@@ -10,6 +14,7 @@ mod source_file;
 mod state_graph;
 mod task;
 mod test_budget;
+mod wasm;
 mod workspace;
 mod xor_shift;
 

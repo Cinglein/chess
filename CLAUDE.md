@@ -17,8 +17,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `fn-shape`, `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`,
-  `test-budget`, and `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
+  and runs `distinct-signatures`, `fn-shape`, `named-lifetimes`, `no-comments`, `no-free-fns`,
+  `private-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
 
 ## Rules
 
@@ -68,6 +68,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   two values that travel together are a struct. At most 4 parameters after the receiver. Control
   flow nests at most two deep, counting `if`, `match` arms, loops, and closure bodies, with
   `else if` chains flat. `cargo xtask fn-shape` enforces it.
+- No two non-`pub` functions on one type share a signature (generics, receiver, parameter types,
+  return type). Two such helpers mean a value is missing its type: `alpha` and `beta` both returning
+  `Score` became `Bound<Lower>` and `Bound<Upper>`. `cargo xtask distinct-signatures` enforces it.
 - Invariants live as high as possible: a type that cannot represent the invalid state, else a
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most

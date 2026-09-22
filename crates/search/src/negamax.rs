@@ -53,7 +53,7 @@ impl<E: Evaluator> Negamax<E> {
         window: Window,
     ) -> Score {
         let floor = R::floor::<E>(board);
-        if window.cuts(floor) {
+        if window.upper().excludes(floor) {
             return floor;
         }
         let moves = board.legal_moves();

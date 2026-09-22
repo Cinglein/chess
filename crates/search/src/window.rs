@@ -1,34 +1,32 @@
-use eval::Score;
+use crate::bound::Bound;
+use crate::lower::Lower;
+use crate::upper::Upper;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Window {
-    alpha: Score,
-    beta: Score,
+    lower: Bound<Lower>,
+    upper: Bound<Upper>,
 }
 
 impl Window {
     pub(crate) const FULL: Window = Window {
-        alpha: Score::INFINITY.negated(),
-        beta: Score::INFINITY,
+        lower: Bound::LOWEST,
+        upper: Bound::HIGHEST,
     };
 
-    pub(crate) const fn new(alpha: Score, beta: Score) -> Window {
-        Window { alpha, beta }
+    pub(crate) const fn new(lower: Bound<Lower>, upper: Bound<Upper>) -> Window {
+        Window { lower, upper }
     }
 
-    pub(crate) const fn alpha(self) -> Score {
-        self.alpha
+    pub(crate) const fn lower(self) -> Bound<Lower> {
+        self.lower
     }
 
-    pub(crate) const fn beta(self) -> Score {
-        self.beta
+    pub(crate) const fn upper(self) -> Bound<Upper> {
+        self.upper
     }
 
-    pub(crate) const fn below(self, beta: Score) -> Window {
-        Window { beta, ..self }
-    }
-
-    pub(crate) fn cuts(self, score: Score) -> bool {
-        score >= self.beta
+    pub(crate) const fn below(self, upper: Bound<Upper>) -> Window {
+        Window { upper, ..self }
     }
 }

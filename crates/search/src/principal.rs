@@ -1,6 +1,8 @@
 use board::ChessMove;
 use eval::Score;
 
+use crate::bound::Bound;
+use crate::lower::Lower;
 use crate::window::Window;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -23,8 +25,8 @@ impl Principal {
         self.score
     }
 
-    pub(crate) const fn window(self) -> Window {
-        Window::FULL.below(self.score.negated())
+    pub(crate) fn window(self) -> Window {
+        Window::FULL.below(-Bound::<Lower>::new(self.score))
     }
 
     pub(crate) fn improved(self, chess_move: ChessMove, score: Score) -> Principal {

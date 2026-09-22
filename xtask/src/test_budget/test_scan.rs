@@ -35,33 +35,17 @@ impl<'scan> TestScan<'scan> {
     fn test_violations(&self, function: &ItemFn) -> Vec<String> {
         let name = &function.sig.ident;
         let line = name.span().start().line;
-        let counts = TestCounts::of(&function.block);
-        [
-            (
-                "assertions",
-                counts.assertions(),
-                TestBudget::MAX_ASSERTIONS_PER_TEST,
-            ),
-            (
-                "body lines",
-                Self::line_count(function.block.span()).saturating_sub(2),
-                TestBudget::MAX_LINES_PER_TEST,
-            ),
-            (
-                "literals",
-                counts.literals(),
-                TestBudget::MAX_LITERALS_PER_TEST,
-            ),
-        ]
-        .into_iter()
-        .filter(|(_, actual, limit)| actual > limit)
-        .map(|(kind, actual, limit)| {
-            format!(
-                "{}:{line}: fn {name} has {actual} {kind}, at most {limit} allowed",
-                self.path
-            )
-        })
-        .collect()
+        TestCounts::of(&function.block)
+            .measurements()
+            .into_iter()
+            .filter(|(_, actual, limit)| actual > limit)
+            .map(|(kind, actual, limit)| {
+                format!(
+                    "{}:{line}: fn {name} has {actual} {kind}, at most {limit} allowed",
+                    self.path
+                )
+            })
+            .collect()
     }
 
     fn line_count(span: Span) -> usize {

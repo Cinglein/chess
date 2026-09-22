@@ -43,8 +43,7 @@ impl TestBudget {
             .violations
             .iter()
             .cloned()
-            .chain(self.average_violation())
-            .chain(self.percent_violation())
+            .chain(self.global_violations())
             .collect();
         if violations.is_empty() {
             println!(
@@ -57,26 +56,30 @@ impl TestBudget {
         }
     }
 
-    fn average_violation(&self) -> Option<String> {
-        (self.tests > self.files * Self::MAX_AVERAGE_TESTS_PER_FILE).then(|| {
-            format!(
-                "{} tests across {} files, at most {} per file on average allowed",
-                self.tests,
-                self.files,
-                Self::MAX_AVERAGE_TESTS_PER_FILE
-            )
-        })
-    }
-
-    fn percent_violation(&self) -> Option<String> {
-        (self.test_lines * 100 > self.lines * Self::MAX_TEST_LINE_PERCENT).then(|| {
-            format!(
-                "{} of {} lines are test code, at most {}% allowed",
-                self.test_lines,
-                self.lines,
-                Self::MAX_TEST_LINE_PERCENT
-            )
-        })
+    fn global_violations(&self) -> impl Iterator<Item = String> {
+        [
+            (
+                self.tests > self.files * Self::MAX_AVERAGE_TESTS_PER_FILE,
+                format!(
+                    "{} tests across {} files, at most {} per file on average allowed",
+                    self.tests,
+                    self.files,
+                    Self::MAX_AVERAGE_TESTS_PER_FILE
+                ),
+            ),
+            (
+                self.test_lines * 100 > self.lines * Self::MAX_TEST_LINE_PERCENT,
+                format!(
+                    "{} of {} lines are test code, at most {}% allowed",
+                    self.test_lines,
+                    self.lines,
+                    Self::MAX_TEST_LINE_PERCENT
+                ),
+            ),
+        ]
+        .into_iter()
+        .filter(|(exceeded, _)| *exceeded)
+        .map(|(_, message)| message)
     }
 }
 
