@@ -1,0 +1,15 @@
+[package]
+name = "search"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+board = { version = "0.1.0", path = "../board" }
+derive_more = { version = "2", default-features = false, features = ["display"] }
+eval = { version = "0.1.0", path = "../eval" }
+
+[lints]
+workspace = true

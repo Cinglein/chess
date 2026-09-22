@@ -10,6 +10,7 @@ use crate::color::Color;
 use crate::file::File;
 use crate::fullmove_number::FullmoveNumber;
 use crate::halfmove_clock::HalfmoveClock;
+use crate::king_safety::KingSafety;
 use crate::leaper::{BlackPawn, WhitePawn};
 use crate::move_generator::MoveGenerator;
 use crate::piece_kind::PieceKind;
@@ -87,6 +88,11 @@ impl Board {
             ^ ZobristKeys::KEYS.castling(self.castling_rights)
             ^ ZobristKeys::KEYS.en_passant(self.en_passant_file)
             ^ ZobristKeys::KEYS.side_to_move(self.side_to_move)
+    }
+
+    #[must_use]
+    pub fn in_check(&self) -> bool {
+        KingSafety::new(&self.placement, self.side_to_move).is_some_and(|safety| safety.in_check())
     }
 
     #[must_use]

@@ -26,7 +26,7 @@ pub enum Task {
 }
 
 impl Task {
-    const WASM_CRATES: &[&str] = &["board", "eval", "fen"];
+    const WASM_CRATES: &[&str] = &["board", "eval", "fen", "search"];
 
     pub fn usage() -> String {
         format!("usage: cargo xtask <{}>", Self::VARIANTS.join("|"))
