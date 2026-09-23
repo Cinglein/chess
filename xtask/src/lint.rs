@@ -2,6 +2,7 @@ use crate::const_shape::ConstShape;
 use crate::distinct_signatures::DistinctSignatures;
 use crate::failure::Failure;
 use crate::fn_shape::FnShape;
+use crate::literal_names::LiteralNames;
 use crate::manual_iteration::ManualIteration;
 use crate::named_lifetimes::NamedLifetimes;
 use crate::no_comments::NoComments;
@@ -19,17 +20,18 @@ impl Lint {
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
         let files = workspace.source_files()?;
         let reports: Vec<Report> = [
-            ConstShape::check(&files),
-            DistinctSignatures::check(&files),
-            FnShape::check(&files),
-            ManualIteration::check(&files),
-            NamedLifetimes::check(&files),
-            NoComments::check(&files),
-            NoFreeFns::check(&files),
-            PrivateFns::check(&files),
-            StateGraph::check(&files),
-            TestBudget::check(&files),
-            TypeShape::check(&files),
+            ConstShape::report(&files),
+            DistinctSignatures::report(&files),
+            FnShape::report(&files),
+            LiteralNames::report(&files),
+            ManualIteration::report(&files),
+            NamedLifetimes::report(&files),
+            NoComments::report(&files),
+            NoFreeFns::report(&files),
+            PrivateFns::report(&files),
+            StateGraph::report(&files),
+            TestBudget::report(&files),
+            TypeShape::report(&files),
         ]
         .into_iter()
         .filter(|report| !report.is_clean())

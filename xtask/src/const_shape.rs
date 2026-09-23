@@ -19,7 +19,7 @@ impl ConstShape {
         "crates/board/src/slider/magic.rs",
     ];
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "casts live in const fns or boundary files, and const loops walk slices",
             files.iter().flat_map(Self::violations).collect(),
@@ -158,7 +158,7 @@ impl Table {
     #[test]
     fn flags_counter_loops_in_const_and_casts_outside_const_or_boundary_files() {
         let file = SourceFile::parse("table.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ConstShape::check(core::slice::from_ref(&file)).to_string();
+        let report = ConstShape::report(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

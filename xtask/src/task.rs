@@ -6,6 +6,7 @@ use crate::distinct_signatures::DistinctSignatures;
 use crate::failure::Failure;
 use crate::fn_shape::FnShape;
 use crate::lint::Lint;
+use crate::literal_names::LiteralNames;
 use crate::magics::Magics;
 use crate::manual_iteration::ManualIteration;
 use crate::named_lifetimes::NamedLifetimes;
@@ -26,6 +27,7 @@ pub enum Task {
     DistinctSignatures,
     FnShape,
     Lint,
+    LiteralNames,
     Magics,
     ManualIteration,
     NamedLifetimes,
@@ -47,21 +49,22 @@ impl Task {
         let workspace = Workspace::locate();
         match self {
             Task::Ci => Ci::run(&workspace),
-            Task::ConstShape => ConstShape::check(&workspace.source_files()?).verdict(),
+            Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
             Task::DistinctSignatures => {
-                DistinctSignatures::check(&workspace.source_files()?).verdict()
+                DistinctSignatures::report(&workspace.source_files()?).verdict()
             }
-            Task::FnShape => FnShape::check(&workspace.source_files()?).verdict(),
+            Task::FnShape => FnShape::report(&workspace.source_files()?).verdict(),
             Task::Lint => Lint::run(&workspace),
+            Task::LiteralNames => LiteralNames::report(&workspace.source_files()?).verdict(),
             Task::Magics => Magics::run(&workspace),
-            Task::ManualIteration => ManualIteration::check(&workspace.source_files()?).verdict(),
-            Task::NamedLifetimes => NamedLifetimes::check(&workspace.source_files()?).verdict(),
-            Task::NoComments => NoComments::check(&workspace.source_files()?).verdict(),
-            Task::NoFreeFns => NoFreeFns::check(&workspace.source_files()?).verdict(),
-            Task::PrivateFns => PrivateFns::check(&workspace.source_files()?).verdict(),
-            Task::StateGraph => StateGraph::check(&workspace.source_files()?).verdict(),
-            Task::TestBudget => TestBudget::check(&workspace.source_files()?).verdict(),
-            Task::TypeShape => TypeShape::check(&workspace.source_files()?).verdict(),
+            Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
+            Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
+            Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
+            Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
+            Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
+            Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
+            Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
+            Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace),
         }
     }

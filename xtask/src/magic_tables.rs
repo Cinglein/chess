@@ -38,7 +38,7 @@ impl MagicTables {
     }
 
     fn find_all<S: Slider>(rng: &mut XorShift) -> EnumMap<Square, u64> {
-        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).run(rng))
+        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).find_multiplier(rng))
     }
 
     fn fmt_table(

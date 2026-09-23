@@ -10,7 +10,7 @@ pub enum Returns {
 }
 
 impl Returns {
-    pub fn of(output: &ReturnType, vertex: impl Fn(&Type) -> Option<TypeName>) -> Returns {
+    pub fn classify(output: &ReturnType, vertex: impl Fn(&Type) -> Option<TypeName>) -> Returns {
         let ReturnType::Type(_, ty) = output else {
             return Returns::Other;
         };

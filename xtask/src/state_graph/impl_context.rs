@@ -11,8 +11,8 @@ pub struct ImplContext {
 }
 
 impl ImplContext {
-    pub fn of(item: &ItemImpl, declarations: &Declarations) -> ImplContext {
-        let self_type = declarations.resolve(TypeName::of(&item.self_ty));
+    pub fn describe(item: &ItemImpl, declarations: &Declarations) -> ImplContext {
+        let self_type = declarations.resolve(TypeName::from_type(&item.self_ty));
         let trait_name = item
             .trait_
             .as_ref()

@@ -11,7 +11,7 @@ pub struct NamedLifetimes;
 impl NamedLifetimes {
     const MIN_NAME_LENGTH: usize = 2;
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "lifetimes are named with a word, never a letter",
             files

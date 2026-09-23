@@ -14,7 +14,7 @@ use crate::violation::Violation;
 pub struct TypeShape;
 
 impl TypeShape {
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "types carry their meaning: no bool fields, no tuples in signatures, no String errors",
             files.iter().flat_map(Self::violations).collect(),
@@ -144,7 +144,7 @@ impl Iterator for Flags { type Item = u8; fn size_hint(&self) -> (usize, Option<
     #[test]
     fn flags_bool_fields_tuples_and_string_errors_outside_trait_impls() {
         let file = SourceFile::parse("flags.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = TypeShape::check(core::slice::from_ref(&file)).to_string();
+        let report = TypeShape::report(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)) && !report.contains(":8:"),
             "{report}"

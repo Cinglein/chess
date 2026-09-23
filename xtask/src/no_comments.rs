@@ -8,7 +8,7 @@ use crate::violation::Violation;
 pub struct NoComments;
 
 impl NoComments {
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "comments are not allowed in this repository",
             files

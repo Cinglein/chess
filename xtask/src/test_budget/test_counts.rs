@@ -39,7 +39,7 @@ impl TestCounts {
         "prop_assert_ne",
     ];
 
-    pub(super) fn of(block: &Block) -> Self {
+    pub(super) fn tally(block: &Block) -> Self {
         let span = block.span();
         let mut counts = TestCounts {
             body_lines: (span.end().line - span.start().line).saturating_sub(1),

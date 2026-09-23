@@ -17,9 +17,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `manual-iteration`,
-  `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`, `state-graph`, `test-budget`,
-  and `type-shape`, `cargo xtask wasm`, `cargo xtask magics`). Lints return a `Report` of
+  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
+  `manual-iteration`, `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`,
+  `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
@@ -66,6 +66,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   the only exceptions are `main` and `#[test]` functions. `cargo xtask no-free-fns` enforces it.
 - Lifetimes are named with a word (`'board`, `'scan`, `'ast`), never a single letter.
   `cargo xtask named-lifetimes` enforces it; `'_` and `'static` are exempt.
+- Function names say what the function does. No name under three letters and none from the
+  vague list (`of`, `with`, `get`, `set`, `make`, `check`, `build`, `handle`, `process`,
+  `helper`, `data`, `value`, and the like); `new` is the one conventional exception, and trait
+  impl methods take their name from the trait. `cargo xtask literal-names` enforces it.
 - At most 4 private functions per type, counted across all its inherent impl blocks; trait impl
   methods do not count. More than that means a second type is hiding inside the first.
   `cargo xtask private-fns` enforces it.

@@ -31,7 +31,7 @@ impl ManualIteration {
     ];
     const ACCUMULATORS: [&str; 4] = ["push", "extend", "insert", "push_str"];
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "iterators are driven by combinators, not by hand",
             files.iter().flat_map(Self::violations).collect(),
@@ -145,7 +145,7 @@ impl W {
     #[test]
     fn flags_mutable_iterator_locals_and_accumulating_loops() {
         let file = SourceFile::parse("walk.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ManualIteration::check(core::slice::from_ref(&file)).to_string();
+        let report = ManualIteration::report(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)) && !report.contains(":7:"),
             "{report}"

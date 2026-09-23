@@ -85,7 +85,7 @@ impl<'scan> EdgeScan<'scan> {
     }
 
     fn check_function(&mut self, context: &ImplContext, function: &ImplItemFn) {
-        let shape = FunctionShape::of(&self.path, function, context, self.declarations);
+        let shape = FunctionShape::describe(&self.path, function, context, self.declarations);
         if shape.returns().holds_vertex_in_tuple() {
             self.violations.push(Violation::new(
                 shape.site().clone(),
@@ -187,7 +187,7 @@ impl<'scan> EdgeScan<'scan> {
 
 impl<'ast> Visit<'ast> for EdgeScan<'_> {
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        let context = ImplContext::of(item, self.declarations);
+        let context = ImplContext::describe(item, self.declarations);
         for function in item.items.iter().filter_map(|item| match item {
             ImplItem::Fn(function) => Some(function),
             _ => None,

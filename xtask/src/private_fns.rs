@@ -14,7 +14,7 @@ pub struct PrivateFns;
 impl PrivateFns {
     const MAX_PRIVATE_FNS_PER_TYPE: usize = 4;
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "too many private fns; a type's logic belongs in its interface or in more types",
             files

@@ -33,7 +33,7 @@ impl Bitboard {
         let mut squares = Bitboard::EMPTY;
         let mut ranks = Rank::VARIANTS;
         while let [rank, rest @ ..] = ranks {
-            squares = squares.with(Square::new(file, *rank));
+            squares = squares.including(Square::new(file, *rank));
             ranks = rest;
         }
         squares
@@ -44,7 +44,7 @@ impl Bitboard {
         let mut squares = Bitboard::EMPTY;
         let mut files = File::VARIANTS;
         while let [file, rest @ ..] = files {
-            squares = squares.with(Square::new(*file, rank));
+            squares = squares.including(Square::new(*file, rank));
             files = rest;
         }
         squares
@@ -71,12 +71,12 @@ impl Bitboard {
     }
 
     #[must_use]
-    pub const fn with(self, square: Square) -> Bitboard {
+    pub const fn including(self, square: Square) -> Bitboard {
         Bitboard(self.0 | Self::from_square(square).0)
     }
 
     #[must_use]
-    pub const fn without(self, square: Square) -> Bitboard {
+    pub const fn excluding(self, square: Square) -> Bitboard {
         Bitboard(self.0 & !Self::from_square(square).0)
     }
 
@@ -196,7 +196,9 @@ impl From<Square> for Bitboard {
 
 impl FromIterator<Square> for Bitboard {
     fn from_iter<I: IntoIterator<Item = Square>>(squares: I) -> Bitboard {
-        squares.into_iter().fold(Bitboard::EMPTY, Bitboard::with)
+        squares
+            .into_iter()
+            .fold(Bitboard::EMPTY, Bitboard::including)
     }
 }
 

@@ -61,14 +61,14 @@ impl<'ast> Visit<'ast> for Declarations {
             .and_then(|(_, path, _)| path.segments.last())
             .is_some_and(|segment| segment.ident == "State")
         {
-            self.vertices.insert(TypeName::of(&item.self_ty));
+            self.vertices.insert(TypeName::from_type(&item.self_ty));
         }
         syn::visit::visit_item_impl(self, item);
     }
 
     fn visit_item_type(&mut self, item: &'ast ItemType) {
         self.aliases
-            .insert(TypeName::named(&item.ident), TypeName::of(&item.ty));
+            .insert(TypeName::named(&item.ident), TypeName::from_type(&item.ty));
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {

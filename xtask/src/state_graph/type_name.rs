@@ -9,7 +9,7 @@ pub struct TypeName(String);
 impl TypeName {
     const WRAPPERS: [&str; 2] = ["Option", "Result"];
 
-    pub fn of(ty: &Type) -> TypeName {
+    pub fn from_type(ty: &Type) -> TypeName {
         TypeName(
             Self::unwrapped(ty)
                 .to_token_stream()

@@ -5,6 +5,7 @@ mod failure;
 mod fn_shape;
 mod hex_literal;
 mod lint;
+mod literal_names;
 mod magic_search;
 mod magic_tables;
 mod magics;

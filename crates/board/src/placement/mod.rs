@@ -115,17 +115,17 @@ impl Placement<Empty> {
     const START_PIECES: EnumMap<Color, EnumMap<PieceKind, Bitboard>> = EnumMap::from_array([
         EnumMap::from_array([
             Bitboard::rank(Rank::Two),
-            Bitboard::from_square(Square::B1).with(Square::G1),
-            Bitboard::from_square(Square::C1).with(Square::F1),
-            Bitboard::from_square(Square::A1).with(Square::H1),
+            Bitboard::from_square(Square::B1).including(Square::G1),
+            Bitboard::from_square(Square::C1).including(Square::F1),
+            Bitboard::from_square(Square::A1).including(Square::H1),
             Bitboard::from_square(Square::D1),
             Bitboard::from_square(Square::E1),
         ]),
         EnumMap::from_array([
             Bitboard::rank(Rank::Seven),
-            Bitboard::from_square(Square::B8).with(Square::G8),
-            Bitboard::from_square(Square::C8).with(Square::F8),
-            Bitboard::from_square(Square::A8).with(Square::H8),
+            Bitboard::from_square(Square::B8).including(Square::G8),
+            Bitboard::from_square(Square::C8).including(Square::F8),
+            Bitboard::from_square(Square::A8).including(Square::H8),
             Bitboard::from_square(Square::D8),
             Bitboard::from_square(Square::E8),
         ]),

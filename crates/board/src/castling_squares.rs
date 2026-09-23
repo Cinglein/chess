@@ -49,6 +49,6 @@ impl CastlingSquares {
 
     #[must_use]
     pub const fn footprint(self) -> Bitboard {
-        Bitboard::from_square(self.king_origin).with(self.rook_origin)
+        Bitboard::from_square(self.king_origin).including(self.rook_origin)
     }
 }

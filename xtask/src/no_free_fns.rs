@@ -8,7 +8,7 @@ use crate::violation::Violation;
 pub struct NoFreeFns;
 
 impl NoFreeFns {
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "free functions are not allowed; make them associated functions or methods",
             files

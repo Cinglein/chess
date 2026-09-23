@@ -95,7 +95,7 @@ mod tests {
                 let mut expected = Bitboard::EMPTY;
                 let mut current = square + direction;
                 while let Some(next) = current {
-                    expected = expected.with(next);
+                    expected = expected.including(next);
                     current = (!blockers.contains(next))
                         .then(|| next + direction)
                         .flatten();

@@ -26,7 +26,7 @@ impl FnShape {
         "ne",
     ];
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "hairy control flow; booleans and tuples become types, nesting becomes methods",
             files.iter().flat_map(Self::violations).collect(),
@@ -233,7 +233,7 @@ impl Wide {
     #[test]
     fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting() {
         let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = FnShape::check(core::slice::from_ref(&file)).to_string();
+        let report = FnShape::report(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

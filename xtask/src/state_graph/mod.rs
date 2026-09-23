@@ -24,7 +24,7 @@ pub struct StateGraph;
 impl StateGraph {
     const MAX_EDGES_PER_VERTEX: usize = 4;
 
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         let declarations = Declarations::collect(files);
         let mut edges = EdgeScan::new(&declarations);
         for file in files {
@@ -90,7 +90,7 @@ impl Other {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = StateGraph::check(&files).to_string();
+        let report = StateGraph::report(&files).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

@@ -32,8 +32,8 @@ impl TestBudget {
     const MAX_AVERAGE_TESTS_PER_FILE: usize = 1;
     const MAX_TEST_LINE_PERCENT: usize = 20;
 
-    pub fn check(files: &[SourceFile]) -> Report {
-        files.iter().map(Self::measure).sum::<Self>().report()
+    pub fn report(files: &[SourceFile]) -> Report {
+        files.iter().map(Self::measure).sum::<Self>().summarise()
     }
 
     fn measure(file: &SourceFile) -> Self {
@@ -44,7 +44,7 @@ impl TestBudget {
         }
     }
 
-    fn report(self) -> Report {
+    fn summarise(self) -> Report {
         println!(
             "test budget: {} tests in {} files, {} of {} lines",
             self.tests, self.files, self.test_lines, self.lines

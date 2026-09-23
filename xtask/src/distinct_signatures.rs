@@ -12,7 +12,7 @@ use crate::violation::Violation;
 pub struct DistinctSignatures;
 
 impl DistinctSignatures {
-    pub fn check(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "two helpers on one type with the same signature hide a missing type",
             files
@@ -51,7 +51,7 @@ struct Shape {
 }
 
 impl Shape {
-    fn of(item: &ItemImpl, signature: &Signature) -> Shape {
+    fn describe(item: &ItemImpl, signature: &Signature) -> Shape {
         let inputs: Vec<String> = signature
             .inputs
             .iter()
@@ -106,7 +106,7 @@ impl<'ast> Visit<'ast> for SignatureIndex {
         }
         let helpers = item.items.iter().filter_map(|member| match member {
             ImplItem::Fn(function) if !matches!(function.vis, Visibility::Public(_)) => Some((
-                Shape::of(item, &function.sig),
+                Shape::describe(item, &function.sig),
                 function.sig.ident.to_string(),
             )),
             _ => None,

@@ -15,19 +15,19 @@ pub struct FunctionShape {
 }
 
 impl FunctionShape {
-    pub fn of(
+    pub fn describe(
         path: &str,
         function: &ImplItemFn,
         context: &ImplContext,
         declarations: &Declarations,
     ) -> FunctionShape {
         let vertex = |ty: &Type| {
-            let name = declarations.resolve(TypeName::of(ty).or_self(context.self_type()));
+            let name = declarations.resolve(TypeName::from_type(ty).or_self(context.self_type()));
             declarations.is_vertex(&name).then_some(name)
         };
         FunctionShape {
             site: Site::Line(path.to_owned(), function.sig.ident.span().start().line),
-            returns: Returns::of(&function.sig.output, vertex),
+            returns: Returns::classify(&function.sig.output, vertex),
             vertex_parameters: function
                 .sig
                 .inputs
@@ -37,7 +37,7 @@ impl FunctionShape {
                     FnArg::Receiver(_) => None,
                 })
                 .collect(),
-            body: Body::of(&function.block),
+            body: Body::classify(&function.block),
         }
     }
 

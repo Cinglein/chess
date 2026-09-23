@@ -31,7 +31,7 @@ impl<'scan> TestModule<'scan> {
     fn test_violations(&self, function: &ItemFn) -> Vec<Violation> {
         let name = &function.sig.ident;
         let site = Site::Line(self.path.to_owned(), name.span().start().line);
-        TestCounts::of(&function.block)
+        TestCounts::tally(&function.block)
             .measurements()
             .into_iter()
             .filter(Measurement::exceeded)
