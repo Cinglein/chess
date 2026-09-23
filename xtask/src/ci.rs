@@ -1,3 +1,4 @@
+use crate::failure::Failure;
 use crate::lint::Lint;
 use crate::wasm::Wasm;
 use crate::workspace::Workspace;
@@ -5,7 +6,7 @@ use crate::workspace::Workspace;
 pub struct Ci;
 
 impl Ci {
-    pub fn run(workspace: &Workspace) -> Result<(), String> {
+    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
         workspace.cargo(&["fmt", "--all", "--check"])?;
         workspace.cargo(&[
             "clippy",

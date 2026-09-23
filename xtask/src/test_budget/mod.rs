@@ -1,11 +1,17 @@
 use std::iter::Sum;
 use std::ops::Add;
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
+mod measurement;
 mod test_counts;
+mod test_module;
 mod test_scan;
 
+use measurement::Measurement;
 use test_scan::TestScan;
 
 #[derive(Default)]
@@ -14,7 +20,7 @@ pub struct TestBudget {
     lines: usize,
     tests: usize,
     test_lines: usize,
-    violations: Vec<String>,
+    violations: Vec<Violation>,
 }
 
 impl TestBudget {
@@ -26,8 +32,8 @@ impl TestBudget {
     const MAX_AVERAGE_TESTS_PER_FILE: usize = 1;
     const MAX_TEST_LINE_PERCENT: usize = 20;
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        files.iter().map(Self::measure).sum::<Self>().verdict()
+    pub fn check(files: &[SourceFile]) -> Report {
+        files.iter().map(Self::measure).sum::<Self>().report()
     }
 
     fn measure(file: &SourceFile) -> Self {
@@ -38,48 +44,30 @@ impl TestBudget {
         }
     }
 
-    fn verdict(&self) -> Result<(), String> {
-        let violations: Vec<String> = self
-            .violations
-            .iter()
-            .cloned()
-            .chain(self.global_violations())
-            .collect();
-        if violations.is_empty() {
-            println!(
-                "test budget: {} tests in {} files, {} of {} lines",
-                self.tests, self.files, self.test_lines, self.lines
-            );
-            Ok(())
-        } else {
-            Err(format!("test budget exceeded:\n{}", violations.join("\n")))
-        }
-    }
-
-    fn global_violations(&self) -> impl Iterator<Item = String> {
-        [
-            (
-                self.tests > self.files * Self::MAX_AVERAGE_TESTS_PER_FILE,
-                format!(
-                    "{} tests across {} files, at most {} per file on average allowed",
-                    self.tests,
-                    self.files,
-                    Self::MAX_AVERAGE_TESTS_PER_FILE
-                ),
+    fn report(self) -> Report {
+        println!(
+            "test budget: {} tests in {} files, {} of {} lines",
+            self.tests, self.files, self.test_lines, self.lines
+        );
+        let global = [
+            Measurement::new(
+                "tests across the workspace",
+                self.tests,
+                self.files * Self::MAX_AVERAGE_TESTS_PER_FILE,
             ),
-            (
-                self.test_lines * 100 > self.lines * Self::MAX_TEST_LINE_PERCENT,
-                format!(
-                    "{} of {} lines are test code, at most {}% allowed",
-                    self.test_lines,
-                    self.lines,
-                    Self::MAX_TEST_LINE_PERCENT
-                ),
+            Measurement::new(
+                "test lines",
+                self.test_lines,
+                self.lines * Self::MAX_TEST_LINE_PERCENT / 100,
             ),
         ]
         .into_iter()
-        .filter(|(exceeded, _)| *exceeded)
-        .map(|(_, message)| message)
+        .filter(Measurement::exceeded)
+        .map(|measurement| Violation::new(Site::Workspace, measurement.to_string()));
+        Report::new(
+            "test budget exceeded",
+            self.violations.into_iter().chain(global).collect(),
+        )
     }
 }
 
@@ -129,9 +117,12 @@ mod tests {
     #[test]
     fn counts_assertions_literals_and_variants_inside_macros() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let joined = TestScan::budget("example.rs", &parsed)
+        let joined: Vec<String> = TestScan::budget("example.rs", &parsed)
             .violations
-            .join("\n");
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+        let joined = joined.join("\n");
         assert!(
             REPORTED.iter().all(|report| joined.contains(report)),
             "{joined}"

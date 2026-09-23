@@ -17,9 +17,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `named-lifetimes`, `no-comments`,
-  `no-free-fns`, `private-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`,
-  `cargo xtask magics`).
+  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `manual-iteration`,
+  `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`, `state-graph`, `test-budget`,
+  and `type-shape`, `cargo xtask wasm`, `cargo xtask magics`). Lints return a `Report` of
+  `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
 
@@ -73,6 +74,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   two values that travel together are a struct. At most 4 parameters after the receiver. Control
   flow nests at most two deep, counting `if`, `match` arms, loops, and closure bodies, with
   `else if` chains flat. `cargo xtask fn-shape` enforces it.
+- Iterators are driven by combinators. No `let mut` bound to an iterator, and no `for` loop whose
+  body only pushes, extends, or inserts into a collection, even behind an `if`: use `format`,
+  `collect`, `fold`, or `extend`. `cargo xtask manual-iteration` enforces it.
+- Types carry their meaning. No `bool` struct field: a stored flag is a stored mode, so it is an
+  enum or a type parameter. No tuple type in a function signature or struct field outside a trait
+  impl: values that travel together are a struct. No `Result<_, String>`: errors are an enum with
+  `thiserror`. `cargo xtask type-shape` enforces all three.
 - No two non-`pub` functions on one type share a signature (generics, receiver, parameter types,
   return type). Two such helpers mean a value is missing its type: `alpha` and `beta` both returning
   `Score` became `Bound<Lower>` and `Bound<Upper>`. `cargo xtask distinct-signatures` enforces it.

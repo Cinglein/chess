@@ -1,34 +1,36 @@
-use syn::LifetimeParam;
 use syn::visit::Visit;
+use syn::{Ident, LifetimeParam};
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct NamedLifetimes;
 
 impl NamedLifetimes {
     const MIN_NAME_LENGTH: usize = 2;
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files
-            .iter()
-            .flat_map(|file| {
-                Self::short_lifetimes(file.syntax())
-                    .into_iter()
-                    .map(move |(line, name)| format!("{}:{line}: '{name}", file.path()))
-            })
-            .collect();
-        if violations.is_empty() {
-            println!("every lifetime is named in {} rust files", files.len());
-            Ok(())
-        } else {
-            Err(format!(
-                "lifetimes are named with a word, never a letter:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn check(files: &[SourceFile]) -> Report {
+        Report::new(
+            "lifetimes are named with a word, never a letter",
+            files
+                .iter()
+                .flat_map(|file| {
+                    Self::short_lifetimes(file.syntax())
+                        .into_iter()
+                        .map(move |name| {
+                            Violation::new(
+                                Site::Line(file.path().to_owned(), name.span().start().line),
+                                format!("'{name}"),
+                            )
+                        })
+                })
+                .collect(),
+        )
     }
 
-    fn short_lifetimes(file: &syn::File) -> Vec<(usize, String)> {
+    fn short_lifetimes(file: &syn::File) -> Vec<Ident> {
         let mut visitor = ShortLifetimes::default();
         visitor.visit_file(file);
         visitor.0
@@ -36,13 +38,12 @@ impl NamedLifetimes {
 }
 
 #[derive(Default)]
-struct ShortLifetimes(Vec<(usize, String)>);
+struct ShortLifetimes(Vec<Ident>);
 
 impl<'ast> Visit<'ast> for ShortLifetimes {
     fn visit_lifetime_param(&mut self, parameter: &'ast LifetimeParam) {
-        let name = parameter.lifetime.ident.to_string();
-        if name.len() < NamedLifetimes::MIN_NAME_LENGTH {
-            self.0.push((parameter.lifetime.span().start().line, name));
+        if parameter.lifetime.ident.to_string().len() < NamedLifetimes::MIN_NAME_LENGTH {
+            self.0.push(parameter.lifetime.ident.clone());
         }
     }
 }
@@ -61,8 +62,8 @@ impl<'b> Scan<'b, '_> { fn view<'c>(&'c self) -> &'c str { self.text } }
     fn flags_single_letter_lifetimes_where_they_are_declared() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
         let names: Vec<String> = NamedLifetimes::short_lifetimes(&parsed)
-            .into_iter()
-            .map(|(_, name)| name)
+            .iter()
+            .map(ToString::to_string)
             .collect();
         assert_eq!(names, FLAGGED);
     }

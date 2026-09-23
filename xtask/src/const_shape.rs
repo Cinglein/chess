@@ -5,7 +5,10 @@ use syn::{
     ItemConst, ItemFn, ItemMod,
 };
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct ConstShape;
 
@@ -16,23 +19,14 @@ impl ConstShape {
         "crates/board/src/slider/magic.rs",
     ];
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files.iter().flat_map(Self::violations).collect();
-        if violations.is_empty() {
-            println!(
-                "casts stay at the bit boundary and const loops walk slices in {} rust files",
-                files.len()
-            );
-            Ok(())
-        } else {
-            Err(format!(
-                "const shape violated; casts live in const fns or boundary files, const loops are while let over slices:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn check(files: &[SourceFile]) -> Report {
+        Report::new(
+            "casts live in const fns or boundary files, and const loops walk slices",
+            files.iter().flat_map(Self::violations).collect(),
+        )
     }
 
-    fn violations(file: &SourceFile) -> Vec<String> {
+    fn violations(file: &SourceFile) -> Vec<Violation> {
         let mut contexts = ConstContexts {
             path: file.path(),
             const_depth: 0,
@@ -46,13 +40,15 @@ impl ConstShape {
 struct ConstContexts<'scan> {
     path: &'scan str,
     const_depth: usize,
-    violations: Vec<String>,
+    violations: Vec<Violation>,
 }
 
 impl ConstContexts<'_> {
     fn report(&mut self, span: Span, message: &str) {
-        self.violations
-            .push(format!("{}:{}: {message}", self.path, span.start().line));
+        self.violations.push(Violation::new(
+            Site::Line(self.path.to_owned(), span.start().line),
+            message,
+        ));
     }
 
     fn within_const(&mut self, visit: impl FnOnce(&mut Self)) {
@@ -162,7 +158,7 @@ impl Table {
     #[test]
     fn flags_counter_loops_in_const_and_casts_outside_const_or_boundary_files() {
         let file = SourceFile::parse("table.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ConstShape::check(core::slice::from_ref(&file)).expect_err("violations");
+        let report = ConstShape::check(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

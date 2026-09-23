@@ -1,8 +1,10 @@
 use std::env;
-use std::fs;
+use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::failure::Failure;
+use crate::site::Site;
 use crate::source_file::SourceFile;
 
 pub struct Workspace {
@@ -10,6 +12,8 @@ pub struct Workspace {
 }
 
 impl Workspace {
+    const EXCLUDED_DIRECTORIES: [&str; 2] = ["target", ".git"];
+
     pub fn locate() -> Workspace {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
@@ -22,22 +26,22 @@ impl Workspace {
         &self.root
     }
 
-    pub fn cargo(&self, args: &[&str]) -> Result<(), String> {
+    pub fn cargo(&self, args: &[&str]) -> Result<(), Failure> {
         let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-        let status = Command::new(cargo)
+        Command::new(cargo)
             .args(args)
             .current_dir(&self.root)
             .status()
-            .map_err(|error| format!("failed to run cargo {}: {error}", args.join(" ")))?;
-        if status.success() {
-            Ok(())
-        } else {
-            Err(format!("cargo {} failed", args.join(" ")))
-        }
+            .ok()
+            .filter(std::process::ExitStatus::success)
+            .map(|_| ())
+            .ok_or_else(|| Failure::Cargo(args.join(" ")))
     }
 
-    pub fn source_files(&self) -> Result<Vec<SourceFile>, String> {
-        self.rust_files()?
+    pub fn source_files(&self) -> Result<Vec<SourceFile>, Failure> {
+        let mut files = Self::rust_files_under(&self.root)?;
+        files.sort();
+        files
             .iter()
             .map(|file| SourceFile::read(self, file))
             .collect()
@@ -50,24 +54,39 @@ impl Workspace {
             .to_string()
     }
 
-    fn rust_files(&self) -> Result<Vec<PathBuf>, String> {
-        let mut files = Vec::new();
-        Self::collect_rust_files(&self.root, &mut files)?;
-        files.sort();
-        Ok(files)
+    fn rust_files_under(directory: &Path) -> Result<Vec<PathBuf>, Failure> {
+        let io = |error| Failure::Io {
+            site: Site::File(directory.display().to_string()),
+            error,
+        };
+        fs::read_dir(directory)
+            .map_err(io)?
+            .map(|entry| {
+                entry
+                    .map_err(io)
+                    .and_then(|entry| Self::rust_files_in(&entry))
+            })
+            .collect::<Result<Vec<Vec<PathBuf>>, Failure>>()
+            .map(|nested| nested.into_iter().flatten().collect())
     }
 
-    fn collect_rust_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
-        let entries = fs::read_dir(dir).map_err(|error| format!("{}: {error}", dir.display()))?;
-        for entry in entries {
-            let entry = entry.map_err(|error| format!("{}: {error}", dir.display()))?;
-            let path = entry.path();
-            if path.is_dir() && entry.file_name() != "target" && entry.file_name() != ".git" {
-                Self::collect_rust_files(&path, out)?;
-            } else if path.extension().is_some_and(|extension| extension == "rs") {
-                out.push(path);
-            }
+    fn rust_files_in(entry: &DirEntry) -> Result<Vec<PathBuf>, Failure> {
+        let path = entry.path();
+        if path.is_dir() {
+            return if Self::EXCLUDED_DIRECTORIES
+                .iter()
+                .any(|excluded| entry.file_name() == *excluded)
+            {
+                Ok(Vec::new())
+            } else {
+                Self::rust_files_under(&path)
+            };
         }
-        Ok(())
+        Ok(path
+            .extension()
+            .is_some_and(|extension| extension == "rs")
+            .then_some(path)
+            .into_iter()
+            .collect())
     }
 }

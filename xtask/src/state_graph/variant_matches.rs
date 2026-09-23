@@ -4,16 +4,21 @@ use syn::{Expr, ExprLet, ExprMatch, Local, Pat};
 
 use super::declarations::Declarations;
 use super::variant_paths::VariantPaths;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct VariantMatches<'scan> {
     declarations: &'scan Declarations,
     path: &'scan str,
-    violations: Vec<String>,
+    violations: Vec<Violation>,
 }
 
 impl<'scan> VariantMatches<'scan> {
-    pub fn violations(file: &'scan SourceFile, declarations: &'scan Declarations) -> Vec<String> {
+    pub fn violations(
+        file: &'scan SourceFile,
+        declarations: &'scan Declarations,
+    ) -> Vec<Violation> {
         let mut matches = VariantMatches {
             declarations,
             path: file.path(),
@@ -30,10 +35,9 @@ impl<'scan> VariantMatches<'scan> {
     }
 
     fn report(&mut self, pat: &Pat, enum_name: &str) {
-        self.violations.push(format!(
-            "{}:{}: match on {enum_name} outside its file; dispatch through a trait",
-            self.path,
-            pat.span().start().line
+        self.violations.push(Violation::new(
+            Site::Line(self.path.to_owned(), pat.span().start().line),
+            format!("match on {enum_name} outside its file; dispatch through a trait"),
         ));
     }
 

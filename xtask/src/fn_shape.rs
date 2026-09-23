@@ -6,7 +6,10 @@ use syn::{
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
 };
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct FnShape;
 
@@ -23,23 +26,14 @@ impl FnShape {
         "ne",
     ];
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files.iter().flat_map(Self::violations).collect();
-        if violations.is_empty() {
-            println!(
-                "function shapes within budget in {} rust files",
-                files.len()
-            );
-            Ok(())
-        } else {
-            Err(format!(
-                "hairy control flow; booleans and tuples become types, nesting becomes methods:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn check(files: &[SourceFile]) -> Report {
+        Report::new(
+            "hairy control flow; booleans and tuples become types, nesting becomes methods",
+            files.iter().flat_map(Self::violations).collect(),
+        )
     }
 
-    fn violations(file: &SourceFile) -> Vec<String> {
+    fn violations(file: &SourceFile) -> Vec<Violation> {
         let mut shapes = Shapes {
             path: file.path(),
             depth: 0,
@@ -89,13 +83,15 @@ impl FnShape {
 struct Shapes<'scan> {
     path: &'scan str,
     depth: usize,
-    violations: Vec<String>,
+    violations: Vec<Violation>,
 }
 
 impl Shapes<'_> {
     fn report(&mut self, span: Span, message: &str) {
-        self.violations
-            .push(format!("{}:{}: {message}", self.path, span.start().line));
+        self.violations.push(Violation::new(
+            Site::Line(self.path.to_owned(), span.start().line),
+            message,
+        ));
     }
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
@@ -119,12 +115,13 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
     }
 
     fn visit_signature(&mut self, signature: &'ast Signature) {
-        let parameters = signature
+        if signature
             .inputs
             .iter()
             .filter(|argument| matches!(argument, FnArg::Typed(_)))
-            .count();
-        if parameters > FnShape::MAX_PARAMETERS {
+            .count()
+            > FnShape::MAX_PARAMETERS
+        {
             self.report(
                 signature.ident.span(),
                 "more than four parameters; group the ones that travel together into a struct",
@@ -236,7 +233,7 @@ impl Wide {
     #[test]
     fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting() {
         let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = FnShape::check(core::slice::from_ref(&file)).expect_err("violations");
+        let report = FnShape::check(core::slice::from_ref(&file)).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

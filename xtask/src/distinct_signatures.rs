@@ -4,49 +4,41 @@ use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{FnArg, ImplItem, ItemImpl, ItemMod, ReturnType, Signature, Visibility};
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct DistinctSignatures;
 
 impl DistinctSignatures {
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files
-            .iter()
-            .flat_map(|file| {
-                Self::shared(file.syntax())
-                    .into_iter()
-                    .map(move |(shape, names)| {
-                        format!(
-                            "{}: {} share the signature {}; distinguish the types they take or return",
-                            file.path(),
-                            names.join(", "),
-                            shape.rendered()
-                        )
-                    })
-            })
-            .collect();
-        if violations.is_empty() {
-            println!(
-                "helper signatures are distinct in {} rust files",
-                files.len()
-            );
-            Ok(())
-        } else {
-            Err(format!(
-                "two helpers on one type with the same signature hide a missing type:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn check(files: &[SourceFile]) -> Report {
+        Report::new(
+            "two helpers on one type with the same signature hide a missing type",
+            files
+                .iter()
+                .flat_map(|file| {
+                    Self::shared(file.syntax())
+                        .into_iter()
+                        .map(move |(shape, names)| {
+                            Violation::new(
+                                Site::File(file.path().to_owned()),
+                                format!(
+                                    "{} share the signature {shape}; distinguish the types they take or return",
+                                    names.join(", ")
+                                ),
+                            )
+                        })
+                })
+                .collect(),
+        )
     }
 
-    fn shared(file: &syn::File) -> Vec<(Shape, Vec<String>)> {
+    fn shared(file: &syn::File) -> BTreeMap<Shape, Vec<String>> {
         let mut index = SignatureIndex::default();
         index.visit_file(file);
-        index
-            .0
-            .into_iter()
-            .filter(|(_, names)| names.len() > 1)
-            .collect()
+        index.0.retain(|_, names| names.len() > 1);
+        index.0
     }
 }
 
@@ -83,9 +75,12 @@ impl Shape {
             },
         }
     }
+}
 
-    fn rendered(&self) -> String {
-        format!(
+impl std::fmt::Display for Shape {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
             "{}::{}({}){}",
             self.self_type,
             self.generics,
@@ -143,6 +138,9 @@ impl W {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
         let shared = DistinctSignatures::shared(&parsed);
         assert_eq!(shared.len(), 1);
-        assert_eq!(shared[0].1, SHARED);
+        assert_eq!(
+            shared.into_values().next(),
+            Some(SHARED.map(String::from).to_vec())
+        );
     }
 }

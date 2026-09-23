@@ -1,20 +1,26 @@
 mod ci;
 mod const_shape;
 mod distinct_signatures;
+mod failure;
 mod fn_shape;
 mod hex_literal;
 mod lint;
 mod magic_search;
 mod magic_tables;
 mod magics;
+mod manual_iteration;
 mod named_lifetimes;
 mod no_comments;
 mod no_free_fns;
 mod private_fns;
+mod report;
+mod site;
 mod source_file;
 mod state_graph;
 mod task;
 mod test_budget;
+mod type_shape;
+mod violation;
 mod wasm;
 mod workspace;
 mod xor_shift;
@@ -31,8 +37,8 @@ fn main() -> ExitCode {
         .and_then(|argument| argument.parse::<Task>().map_err(|_| Task::usage()));
     match task.and_then(Task::run) {
         Ok(()) => ExitCode::SUCCESS,
-        Err(message) => {
-            eprintln!("{message}");
+        Err(failure) => {
+            eprintln!("{failure}");
             ExitCode::FAILURE
         }
     }

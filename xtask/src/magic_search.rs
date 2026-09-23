@@ -4,21 +4,21 @@ use crate::xor_shift::XorShift;
 
 pub struct MagicSearch {
     mask: Bitboard,
-    expected: Vec<(Bitboard, Bitboard)>,
+    attacks: Vec<Bitboard>,
     table: Vec<Bitboard>,
 }
 
 impl MagicSearch {
     pub fn new<S: Slider>(square: Square) -> MagicSearch {
         let mask = S::relevant_occupancy(square);
-        let expected = mask
+        let attacks = mask
             .subsets()
-            .map(|subset| (subset, S::attacks_by_ray(square, subset)))
+            .map(|subset| S::attacks_by_ray(square, subset))
             .collect();
         let table = vec![Bitboard::EMPTY; Magic::new(mask, 0, 0).table_size()];
         MagicSearch {
             mask,
-            expected,
+            attacks,
             table,
         }
     }
@@ -39,9 +39,10 @@ impl MagicSearch {
         let magic = Magic::new(self.mask, candidate, 0);
         self.table.fill(Bitboard::EMPTY);
         let table = &mut self.table;
-        self.expected
-            .iter()
-            .all(|&(subset, attacks)| Self::fills(table, magic.index(subset), attacks))
+        self.mask
+            .subsets()
+            .zip(&self.attacks)
+            .all(|(subset, attacks)| Self::fills(table, magic.index(subset), *attacks))
     }
 
     fn fills(table: &mut [Bitboard], index: usize, attacks: Bitboard) -> bool {

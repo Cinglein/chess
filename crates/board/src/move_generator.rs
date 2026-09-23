@@ -97,47 +97,60 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
     }
 
     fn pieces(&mut self, pieces: Bitboard, attacks: impl Fn(Square) -> Bitboard) {
-        for from in pieces {
-            for to in attacks(from) & self.safety.allowed(from) {
-                self.moves.push(ChessMove::Normal(Normal::new(from, to)));
-            }
-        }
+        let safety = &self.safety;
+        self.moves.extend(pieces.into_iter().flat_map(|from| {
+            (attacks(from) & safety.allowed(from))
+                .into_iter()
+                .map(move |to| ChessMove::Normal(Normal::new(from, to)))
+        }));
     }
 
     fn king_moves(&mut self) {
-        let placement = self.board.placement();
-        let king = self.safety.king();
-        let without_king = self.occupied ^ Bitboard::from_square(king);
+        let board = self.board;
+        let safety = &self.safety;
+        let occupied = self.occupied;
+        let king = safety.king();
+        let without_king = occupied ^ Bitboard::from_square(king);
         self.moves.extend(
             (King::attacks(king) & !self.ours)
                 .into_iter()
-                .filter(|to| placement.attackers(*to, !P::COLOR, without_king).is_empty())
+                .filter(|to| {
+                    board
+                        .placement()
+                        .attackers(*to, !P::COLOR, without_king)
+                        .is_empty()
+                })
                 .map(|to| ChessMove::Normal(Normal::new(king, to))),
         );
-        for right in CastlingRight::VARIANTS.iter().copied() {
-            if self.may_castle(right) {
-                self.moves.push(ChessMove::Castling(Castling::new(right)));
-            }
-        }
+        self.moves.extend(
+            CastlingRight::VARIANTS
+                .iter()
+                .copied()
+                .filter(|right| Self::may_castle(board, safety, occupied, *right))
+                .map(|right| ChessMove::Castling(Castling::new(right))),
+        );
     }
 
-    fn may_castle(&self, right: CastlingRight) -> bool {
-        let placement = self.board.placement();
+    fn may_castle(
+        board: &Board,
+        safety: &KingSafety,
+        occupied: Bitboard,
+        right: CastlingRight,
+    ) -> bool {
+        let placement = board.placement();
         let squares = CastlingSquares::new(right);
         let king_path = squares.king_origin().between(squares.king_destination())
             | Bitboard::from_square(squares.king_destination());
-        !self.safety.in_check()
+        !safety.in_check()
             && right.color() == P::COLOR
-            && self.board.castling_rights().contains(right)
-            && self.safety.king() == squares.king_origin()
+            && board.castling_rights().contains(right)
+            && safety.king() == squares.king_origin()
             && placement
                 .pieces(P::COLOR, PieceKind::Rook)
                 .contains(squares.rook_origin())
-            && (squares.king_origin().between(squares.rook_origin()) & self.occupied).is_empty()
-            && king_path.into_iter().all(|square| {
-                placement
-                    .attackers(square, !P::COLOR, self.occupied)
-                    .is_empty()
-            })
+            && (squares.king_origin().between(squares.rook_origin()) & occupied).is_empty()
+            && king_path
+                .into_iter()
+                .all(|square| placement.attackers(square, !P::COLOR, occupied).is_empty())
     }
 }

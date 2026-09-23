@@ -3,6 +3,8 @@ use std::path::Path;
 
 use syn::ItemMod;
 
+use crate::failure::Failure;
+use crate::site::Site;
 use crate::workspace::Workspace;
 
 pub struct SourceFile {
@@ -12,14 +14,20 @@ pub struct SourceFile {
 }
 
 impl SourceFile {
-    pub fn read(workspace: &Workspace, file: &Path) -> Result<Self, String> {
-        let text =
-            fs::read_to_string(file).map_err(|error| format!("{}: {error}", file.display()))?;
-        Self::parse(workspace.relative(file), text)
+    pub fn read(workspace: &Workspace, file: &Path) -> Result<Self, Failure> {
+        let path = workspace.relative(file);
+        let text = fs::read_to_string(file).map_err(|error| Failure::Io {
+            site: Site::File(path.clone()),
+            error,
+        })?;
+        Self::parse(path, text)
     }
 
-    pub fn parse(path: String, text: String) -> Result<Self, String> {
-        let syntax = syn::parse_file(&text).map_err(|error| format!("{path}: {error}"))?;
+    pub fn parse(path: String, text: String) -> Result<Self, Failure> {
+        let syntax = syn::parse_file(&text).map_err(|error| Failure::Parse {
+            site: Site::File(path.clone()),
+            error,
+        })?;
         Ok(Self { path, text, syntax })
     }
 

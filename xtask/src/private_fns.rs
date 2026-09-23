@@ -4,40 +4,39 @@ use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, Visibility};
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct PrivateFns;
 
 impl PrivateFns {
     const MAX_PRIVATE_FNS_PER_TYPE: usize = 4;
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files
-            .iter()
-            .flat_map(|file| {
-                Self::private_fns(file.syntax())
-                    .into_iter()
-                    .filter(|(_, names)| names.len() > Self::MAX_PRIVATE_FNS_PER_TYPE)
-                    .map(move |(type_name, names)| {
-                        format!(
-                            "{}: {type_name} has {} private fns, at most {} allowed: {}",
-                            file.path(),
-                            names.len(),
-                            Self::MAX_PRIVATE_FNS_PER_TYPE,
-                            names.join(", ")
-                        )
-                    })
-            })
-            .collect();
-        if violations.is_empty() {
-            println!("private fns within budget in {} rust files", files.len());
-            Ok(())
-        } else {
-            Err(format!(
-                "too many private fns; a type's logic belongs in its interface or in more types:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn check(files: &[SourceFile]) -> Report {
+        Report::new(
+            "too many private fns; a type's logic belongs in its interface or in more types",
+            files
+                .iter()
+                .flat_map(|file| {
+                    Self::private_fns(file.syntax())
+                        .into_iter()
+                        .filter(|(_, names)| names.len() > Self::MAX_PRIVATE_FNS_PER_TYPE)
+                        .map(move |(type_name, names)| {
+                            Violation::new(
+                                Site::File(file.path().to_owned()),
+                                format!(
+                                    "{type_name} has {} private fns, at most {} allowed: {}",
+                                    names.len(),
+                                    Self::MAX_PRIVATE_FNS_PER_TYPE,
+                                    names.join(", ")
+                                ),
+                            )
+                        })
+                })
+                .collect(),
+        )
     }
 
     fn private_fns(file: &syn::File) -> BTreeMap<String, Vec<String>> {

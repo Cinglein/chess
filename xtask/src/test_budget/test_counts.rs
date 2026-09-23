@@ -4,6 +4,7 @@ use syn::visit::Visit;
 use syn::{Block, Expr, ExprLit, ExprPath, Macro, Token};
 
 use super::TestBudget;
+use super::measurement::Measurement;
 
 #[derive(Default)]
 pub(super) struct TestCounts {
@@ -13,19 +14,19 @@ pub(super) struct TestCounts {
 }
 
 impl TestCounts {
-    pub(super) fn measurements(&self) -> [(&'static str, usize, usize); 3] {
+    pub(super) fn measurements(&self) -> [Measurement; 3] {
         [
-            (
+            Measurement::new(
                 "assertions",
                 self.assertions,
                 TestBudget::MAX_ASSERTIONS_PER_TEST,
             ),
-            (
+            Measurement::new(
                 "body lines",
                 self.body_lines,
                 TestBudget::MAX_LINES_PER_TEST,
             ),
-            ("literals", self.literals, TestBudget::MAX_LITERALS_PER_TEST),
+            Measurement::new("literals", self.literals, TestBudget::MAX_LITERALS_PER_TEST),
         ]
     }
 

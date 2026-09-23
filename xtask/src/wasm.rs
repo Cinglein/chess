@@ -1,3 +1,4 @@
+use crate::failure::Failure;
 use crate::workspace::Workspace;
 
 pub struct Wasm;
@@ -5,7 +6,7 @@ pub struct Wasm;
 impl Wasm {
     const CRATES: &[&str] = &["board", "eval", "fen", "search"];
 
-    pub fn run(workspace: &Workspace) -> Result<(), String> {
+    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
         Self::CRATES.iter().try_for_each(|crate_name| {
             workspace.cargo(&[
                 "clippy",

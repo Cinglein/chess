@@ -16,21 +16,22 @@ pub struct Declarations {
 
 impl Declarations {
     pub fn collect(files: &[SourceFile]) -> Declarations {
-        let mut declarations =
-            files
-                .iter()
-                .fold(Declarations::default(), |mut declarations, file| {
-                    file.path().clone_into(&mut declarations.path);
-                    declarations.visit_file(file.syntax());
-                    declarations
-                });
+        let declarations = files
+            .iter()
+            .fold(Declarations::default(), |mut declarations, file| {
+                file.path().clone_into(&mut declarations.path);
+                declarations.visit_file(file.syntax());
+                declarations
+            });
         let resolved: BTreeSet<TypeName> = declarations
             .vertices
             .iter()
             .map(|vertex| declarations.resolve(vertex.clone()))
             .collect();
-        declarations.vertices = resolved;
-        declarations
+        Declarations {
+            vertices: resolved,
+            ..declarations
+        }
     }
 
     pub fn resolve(&self, name: TypeName) -> TypeName {
