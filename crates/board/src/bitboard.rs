@@ -1,6 +1,7 @@
 use core::fmt;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
+use itertools::Itertools;
 use strum::{EnumCount, VariantArray};
 
 use crate::direction::Direction;
@@ -30,10 +31,10 @@ impl Bitboard {
     #[must_use]
     pub const fn file(file: File) -> Bitboard {
         let mut squares = Bitboard::EMPTY;
-        let mut index = 0;
-        while index < Rank::COUNT {
-            squares = squares.with(Square::new(file, Rank::VARIANTS[index]));
-            index += 1;
+        let mut ranks = Rank::VARIANTS;
+        while let [rank, rest @ ..] = ranks {
+            squares = squares.with(Square::new(file, *rank));
+            ranks = rest;
         }
         squares
     }
@@ -41,10 +42,10 @@ impl Bitboard {
     #[must_use]
     pub const fn rank(rank: Rank) -> Bitboard {
         let mut squares = Bitboard::EMPTY;
-        let mut index = 0;
-        while index < File::COUNT {
-            squares = squares.with(Square::new(File::VARIANTS[index], rank));
-            index += 1;
+        let mut files = File::VARIANTS;
+        while let [file, rest @ ..] = files {
+            squares = squares.with(Square::new(*file, rank));
+            files = rest;
         }
         squares
     }
@@ -216,14 +217,7 @@ impl fmt::Debug for Bitboard {
 
 impl fmt::Display for Bitboard {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut squares = self.into_iter();
-        if let Some(first) = squares.next() {
-            write!(formatter, "{first}")?;
-        }
-        for square in squares {
-            write!(formatter, " {square}")?;
-        }
-        Ok(())
+        write!(formatter, "{}", self.into_iter().format(" "))
     }
 }
 

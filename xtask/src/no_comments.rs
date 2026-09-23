@@ -29,7 +29,7 @@ impl NoComments {
         tokenize(source, FrontmatterAllowed::Yes)
             .scan(0, |offset, token| {
                 let start = *offset;
-                *offset += token.len as usize;
+                *offset += usize::try_from(token.len).ok()?;
                 Some((start, token.kind))
             })
             .filter(|(_, kind)| {

@@ -16,16 +16,10 @@ impl Leaps {
     #[must_use]
     pub const fn attacks_from(&self, origin: Bitboard) -> Bitboard {
         let mut attacks = Bitboard::EMPTY;
-        let mut jump = 0;
-        while jump < self.0.len() {
-            let mut target = origin;
-            let mut step = 0;
-            while step < self.0[jump].len() {
-                target = target.shift(self.0[jump][step]);
-                step += 1;
-            }
-            attacks = attacks.union(target);
-            jump += 1;
+        let mut jumps = self.0;
+        while let [jump, rest @ ..] = jumps {
+            attacks = attacks.union(Self::leap(origin, jump));
+            jumps = rest;
         }
         attacks
     }
@@ -33,11 +27,21 @@ impl Leaps {
     #[must_use]
     pub const fn table(&self) -> EnumMap<Square, Bitboard> {
         let mut table = [Bitboard::EMPTY; Square::COUNT];
-        let mut index = 0;
-        while index < Square::COUNT {
-            table[index] = self.attacks_from(Bitboard::from_square(Square::VARIANTS[index]));
-            index += 1;
+        let mut squares = Square::VARIANTS;
+        while let [square, rest @ ..] = squares {
+            table[*square as usize] = self.attacks_from(Bitboard::from_square(*square));
+            squares = rest;
         }
         EnumMap::from_array(table)
+    }
+
+    const fn leap(origin: Bitboard, steps: &[Direction]) -> Bitboard {
+        let mut target = origin;
+        let mut steps = steps;
+        while let [step, rest @ ..] = steps {
+            target = target.shift(*step);
+            steps = rest;
+        }
+        target
     }
 }

@@ -50,7 +50,7 @@ pub use orthogonal::Orthogonal;
 pub use perft_position::PerftPosition;
 pub use piece::Piece;
 pub use piece_kind::PieceKind;
-pub use placement::{Empty, Hand, Holding, PiecePlacement, Placement};
+pub use placement::{Empty, Hand, Holding, PiecePlacement, PlacedPiece, Placement};
 pub use promotion_piece::PromotionPiece;
 pub use rank::Rank;
 pub use slider::{Bishop, Magic, Rays, Rook, Slider};

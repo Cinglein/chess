@@ -1,6 +1,7 @@
 use strum::{EnumString, VariantNames};
 
 use crate::ci::Ci;
+use crate::const_shape::ConstShape;
 use crate::distinct_signatures::DistinctSignatures;
 use crate::fn_shape::FnShape;
 use crate::lint::Lint;
@@ -18,6 +19,7 @@ use crate::workspace::Workspace;
 #[strum(serialize_all = "kebab-case")]
 pub enum Task {
     Ci,
+    ConstShape,
     DistinctSignatures,
     FnShape,
     Lint,
@@ -40,6 +42,7 @@ impl Task {
         let workspace = Workspace::locate();
         match self {
             Task::Ci => Ci::run(&workspace),
+            Task::ConstShape => ConstShape::check(&workspace.source_files()?),
             Task::DistinctSignatures => DistinctSignatures::check(&workspace.source_files()?),
             Task::FnShape => FnShape::check(&workspace.source_files()?),
             Task::Lint => Lint::run(&workspace),

@@ -1,4 +1,5 @@
 mod ci;
+mod const_shape;
 mod distinct_signatures;
 mod fn_shape;
 mod hex_literal;

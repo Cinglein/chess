@@ -1,11 +1,12 @@
 use core::fmt;
-use core::iter;
 use core::str::FromStr;
 
 use enum_map::EnumMap;
 use fen::FenError;
 use itertools::{Itertools, process_results};
 
+use super::placed_piece::PlacedPiece;
+use super::rank_token::RankToken;
 use crate::file::File;
 use crate::piece::Piece;
 use crate::rank::Rank;
@@ -19,25 +20,10 @@ impl RankPlacement {
         RankPlacement(squares)
     }
 
-    pub fn pieces(self, rank: Rank) -> impl Iterator<Item = (Square, Piece)> {
-        self.0
-            .into_iter()
-            .filter_map(move |(file, piece)| piece.map(|piece| (Square::new(file, rank), piece)))
-    }
-
-    fn squares_for(letter: char) -> impl Iterator<Item = Result<Option<Piece>, FenError>> {
-        let (square, count) = match letter.to_digit(10) {
-            Some(empties) => (Ok(None), empties as usize),
-            None => (
-                letter
-                    .encode_utf8(&mut [0; 4])
-                    .parse::<Piece>()
-                    .map(Some)
-                    .map_err(|_| FenError::Piece(letter)),
-                1,
-            ),
-        };
-        iter::repeat_n(square, count)
+    pub fn pieces(self, rank: Rank) -> impl Iterator<Item = PlacedPiece> {
+        self.0.into_iter().filter_map(move |(file, piece)| {
+            piece.map(|piece| PlacedPiece::new(Square::new(file, rank), piece))
+        })
     }
 }
 
@@ -57,8 +43,8 @@ impl FromStr for RankPlacement {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<Self, FenError> {
-        process_results(text.chars().flat_map(Self::squares_for), |squares| {
-            squares.collect_array()
+        process_results(text.chars().map(RankToken::try_from), |tokens| {
+            tokens.flat_map(RankToken::squares).collect_array()
         })?
         .map(|squares| RankPlacement(EnumMap::from_array(squares)))
         .ok_or(FenError::RankWidth)

@@ -3,6 +3,7 @@ use core::str::FromStr;
 
 use arrayvec::ArrayVec;
 use fen::{DashOr, Fen, FenError};
+use itertools::Itertools;
 
 use crate::castling_rights::CastlingRights;
 use crate::chess_move::{ChessMove, MoveKind};
@@ -191,24 +192,31 @@ impl FromStr for Board {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<Board, FenError> {
-        let mut fields = text.split_whitespace();
-        let mut field = || fields.next().ok_or(FenError::FieldCount);
-        let placement = field()?.parse()?;
-        let side_to_move = field()?.parse().map_err(|_| FenError::SideToMove)?;
-        let castling_rights = CastlingRights::from(field()?.parse::<DashOr<CastlingRights>>()?);
-        let en_passant_file = Self::parse_en_passant(side_to_move, field()?)?;
-        let halfmove_clock = field()?.parse().map_err(|_| FenError::HalfmoveClock)?;
-        let fullmove_number = field()?.parse().map_err(|_| FenError::FullmoveNumber)?;
-        if fields.next().is_some() {
-            return Err(FenError::FieldCount);
-        }
-        Ok(Board {
+        let [
             placement,
             side_to_move,
             castling_rights,
-            en_passant_file,
+            en_passant,
             halfmove_clock,
             fullmove_number,
+        ] = text
+            .split_whitespace()
+            .collect_array()
+            .ok_or(FenError::FieldCount)?;
+        let side_to_move: Color = side_to_move.parse().map_err(|_| FenError::SideToMove)?;
+        Ok(Board {
+            placement: placement.parse()?,
+            side_to_move,
+            castling_rights: CastlingRights::from(
+                castling_rights.parse::<DashOr<CastlingRights>>()?,
+            ),
+            en_passant_file: Self::parse_en_passant(side_to_move, en_passant)?,
+            halfmove_clock: halfmove_clock
+                .parse()
+                .map_err(|_| FenError::HalfmoveClock)?,
+            fullmove_number: fullmove_number
+                .parse()
+                .map_err(|_| FenError::FullmoveNumber)?,
         })
     }
 }

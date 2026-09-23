@@ -1,3 +1,4 @@
+use crate::const_shape::ConstShape;
 use crate::distinct_signatures::DistinctSignatures;
 use crate::fn_shape::FnShape;
 use crate::named_lifetimes::NamedLifetimes;
@@ -14,6 +15,7 @@ impl Lint {
     pub fn run(workspace: &Workspace) -> Result<(), String> {
         let files = workspace.source_files()?;
         let failures: Vec<String> = [
+            ConstShape::check(&files),
             DistinctSignatures::check(&files),
             FnShape::check(&files),
             NamedLifetimes::check(&files),

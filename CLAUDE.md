@@ -17,8 +17,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `distinct-signatures`, `fn-shape`, `named-lifetimes`, `no-comments`, `no-free-fns`,
-  `private-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
+  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `named-lifetimes`, `no-comments`,
+  `no-free-fns`, `private-fns`, `test-budget`, and `state-graph`, `cargo xtask wasm`,
+  `cargo xtask magics`).
 
 ## Rules
 
@@ -41,8 +42,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   keyword; `ChessMove` in `chess_move.rs`, not `Move` behind `r#move`.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
-- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. The
-  only `as usize` casts on enums live inside `const fn` table construction.
+- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
+  cast is allowed only inside a `const fn`, `const` item, or `const` block, or in one of the
+  three bit boundary files `square.rs`, `bitboard.rs`, and `slider/magic.rs`; elsewhere use
+  `From`, `TryFrom`, or an `EnumMap`. Loops in const context walk a slice with
+  `while let [head, rest @ ..]` or recurse; no counter loops. `cargo xtask const-shape` enforces
+  both.
 - A family of behaviours is a trait with zero-sized implementors, not an enum matched on at
   runtime: `Rook: Slider`, `Knight: Leaper`. Per-implementor data is an associated const.
 - Game logic is a state transition graph, and `cargo xtask state-graph` enforces its shape. A

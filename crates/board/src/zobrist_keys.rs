@@ -12,8 +12,10 @@ use crate::split_mix::SplitMix64;
 use crate::square::Square;
 use crate::zobrist::Zobrist;
 
+type SquareKeys = [Zobrist; Square::COUNT];
+
 pub(crate) struct ZobristKeys {
-    pieces: EnumMap<Color, EnumMap<PieceKind, EnumMap<Square, Zobrist>>>,
+    pieces: [[SquareKeys; PieceKind::COUNT]; Color::COUNT],
     castling: EnumMap<CastlingRight, Zobrist>,
     en_passant: EnumMap<File, Zobrist>,
     black_to_move: Zobrist,
@@ -21,10 +23,10 @@ pub(crate) struct ZobristKeys {
 
 impl ZobristKeys {
     const SEED: u64 = 0x0C4E_55B0_A4D6_4C10;
-    pub(crate) const KEYS: ZobristKeys = Self::generate(SplitMix64::new(Self::SEED));
+    pub(crate) const KEYS: ZobristKeys = Self::generate();
 
-    pub(crate) fn piece(&self, piece: Piece, square: Square) -> Zobrist {
-        self.pieces[piece.color()][piece.kind()][square]
+    pub(crate) const fn piece(&self, piece: Piece, square: Square) -> Zobrist {
+        self.pieces[piece.color() as usize][piece.kind() as usize][square as usize]
     }
 
     pub(crate) fn castling(&self, rights: CastlingRights) -> Zobrist {
@@ -50,75 +52,72 @@ impl ZobristKeys {
         pieces: &EnumMap<Color, EnumMap<PieceKind, Bitboard>>,
     ) -> Zobrist {
         let mut hash = Zobrist::EMPTY;
-        let mut color = 0;
-        while color < Color::COUNT {
-            let mut kind = 0;
-            while kind < PieceKind::COUNT {
-                let keys = self.pieces.as_array()[color].as_array()[kind].as_array();
-                let bitboard = pieces.as_array()[color].as_array()[kind];
+        let mut colors = Color::VARIANTS;
+        while let [color, rest @ ..] = colors {
+            let mut kinds = PieceKind::VARIANTS;
+            while let [kind, tail @ ..] = kinds {
+                let keys = &self.pieces[*color as usize][*kind as usize];
+                let bitboard = pieces.as_array()[*color as usize].as_array()[*kind as usize];
                 hash = hash.xor(Self::hash_bitboard(keys, bitboard));
-                kind += 1;
+                kinds = tail;
             }
-            color += 1;
+            colors = rest;
         }
         hash
     }
 
-    const fn hash_bitboard(keys: &[Zobrist; Square::COUNT], bitboard: Bitboard) -> Zobrist {
+    const fn hash_bitboard(keys: &SquareKeys, bitboard: Bitboard) -> Zobrist {
         let mut hash = Zobrist::EMPTY;
-        let mut square = 0;
-        while square < Square::COUNT {
-            if bitboard.contains(Square::VARIANTS[square]) {
-                hash = hash.xor(keys[square]);
+        let mut squares = Square::VARIANTS;
+        while let [square, rest @ ..] = squares {
+            if bitboard.contains(*square) {
+                hash = hash.xor(keys[*square as usize]);
             }
-            square += 1;
+            squares = rest;
         }
         hash
     }
 
-    const fn generate(generator: SplitMix64) -> ZobristKeys {
-        let mut generator = generator;
-        let mut colors = [const {
-            EnumMap::from_array(
-                [const { EnumMap::from_array([Zobrist::EMPTY; Square::COUNT]) }; PieceKind::COUNT],
-            )
-        }; Color::COUNT];
-        let mut color = 0;
-        while color < Color::COUNT {
-            let mut kinds =
-                [const { EnumMap::from_array([Zobrist::EMPTY; Square::COUNT]) }; PieceKind::COUNT];
-            let mut kind = 0;
-            while kind < PieceKind::COUNT {
-                let (next, keys) = Self::fill::<{ Square::COUNT }>(generator);
-                generator = next;
-                kinds[kind] = EnumMap::from_array(keys);
-                kind += 1;
-            }
-            colors[color] = EnumMap::from_array(kinds);
-            color += 1;
+    const fn generate() -> ZobristKeys {
+        let mut generator = SplitMix64::new(Self::SEED);
+        let mut pieces = [[[Zobrist::EMPTY; Square::COUNT]; PieceKind::COUNT]; Color::COUNT];
+        let mut colors: &mut [[SquareKeys; PieceKind::COUNT]] = &mut pieces;
+        while let [color, rest @ ..] = colors {
+            generator = Self::fill_kinds(generator, color);
+            colors = rest;
         }
-        let (generator, castling) = Self::fill::<{ CastlingRight::VARIANTS.len() }>(generator);
-        let (generator, en_passant) = Self::fill::<{ File::COUNT }>(generator);
-        let (_, black_to_move) = generator.next();
+        let mut castling = [Zobrist::EMPTY; CastlingRight::VARIANTS.len()];
+        generator = Self::fill(generator, &mut castling);
+        let mut en_passant = [Zobrist::EMPTY; File::COUNT];
+        generator = Self::fill(generator, &mut en_passant);
+        let generator = generator.next();
         ZobristKeys {
-            pieces: EnumMap::from_array(colors),
+            pieces,
             castling: EnumMap::from_array(castling),
             en_passant: EnumMap::from_array(en_passant),
-            black_to_move: Zobrist::from_bits(black_to_move),
+            black_to_move: Zobrist::from_bits(generator.output()),
         }
     }
 
-    const fn fill<const COUNT: usize>(generator: SplitMix64) -> (SplitMix64, [Zobrist; COUNT]) {
+    const fn fill_kinds(generator: SplitMix64, kinds: &mut [SquareKeys]) -> SplitMix64 {
         let mut generator = generator;
-        let mut keys = [Zobrist::EMPTY; COUNT];
-        let mut index = 0;
-        while index < COUNT {
-            let (next, key) = generator.next();
-            generator = next;
-            keys[index] = Zobrist::from_bits(key);
-            index += 1;
+        let mut kinds = kinds;
+        while let [kind, rest @ ..] = kinds {
+            generator = Self::fill(generator, kind);
+            kinds = rest;
         }
-        (generator, keys)
+        generator
+    }
+
+    const fn fill(generator: SplitMix64, keys: &mut [Zobrist]) -> SplitMix64 {
+        let mut generator = generator;
+        let mut keys = keys;
+        while let [key, rest @ ..] = keys {
+            generator = generator.next();
+            *key = Zobrist::from_bits(generator.output());
+            keys = rest;
+        }
+        generator
     }
 }
 

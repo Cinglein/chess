@@ -1,6 +1,6 @@
-use board::{Board, Color, PieceKind, Rank, Square};
+use board::{Board, Color, PieceKind, Square};
 use enum_map::EnumMap;
-use strum::{EnumCount, VariantArray};
+use strum::VariantArray;
 
 use crate::evaluator::Evaluator;
 use crate::score::Score;
@@ -12,8 +12,8 @@ impl PieceSquareTables {
         EnumMap::from_array([100, 320, 330, 500, 900, 20_000]);
 
     #[rustfmt::skip]
-    const PLACEMENT: EnumMap<PieceKind, [i32; Square::COUNT]> = EnumMap::from_array([
-        [
+    const PLACEMENT: EnumMap<PieceKind, EnumMap<Square, i32>> = EnumMap::from_array([
+        EnumMap::from_array([
               0,   0,   0,   0,   0,   0,   0,   0,
               5,  10,  10, -20, -20,  10,  10,   5,
               5,  -5, -10,   0,   0, -10,  -5,   5,
@@ -22,8 +22,8 @@ impl PieceSquareTables {
              10,  10,  20,  30,  30,  20,  10,  10,
              50,  50,  50,  50,  50,  50,  50,  50,
               0,   0,   0,   0,   0,   0,   0,   0,
-        ],
-        [
+        ]),
+        EnumMap::from_array([
             -50, -40, -30, -30, -30, -30, -40, -50,
             -40, -20,   0,   5,   5,   0, -20, -40,
             -30,   5,  10,  15,  15,  10,   5, -30,
@@ -32,8 +32,8 @@ impl PieceSquareTables {
             -30,   0,  10,  15,  15,  10,   0, -30,
             -40, -20,   0,   0,   0,   0, -20, -40,
             -50, -40, -30, -30, -30, -30, -40, -50,
-        ],
-        [
+        ]),
+        EnumMap::from_array([
             -20, -10, -10, -10, -10, -10, -10, -20,
             -10,   5,   0,   0,   0,   0,   5, -10,
             -10,  10,  10,  10,  10,  10,  10, -10,
@@ -42,8 +42,8 @@ impl PieceSquareTables {
             -10,   0,   5,  10,  10,   5,   0, -10,
             -10,   0,   0,   0,   0,   0,   0, -10,
             -20, -10, -10, -10, -10, -10, -10, -20,
-        ],
-        [
+        ]),
+        EnumMap::from_array([
               0,   0,   0,   5,   5,   0,   0,   0,
              -5,   0,   0,   0,   0,   0,   0,  -5,
              -5,   0,   0,   0,   0,   0,   0,  -5,
@@ -52,8 +52,8 @@ impl PieceSquareTables {
              -5,   0,   0,   0,   0,   0,   0,  -5,
               5,  10,  10,  10,  10,  10,  10,   5,
               0,   0,   0,   0,   0,   0,   0,   0,
-        ],
-        [
+        ]),
+        EnumMap::from_array([
             -20, -10, -10,  -5,  -5, -10, -10, -20,
             -10,   0,   5,   0,   0,   0,   0, -10,
             -10,   5,   5,   5,   5,   5,   0, -10,
@@ -62,8 +62,8 @@ impl PieceSquareTables {
             -10,   0,   5,   5,   5,   5,   0, -10,
             -10,   0,   0,   0,   0,   0,   0, -10,
             -20, -10, -10,  -5,  -5, -10, -10, -20,
-        ],
-        [
+        ]),
+        EnumMap::from_array([
              20,  30,  10,   0,   0,  10,  30,  20,
              20,  20,   0,   0,   0,   0,  20,  20,
             -10, -20, -20, -20, -20, -20, -20, -10,
@@ -72,20 +72,16 @@ impl PieceSquareTables {
             -30, -40, -40, -50, -50, -40, -40, -30,
             -30, -40, -40, -50, -50, -40, -40, -30,
             -30, -40, -40, -50, -50, -40, -40, -30,
-        ],
+        ]),
     ]);
 
     #[must_use]
     pub fn piece_value(color: Color, kind: PieceKind, square: Square) -> Score {
         let from_white = match color {
             Color::White => square,
-            Color::Black => Square::new(square.file(), Self::mirrored(square.rank())),
+            Color::Black => square.mirrored(),
         };
-        Score::new(Self::MATERIAL[kind] + Self::PLACEMENT[kind][from_white as usize])
-    }
-
-    fn mirrored(rank: Rank) -> Rank {
-        Rank::VARIANTS[Rank::COUNT - 1 - rank as usize]
+        Score::new(Self::MATERIAL[kind] + Self::PLACEMENT[kind][from_white])
     }
 
     fn side_value(board: &Board, color: Color) -> Score {
@@ -132,11 +128,9 @@ mod tests {
     fn tables_are_mirror_images_between_the_colours() {
         for kind in PieceKind::iter() {
             for square in Square::iter() {
-                let mirrored =
-                    Square::new(square.file(), PieceSquareTables::mirrored(square.rank()));
                 assert_eq!(
                     PieceSquareTables::piece_value(Color::White, kind, square),
-                    PieceSquareTables::piece_value(Color::Black, kind, mirrored)
+                    PieceSquareTables::piece_value(Color::Black, kind, square.mirrored())
                 );
             }
         }

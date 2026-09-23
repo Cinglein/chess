@@ -37,12 +37,13 @@ impl<const SIZE: usize> AttackTable<SIZE> {
     const fn magics(rays: Rays, multipliers: &EnumMap<Square, u64>) -> EnumMap<Square, Magic> {
         let mut magics = [Magic::new(Bitboard::EMPTY, 0, 0); Square::COUNT];
         let mut offset = 0;
-        let mut index = 0;
-        while index < Square::COUNT {
-            let mask = rays.relevant_occupancy(Square::VARIANTS[index]);
-            magics[index] = Magic::new(mask, multipliers.as_array()[index], offset);
-            offset += magics[index].table_size();
-            index += 1;
+        let mut squares = Square::VARIANTS;
+        while let [square, rest @ ..] = squares {
+            let mask = rays.relevant_occupancy(*square);
+            let magic = Magic::new(mask, multipliers.as_array()[*square as usize], offset);
+            magics[*square as usize] = magic;
+            offset += magic.table_size();
+            squares = rest;
         }
         EnumMap::from_array(magics)
     }

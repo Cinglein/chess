@@ -58,6 +58,11 @@ impl Square {
     }
 
     #[must_use]
+    pub const fn mirrored(self) -> Square {
+        Self::VARIANTS[self as usize ^ 0b11_1000]
+    }
+
+    #[must_use]
     pub fn between(self, other: Square) -> Bitboard {
         let origin = Bitboard::from_square(self);
         let target = Bitboard::from_square(other);
