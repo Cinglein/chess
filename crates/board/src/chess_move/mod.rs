@@ -17,6 +17,7 @@ use core::fmt;
 use enum_dispatch::enum_dispatch;
 
 use crate::file::File;
+use crate::piece::Piece;
 use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;

@@ -49,9 +49,8 @@ impl<E: Evaluator> Search<E> {
         let depth = self.depth.incremented();
         let remaining = depth.decremented().unwrap_or_default();
         let mut negamax = Negamax::<E>::new();
-        let principal = self
-            .board
-            .legal_moves()
+        let principal = negamax
+            .root_moves(&self.board, self.best_move)
             .into_iter()
             .filter_map(|chess_move| {
                 self.board
@@ -98,14 +97,21 @@ mod tests {
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
     const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
+    const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    const ORDERING_DEPTH: u8 = 4;
 
     #[test]
-    fn a_mate_in_one_is_found_at_depth_two() {
-        let board: Board = MATE_IN_ONE.parse().unwrap();
-        let search = Search::<PieceSquareTables>::from(board).deepen().deepen();
+    fn mate_in_one_is_found_and_stalemate_has_no_move_and_a_drawn_score() {
+        let mated: Board = MATE_IN_ONE.parse().unwrap();
+        let search = Search::<PieceSquareTables>::from(mated).deepen().deepen();
         let best = search.best_move().map(|chess_move| chess_move.to_string());
-        assert_eq!(best.as_deref(), Some("a1a8"));
-        assert_eq!(search.score(), Score::mate_in(1));
+        assert_eq!(
+            (best.as_deref(), search.score()),
+            (Some("a1a8"), Score::mate_in(1))
+        );
+        let stalemated: Board = STALEMATE.parse().unwrap();
+        let search = Search::<PieceSquareTables>::from(stalemated).deepen();
+        assert_eq!((search.best_move(), search.score()), (None, Score::DRAW));
     }
 
     #[test]
@@ -118,9 +124,15 @@ mod tests {
     }
 
     #[test]
-    fn a_stalemated_side_has_no_move_and_a_drawn_score() {
-        let board: Board = STALEMATE.parse().unwrap();
-        let search = Search::<PieceSquareTables>::from(board).deepen();
-        assert_eq!((search.best_move(), search.score()), (None, Score::DRAW));
+    fn ordered_search_visits_a_small_fraction_of_the_perft_tree() {
+        let board: Board = KIWIPETE.parse().unwrap();
+        let deepened = |search: Search<PieceSquareTables>, _: u8| search.deepen();
+        let search = (0..ORDERING_DEPTH).fold(Search::from(board), deepened);
+        let leaves = board.perft(ORDERING_DEPTH);
+        assert!(
+            search.nodes() * u64::from(ORDERING_DEPTH) < leaves,
+            "{}",
+            search.nodes()
+        );
     }
 }

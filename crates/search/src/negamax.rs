@@ -1,18 +1,21 @@
 use core::marker::PhantomData;
 use core::ops::ControlFlow;
 
-use board::Board;
+use board::{Board, ChessMove, MoveKind};
 use eval::{Evaluator, Score};
 
 use crate::bounds::Bounds;
 use crate::depth::Depth;
 use crate::full_width::FullWidth;
+use crate::killer_table::KillerTable;
+use crate::ordered_moves::OrderedMoves;
 use crate::quiescence::Quiescence;
 use crate::regime::Regime;
 use crate::window::Window;
 
 pub(crate) struct Negamax<E: Evaluator> {
     nodes: u64,
+    killers: KillerTable,
     evaluator: PhantomData<E>,
 }
 
@@ -20,6 +23,7 @@ impl<E: Evaluator> Negamax<E> {
     pub(crate) const fn new() -> Negamax<E> {
         Negamax {
             nodes: 0,
+            killers: KillerTable::new(),
             evaluator: PhantomData,
         }
     }
@@ -56,21 +60,32 @@ impl<E: Evaluator> Negamax<E> {
         if window.upper().excludes(floor) {
             return floor;
         }
-        let moves = board.legal_moves();
+        let moves = OrderedMoves::from_board(board, self.killers.at_ply(ply), None);
         if moves.is_empty() {
             return Self::terminal(board, ply);
         }
         let searched = moves
             .into_iter()
             .filter(|chess_move| R::considers(*chess_move, board))
-            .filter_map(|chess_move| board.make_move(chess_move))
-            .try_fold(Bounds::new(window, floor), |bounds, child| {
+            .filter_map(|chess_move| board.make_move(chess_move).map(|child| (chess_move, child)))
+            .try_fold(Bounds::new(window, floor), |bounds, (chess_move, child)| {
                 let reply = ply.saturating_add(1);
-                bounds.admit(-self.score(&child, remaining, reply, bounds.child_window()))
+                let score = -self.score(&child, remaining, reply, bounds.child_window());
+                let admitted = bounds.admit(score);
+                if admitted.is_break() && !chess_move.captures(board.placement()) {
+                    self.killers.remember(ply, chess_move);
+                }
+                admitted
             });
         match searched {
             ControlFlow::Break(best) => best,
             ControlFlow::Continue(bounds) => bounds.best(),
         }
+    }
+}
+
+impl<E: Evaluator> Negamax<E> {
+    pub(crate) fn root_moves(&self, board: &Board, principal: Option<ChessMove>) -> OrderedMoves {
+        OrderedMoves::from_board(board, self.killers.at_ply(0), principal)
     }
 }

@@ -3,14 +3,12 @@ use enum_map::EnumMap;
 use strum::VariantArray;
 
 use crate::evaluator::Evaluator;
+use crate::piece_kind_value::PieceKindValue;
 use crate::score::Score;
 
 pub struct PieceSquareTables;
 
 impl PieceSquareTables {
-    const MATERIAL: EnumMap<PieceKind, i32> =
-        EnumMap::from_array([100, 320, 330, 500, 900, 20_000]);
-
     #[rustfmt::skip]
     const PLACEMENT: EnumMap<PieceKind, EnumMap<Square, i32>> = EnumMap::from_array([
         EnumMap::from_array([
@@ -81,7 +79,7 @@ impl PieceSquareTables {
             Color::White => square,
             Color::Black => square.mirrored(),
         };
-        Score::new(Self::MATERIAL[kind] + Self::PLACEMENT[kind][from_white])
+        PieceKindValue::material(kind) + Score::new(Self::PLACEMENT[kind][from_white])
     }
 
     fn side_value(board: &Board, color: Color) -> Score {
