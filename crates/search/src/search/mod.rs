@@ -1,9 +1,13 @@
 mod depth;
+mod interrupt;
 mod negamax;
 mod principal;
+mod uninterrupted;
 
 pub use depth::Depth;
+pub use interrupt::Interrupt;
 pub use negamax::{BoundKind, TableEntry, TranspositionTable};
+pub use uninterrupted::Uninterrupted;
 
 use core::marker::PhantomData;
 
@@ -51,10 +55,14 @@ impl<E: Evaluator> Search<E> {
     }
 
     #[must_use]
-    pub fn deepen(self, table: &mut TranspositionTable<'_>) -> Search<E> {
+    pub fn deepen<I: Interrupt>(
+        self,
+        table: &mut TranspositionTable<'_>,
+        interrupt: &I,
+    ) -> Search<E> {
         let depth = self.depth.incremented();
         let remaining = depth.decremented().unwrap_or_default();
-        let mut negamax = Negamax::<E>::new(table);
+        let mut negamax = Negamax::<E, I>::new(table, interrupt);
         let principal = negamax
             .root_moves(&self.board, self.best_move)
             .into_iter()
@@ -68,11 +76,14 @@ impl<E: Evaluator> Search<E> {
                 let score = -negamax.score(&child, remaining, distance, principal.window());
                 principal.improved(chess_move, score)
             });
+        if negamax.was_aborted() {
+            return self;
+        }
         Search {
             depth,
             best_move: principal.chess_move(),
             score: principal.chess_move().map_or_else(
-                || Negamax::<E>::terminal(&self.board, RootDistance::ROOT),
+                || Negamax::<E, I>::terminal(&self.board, RootDistance::ROOT),
                 |_| principal.score(),
             ),
             nodes: self.nodes + negamax.nodes(),
@@ -99,8 +110,7 @@ mod tests {
     use board::Board;
     use eval::{PieceSquareTables, Score};
 
-    use super::Search;
-    use super::{TableEntry, TranspositionTable};
+    use super::{Search, TableEntry, TranspositionTable, Uninterrupted};
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
@@ -116,7 +126,9 @@ mod tests {
             let mut store = vec![TableEntry::EMPTY; entries];
             let mut table = TranspositionTable::new(&mut store);
             let board: Board = fen.parse().unwrap();
-            (0..depth).fold(Search::from(board), |search, _| search.deepen(&mut table))
+            (0..depth).fold(Search::from(board), |search, _| {
+                search.deepen(&mut table, &Uninterrupted)
+            })
         }
     }
 

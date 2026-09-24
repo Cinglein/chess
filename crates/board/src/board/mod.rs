@@ -6,10 +6,10 @@ pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
 pub use move_generator::MoveGenerator;
 
-use core::fmt;
+use core::fmt::{self, Write};
 use core::str::FromStr;
 
-use arrayvec::ArrayVec;
+use arrayvec::{ArrayString, ArrayVec};
 use fen::{DashOr, Fen, FenError};
 use itertools::Itertools;
 
@@ -109,6 +109,14 @@ impl Board {
             Color::Black => MoveGenerator::<BlackPawn>::new(self)
                 .map_or_else(MoveList::new, MoveGenerator::legal_moves),
         }
+    }
+
+    #[must_use]
+    pub fn parse_move(&self, text: &str) -> Option<ChessMove> {
+        self.legal_moves().into_iter().find(|chess_move| {
+            let mut rendered = ArrayString::<8>::new();
+            write!(rendered, "{chess_move}").is_ok() && rendered.as_str() == text
+        })
     }
 
     #[must_use]
@@ -327,6 +335,9 @@ mod tests {
         proptest!(|(origin in select(Square::VARIANTS), destination in select(Square::VARIANTS))| {
             let owned = Board::START.placement().occupied_by(Color::White).contains(origin);
             prop_assert_eq!(Board::START.make_move(ChessMove::Normal(Normal::new(origin, destination))).is_some(), owned);
+            for legal in Board::START.legal_moves() {
+                prop_assert_eq!(Board::START.parse_move(&legal.to_string()), Some(legal));
+            }
         });
     }
 }
