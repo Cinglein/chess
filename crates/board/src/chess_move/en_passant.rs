@@ -1,4 +1,5 @@
 use super::MoveKind;
+use crate::piece::Piece;
 use crate::placement::PiecePlacement;
 use crate::square::Square;
 
@@ -23,12 +24,12 @@ impl MoveKind for EnPassant {
         self.origin
     }
 
-    fn captures(&self, _: &PiecePlacement) -> bool {
-        true
-    }
-
     fn destination(&self) -> Square {
         self.destination
+    }
+
+    fn victim(&self, placement: &PiecePlacement) -> Option<Piece> {
+        placement.piece_at(Square::new(self.destination.file(), self.origin.rank()))
     }
 
     fn play(self, placement: PiecePlacement) -> Option<PiecePlacement> {

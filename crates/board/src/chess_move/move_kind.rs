@@ -1,6 +1,7 @@
 use enum_dispatch::enum_dispatch;
 
 use crate::file::File;
+use crate::piece::Piece;
 use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;
@@ -14,7 +15,11 @@ pub trait MoveKind {
     fn play(self, placement: PiecePlacement) -> Option<PiecePlacement>;
 
     fn captures(&self, placement: &PiecePlacement) -> bool {
-        placement.piece_at(self.destination()).is_some()
+        self.victim(placement).is_some()
+    }
+
+    fn victim(&self, placement: &PiecePlacement) -> Option<Piece> {
+        placement.piece_at(self.destination())
     }
 
     fn en_passant_file(&self) -> Option<File> {
