@@ -56,6 +56,16 @@ impl Score {
     }
 
     #[must_use]
+    pub fn mating_in_moves(moves: i32) -> Score {
+        let plies = |count: i32| u8::try_from(count).unwrap_or(u8::MAX);
+        if moves > 0 {
+            Self::mate_in(plies(2 * moves - 1))
+        } else {
+            Self::mated_in(plies(-2 * moves))
+        }
+    }
+
+    #[must_use]
     pub fn mate_in_moves(self) -> Option<i32> {
         match self.mate_direction() {
             MateDirection::Winning => Some(((Self::MATE - self).0 + 1) / 2),
@@ -103,6 +113,7 @@ mod tests {
     use super::Score;
 
     const PLIES: u8 = 3;
+    const MOVES: [i32; 4] = [-3, -1, 1, 2];
 
     #[test]
     fn faster_mates_score_higher_and_being_mated_is_the_negation() {
@@ -115,7 +126,9 @@ mod tests {
     #[test]
     fn mate_distances_convert_from_plies_to_signed_moves_and_centipawns_do_not() {
         assert_eq!(Score::mate_in(PLIES).mate_in_moves(), Some(2));
-        assert_eq!(Score::mated_in(2).mate_in_moves(), Some(-1));
+        for moves in MOVES {
+            assert_eq!(Score::mating_in_moves(moves).mate_in_moves(), Some(moves));
+        }
         assert_eq!(Score::new(PLIES.into()).mate_in_moves(), None);
     }
 

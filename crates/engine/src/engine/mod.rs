@@ -11,7 +11,7 @@ use board::{Board, State};
 use lifecycle::Lifecycle;
 use search::TableEntry;
 use thinker::Thinker;
-use uci::{GoLimits, Identity, Position, Receiver, Response};
+use uci::{EngineOption, GoLimits, Identity, Position, Receiver, Response};
 
 pub struct Engine<S: Sink> {
     board: Board,
@@ -76,6 +76,10 @@ impl<'line, S: Sink> Receiver<'line> for Engine<S> {
         self
     }
 
+    fn configure(self, _: EngineOption<'line>) -> Self {
+        self
+    }
+
     fn reset_game(mut self) -> Self {
         self.entries.fill(TableEntry::EMPTY);
         self
@@ -119,9 +123,9 @@ mod tests {
     const SEARCH: &str = "go depth 2";
     const EXPECTED: &str = "bestmove a1a8";
 
-    impl Sink for Vec<Response> {
-        fn emit(&mut self, response: Response) {
-            self.push(response);
+    impl Sink for Vec<String> {
+        fn emit(&mut self, response: Response<'_>) {
+            self.push(response.to_string());
         }
     }
 
@@ -130,7 +134,7 @@ mod tests {
         let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
         let placed = Command::try_from(PLACE).unwrap().deliver_to(fresh);
         let engine = Command::try_from(SEARCH).unwrap().deliver_to(placed);
-        let announced: Vec<String> = engine.sink().iter().map(ToString::to_string).collect();
+        let announced = engine.sink();
         assert!(
             announced.iter().any(|line| line == EXPECTED),
             "{announced:?}"

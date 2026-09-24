@@ -1,3 +1,4 @@
+use core::fmt;
 use core::time::Duration;
 
 use board::Color;
@@ -40,5 +41,18 @@ impl Clock {
             Color::White => self.white_increment,
             Color::Black => self.black_increment,
         }
+    }
+}
+
+impl fmt::Display for Clock {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "wtime {} btime {} winc {} binc {}",
+            self.white.as_millis(),
+            self.black.as_millis(),
+            self.white_increment.as_millis(),
+            self.black_increment.as_millis()
+        )
     }
 }

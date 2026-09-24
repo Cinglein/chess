@@ -1,4 +1,4 @@
-use crate::command::{GoLimits, Position};
+use crate::command::{EngineOption, GoLimits, Position};
 
 pub trait Receiver<'line>: Sized {
     #[must_use]
@@ -6,6 +6,9 @@ pub trait Receiver<'line>: Sized {
 
     #[must_use]
     fn confirm_ready(self) -> Self;
+
+    #[must_use]
+    fn configure(self, option: EngineOption<'line>) -> Self;
 
     #[must_use]
     fn reset_game(self) -> Self;

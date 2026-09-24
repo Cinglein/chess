@@ -3,6 +3,7 @@ mod go_builder;
 
 pub use clock::Clock;
 
+use core::fmt;
 use core::time::Duration;
 
 use go_builder::GoBuilder;
@@ -56,5 +57,17 @@ impl From<&str> for GoLimits {
         rest.split_whitespace()
             .fold(GoBuilder::default(), GoBuilder::absorb)
             .limits()
+    }
+}
+
+impl fmt::Display for GoLimits {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GoLimits::Infinite => formatter.write_str("infinite"),
+            GoLimits::Depth(depth) => write!(formatter, "depth {depth}"),
+            GoLimits::Nodes(nodes) => write!(formatter, "nodes {nodes}"),
+            GoLimits::MoveTime(duration) => write!(formatter, "movetime {}", duration.as_millis()),
+            GoLimits::Clock(clock) => write!(formatter, "{clock}"),
+        }
     }
 }

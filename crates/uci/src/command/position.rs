@@ -1,4 +1,6 @@
-use super::uci_error::UciError;
+use core::fmt;
+
+use crate::uci_error::UciError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Position<'line> {
@@ -7,6 +9,11 @@ pub struct Position<'line> {
 }
 
 impl<'line> Position<'line> {
+    #[must_use]
+    pub const fn new(fen: Option<&'line str>, moves: &'line str) -> Position<'line> {
+        Position { fen, moves }
+    }
+
     #[must_use]
     pub const fn fen(&self) -> Option<&'line str> {
         self.fen
@@ -31,6 +38,23 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
                     .trim(),
             ),
         };
-        Ok(Position { fen, moves })
+        Ok(Position {
+            fen,
+            moves: moves.trim(),
+        })
+    }
+}
+
+impl fmt::Display for Position<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.fen {
+            Some(fen) => write!(formatter, "fen {fen}")?,
+            None => formatter.write_str("startpos")?,
+        }
+        if self.moves.is_empty() {
+            Ok(())
+        } else {
+            write!(formatter, " moves {}", self.moves)
+        }
     }
 }
