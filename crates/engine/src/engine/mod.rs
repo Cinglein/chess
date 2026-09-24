@@ -55,8 +55,9 @@ impl<S: Sink> Engine<S> {
             .fen()
             .map_or(Some(Board::START), |fen| fen.parse().ok())?;
         position.moves().try_fold(start, |board, text| {
-            board
-                .parse_move(text)
+            text.parse()
+                .ok()
+                .and_then(|notation| board.resolve_move(notation))
                 .and_then(|chess_move| board.make_move(chess_move))
         })
     }

@@ -17,6 +17,7 @@ use core::fmt;
 use enum_dispatch::enum_dispatch;
 
 use crate::file::File;
+use crate::long_algebraic::LongAlgebraic;
 use crate::piece::Piece;
 use crate::placement::PiecePlacement;
 use crate::promotion_piece::PromotionPiece;
@@ -35,9 +36,7 @@ pub enum ChessMove {
 
 impl fmt::Display for ChessMove {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}{}", self.origin(), self.destination())?;
-        self.promotion_piece()
-            .map_or(Ok(()), |piece| write!(formatter, "{piece}"))
+        LongAlgebraic::from(*self).fmt(formatter)
     }
 }
 
