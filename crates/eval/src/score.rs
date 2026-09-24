@@ -10,6 +10,7 @@ impl Score {
     pub const DRAW: Score = Score(0);
     pub const INFINITY: Score = Score(32_000);
     const MATE: Score = Score(31_000);
+    const LONGEST_MATE: Score = Score(30_000);
 
     #[must_use]
     pub const fn new(centipawns: i32) -> Score {
@@ -35,6 +36,41 @@ impl Score {
     pub fn mated_in(plies: u8) -> Score {
         -Self::mate_in(plies)
     }
+
+    #[must_use]
+    pub fn stored_from_root_distance(self, ply: u8) -> Score {
+        match self.mate_direction() {
+            MateDirection::Winning => self + Score(i32::from(ply)),
+            MateDirection::Losing => self - Score(i32::from(ply)),
+            MateDirection::None => self,
+        }
+    }
+
+    #[must_use]
+    pub fn seen_from_root_distance(self, ply: u8) -> Score {
+        match self.mate_direction() {
+            MateDirection::Winning => self - Score(i32::from(ply)),
+            MateDirection::Losing => self + Score(i32::from(ply)),
+            MateDirection::None => self,
+        }
+    }
+
+    fn mate_direction(self) -> MateDirection {
+        if self >= Self::LONGEST_MATE {
+            MateDirection::Winning
+        } else if self <= -Self::LONGEST_MATE {
+            MateDirection::Losing
+        } else {
+            MateDirection::None
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MateDirection {
+    Winning,
+    Losing,
+    None,
 }
 
 impl Neg for Score {
@@ -53,6 +89,8 @@ impl Sum for Score {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::Score;
 
     const PLIES: u8 = 3;
@@ -63,5 +101,14 @@ mod tests {
         assert!(Score::INFINITY > mate && mate > Score::mate_in(PLIES + 1));
         assert!(Score::mate_in(PLIES + 1) > Score::new(i32::from(u8::MAX)));
         assert_eq!(Score::mated_in(PLIES), -mate);
+    }
+
+    #[test]
+    fn storing_and_recalling_a_score_at_the_same_ply_is_the_identity() {
+        proptest!(|(centipawns in -31_000_i32..=31_000, ply: u8)| {
+            let score = Score::new(centipawns);
+            let recalled = score.stored_from_root_distance(ply).seen_from_root_distance(ply);
+            prop_assert_eq!(recalled, score);
+        });
     }
 }

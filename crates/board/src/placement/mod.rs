@@ -1,14 +1,12 @@
 mod empty;
 mod hand;
 mod holding;
-mod placed_piece;
 mod rank_placement;
-mod rank_token;
 
 pub use empty::Empty;
 pub use hand::Hand;
 pub use holding::Holding;
-pub use placed_piece::PlacedPiece;
+pub use rank_placement::PlacedPiece;
 
 use core::fmt;
 use core::str::FromStr;
