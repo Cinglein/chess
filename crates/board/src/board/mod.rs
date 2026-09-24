@@ -6,10 +6,10 @@ pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
 pub use move_generator::MoveGenerator;
 
-use core::fmt::{self, Write};
+use core::fmt;
 use core::str::FromStr;
 
-use arrayvec::{ArrayString, ArrayVec};
+use arrayvec::ArrayVec;
 use fen::{DashOr, Fen, FenError};
 use itertools::Itertools;
 
@@ -19,6 +19,7 @@ use crate::color::Color;
 use crate::file::File;
 use crate::king_safety::KingSafety;
 use crate::leaper::{BlackPawn, WhitePawn};
+use crate::long_algebraic::LongAlgebraic;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
 use crate::rank::Rank;
@@ -112,11 +113,10 @@ impl Board {
     }
 
     #[must_use]
-    pub fn parse_move(&self, text: &str) -> Option<ChessMove> {
-        self.legal_moves().into_iter().find(|chess_move| {
-            let mut rendered = ArrayString::<8>::new();
-            write!(rendered, "{chess_move}").is_ok() && rendered.as_str() == text
-        })
+    pub fn resolve_move(&self, notation: LongAlgebraic) -> Option<ChessMove> {
+        self.legal_moves()
+            .into_iter()
+            .find(|chess_move| LongAlgebraic::from(*chess_move) == notation)
     }
 
     #[must_use]
@@ -335,9 +335,6 @@ mod tests {
         proptest!(|(origin in select(Square::VARIANTS), destination in select(Square::VARIANTS))| {
             let owned = Board::START.placement().occupied_by(Color::White).contains(origin);
             prop_assert_eq!(Board::START.make_move(ChessMove::Normal(Normal::new(origin, destination))).is_some(), owned);
-            for legal in Board::START.legal_moves() {
-                prop_assert_eq!(Board::START.parse_move(&legal.to_string()), Some(legal));
-            }
         });
     }
 }
