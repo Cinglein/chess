@@ -1,4 +1,8 @@
+mod option_word;
+
 use core::fmt;
+
+use option_word::OptionWord;
 
 use crate::uci_error::UciError;
 
@@ -31,8 +35,8 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
     fn try_from(rest: &'line str) -> Result<EngineOption<'line>, UciError> {
         let (name, setting) = rest
             .trim()
-            .strip_prefix("name")
-            .and_then(|named| named.split_once("value"))
+            .strip_prefix(<&str>::from(OptionWord::Name))
+            .and_then(|named| named.split_once(<&str>::from(OptionWord::Value)))
             .ok_or(UciError::UnknownOption)?;
         Ok(EngineOption {
             name: name.trim(),
@@ -43,6 +47,13 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
 
 impl fmt::Display for EngineOption<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "name {} value {}", self.name, self.setting)
+        write!(
+            formatter,
+            "{} {} {} {}",
+            OptionWord::Name,
+            self.name,
+            OptionWord::Value,
+            self.setting
+        )
     }
 }
