@@ -202,6 +202,7 @@ dependencies = [
  "board",
  "derive_more",
  "enum-map",
+ "proptest",
  "strum",
 ]
 

@@ -1,4 +1,7 @@
+use board::ChessMove;
+
 use crate::killers::Killers;
+use crate::root_distance::RootDistance;
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct KillerTable([Killers; KillerTable::MAX_PLY]);
@@ -10,15 +13,15 @@ impl KillerTable {
         KillerTable([Killers::NONE; Self::MAX_PLY])
     }
 
-    pub(crate) fn at_ply(&self, ply: u8) -> Killers {
+    pub(crate) fn at_ply(&self, distance: RootDistance) -> Killers {
         self.0
-            .get(usize::from(ply))
+            .get(usize::from(distance.plies()))
             .copied()
             .unwrap_or(Killers::NONE)
     }
 
-    pub(crate) fn remember(&mut self, ply: u8, chess_move: board::ChessMove) {
-        if let Some(killers) = self.0.get_mut(usize::from(ply)) {
+    pub(crate) fn remember(&mut self, distance: RootDistance, chess_move: ChessMove) {
+        if let Some(killers) = self.0.get_mut(usize::from(distance.plies())) {
             *killers = killers.remembering(chess_move);
         }
     }

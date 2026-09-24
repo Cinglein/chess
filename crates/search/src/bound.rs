@@ -28,6 +28,10 @@ impl Bound<Lower> {
     pub(crate) fn raised(self, score: Score) -> Bound<Lower> {
         Bound::new(self.score.max(score))
     }
+
+    pub(crate) fn admits_no_more_than(self, score: Score) -> bool {
+        score <= self.score
+    }
 }
 
 impl Bound<Upper> {
