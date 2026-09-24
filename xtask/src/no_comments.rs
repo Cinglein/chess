@@ -1,35 +1,34 @@
 use rustc_lexer::{FrontmatterAllowed, TokenKind, tokenize};
 
+use crate::report::Report;
+use crate::site::Site;
 use crate::source_file::SourceFile;
+use crate::violation::Violation;
 
 pub struct NoComments;
 
 impl NoComments {
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
-        let violations: Vec<String> = files
-            .iter()
-            .flat_map(|file| {
-                Self::comment_lines(file.text())
-                    .into_iter()
-                    .map(move |line| format!("{}:{line}", file.path()))
-            })
-            .collect();
-        if violations.is_empty() {
-            println!("no comments found in {} rust files", files.len());
-            Ok(())
-        } else {
-            Err(format!(
-                "comments are not allowed in this repository:\n{}",
-                violations.join("\n")
-            ))
-        }
+    pub fn report(files: &[SourceFile]) -> Report {
+        Report::new(
+            "comments are not allowed in this repository",
+            files
+                .iter()
+                .flat_map(|file| {
+                    Self::comment_lines(file.text())
+                        .into_iter()
+                        .map(move |line| {
+                            Violation::new(Site::Line(file.path().to_owned(), line), "comment")
+                        })
+                })
+                .collect(),
+        )
     }
 
     fn comment_lines(source: &str) -> Vec<usize> {
         tokenize(source, FrontmatterAllowed::Yes)
             .scan(0, |offset, token| {
                 let start = *offset;
-                *offset += token.len as usize;
+                *offset += usize::try_from(token.len).ok()?;
                 Some((start, token.kind))
             })
             .filter(|(_, kind)| {

@@ -1,18 +1,21 @@
 mod empty;
 mod hand;
 mod holding;
+mod placed_piece;
 mod rank_placement;
+mod rank_token;
 
 pub use empty::Empty;
 pub use hand::Hand;
 pub use holding::Holding;
+pub use placed_piece::PlacedPiece;
 
 use core::fmt;
 use core::str::FromStr;
 
 use enum_map::EnumMap;
 use fen::{Fen, FenError};
-use itertools::process_results;
+use itertools::{Itertools, process_results};
 use strum::{EnumCount, IntoEnumIterator};
 
 use crate::bitboard::Bitboard;
@@ -112,17 +115,17 @@ impl Placement<Empty> {
     const START_PIECES: EnumMap<Color, EnumMap<PieceKind, Bitboard>> = EnumMap::from_array([
         EnumMap::from_array([
             Bitboard::rank(Rank::Two),
-            Bitboard::from_square(Square::B1).with(Square::G1),
-            Bitboard::from_square(Square::C1).with(Square::F1),
-            Bitboard::from_square(Square::A1).with(Square::H1),
+            Bitboard::from_square(Square::B1).including(Square::G1),
+            Bitboard::from_square(Square::C1).including(Square::F1),
+            Bitboard::from_square(Square::A1).including(Square::H1),
             Bitboard::from_square(Square::D1),
             Bitboard::from_square(Square::E1),
         ]),
         EnumMap::from_array([
             Bitboard::rank(Rank::Seven),
-            Bitboard::from_square(Square::B8).with(Square::G8),
-            Bitboard::from_square(Square::C8).with(Square::F8),
-            Bitboard::from_square(Square::A8).with(Square::H8),
+            Bitboard::from_square(Square::B8).including(Square::G8),
+            Bitboard::from_square(Square::C8).including(Square::F8),
+            Bitboard::from_square(Square::A8).including(Square::H8),
             Bitboard::from_square(Square::D8),
             Bitboard::from_square(Square::E8),
         ]),
@@ -174,13 +177,14 @@ impl Placement<Holding> {
     }
 }
 
-impl FromIterator<(Square, Piece)> for PiecePlacement {
-    fn from_iter<I: IntoIterator<Item = (Square, Piece)>>(pieces: I) -> PiecePlacement {
+impl FromIterator<PlacedPiece> for PiecePlacement {
+    fn from_iter<I: IntoIterator<Item = PlacedPiece>>(pieces: I) -> PiecePlacement {
         pieces
             .into_iter()
-            .fold(PiecePlacement::EMPTY, |mut placement, (square, piece)| {
-                placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
-                placement.hash ^= ZobristKeys::KEYS.piece(piece, square);
+            .fold(PiecePlacement::EMPTY, |mut placement, placed| {
+                placement.pieces[placed.piece().color()][placed.piece().kind()] |=
+                    Bitboard::from_square(placed.square());
+                placement.hash ^= ZobristKeys::KEYS.piece(placed.piece(), placed.square());
                 placement
             })
     }
@@ -190,11 +194,8 @@ impl Fen for PiecePlacement {}
 
 impl fmt::Display for PiecePlacement {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut ranks = Rank::iter().rev();
-        if let Some(rank) = ranks.next() {
-            write!(formatter, "{}", self.rank_placement(rank))?;
-        }
-        ranks.try_for_each(|rank| write!(formatter, "/{}", self.rank_placement(rank)))
+        let ranks = Rank::iter().rev().map(|rank| self.rank_placement(rank));
+        write!(formatter, "{}", ranks.format("/"))
     }
 }
 
@@ -207,17 +208,9 @@ impl FromStr for PiecePlacement {
         }
         let ranks = Rank::iter().rev().zip(text.split('/')).map(|(rank, text)| {
             text.parse::<RankPlacement>()
-                .map(|placement| (rank, placement))
+                .map(|placement| placement.pieces(rank))
         });
-        process_results(ranks, |ranks| {
-            ranks
-                .flat_map(|(rank, placement)| {
-                    placement
-                        .pieces()
-                        .map(move |(file, piece)| (Square::new(file, rank), piece))
-                })
-                .collect()
-        })
+        process_results(ranks, |ranks| ranks.flatten().collect())
     }
 }
 
@@ -228,7 +221,7 @@ mod tests {
     use proptest::sample::select;
     use strum::VariantArray;
 
-    use super::PiecePlacement;
+    use super::{PiecePlacement, PlacedPiece};
     use crate::bitboard::Bitboard;
     use crate::color::Color;
     use crate::piece::Piece;
@@ -241,7 +234,7 @@ mod tests {
     fn a_placed_piece_is_found_on_its_square_and_nowhere_else() {
         proptest!(|(color in select(Color::VARIANTS), kind in select(PieceKind::VARIANTS), square in select(Square::VARIANTS))| {
             let piece = Piece::new(color, kind);
-            let placement: PiecePlacement = [(square, piece)].into_iter().collect();
+            let placement: PiecePlacement = [PlacedPiece::new(square, piece)].into_iter().collect();
             prop_assert_eq!(placement.piece_at(square), Some(piece));
             prop_assert_eq!(placement.pieces(color, kind), Bitboard::from_square(square));
             prop_assert_eq!(placement.occupied(), Bitboard::from_square(square));

@@ -14,7 +14,7 @@ impl Magic {
         Magic {
             mask,
             multiplier,
-            shift: u64::BITS - mask.count(),
+            shift: u64::BITS - 1 - mask.count(),
             offset,
         }
     }
@@ -30,20 +30,12 @@ impl Magic {
     }
 
     #[must_use]
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "the hash is shifted down to at most twelve bits before the cast"
-    )]
     pub const fn index(&self, occupied: Bitboard) -> usize {
         let hash = occupied
             .intersection(self.mask)
             .bits()
             .wrapping_mul(self.multiplier);
-        let slot = match hash.checked_shr(self.shift) {
-            Some(slot) => slot,
-            None => 0,
-        };
-        self.offset + slot as usize
+        self.offset + ((hash >> 1) >> self.shift) as usize
     }
 }
 

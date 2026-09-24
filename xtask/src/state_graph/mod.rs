@@ -1,8 +1,12 @@
+mod body;
 mod declarations;
+mod edge;
 mod edge_scan;
 mod field_visibility;
 mod function_shape;
 mod impl_context;
+mod impl_kind;
+mod returns;
 mod type_name;
 mod variant_matches;
 mod variant_paths;
@@ -12,6 +16,7 @@ use edge_scan::EdgeScan;
 use field_visibility::FieldVisibility;
 use variant_matches::VariantMatches;
 
+use crate::report::Report;
 use crate::source_file::SourceFile;
 
 pub struct StateGraph;
@@ -19,31 +24,29 @@ pub struct StateGraph;
 impl StateGraph {
     const MAX_EDGES_PER_VERTEX: usize = 4;
 
-    pub fn check(files: &[SourceFile]) -> Result<(), String> {
+    pub fn report(files: &[SourceFile]) -> Report {
         let declarations = Declarations::collect(files);
         let mut edges = EdgeScan::new(&declarations);
         for file in files {
             edges.scan(file);
         }
-        let edge_count = edges.edge_count();
-        let violations: Vec<String> = files
-            .iter()
-            .flat_map(|file| {
-                FieldVisibility::violations(file)
-                    .into_iter()
-                    .chain(VariantMatches::violations(file, &declarations))
-            })
-            .chain(edges.violations(Self::MAX_EDGES_PER_VERTEX))
-            .collect();
-        if violations.is_empty() {
-            println!(
-                "state graph: {} vertices, {edge_count} edges",
-                declarations.vertex_count()
-            );
-            Ok(())
-        } else {
-            Err(format!("state graph violated:\n{}", violations.join("\n")))
-        }
+        println!(
+            "state graph: {} vertices, {} edges",
+            declarations.vertex_count(),
+            edges.edge_count()
+        );
+        Report::new(
+            "state graph violated",
+            files
+                .iter()
+                .flat_map(|file| {
+                    FieldVisibility::violations(file)
+                        .into_iter()
+                        .chain(VariantMatches::violations(file, &declarations))
+                })
+                .chain(edges.violations(Self::MAX_EDGES_PER_VERTEX))
+                .collect(),
+        )
     }
 }
 
@@ -75,9 +78,9 @@ impl Other {
 ";
     const FILES: [(&str, &str); 2] = [("hub.rs", VERTICES), ("other.rs", MATCHER)];
     const REPORTED: [&str; 5] = [
-        "fn hidden is a hidden edge",
+        "hub.rs:9: is a hidden edge Hub -> Spoke",
         "Hub -> Spoke has 2 edges",
-        "fn peek is a view returning vertex Spoke",
+        "hub.rs:12: is a view returning vertex Spoke",
         "field inner of Leaky is pub",
         "match on Wire outside its file",
     ];
@@ -87,7 +90,7 @@ impl Other {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = StateGraph::check(&files).expect_err("violations");
+        let report = StateGraph::report(&files).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

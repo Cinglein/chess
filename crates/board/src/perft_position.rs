@@ -36,8 +36,8 @@ impl PerftPosition {
         self.fen
     }
 
-    pub fn expected(&self) -> impl Iterator<Item = (u8, u64)> + '_ {
-        (1..).zip(self.nodes.iter().copied())
+    pub fn nodes_by_depth(&self) -> impl Iterator<Item = u64> + '_ {
+        self.nodes.iter().copied()
     }
 }
 
@@ -50,7 +50,7 @@ mod tests {
     fn shallow_perft_counts_match_the_reference_positions() {
         for position in &PerftPosition::REFERENCE {
             let board: Board = position.fen().parse().unwrap();
-            for (depth, nodes) in position.expected().filter(|(depth, _)| *depth <= 3) {
+            for (depth, nodes) in (1..).zip(position.nodes_by_depth()).take(3) {
                 assert_eq!(
                     board.perft(depth),
                     nodes,
@@ -66,7 +66,7 @@ mod tests {
     fn deep_perft_counts_match_the_reference_positions() {
         for position in &PerftPosition::REFERENCE {
             let board: Board = position.fen().parse().unwrap();
-            for (depth, nodes) in position.expected() {
+            for (depth, nodes) in (1..).zip(position.nodes_by_depth()) {
                 assert_eq!(
                     board.perft(depth),
                     nodes,

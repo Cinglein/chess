@@ -21,7 +21,7 @@ impl Iterator for SquareIter {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let remaining = self.0.count() as usize;
+        let remaining = usize::try_from(self.0.count()).unwrap_or(0);
         (remaining, Some(remaining))
     }
 }

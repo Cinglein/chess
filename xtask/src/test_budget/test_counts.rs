@@ -1,20 +1,33 @@
 use syn::punctuated::Punctuated;
+use syn::spanned::Spanned;
 use syn::visit::Visit;
 use syn::{Block, Expr, ExprLit, ExprPath, Macro, Token};
+
+use super::TestBudget;
+use super::measurement::Measurement;
 
 #[derive(Default)]
 pub(super) struct TestCounts {
     assertions: usize,
     literals: usize,
+    body_lines: usize,
 }
 
 impl TestCounts {
-    pub(super) fn assertions(&self) -> usize {
-        self.assertions
-    }
-
-    pub(super) fn literals(&self) -> usize {
-        self.literals
+    pub(super) fn measurements(&self) -> [Measurement; 3] {
+        [
+            Measurement::new(
+                "assertions",
+                self.assertions,
+                TestBudget::MAX_ASSERTIONS_PER_TEST,
+            ),
+            Measurement::new(
+                "body lines",
+                self.body_lines,
+                TestBudget::MAX_LINES_PER_TEST,
+            ),
+            Measurement::new("literals", self.literals, TestBudget::MAX_LITERALS_PER_TEST),
+        ]
     }
 
     const ASSERTIONS: [&str; 6] = [
@@ -26,8 +39,12 @@ impl TestCounts {
         "prop_assert_ne",
     ];
 
-    pub(super) fn of(block: &Block) -> Self {
-        let mut counts = Self::default();
+    pub(super) fn tally(block: &Block) -> Self {
+        let span = block.span();
+        let mut counts = TestCounts {
+            body_lines: (span.end().line - span.start().line).saturating_sub(1),
+            ..Self::default()
+        };
         counts.visit_block(block);
         counts
     }

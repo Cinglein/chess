@@ -12,10 +12,12 @@ impl VariantPaths {
     }
 
     fn record(&mut self, path: &Path) {
-        let mut segments = path.segments.iter().rev();
-        if let (Some(_variant), Some(parent)) = (segments.next(), segments.next()) {
-            self.0.push(parent.ident.to_string());
-        }
+        self.0.extend(
+            path.segments
+                .iter()
+                .nth_back(1)
+                .map(|parent| parent.ident.to_string()),
+        );
     }
 }
 

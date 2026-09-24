@@ -1,105 +1,71 @@
 use strum::{EnumString, VariantNames};
 
-use crate::magic_tables::MagicTables;
+use crate::ci::Ci;
+use crate::const_shape::ConstShape;
+use crate::distinct_signatures::DistinctSignatures;
+use crate::failure::Failure;
+use crate::fn_shape::FnShape;
+use crate::lint::Lint;
+use crate::literal_names::LiteralNames;
+use crate::magics::Magics;
+use crate::manual_iteration::ManualIteration;
 use crate::named_lifetimes::NamedLifetimes;
 use crate::no_comments::NoComments;
 use crate::no_free_fns::NoFreeFns;
 use crate::private_fns::PrivateFns;
 use crate::state_graph::StateGraph;
 use crate::test_budget::TestBudget;
+use crate::type_shape::TypeShape;
+use crate::wasm::Wasm;
 use crate::workspace::Workspace;
-use crate::xor_shift::XorShift;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, EnumString, VariantNames)]
 #[strum(serialize_all = "kebab-case")]
 pub enum Task {
     Ci,
+    ConstShape,
+    DistinctSignatures,
+    FnShape,
     Lint,
+    LiteralNames,
     Magics,
+    ManualIteration,
     NamedLifetimes,
     NoComments,
     NoFreeFns,
     PrivateFns,
     StateGraph,
     TestBudget,
+    TypeShape,
     Wasm,
 }
 
 impl Task {
-    const WASM_CRATES: &[&str] = &["board", "eval", "fen", "search"];
-
-    pub fn usage() -> String {
-        format!("usage: cargo xtask <{}>", Self::VARIANTS.join("|"))
+    pub fn usage() -> Failure {
+        Failure::Usage(format!("usage: cargo xtask <{}>", Self::VARIANTS.join("|")))
     }
 
-    pub fn run(self) -> Result<(), String> {
+    pub fn run(self) -> Result<(), Failure> {
         let workspace = Workspace::locate();
         match self {
-            Task::Ci => Self::ci(&workspace),
-            Task::Lint => Self::lint(&workspace),
-            Task::Magics => Self::magics(&workspace),
-            Task::NamedLifetimes => NamedLifetimes::check(&workspace.source_files()?),
-            Task::NoComments => NoComments::check(&workspace.source_files()?),
-            Task::NoFreeFns => NoFreeFns::check(&workspace.source_files()?),
-            Task::PrivateFns => PrivateFns::check(&workspace.source_files()?),
-            Task::StateGraph => StateGraph::check(&workspace.source_files()?),
-            Task::TestBudget => TestBudget::check(&workspace.source_files()?),
-            Task::Wasm => Self::wasm(&workspace),
+            Task::Ci => Ci::run(&workspace),
+            Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
+            Task::DistinctSignatures => {
+                DistinctSignatures::report(&workspace.source_files()?).verdict()
+            }
+            Task::FnShape => FnShape::report(&workspace.source_files()?).verdict(),
+            Task::Lint => Lint::run(&workspace),
+            Task::LiteralNames => LiteralNames::report(&workspace.source_files()?).verdict(),
+            Task::Magics => Magics::run(&workspace),
+            Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
+            Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
+            Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
+            Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
+            Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
+            Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
+            Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
+            Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
+            Task::Wasm => Wasm::run(&workspace),
         }
-    }
-
-    fn ci(workspace: &Workspace) -> Result<(), String> {
-        workspace.cargo(&["fmt", "--all", "--check"])?;
-        workspace.cargo(&[
-            "clippy",
-            "--workspace",
-            "--all-targets",
-            "--all-features",
-            "--",
-            "-D",
-            "warnings",
-        ])?;
-        Self::wasm(workspace)?;
-        workspace.cargo(&["test", "--workspace", "--all-features"])?;
-        Self::lint(workspace)
-    }
-
-    fn lint(workspace: &Workspace) -> Result<(), String> {
-        let files = workspace.source_files()?;
-        let failures: Vec<String> = [
-            NamedLifetimes::check(&files),
-            NoComments::check(&files),
-            NoFreeFns::check(&files),
-            PrivateFns::check(&files),
-            StateGraph::check(&files),
-            TestBudget::check(&files),
-        ]
-        .into_iter()
-        .filter_map(Result::err)
-        .collect();
-        failures
-            .is_empty()
-            .then_some(())
-            .ok_or_else(|| failures.join("\n\n"))
-    }
-
-    fn magics(workspace: &Workspace) -> Result<(), String> {
-        MagicTables::find(&mut XorShift::new(MagicTables::SEED)).write(workspace.root())?;
-        workspace.cargo(&["fmt", "--package", "board"])
-    }
-
-    fn wasm(workspace: &Workspace) -> Result<(), String> {
-        Self::WASM_CRATES.iter().try_for_each(|crate_name| {
-            workspace.cargo(&[
-                "clippy",
-                "--package",
-                crate_name,
-                "--target",
-                "wasm32-unknown-unknown",
-                "--",
-                "-D",
-                "warnings",
-            ])
-        })
     }
 }

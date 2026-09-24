@@ -5,8 +5,10 @@ use std::path::Path;
 use board::{Bishop, Rook, Slider, Square};
 use enum_map::EnumMap;
 
+use crate::failure::Failure;
 use crate::hex_literal::HexLiteral;
 use crate::magic_search::MagicSearch;
+use crate::site::Site;
 use crate::xor_shift::XorShift;
 
 pub struct MagicTables {
@@ -25,15 +27,18 @@ impl MagicTables {
         }
     }
 
-    pub fn write(&self, workspace_root: &Path) -> Result<(), String> {
+    pub fn write(&self, workspace_root: &Path) -> Result<(), Failure> {
         let path = workspace_root.join(Self::OUTPUT);
-        fs::write(&path, self.to_string()).map_err(|error| format!("{}: {error}", Self::OUTPUT))?;
+        fs::write(&path, self.to_string()).map_err(|error| Failure::Io {
+            site: Site::File(Self::OUTPUT.to_owned()),
+            error,
+        })?;
         println!("wrote {}", Self::OUTPUT);
         Ok(())
     }
 
     fn find_all<S: Slider>(rng: &mut XorShift) -> EnumMap<Square, u64> {
-        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).run(rng))
+        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).find_multiplier(rng))
     }
 
     fn fmt_table(

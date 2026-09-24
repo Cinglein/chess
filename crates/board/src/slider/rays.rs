@@ -1,4 +1,4 @@
-use strum::{EnumCount, VariantArray};
+use strum::VariantArray;
 
 use crate::bitboard::Bitboard;
 use crate::direction::Direction;
@@ -19,10 +19,10 @@ impl Rays {
     pub const fn attacks_by_ray(&self, square: Square, occupied: Bitboard) -> Bitboard {
         let origin = Bitboard::from_square(square);
         let mut attacks = Bitboard::EMPTY;
-        let mut index = 0;
-        while index < self.0.len() {
-            attacks = attacks.union(Self::cast(origin, self.0[index], occupied));
-            index += 1;
+        let mut directions: &[Direction] = &self.0;
+        while let [direction, rest @ ..] = directions {
+            attacks = attacks.union(Self::cast(origin.shift(*direction), *direction, occupied));
+            directions = rest;
         }
         attacks
     }
@@ -42,22 +42,20 @@ impl Rays {
     #[must_use]
     pub const fn table_size(&self) -> usize {
         let mut total = 0;
-        let mut index = 0;
-        while index < Square::COUNT {
-            total += 1 << self.relevant_occupancy(Square::VARIANTS[index]).count();
-            index += 1;
+        let mut squares = Square::VARIANTS;
+        while let [square, rest @ ..] = squares {
+            total += 1 << self.relevant_occupancy(*square).count();
+            squares = rest;
         }
         total
     }
 
-    const fn cast(origin: Bitboard, direction: Direction, occupied: Bitboard) -> Bitboard {
-        let mut attacks = Bitboard::EMPTY;
-        let mut frontier = origin.shift(direction);
-        while !frontier.is_empty() {
-            attacks = attacks.union(frontier);
-            frontier = frontier.difference(occupied).shift(direction);
+    const fn cast(frontier: Bitboard, direction: Direction, occupied: Bitboard) -> Bitboard {
+        if frontier.is_empty() {
+            return Bitboard::EMPTY;
         }
-        attacks
+        let beyond = frontier.difference(occupied).shift(direction);
+        frontier.union(Self::cast(beyond, direction, occupied))
     }
 }
 
@@ -97,14 +95,14 @@ mod tests {
                 let mut expected = Bitboard::EMPTY;
                 let mut current = square + direction;
                 while let Some(next) = current {
-                    expected = expected.with(next);
+                    expected = expected.including(next);
                     current = (!blockers.contains(next))
                         .then(|| next + direction)
                         .flatten();
                 }
-                let origin = Bitboard::from_square(square);
+                let frontier = Bitboard::from_square(square).shift(direction);
                 assert_eq!(
-                    Rays::cast(origin, direction, blockers),
+                    Rays::cast(frontier, direction, blockers),
                     expected,
                     "{square} {direction:?}"
                 );

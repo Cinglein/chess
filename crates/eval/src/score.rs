@@ -1,11 +1,9 @@
 use core::iter::Sum;
-use core::ops::Add;
+use core::ops::{Add, Neg};
 
-use derive_more::{Add, Display, Neg, Sub};
+use derive_more::{Add, Display, Sub};
 
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Neg, Display,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display)]
 pub struct Score(i32);
 
 impl Score {
@@ -24,6 +22,11 @@ impl Score {
     }
 
     #[must_use]
+    pub const fn negated(self) -> Score {
+        Score(-self.0)
+    }
+
+    #[must_use]
     pub fn mate_in(plies: u8) -> Score {
         Self::MATE - Score(i32::from(plies))
     }
@@ -31,6 +34,14 @@ impl Score {
     #[must_use]
     pub fn mated_in(plies: u8) -> Score {
         -Self::mate_in(plies)
+    }
+}
+
+impl Neg for Score {
+    type Output = Score;
+
+    fn neg(self) -> Score {
+        self.negated()
     }
 }
 

@@ -58,8 +58,14 @@ impl Square {
     }
 
     #[must_use]
+    pub const fn mirrored(self) -> Square {
+        Self::VARIANTS[self as usize ^ 0b11_1000]
+    }
+
+    #[must_use]
     pub fn between(self, other: Square) -> Bitboard {
-        let (origin, target) = (Bitboard::from_square(self), Bitboard::from_square(other));
+        let origin = Bitboard::from_square(self);
+        let target = Bitboard::from_square(other);
         if self.aligned_by::<Rook>(other) {
             Rook::attacks(self, target) & Rook::attacks(other, origin)
         } else if self.aligned_by::<Bishop>(other) {

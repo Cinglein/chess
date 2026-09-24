@@ -42,17 +42,15 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
     #[must_use]
     pub fn legal_moves(mut self) -> MoveList {
         let ours = |kind| self.board.placement().pieces(P::COLOR, kind);
-        let (pawns, knights, queens) = (
-            ours(PieceKind::Pawn),
-            ours(PieceKind::Knight),
-            ours(PieceKind::Queen),
-        );
-        let (bishops, rooks) = (
-            ours(PieceKind::Bishop) | queens,
-            ours(PieceKind::Rook) | queens,
-        );
+        let queens = ours(PieceKind::Queen);
+        let pawns = ours(PieceKind::Pawn);
+        let knights = ours(PieceKind::Knight);
+        let bishops = ours(PieceKind::Bishop) | queens;
+        let rooks = ours(PieceKind::Rook) | queens;
         let occupied = self.occupied;
-        self.pawns(pawns);
+        for from in pawns {
+            self.pawn_moves(from);
+        }
         self.pieces(knights, Knight::attacks);
         self.pieces(bishops, |from| Bishop::attacks(from, occupied));
         self.pieces(rooks, |from| Rook::attacks(from, occupied));
@@ -60,87 +58,99 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
         self.moves
     }
 
-    fn pawns(&mut self, pawns: Bitboard) {
-        for from in pawns {
-            let allowed = self.safety.allowed(from);
-            let push = (from + P::PUSH).filter(|to| !self.occupied.contains(*to));
-            let double = push
-                .filter(|_| from.rank() == P::START_RANK)
-                .and_then(|to| to + P::PUSH)
-                .filter(|to| !self.occupied.contains(*to) && allowed.contains(*to));
-            let single = push.map_or(Bitboard::EMPTY, Bitboard::from_square);
-            for to in (single | (P::attacks(from) & self.theirs)) & allowed {
-                if to.rank() == P::PROMOTION_RANK {
-                    self.moves.extend(
-                        PromotionPiece::iter()
-                            .map(|piece| ChessMove::Promotion(Promotion::new(from, to, piece))),
-                    );
-                } else {
-                    self.moves.push(ChessMove::Normal(Normal::new(from, to)));
-                }
-            }
-            if let Some(to) = double {
-                self.moves
-                    .push(ChessMove::DoublePush(DoublePush::new(from, to)));
-            }
-            if let Some(target) = self.board.en_passant_square()
-                && P::attacks(from).contains(target)
-            {
-                let en_passant = ChessMove::EnPassant(EnPassant::new(from, target));
-                let safe = en_passant
+    fn pawn_moves(&mut self, from: Square) {
+        let allowed = self.safety.allowed(from);
+        let push = (from + P::PUSH).filter(|to| !self.occupied.contains(*to));
+        let double = push
+            .filter(|_| from.rank() == P::START_RANK)
+            .and_then(|to| to + P::PUSH)
+            .filter(|to| !self.occupied.contains(*to) && allowed.contains(*to));
+        let single = push.map_or(Bitboard::EMPTY, Bitboard::from_square);
+        let destinations = (single | (P::attacks(from) & self.theirs)) & allowed;
+        let promoting = destinations & Bitboard::rank(P::PROMOTION_RANK);
+        let en_passant = self
+            .board
+            .en_passant_square()
+            .filter(|target| P::attacks(from).contains(*target))
+            .map(|target| ChessMove::EnPassant(EnPassant::new(from, target)))
+            .filter(|chess_move| {
+                chess_move
                     .play(*self.board.placement())
                     .is_some_and(|after| {
                         after
                             .attackers(self.safety.king(), !P::COLOR, after.occupied())
                             .is_empty()
-                    });
-                if safe {
-                    self.moves.push(en_passant);
-                }
-            }
-        }
+                    })
+            });
+        self.moves.extend(
+            (destinations & !promoting)
+                .into_iter()
+                .map(|to| ChessMove::Normal(Normal::new(from, to))),
+        );
+        self.moves.extend(promoting.into_iter().flat_map(|to| {
+            PromotionPiece::iter()
+                .map(move |piece| ChessMove::Promotion(Promotion::new(from, to, piece)))
+        }));
+        self.moves
+            .extend(double.map(|to| ChessMove::DoublePush(DoublePush::new(from, to))));
+        self.moves.extend(en_passant);
     }
 
     fn pieces(&mut self, pieces: Bitboard, attacks: impl Fn(Square) -> Bitboard) {
-        for from in pieces {
-            for to in attacks(from) & self.safety.allowed(from) {
-                self.moves.push(ChessMove::Normal(Normal::new(from, to)));
-            }
-        }
+        let safety = &self.safety;
+        self.moves.extend(pieces.into_iter().flat_map(|from| {
+            (attacks(from) & safety.allowed(from))
+                .into_iter()
+                .map(move |to| ChessMove::Normal(Normal::new(from, to)))
+        }));
     }
 
     fn king_moves(&mut self) {
-        let placement = self.board.placement();
-        let king = self.safety.king();
-        let without_king = self.occupied ^ Bitboard::from_square(king);
-        for to in King::attacks(king) & !self.ours {
-            if placement.attackers(to, !P::COLOR, without_king).is_empty() {
-                self.moves.push(ChessMove::Normal(Normal::new(king, to)));
-            }
-        }
-        if self.safety.in_check() {
-            return;
-        }
-        for right in CastlingRight::VARIANTS.iter().copied() {
-            let squares = CastlingSquares::new(right);
-            let king_path = squares.king_origin().between(squares.king_destination())
-                | Bitboard::from_square(squares.king_destination());
-            let may_castle = right.color() == P::COLOR
-                && self.board.castling_rights().contains(right)
-                && king == squares.king_origin()
-                && placement
-                    .pieces(P::COLOR, PieceKind::Rook)
-                    .contains(squares.rook_origin())
-                && (squares.king_origin().between(squares.rook_origin()) & self.occupied)
-                    .is_empty()
-                && king_path.into_iter().all(|square| {
-                    placement
-                        .attackers(square, !P::COLOR, self.occupied)
+        let board = self.board;
+        let safety = &self.safety;
+        let occupied = self.occupied;
+        let king = safety.king();
+        let without_king = occupied ^ Bitboard::from_square(king);
+        self.moves.extend(
+            (King::attacks(king) & !self.ours)
+                .into_iter()
+                .filter(|to| {
+                    board
+                        .placement()
+                        .attackers(*to, !P::COLOR, without_king)
                         .is_empty()
-                });
-            if may_castle {
-                self.moves.push(ChessMove::Castling(Castling::new(right)));
-            }
-        }
+                })
+                .map(|to| ChessMove::Normal(Normal::new(king, to))),
+        );
+        self.moves.extend(
+            CastlingRight::VARIANTS
+                .iter()
+                .copied()
+                .filter(|right| Self::may_castle(board, safety, occupied, *right))
+                .map(|right| ChessMove::Castling(Castling::new(right))),
+        );
+    }
+
+    fn may_castle(
+        board: &Board,
+        safety: &KingSafety,
+        occupied: Bitboard,
+        right: CastlingRight,
+    ) -> bool {
+        let placement = board.placement();
+        let squares = CastlingSquares::new(right);
+        let king_path = squares.king_origin().between(squares.king_destination())
+            | Bitboard::from_square(squares.king_destination());
+        !safety.in_check()
+            && right.color() == P::COLOR
+            && board.castling_rights().contains(right)
+            && safety.king() == squares.king_origin()
+            && placement
+                .pieces(P::COLOR, PieceKind::Rook)
+                .contains(squares.rook_origin())
+            && (squares.king_origin().between(squares.rook_origin()) & occupied).is_empty()
+            && king_path
+                .into_iter()
+                .all(|square| placement.attackers(square, !P::COLOR, occupied).is_empty())
     }
 }

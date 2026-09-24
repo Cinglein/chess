@@ -9,15 +9,18 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/eval`: `no_std` evaluation: the `Evaluator` trait, `Score`, and `PieceSquareTables`;
   the trained network becomes a second implementor.
 - `crates/search`: `no_std` search: `Search<E: Evaluator>` deepens one ply per `deepen` edge
-  with alpha-beta negamax; `Depth` newtype.
+  with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
+  newtype.
 - `crates/engine`: `std` orchestration: threads, time management, table allocation.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `uci` (`no_std`
   message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`, `test-budget`, and
-  `state-graph`, `cargo xtask wasm`, `cargo xtask magics`).
+  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
+  `manual-iteration`, `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`,
+  `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`, `cargo xtask magics`). Lints return a `Report` of
+  `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
 
@@ -40,8 +43,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   keyword; `ChessMove` in `chess_move.rs`, not `Move` behind `r#move`.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
-- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. The
-  only `as usize` casts on enums live inside `const fn` table construction.
+- Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
+  cast is allowed only inside a `const fn`, `const` item, or `const` block, or in one of the
+  three bit boundary files `square.rs`, `bitboard.rs`, and `slider/magic.rs`; elsewhere use
+  `From`, `TryFrom`, or an `EnumMap`. Loops in const context walk a slice with
+  `while let [head, rest @ ..]` or recurse; no counter loops. `cargo xtask const-shape` enforces
+  both.
 - A family of behaviours is a trait with zero-sized implementors, not an enum matched on at
   runtime: `Rook: Slider`, `Knight: Leaper`. Per-implementor data is an associated const.
 - Game logic is a state transition graph, and `cargo xtask state-graph` enforces its shape. A
@@ -59,9 +66,28 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   the only exceptions are `main` and `#[test]` functions. `cargo xtask no-free-fns` enforces it.
 - Lifetimes are named with a word (`'board`, `'scan`, `'ast`), never a single letter.
   `cargo xtask named-lifetimes` enforces it; `'_` and `'static` are exempt.
+- Function names say what the function does. No name under three letters and none from the
+  vague list (`of`, `with`, `get`, `set`, `make`, `check`, `build`, `handle`, `process`,
+  `helper`, `data`, `value`, and the like); `new` is the one conventional exception, and trait
+  impl methods take their name from the trait. `cargo xtask literal-names` enforces it.
 - At most 4 private functions per type, counted across all its inherent impl blocks; trait impl
   methods do not count. More than that means a second type is hiding inside the first.
   `cargo xtask private-fns` enforces it.
+- Function bodies stay flat, outside test modules. No local bound to a boolean: a one-use
+  condition is inlined, a mode is a type. No tuple literal bound to a local or seeding a fold:
+  two values that travel together are a struct. At most 4 parameters after the receiver. Control
+  flow nests at most two deep, counting `if`, `match` arms, loops, and closure bodies, with
+  `else if` chains flat. `cargo xtask fn-shape` enforces it.
+- Iterators are driven by combinators. No `let mut` bound to an iterator, and no `for` loop whose
+  body only pushes, extends, or inserts into a collection, even behind an `if`: use `format`,
+  `collect`, `fold`, or `extend`. `cargo xtask manual-iteration` enforces it.
+- Types carry their meaning. No `bool` struct field: a stored flag is a stored mode, so it is an
+  enum or a type parameter. No tuple type in a function signature or struct field outside a trait
+  impl: values that travel together are a struct. No `Result<_, String>`: errors are an enum with
+  `thiserror`. `cargo xtask type-shape` enforces all three.
+- No two non-`pub` functions on one type share a signature (generics, receiver, parameter types,
+  return type). Two such helpers mean a value is missing its type: `alpha` and `beta` both returning
+  `Score` became `Bound<Lower>` and `Bound<Upper>`. `cargo xtask distinct-signatures` enforces it.
 - Invariants live as high as possible: a type that cannot represent the invalid state, else a
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most

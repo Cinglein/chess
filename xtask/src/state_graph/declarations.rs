@@ -16,21 +16,22 @@ pub struct Declarations {
 
 impl Declarations {
     pub fn collect(files: &[SourceFile]) -> Declarations {
-        let mut declarations =
-            files
-                .iter()
-                .fold(Declarations::default(), |mut declarations, file| {
-                    file.path().clone_into(&mut declarations.path);
-                    declarations.visit_file(file.syntax());
-                    declarations
-                });
+        let declarations = files
+            .iter()
+            .fold(Declarations::default(), |mut declarations, file| {
+                file.path().clone_into(&mut declarations.path);
+                declarations.visit_file(file.syntax());
+                declarations
+            });
         let resolved: BTreeSet<TypeName> = declarations
             .vertices
             .iter()
             .map(|vertex| declarations.resolve(vertex.clone()))
             .collect();
-        declarations.vertices = resolved;
-        declarations
+        Declarations {
+            vertices: resolved,
+            ..declarations
+        }
     }
 
     pub fn resolve(&self, name: TypeName) -> TypeName {
@@ -54,28 +55,28 @@ impl Declarations {
 
 impl<'ast> Visit<'ast> for Declarations {
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        let declares_state = item
+        if item
             .trait_
             .as_ref()
             .and_then(|(_, path, _)| path.segments.last())
-            .is_some_and(|segment| segment.ident == "State");
-        if declares_state {
-            self.vertices.insert(TypeName::of(&item.self_ty));
+            .is_some_and(|segment| segment.ident == "State")
+        {
+            self.vertices.insert(TypeName::from_type(&item.self_ty));
         }
         syn::visit::visit_item_impl(self, item);
     }
 
     fn visit_item_type(&mut self, item: &'ast ItemType) {
         self.aliases
-            .insert(TypeName::named(&item.ident), TypeName::of(&item.ty));
+            .insert(TypeName::named(&item.ident), TypeName::from_type(&item.ty));
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        let carries_data = item
+        if item
             .variants
             .iter()
-            .any(|variant| !matches!(variant.fields, Fields::Unit));
-        if carries_data {
+            .any(|variant| !matches!(variant.fields, Fields::Unit))
+        {
             self.sum_types
                 .insert(item.ident.to_string(), self.path.clone());
         }

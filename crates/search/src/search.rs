@@ -5,6 +5,7 @@ use eval::{Evaluator, Score};
 
 use crate::depth::Depth;
 use crate::negamax::Negamax;
+use crate::principal::Principal;
 
 pub struct Search<E: Evaluator> {
     board: Board,
@@ -48,7 +49,7 @@ impl<E: Evaluator> Search<E> {
         let depth = self.depth.incremented();
         let remaining = depth.decremented().unwrap_or_default();
         let mut negamax = Negamax::<E>::new();
-        let (best_move, score) = self
+        let principal = self
             .board
             .legal_moves()
             .into_iter()
@@ -57,25 +58,17 @@ impl<E: Evaluator> Search<E> {
                     .make_move(chess_move)
                     .map(|child| (chess_move, child))
             })
-            .fold(
-                (None, -Score::INFINITY),
-                |(best_move, alpha), (chess_move, child)| {
-                    let score = -negamax.score(&child, remaining, 1, -Score::INFINITY, -alpha);
-                    if score > alpha {
-                        (Some(chess_move), score)
-                    } else {
-                        (best_move, alpha)
-                    }
-                },
-            );
+            .fold(Principal::NONE, |principal, (chess_move, child)| {
+                let score = -negamax.score(&child, remaining, 1, principal.window());
+                principal.improved(chess_move, score)
+            });
         Search {
             depth,
-            best_move,
-            score: if best_move.is_some() {
-                score
-            } else {
-                Negamax::<E>::terminal(&self.board, 0)
-            },
+            best_move: principal.chess_move(),
+            score: principal.chess_move().map_or_else(
+                || Negamax::<E>::terminal(&self.board, 0),
+                |_| principal.score(),
+            ),
             nodes: self.nodes + negamax.nodes(),
             ..self
         }
@@ -104,6 +97,7 @@ mod tests {
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
+    const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
 
     #[test]
     fn a_mate_in_one_is_found_at_depth_two() {
@@ -112,6 +106,15 @@ mod tests {
         let best = search.best_move().map(|chess_move| chess_move.to_string());
         assert_eq!(best.as_deref(), Some("a1a8"));
         assert_eq!(search.score(), Score::mate_in(1));
+    }
+
+    #[test]
+    fn a_defended_pawn_is_not_taken_at_depth_one_because_the_recapture_is_seen() {
+        let board: Board = DEFENDED_PAWN.parse().unwrap();
+        let search = Search::<PieceSquareTables>::from(board).deepen();
+        let best = search.best_move().map(|chess_move| chess_move.to_string());
+        assert_ne!(best.as_deref(), Some("d1d5"));
+        assert!(search.score() > Score::DRAW);
     }
 
     #[test]
