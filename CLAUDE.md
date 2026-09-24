@@ -18,8 +18,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
-  `manual-iteration`, `named-lifetimes`, `no-comments`, `no-free-fns`, `private-fns`,
-  `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`, `cargo xtask magics`). Lints return a `Report` of
+  `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-free-fns`,
+  `private-fns`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
+  `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
@@ -41,6 +42,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   hold one piece of logic each, private to the module. Always `dir/mod.rs`, never `dir.rs` beside
   `dir/`. Never name a type or module after a
   keyword; `ChessMove` in `chess_move.rs`, not `Move` behind `r#move`.
+- Modules nest by use. A file whose only users outside its parent all sit inside one sibling
+  module belongs inside that sibling, as `bitboard/square_iter.rs` or `search/negamax/window/`.
+  A `use` path never reaches past a module directory's `mod.rs` into its children from outside;
+  import what the directory re-exports. A module directory re-exports at most 8 names and a
+  crate root is exempt. `cargo xtask module-nesting` enforces all three.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
 - Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
