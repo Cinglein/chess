@@ -1,5 +1,5 @@
 [package]
-name = "engine"
+name = "chess"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,9 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-board = { version = "0.1.0", path = "../board" }
-eval = { version = "0.1.0", path = "../eval" }
-search = { version = "0.1.0", path = "../search" }
+engine = { version = "0.1.0", path = "../engine" }
 uci = { version = "0.1.0", path = "../uci" }
 
 [lints]

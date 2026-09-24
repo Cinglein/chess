@@ -11,11 +11,17 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/search`: `no_std` search: `Search<E: Evaluator>` deepens one ply per `deepen` edge
   with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
   newtype.
-- `crates/engine`: `std` orchestration: threads, time management, table allocation.
+- `crates/uci`: `no_std` protocol types: `Command` parsed by `TryFrom<&str>`, `Response`
+  printed by `Display`, and the `Receiver` trait through which a command is delivered, so no
+  other crate matches on `Command`.
+- `crates/engine`: `std` orchestration. `Engine<S: Sink>` owns the board, the transposition
+  table, the stop flag, and its output sink, and implements `Receiver`; `Thinker` runs
+  iterative deepening against a `Deadline` built from the `go` limits and a `TimeBudget`.
+- `crates/chess`: the UCI binary: a stdin thread that also raises the stop flag on `stop` and
+  `quit`, a stdout sink, and a fold of commands over the engine.
 - `crates/tui`: terminal UI binary for playing against the engine.
-- Crates are `no_std` unless the feature they exist for needs `std`. Planned: `uci` (`no_std`
-  message types), `chess` binary, `web` (Dioxus, wasm), `arena`, `datagen`, `trainer`. Crates
-  are added when their milestone starts.
+- Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
+  wasm), `arena`, `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-free-fns`,

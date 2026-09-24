@@ -55,6 +55,15 @@ impl Score {
         }
     }
 
+    #[must_use]
+    pub fn mate_in_moves(self) -> Option<i32> {
+        match self.mate_direction() {
+            MateDirection::Winning => Some(((Self::MATE - self).0 + 1) / 2),
+            MateDirection::Losing => Some(-(((Self::MATE + self).0 + 1) / 2)),
+            MateDirection::None => None,
+        }
+    }
+
     fn mate_direction(self) -> MateDirection {
         if self >= Self::LONGEST_MATE {
             MateDirection::Winning
@@ -101,6 +110,13 @@ mod tests {
         assert!(Score::INFINITY > mate && mate > Score::mate_in(PLIES + 1));
         assert!(Score::mate_in(PLIES + 1) > Score::new(i32::from(u8::MAX)));
         assert_eq!(Score::mated_in(PLIES), -mate);
+    }
+
+    #[test]
+    fn mate_distances_convert_from_plies_to_signed_moves_and_centipawns_do_not() {
+        assert_eq!(Score::mate_in(PLIES).mate_in_moves(), Some(2));
+        assert_eq!(Score::mated_in(2).mate_in_moves(), Some(-1));
+        assert_eq!(Score::new(PLIES.into()).mate_in_moves(), None);
     }
 
     #[test]

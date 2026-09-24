@@ -1,5 +1,5 @@
 [package]
-name = "engine"
+name = "uci"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,8 @@ repository.workspace = true
 board = { version = "0.1.0", path = "../board" }
 eval = { version = "0.1.0", path = "../eval" }
 search = { version = "0.1.0", path = "../search" }
-uci = { version = "0.1.0", path = "../uci" }
+strum = { version = "0.28", default-features = false, features = ["derive"] }
+thiserror = { version = "2", default-features = false }
 
 [lints]
 workspace = true

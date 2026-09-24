@@ -2,4 +2,6 @@
 
 mod search;
 
-pub use search::{BoundKind, Depth, Search, TableEntry, TranspositionTable};
+pub use search::{
+    BoundKind, Depth, Interrupt, Search, TableEntry, TranspositionTable, Uninterrupted,
+};
