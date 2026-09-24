@@ -1,4 +1,8 @@
+mod position_word;
+
 use core::fmt;
+
+use position_word::PositionWord;
 
 use crate::uci_error::UciError;
 
@@ -28,15 +32,15 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
     type Error = UciError;
 
     fn try_from(rest: &'line str) -> Result<Position<'line>, UciError> {
-        let (setup, moves) = rest.split_once("moves").unwrap_or((rest, ""));
-        let fen = match setup.trim() {
-            "startpos" => None,
-            described => Some(
-                described
-                    .strip_prefix("fen")
-                    .ok_or(UciError::UnknownPosition)?
-                    .trim(),
-            ),
+        let (setup, moves) = rest
+            .split_once(<&str>::from(PositionWord::Moves))
+            .unwrap_or((rest, ""));
+        let setup = setup.trim();
+        let (head, fen) = setup.split_once(char::is_whitespace).unwrap_or((setup, ""));
+        let fen = match head.parse::<PositionWord>() {
+            Ok(PositionWord::StartPos) => None,
+            Ok(PositionWord::Fen) => Some(fen.trim()),
+            _ => return Err(UciError::UnknownPosition),
         };
         Ok(Position {
             fen,
@@ -48,13 +52,13 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
 impl fmt::Display for Position<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.fen {
-            Some(fen) => write!(formatter, "fen {fen}")?,
-            None => formatter.write_str("startpos")?,
+            Some(fen) => write!(formatter, "{} {fen}", PositionWord::Fen)?,
+            None => write!(formatter, "{}", PositionWord::StartPos)?,
         }
         if self.moves.is_empty() {
             Ok(())
         } else {
-            write!(formatter, " moves {}", self.moves)
+            write!(formatter, " {} {}", PositionWord::Moves, self.moves)
         }
     }
 }

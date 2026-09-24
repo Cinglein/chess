@@ -1,13 +1,11 @@
-mod info_key;
-
 use core::time::Duration;
 
 use board::LongAlgebraic;
 use eval::Score;
-use info_key::InfoKey;
 use search::Depth;
 
 use super::SearchInfo;
+use super::info_key::InfoKey;
 use crate::uci_error::UciError;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -25,11 +23,11 @@ impl InfoBuilder {
     pub(super) fn absorb(self, token: &str) -> InfoBuilder {
         match (self.pending, token.parse::<InfoKey>()) {
             (Some(key), _) => self.assign(key, token),
+            (None, Ok(InfoKey::Score | InfoKey::String) | Err(_)) => self,
             (None, Ok(key)) => InfoBuilder {
                 pending: Some(key),
                 ..self
             },
-            (None, Err(_)) => self,
         }
     }
 
@@ -54,6 +52,7 @@ impl InfoBuilder {
             ..self
         };
         match key {
+            InfoKey::Score | InfoKey::Nps | InfoKey::String => cleared,
             InfoKey::Depth => InfoBuilder {
                 depth: token.parse().ok(),
                 ..cleared

@@ -1,3 +1,4 @@
+mod command_word;
 mod engine_option;
 mod go_limits;
 mod position;
@@ -7,6 +8,8 @@ pub use go_limits::{Clock, GoLimits};
 pub use position::Position;
 
 use core::fmt;
+
+use command_word::CommandWord;
 
 use crate::receiver::Receiver;
 use crate::uci_error::UciError;
@@ -24,6 +27,19 @@ pub enum Command<'line> {
 }
 
 impl<'line> Command<'line> {
+    const fn word(&self) -> CommandWord {
+        match self {
+            Command::Uci => CommandWord::Uci,
+            Command::IsReady => CommandWord::IsReady,
+            Command::SetOption(_) => CommandWord::SetOption,
+            Command::UciNewGame => CommandWord::UciNewGame,
+            Command::Position(_) => CommandWord::Position,
+            Command::Go(_) => CommandWord::Go,
+            Command::Stop => CommandWord::Stop,
+            Command::Quit => CommandWord::Quit,
+        }
+    }
+
     pub fn deliver_to<R: Receiver<'line>>(self, receiver: R) -> R {
         match self {
             Command::Uci => receiver.identify(),
@@ -46,31 +62,30 @@ impl<'line> TryFrom<&'line str> for Command<'line> {
         let (head, rest) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
-        match head {
-            "uci" => Ok(Command::Uci),
-            "isready" => Ok(Command::IsReady),
-            "setoption" => EngineOption::try_from(rest).map(Command::SetOption),
-            "ucinewgame" => Ok(Command::UciNewGame),
-            "position" => Position::try_from(rest).map(Command::Position),
-            "go" => Ok(Command::Go(GoLimits::from(rest))),
-            "stop" => Ok(Command::Stop),
-            "quit" => Ok(Command::Quit),
-            _ => Err(UciError::UnknownCommand),
+        match head
+            .parse::<CommandWord>()
+            .map_err(|_| UciError::UnknownCommand)?
+        {
+            CommandWord::Uci => Ok(Command::Uci),
+            CommandWord::IsReady => Ok(Command::IsReady),
+            CommandWord::SetOption => EngineOption::try_from(rest).map(Command::SetOption),
+            CommandWord::UciNewGame => Ok(Command::UciNewGame),
+            CommandWord::Position => Position::try_from(rest).map(Command::Position),
+            CommandWord::Go => Ok(Command::Go(GoLimits::from(rest))),
+            CommandWord::Stop => Ok(Command::Stop),
+            CommandWord::Quit => Ok(Command::Quit),
         }
     }
 }
 
 impl fmt::Display for Command<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}", self.word())?;
         match self {
-            Command::Uci => formatter.write_str("uci"),
-            Command::IsReady => formatter.write_str("isready"),
-            Command::SetOption(option) => write!(formatter, "setoption {option}"),
-            Command::UciNewGame => formatter.write_str("ucinewgame"),
-            Command::Position(position) => write!(formatter, "position {position}"),
-            Command::Go(limits) => write!(formatter, "go {limits}"),
-            Command::Stop => formatter.write_str("stop"),
-            Command::Quit => formatter.write_str("quit"),
+            Command::SetOption(option) => write!(formatter, " {option}"),
+            Command::Position(position) => write!(formatter, " {position}"),
+            Command::Go(limits) => write!(formatter, " {limits}"),
+            _ => Ok(()),
         }
     }
 }

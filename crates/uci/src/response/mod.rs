@@ -1,4 +1,6 @@
 mod identity;
+mod no_move;
+mod response_word;
 mod search_info;
 
 pub use identity::Identity;
@@ -7,6 +9,8 @@ pub use search_info::SearchInfo;
 use core::fmt;
 
 use board::LongAlgebraic;
+use no_move::NoMove;
+use response_word::ResponseWord;
 
 use crate::uci_error::UciError;
 
@@ -20,10 +24,21 @@ pub enum Response<'line> {
 }
 
 impl Response<'_> {
+    const fn word(&self) -> ResponseWord {
+        match self {
+            Response::Id(_) => ResponseWord::Id,
+            Response::UciOk => ResponseWord::UciOk,
+            Response::ReadyOk => ResponseWord::ReadyOk,
+            Response::Info(_) => ResponseWord::Info,
+            Response::BestMove(_) => ResponseWord::BestMove,
+        }
+    }
+
     fn best_move(rest: &str) -> Result<Self, UciError> {
-        match rest.split_whitespace().next().unwrap_or("") {
-            "0000" | "(none)" => Ok(Response::BestMove(None)),
-            text => text
+        let text = rest.split_whitespace().next().unwrap_or("");
+        match text.parse::<NoMove>() {
+            Ok(_) => Ok(Response::BestMove(None)),
+            Err(_) => text
                 .parse()
                 .map(|notation| Response::BestMove(Some(notation)))
                 .map_err(|_| UciError::UnknownMove),
@@ -39,26 +54,28 @@ impl<'line> TryFrom<&'line str> for Response<'line> {
         let (head, rest) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
-        match head {
-            "id" => Identity::try_from(rest).map(Response::Id),
-            "uciok" => Ok(Response::UciOk),
-            "readyok" => Ok(Response::ReadyOk),
-            "info" => SearchInfo::try_from(rest).map(Response::Info),
-            "bestmove" => Self::best_move(rest),
-            _ => Err(UciError::UnknownResponse),
+        match head
+            .parse::<ResponseWord>()
+            .map_err(|_| UciError::UnknownResponse)?
+        {
+            ResponseWord::Id => Identity::try_from(rest).map(Response::Id),
+            ResponseWord::UciOk => Ok(Response::UciOk),
+            ResponseWord::ReadyOk => Ok(Response::ReadyOk),
+            ResponseWord::Info => SearchInfo::try_from(rest).map(Response::Info),
+            ResponseWord::BestMove => Self::best_move(rest),
         }
     }
 }
 
 impl fmt::Display for Response<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}", self.word())?;
         match self {
-            Response::Id(identity) => write!(formatter, "id {identity}"),
-            Response::UciOk => formatter.write_str("uciok"),
-            Response::ReadyOk => formatter.write_str("readyok"),
-            Response::Info(info) => write!(formatter, "info {info}"),
-            Response::BestMove(Some(notation)) => write!(formatter, "bestmove {notation}"),
-            Response::BestMove(None) => formatter.write_str("bestmove 0000"),
+            Response::Id(identity) => write!(formatter, " {identity}"),
+            Response::Info(info) => write!(formatter, " {info}"),
+            Response::BestMove(Some(notation)) => write!(formatter, " {notation}"),
+            Response::BestMove(None) => write!(formatter, " {}", NoMove::Zeros),
+            _ => Ok(()),
         }
     }
 }

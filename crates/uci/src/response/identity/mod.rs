@@ -1,4 +1,8 @@
+mod identity_word;
+
 use core::fmt;
+
+use identity_word::IdentityWord;
 
 use crate::uci_error::UciError;
 
@@ -16,10 +20,12 @@ impl<'line> TryFrom<&'line str> for Identity<'line> {
         let (kind, text) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
-        match kind {
-            "name" => Ok(Identity::Name(text.trim())),
-            "author" => Ok(Identity::Author(text.trim())),
-            _ => Err(UciError::UnknownResponse),
+        match kind
+            .parse::<IdentityWord>()
+            .map_err(|_| UciError::UnknownResponse)?
+        {
+            IdentityWord::Name => Ok(Identity::Name(text.trim())),
+            IdentityWord::Author => Ok(Identity::Author(text.trim())),
         }
     }
 }
@@ -27,8 +33,8 @@ impl<'line> TryFrom<&'line str> for Identity<'line> {
 impl fmt::Display for Identity<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Identity::Name(name) => write!(formatter, "name {name}"),
-            Identity::Author(author) => write!(formatter, "author {author}"),
+            Identity::Name(name) => write!(formatter, "{} {name}", IdentityWord::Name),
+            Identity::Author(author) => write!(formatter, "{} {author}", IdentityWord::Author),
         }
     }
 }
