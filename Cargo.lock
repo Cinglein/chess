@@ -3,6 +3,17 @@
 version = 4
 
 [[package]]
+name = "arena"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "engine",
+ "search",
+ "thiserror",
+ "uci",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

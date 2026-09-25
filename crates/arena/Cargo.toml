@@ -1,0 +1,19 @@
+[package]
+name = "arena"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+board = { version = "0.1.0", path = "../board" }
+engine = { version = "0.1.0", path = "../engine" }
+thiserror = "2"
+uci = { version = "0.1.0", path = "../uci" }
+
+[dev-dependencies]
+search = { version = "0.1.0", path = "../search" }
+
+[lints]
+workspace = true
