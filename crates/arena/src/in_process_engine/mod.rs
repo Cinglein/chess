@@ -62,7 +62,7 @@ mod tests {
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
 
     #[test]
-    fn the_native_opponent_answers_a_position_with_the_mating_move() {
+    fn the_in_process_engine_answers_a_position_with_the_mating_move() {
         let mut in_process_engine = InProcessEngine::default();
         in_process_engine.begin_game().unwrap();
         let chosen = in_process_engine
