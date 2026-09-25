@@ -20,7 +20,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/chess`: the UCI binary: a stdin thread that also raises the stop flag on `stop` and
   `quit`, a stdout sink, and a fold of commands over the engine.
 - `crates/arena`: `std` match runner. `Opponent` is the trait a game talks to: `UciProcess`
-  drives a child process over pipes with a reader thread and timeouts, `Native` drives
+  drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,

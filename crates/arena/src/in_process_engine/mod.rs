@@ -1,38 +1,38 @@
-mod captured_move;
+mod captured_best_move;
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 use board::LongAlgebraic;
-use captured_move::CapturedMove;
+use captured_best_move::CapturedBestMove;
 use engine::Engine;
 use uci::{Command, GoLimits, Position};
 
 use crate::arena_error::ArenaError;
 use crate::opponent::Opponent;
 
-pub struct Native {
-    engine: Option<Engine<CapturedMove>>,
+pub struct InProcessEngine {
+    engine: Option<Engine<CapturedBestMove>>,
 }
 
-impl Native {
+impl InProcessEngine {
     fn deliver(&mut self, command: Command<'_>) {
         self.engine = self.engine.take().map(|engine| command.deliver_to(engine));
     }
 }
 
-impl Default for Native {
-    fn default() -> Native {
-        Native {
+impl Default for InProcessEngine {
+    fn default() -> InProcessEngine {
+        InProcessEngine {
             engine: Some(Engine::new(
                 Arc::new(AtomicBool::new(false)),
-                CapturedMove::default(),
+                CapturedBestMove::default(),
             )),
         }
     }
 }
 
-impl Opponent for Native {
+impl Opponent for InProcessEngine {
     fn begin_game(&mut self) -> Result<(), ArenaError> {
         self.deliver(Command::UciNewGame);
         Ok(())
@@ -57,15 +57,15 @@ mod tests {
     use search::Depth;
     use uci::{GoLimits, Position};
 
-    use super::{Native, Opponent};
+    use super::{InProcessEngine, Opponent};
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
 
     #[test]
     fn the_native_opponent_answers_a_position_with_the_mating_move() {
-        let mut native = Native::default();
-        native.begin_game().unwrap();
-        let chosen = native
+        let mut in_process_engine = InProcessEngine::default();
+        in_process_engine.begin_game().unwrap();
+        let chosen = in_process_engine
             .choose_move(
                 Position::new(Some(MATE_IN_ONE), ""),
                 GoLimits::Depth(Depth::new(2)),
