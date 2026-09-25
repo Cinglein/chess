@@ -24,6 +24,19 @@ pub enum Response<'line> {
 }
 
 impl Response<'_> {
+    #[must_use]
+    pub const fn best_move(&self) -> Option<LongAlgebraic> {
+        match self {
+            Response::BestMove(Some(notation)) => Some(*notation),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_best_move(&self) -> bool {
+        matches!(self, Response::BestMove(_))
+    }
+
     const fn word(&self) -> ResponseWord {
         match self {
             Response::Id(_) => ResponseWord::Id,
@@ -34,7 +47,7 @@ impl Response<'_> {
         }
     }
 
-    fn best_move(rest: &str) -> Result<Self, UciError> {
+    fn parse_best_move(rest: &str) -> Result<Self, UciError> {
         let text = rest.split_whitespace().next().unwrap_or("");
         match text.parse::<NoMove>() {
             Ok(_) => Ok(Response::BestMove(None)),
@@ -62,7 +75,7 @@ impl<'line> TryFrom<&'line str> for Response<'line> {
             ResponseWord::UciOk => Ok(Response::UciOk),
             ResponseWord::ReadyOk => Ok(Response::ReadyOk),
             ResponseWord::Info => SearchInfo::try_from(rest).map(Response::Info),
-            ResponseWord::BestMove => Self::best_move(rest),
+            ResponseWord::BestMove => Self::parse_best_move(rest),
         }
     }
 }
