@@ -1,12 +1,10 @@
-mod go_key;
-
 use core::time::Duration;
 
 use search::Depth;
 
 use super::GoLimits;
 use super::clock::Clock;
-use go_key::GoKey;
+use super::go_key::GoKey;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct GoBuilder {
@@ -24,11 +22,11 @@ impl GoBuilder {
     pub(super) fn absorb(self, token: &str) -> GoBuilder {
         match (self.pending, token.parse::<GoKey>()) {
             (Some(key), _) => self.assign(key, token.parse().ok()),
+            (None, Ok(GoKey::Infinite) | Err(_)) => self,
             (None, Ok(key)) => GoBuilder {
                 pending: Some(key),
                 ..self
             },
-            (None, Err(_)) => self,
         }
     }
 
@@ -54,6 +52,7 @@ impl GoBuilder {
             ..self
         };
         match key {
+            GoKey::Infinite => cleared,
             GoKey::Depth => GoBuilder {
                 depth: value,
                 ..cleared

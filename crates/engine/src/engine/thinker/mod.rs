@@ -5,7 +5,7 @@ use std::ops::ControlFlow;
 use std::sync::atomic::AtomicBool;
 use std::time::Instant;
 
-use board::Board;
+use board::{Board, LongAlgebraic};
 use deadline::Deadline;
 use eval::PieceSquareTables;
 use search::{Depth, Search, TableEntry, TranspositionTable};
@@ -67,6 +67,8 @@ impl<'position, 'flag> Thinker<'position, 'flag> {
         let search = match searched {
             ControlFlow::Break(search) | ControlFlow::Continue(search) => search,
         };
-        sink.emit(Response::BestMove(search.best_move()));
+        sink.emit(Response::BestMove(
+            search.best_move().map(LongAlgebraic::from),
+        ));
     }
 }

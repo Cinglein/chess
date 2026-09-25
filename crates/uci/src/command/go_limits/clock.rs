@@ -1,6 +1,9 @@
+use core::fmt;
 use core::time::Duration;
 
 use board::Color;
+
+use super::go_key::GoKey;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Clock {
@@ -40,5 +43,22 @@ impl Clock {
             Color::White => self.white_increment,
             Color::Black => self.black_increment,
         }
+    }
+}
+
+impl fmt::Display for Clock {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "{} {} {} {} {} {} {} {}",
+            GoKey::WTime,
+            self.white.as_millis(),
+            GoKey::BTime,
+            self.black.as_millis(),
+            GoKey::WInc,
+            self.white_increment.as_millis(),
+            GoKey::BInc,
+            self.black_increment.as_millis()
+        )
     }
 }

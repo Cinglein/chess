@@ -1,11 +1,14 @@
 mod clock;
 mod go_builder;
+mod go_key;
 
 pub use clock::Clock;
 
+use core::fmt;
 use core::time::Duration;
 
 use go_builder::GoBuilder;
+use go_key::GoKey;
 use search::Depth;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,5 +59,19 @@ impl From<&str> for GoLimits {
         rest.split_whitespace()
             .fold(GoBuilder::default(), GoBuilder::absorb)
             .limits()
+    }
+}
+
+impl fmt::Display for GoLimits {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GoLimits::Infinite => write!(formatter, "{}", GoKey::Infinite),
+            GoLimits::Depth(depth) => write!(formatter, "{} {depth}", GoKey::Depth),
+            GoLimits::Nodes(nodes) => write!(formatter, "{} {nodes}", GoKey::Nodes),
+            GoLimits::MoveTime(duration) => {
+                write!(formatter, "{} {}", GoKey::MoveTime, duration.as_millis())
+            }
+            GoLimits::Clock(clock) => write!(formatter, "{clock}"),
+        }
     }
 }
