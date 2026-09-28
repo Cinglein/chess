@@ -1,15 +1,18 @@
-mod contestant_word;
 mod engine_setting;
 
 use std::path::PathBuf;
 
 use arena::{ArenaError, InProcessEngine, Opponent, UciProcess};
-use contestant_word::ContestantWord;
 use engine_setting::EngineSetting;
+use strum::EnumString;
 use uci::EngineOption;
 
+#[derive(Clone, Debug, PartialEq, Eq, EnumString)]
+#[repr(u8)]
 pub enum Contestant {
+    #[strum(serialize = "in-process")]
     InProcess,
+    #[strum(default)]
     Program(PathBuf),
 }
 
@@ -28,15 +31,6 @@ impl Contestant {
                 ];
                 Ok(Box::new(UciProcess::spawn(path, &options)?))
             }
-        }
-    }
-}
-
-impl From<&str> for Contestant {
-    fn from(text: &str) -> Contestant {
-        match text.parse::<ContestantWord>() {
-            Ok(ContestantWord::InProcess) => Contestant::InProcess,
-            Err(_) => Contestant::Program(PathBuf::from(text)),
         }
     }
 }

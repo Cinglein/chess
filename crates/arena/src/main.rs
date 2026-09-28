@@ -12,8 +12,14 @@ fn main() -> Result<(), ArenaError> {
         .collect::<Vec<String>>()
         .try_into()
         .map_err(|_| ArenaError::Usage)?;
-    let mut white = Contestant::from(white.as_str()).opponent()?;
-    let mut black = Contestant::from(black.as_str()).opponent()?;
+    let mut white = white
+        .parse::<Contestant>()
+        .map_err(|_| ArenaError::Usage)?
+        .opponent()?;
+    let mut black = black
+        .parse::<Contestant>()
+        .map_err(|_| ArenaError::Usage)?
+        .opponent()?;
     let finished = Game::from(Board::START).play(white.as_mut(), black.as_mut());
     println!("{finished}");
     Ok(())
