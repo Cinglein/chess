@@ -77,8 +77,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   paths, and tuples; anything else dispatches through a trait. Every struct field is private,
   including `pub(crate)` and `pub(super)`, so values are built by constructors alone.
 - A crate root re-exports exactly what another crate names. An export with no user outside its
-  crate is removed, and added back the day a user appears. `cargo xtask public-surface`
-  enforces it; a stacked PR may be red on it until the PR that brings the user lands on top.
+  crate is removed, and added back the day a user appears. A crate no other crate depends on
+  yet has no surface to check. `cargo xtask public-surface` enforces it.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;

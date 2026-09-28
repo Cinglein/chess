@@ -24,7 +24,9 @@ impl PublicSurface {
                 .flat_map(|file| {
                     Export::in_root(file)
                         .into_iter()
-                        .filter(|export| !references.names(export))
+                        .filter(|export| {
+                            references.depends_on(export.crate_name()) && !references.names(export)
+                        })
                         .map(move |export| {
                             Violation::new(
                                 Site::Line(file.path().to_owned(), export.line()),
@@ -47,12 +49,17 @@ mod tests {
 
     const LIB: &str = "mod x; pub use x::{Used, Unused}; pub use x::Original as Seen;";
     const MAIN: &str = "use a::Used; fn main() { a::Seen::go(); }";
-    const FILES: [(&str, &str); 2] = [("crates/a/src/lib.rs", LIB), ("crates/b/src/main.rs", MAIN)];
+    const LONELY: &str = "mod y; pub use y::Lonely;";
+    const FILES: [(&str, &str); 3] = [
+        ("crates/a/src/lib.rs", LIB),
+        ("crates/b/src/main.rs", MAIN),
+        ("crates/c/src/lib.rs", LONELY),
+    ];
     const FLAGGED: &str = "Unused is exported";
-    const KEPT: [&str; 2] = ["Used is exported", "Seen"];
+    const KEPT: [&str; 3] = ["Used is exported", "Seen", "Lonely"];
 
     #[test]
-    fn flags_a_root_reexport_that_no_other_crate_names_by_use_or_path() {
+    fn flags_an_unnamed_reexport_of_a_crate_that_has_a_dependent() {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
