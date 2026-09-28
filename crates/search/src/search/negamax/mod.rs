@@ -9,7 +9,7 @@ mod table;
 mod window;
 
 pub(crate) use table::RootDistance;
-pub use table::{BoundKind, TableEntry, TranspositionTable};
+pub use table::{TableEntry, TranspositionTable};
 pub(crate) use window::{Bound, Lower, Window};
 
 use core::marker::PhantomData;

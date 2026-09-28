@@ -16,7 +16,7 @@ impl Rays {
     }
 
     #[must_use]
-    pub const fn attacks_by_ray(&self, square: Square, occupied: Bitboard) -> Bitboard {
+    pub const fn attacks_by_ray(self, square: Square, occupied: Bitboard) -> Bitboard {
         let origin = Bitboard::from_square(square);
         let mut attacks = Bitboard::EMPTY;
         let mut directions: &[Direction] = &self.0;
@@ -28,7 +28,7 @@ impl Rays {
     }
 
     #[must_use]
-    pub const fn relevant_occupancy(&self, square: Square) -> Bitboard {
+    pub const fn relevant_occupancy(self, square: Square) -> Bitboard {
         let outer_ranks = Bitboard::rank(Rank::One)
             .union(Bitboard::rank(Rank::Eight))
             .difference(Bitboard::rank(square.rank()));
@@ -40,7 +40,7 @@ impl Rays {
     }
 
     #[must_use]
-    pub const fn table_size(&self) -> usize {
+    pub const fn table_size(self) -> usize {
         let mut total = 0;
         let mut squares = Square::VARIANTS;
         while let [square, rest @ ..] = squares {

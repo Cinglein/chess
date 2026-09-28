@@ -2,12 +2,14 @@ mod depth;
 mod interrupt;
 mod negamax;
 mod principal;
+#[cfg(test)]
 mod uninterrupted;
 
 pub use depth::Depth;
 pub use interrupt::Interrupt;
-pub use negamax::{BoundKind, TableEntry, TranspositionTable};
-pub use uninterrupted::Uninterrupted;
+pub use negamax::{TableEntry, TranspositionTable};
+#[cfg(test)]
+use uninterrupted::Uninterrupted;
 
 use core::marker::PhantomData;
 

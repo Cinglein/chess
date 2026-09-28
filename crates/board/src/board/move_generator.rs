@@ -2,12 +2,12 @@ use core::marker::PhantomData;
 
 use strum::{IntoEnumIterator, VariantArray};
 
+use super::king_safety::KingSafety;
 use super::{Board, MoveList};
 use crate::bitboard::Bitboard;
 use crate::castling_right::CastlingRight;
 use crate::castling_squares::CastlingSquares;
 use crate::chess_move::{Castling, ChessMove, DoublePush, EnPassant, MoveKind, Normal, Promotion};
-use crate::king_safety::KingSafety;
 use crate::leaper::{King, Knight, Leaper, Pawn};
 use crate::piece_kind::PieceKind;
 use crate::promotion_piece::PromotionPiece;

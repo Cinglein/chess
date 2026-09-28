@@ -1,5 +1,6 @@
 mod fullmove_number;
 mod halfmove_clock;
+mod king_safety;
 mod move_generator;
 
 pub use fullmove_number::FullmoveNumber;
@@ -17,7 +18,6 @@ use crate::castling_rights::CastlingRights;
 use crate::chess_move::{ChessMove, MoveKind};
 use crate::color::Color;
 use crate::file::File;
-use crate::king_safety::KingSafety;
 use crate::leaper::{BlackPawn, WhitePawn};
 use crate::long_algebraic::LongAlgebraic;
 use crate::piece_kind::PieceKind;
@@ -27,6 +27,7 @@ use crate::square::Square;
 use crate::state::State;
 use crate::zobrist::Zobrist;
 use crate::zobrist_keys::ZobristKeys;
+use king_safety::KingSafety;
 
 pub type MoveList = ArrayVec<ChessMove, { Board::MAX_LEGAL_MOVES }>;
 
