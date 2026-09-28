@@ -7,8 +7,10 @@ name = "arena"
 version = "0.1.0"
 dependencies = [
  "board",
+ "derive_more",
  "engine",
  "search",
+ "strum",
  "thiserror",
  "uci",
 ]

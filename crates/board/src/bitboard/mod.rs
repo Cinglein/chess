@@ -21,6 +21,7 @@ pub struct Bitboard(u64);
 impl Bitboard {
     pub const EMPTY: Bitboard = Bitboard(0);
     pub const FULL: Bitboard = Bitboard(u64::MAX);
+    pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55AA_55AA_55AA_55AA);
 
     #[must_use]
     pub const fn from_bits(bits: u64) -> Self {
