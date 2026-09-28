@@ -1,26 +1,15 @@
-mod contestant;
+mod command_line;
 
-use std::env;
+use std::process::ExitCode;
 
-use arena::{ArenaError, Game};
-use board::Board;
-use contestant::Contestant;
+use command_line::CommandLine;
 
-fn main() -> Result<(), ArenaError> {
-    let [white, black]: [String; 2] = env::args()
-        .skip(1)
-        .collect::<Vec<String>>()
-        .try_into()
-        .map_err(|_| ArenaError::Usage)?;
-    let mut white = white
-        .parse::<Contestant>()
-        .map_err(|_| ArenaError::Usage)?
-        .opponent()?;
-    let mut black = black
-        .parse::<Contestant>()
-        .map_err(|_| ArenaError::Usage)?
-        .opponent()?;
-    let finished = Game::from(Board::START).play(white.as_mut(), black.as_mut());
-    println!("{finished}");
-    Ok(())
+fn main() -> ExitCode {
+    match CommandLine::play() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("{error}");
+            ExitCode::FAILURE
+        }
+    }
 }
