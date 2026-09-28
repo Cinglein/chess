@@ -16,10 +16,6 @@ impl RootDistance {
         RootDistance(self.0.saturating_add(1))
     }
 
-    pub(crate) fn mated_here(self) -> Score {
-        Score::mated_in(self.0)
-    }
-
     pub(crate) fn store(self, score: Score) -> StoredScore {
         StoredScore::from_root_relative(score.stored_from_root_distance(self.0))
     }

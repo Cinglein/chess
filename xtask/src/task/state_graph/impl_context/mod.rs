@@ -38,8 +38,8 @@ impl ImplContext {
         self.kind.trait_name().is_some()
     }
 
-    pub fn forbids_mutation(&self) -> bool {
-        self.kind.forbids_mutation()
+    pub fn kind(&self) -> &ImplKind {
+        &self.kind
     }
 
     pub fn is_public(&self, function: &ImplItemFn) -> bool {

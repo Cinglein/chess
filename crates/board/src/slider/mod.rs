@@ -37,13 +37,13 @@ mod tests {
     use strum::IntoEnumIterator;
 
     use super::{Bishop, Rook, Slider};
-    use crate::bitboard::Bitboard;
+    use crate::bitboard::{Bitboard, SubsetIter};
     use crate::square::Square;
 
     trait Checks: Slider {
         fn lookups_match_ray_walking_for_every_relevant_occupancy() {
             for square in Square::iter() {
-                for occupied in Self::relevant_occupancy(square).subsets() {
+                for occupied in SubsetIter::new(Self::relevant_occupancy(square)) {
                     assert_eq!(
                         Self::attacks(square, occupied),
                         Self::attacks_by_ray(square, occupied),

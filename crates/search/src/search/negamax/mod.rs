@@ -88,7 +88,7 @@ impl<'store, 'table, 'stop, E: Evaluator, I: Interrupt> Negamax<'store, 'table, 
 
     pub(crate) fn terminal(board: &Board, distance: RootDistance) -> Score {
         if board.in_check() {
-            distance.mated_here()
+            Score::mated_in(distance.plies())
         } else {
             Score::DRAW
         }

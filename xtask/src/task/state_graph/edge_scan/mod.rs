@@ -166,7 +166,7 @@ impl<'scan> EdgeScan<'scan> {
 
     fn check_view(&mut self, context: &ImplContext, receiver: &Receiver, shape: &FunctionShape) {
         if receiver.mutability.is_some() {
-            if context.forbids_mutation() {
+            if context.kind().forbids_mutation() {
                 self.violations.push(Violation::new(
                     shape.site().clone(),
                     format!(
