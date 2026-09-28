@@ -28,8 +28,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
-  `no-free-fns`, `private-fns`, `public-surface`, `state-graph`, `test-budget`, and
-  `type-shape`, `cargo xtask wasm`,
+  `no-free-fns`, `no-parameter-bags`, `private-fns`, `public-surface`, `state-graph`,
+  `test-budget`, and `type-shape`, `cargo xtask wasm`,
   `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -79,6 +79,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - A crate root re-exports exactly what another crate names. An export with no user outside its
   crate is removed, and added back the day a user appears. `cargo xtask public-surface`
   enforces it; a stacked PR may be red on it until the PR that brings the user lands on top.
+- A struct with no logic of its own (only constructors, field accessors, and `..self` updaters,
+  no trait impls) that exactly one other file names is a parameter bag carrying values between
+  that file's methods. Give it the logic that consumes it. `cargo xtask no-parameter-bags`
+  enforces it.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;

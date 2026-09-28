@@ -6,11 +6,11 @@ use super::regime::Regime;
 pub(crate) struct FullWidth;
 
 impl Regime for FullWidth {
-    fn floor<E: Evaluator>(_: &Board) -> Score {
+    fn floor<E: Evaluator>(&self, _: &Board) -> Score {
         Score::INFINITY.negated()
     }
 
-    fn considers(_: ChessMove, _: &Board) -> bool {
+    fn considers(&self, _: ChessMove, _: &Board) -> bool {
         true
     }
 }

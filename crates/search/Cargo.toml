@@ -13,3 +13,6 @@ eval = { version = "0.1.0", path = "../eval" }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+proptest = "1"
