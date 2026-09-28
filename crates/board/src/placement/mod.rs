@@ -145,21 +145,16 @@ impl Placement<Empty> {
 
 impl Placement<Holding> {
     #[must_use]
-    pub const fn piece(&self) -> Piece {
-        self.hand.piece()
-    }
-
-    #[must_use]
     pub fn promote(self, promotion: PromotionPiece) -> Placement<Holding> {
         Placement {
-            hand: Holding::new(Piece::new(self.piece().color(), promotion.into())),
+            hand: Holding::new(Piece::new(self.hand.piece().color(), promotion.into())),
             ..self
         }
     }
 
     #[must_use]
     pub fn land(self, square: Square) -> PiecePlacement {
-        let piece = self.piece();
+        let piece = self.hand.piece();
         let mut placement = Placement {
             pieces: self.pieces,
             hand: Empty,

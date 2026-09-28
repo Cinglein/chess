@@ -10,6 +10,7 @@ mod manual_iteration;
 mod module_nesting;
 mod named_lifetimes;
 mod no_comments;
+mod no_forwarders;
 mod no_free_fns;
 mod private_fns;
 mod report;
@@ -34,6 +35,7 @@ use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
 use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
+use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::private_fns::PrivateFns;
 use crate::task::state_graph::StateGraph;
@@ -58,6 +60,7 @@ pub enum Task {
     ModuleNesting,
     NamedLifetimes,
     NoComments,
+    NoForwarders,
     NoFreeFns,
     PrivateFns,
     StateGraph,
@@ -87,6 +90,7 @@ impl Task {
             Task::ModuleNesting => ModuleNesting::report(&workspace.source_files()?).verdict(),
             Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
+            Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),

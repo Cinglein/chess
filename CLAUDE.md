@@ -27,8 +27,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   wasm), `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
-  `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-free-fns`,
-  `private-fns`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
+  `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
+  `no-free-fns`, `private-fns`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
   `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -100,6 +100,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   enum or a type parameter. No tuple type in a function signature or struct field outside a trait
   impl: values that travel together are a struct. No `Result<_, String>`: errors are an enum with
   `thiserror`. `cargo xtask type-shape` enforces all three.
+- A method does its own work. A body that is one call handing the method's own inputs to a type
+  declared in this workspace is a forwarder: expose the part instead, or call the target
+  directly. Newtypes may still name a foreign type's method (`Bitboard::count` over
+  `u64::count_ones`). `cargo xtask no-forwarders` enforces it.
 - No two non-`pub` functions on one type share a signature (generics, receiver, parameter types,
   return type). Two such helpers mean a value is missing its type: `alpha` and `beta` both returning
   `Score` became `Bound<Lower>` and `Bound<Upper>`. `cargo xtask distinct-signatures` enforces it.

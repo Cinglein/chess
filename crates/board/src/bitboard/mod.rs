@@ -122,11 +122,6 @@ impl Bitboard {
     }
 
     #[must_use]
-    pub const fn subsets(self) -> SubsetIter {
-        SubsetIter::new(self)
-    }
-
-    #[must_use]
     pub const fn shift(self, direction: Direction) -> Bitboard {
         let vertical = match direction.rank_step() {
             1 => self.0 << File::COUNT,
@@ -234,7 +229,7 @@ mod tests {
     use proptest::prelude::*;
     use strum::IntoEnumIterator;
 
-    use super::Bitboard;
+    use super::{Bitboard, SubsetIter};
     use crate::direction::Direction;
     use crate::rank::Rank;
     use crate::square::Square;
@@ -269,7 +264,7 @@ mod tests {
     fn subsets_of_a_mask_are_its_distinct_sub_bitboards() {
         proptest!(|(bits: u64)| {
             let mask = Bitboard::from_bits(bits) & Bitboard::rank(Rank::One);
-            let subsets: Vec<Bitboard> = mask.subsets().collect();
+            let subsets: Vec<Bitboard> = SubsetIter::new(mask).collect();
             prop_assert_eq!(subsets.len(), 1 << mask.count());
             prop_assert_eq!(subsets.iter().collect::<HashSet<_>>().len(), subsets.len());
             prop_assert!(subsets.iter().all(|subset| subset.difference(mask).is_empty()));

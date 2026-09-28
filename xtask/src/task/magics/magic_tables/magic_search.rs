@@ -1,4 +1,4 @@
-use board::{Bitboard, Magic, Slider, Square};
+use board::{Bitboard, Magic, Slider, Square, SubsetIter};
 
 use crate::task::magics::xor_shift::XorShift;
 
@@ -11,8 +11,7 @@ pub struct MagicSearch {
 impl MagicSearch {
     pub fn new<S: Slider>(square: Square) -> MagicSearch {
         let mask = S::relevant_occupancy(square);
-        let attacks = mask
-            .subsets()
+        let attacks = SubsetIter::new(mask)
             .map(|subset| S::attacks_by_ray(square, subset))
             .collect();
         let table = vec![Bitboard::EMPTY; Magic::new(mask, 0, 0).table_size()];
@@ -39,8 +38,7 @@ impl MagicSearch {
         let magic = Magic::new(self.mask, candidate, 0);
         self.table.fill(Bitboard::EMPTY);
         let table = &mut self.table;
-        self.mask
-            .subsets()
+        SubsetIter::new(self.mask)
             .zip(&self.attacks)
             .all(|(subset, attacks)| Self::fills(table, magic.index(subset), *attacks))
     }
@@ -62,7 +60,7 @@ impl MagicSearch {
 
 #[cfg(test)]
 mod tests {
-    use board::{Bishop, Magic, Slider, Square};
+    use board::{Bishop, Magic, Slider, Square, SubsetIter};
 
     use super::MagicSearch;
     use crate::task::magics::xor_shift::XorShift;
@@ -74,7 +72,7 @@ mod tests {
         let mask = Bishop::relevant_occupancy(square);
         let magic = Magic::new(mask, multiplier, 0);
         let mut table = vec![None; magic.table_size()];
-        for subset in mask.subsets() {
+        for subset in SubsetIter::new(mask) {
             let attacks = Bishop::attacks_by_ray(square, subset);
             let slot = &mut table[magic.index(subset)];
             assert!(slot.is_none_or(|stored| stored == attacks));

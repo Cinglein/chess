@@ -7,6 +7,7 @@ use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
 use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
+use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::private_fns::PrivateFns;
 use crate::task::report::Report;
@@ -29,6 +30,7 @@ impl Lint {
             ModuleNesting::report(&files),
             NamedLifetimes::report(&files),
             NoComments::report(&files),
+            NoForwarders::report(&files),
             NoFreeFns::report(&files),
             PrivateFns::report(&files),
             StateGraph::report(&files),
