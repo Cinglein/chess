@@ -12,6 +12,7 @@ mod named_lifetimes;
 mod no_comments;
 mod no_forwarders;
 mod no_free_fns;
+mod no_parameter_bags;
 mod private_fns;
 mod public_surface;
 mod report;
@@ -38,6 +39,7 @@ use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
+use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
 use crate::task::state_graph::StateGraph;
@@ -64,6 +66,7 @@ pub enum Task {
     NoComments,
     NoForwarders,
     NoFreeFns,
+    NoParameterBags,
     PrivateFns,
     PublicSurface,
     StateGraph,
@@ -95,6 +98,7 @@ impl Task {
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
+            Task::NoParameterBags => NoParameterBags::report(&workspace.source_files()?).verdict(),
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),

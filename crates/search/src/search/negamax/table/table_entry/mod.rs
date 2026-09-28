@@ -1,3 +1,5 @@
+mod stored_score;
+
 use board::{ChessMove, Zobrist};
 use eval::Score;
 
@@ -6,7 +8,7 @@ use super::super::window::Window;
 use super::bound_kind::BoundKind;
 use super::conclusion::Conclusion;
 use super::root_distance::RootDistance;
-use super::stored_score::StoredScore;
+use stored_score::StoredScore;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TableEntry {
@@ -22,7 +24,7 @@ impl TableEntry {
         hash: Zobrist::EMPTY,
         depth: Depth::ZERO,
         best_move: None,
-        score: StoredScore::from_root_relative(Score::DRAW),
+        score: StoredScore::DRAW,
         kind: BoundKind::Exact,
     };
 
@@ -36,7 +38,7 @@ impl TableEntry {
             hash,
             depth,
             best_move: conclusion.best_move(),
-            score: distance.store(conclusion.score()),
+            score: StoredScore::new(conclusion.score(), distance),
             kind: conclusion.kind(),
         }
     }
@@ -62,7 +64,7 @@ impl TableEntry {
         if self.depth < depth {
             return None;
         }
-        let score = distance.recall(self.score);
+        let score = self.score.seen_from(distance);
         match self.kind {
             BoundKind::Exact => Some(score),
             BoundKind::AtMost if window.lower().admits_no_more_than(score) => Some(score),

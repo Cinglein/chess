@@ -9,6 +9,7 @@ use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
+use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
 use crate::task::report::Report;
@@ -33,6 +34,7 @@ impl Lint {
             NoComments::report(&files),
             NoForwarders::report(&files),
             NoFreeFns::report(&files),
+            NoParameterBags::report(&files),
             PrivateFns::report(&files),
             PublicSurface::report(&files),
             StateGraph::report(&files),

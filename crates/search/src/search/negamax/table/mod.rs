@@ -1,7 +1,6 @@
 mod bound_kind;
 mod conclusion;
 mod root_distance;
-mod stored_score;
 mod table_entry;
 
 pub use bound_kind::BoundKind;

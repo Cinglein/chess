@@ -487,6 +487,7 @@ dependencies = [
  "board",
  "derive_more",
  "eval",
+ "proptest",
 ]
 
 [[package]]
