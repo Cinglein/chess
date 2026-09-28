@@ -10,6 +10,7 @@ use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::private_fns::PrivateFns;
+use crate::task::public_surface::PublicSurface;
 use crate::task::report::Report;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
@@ -33,6 +34,7 @@ impl Lint {
             NoForwarders::report(&files),
             NoFreeFns::report(&files),
             PrivateFns::report(&files),
+            PublicSurface::report(&files),
             StateGraph::report(&files),
             TestBudget::report(&files),
             TypeShape::report(&files),

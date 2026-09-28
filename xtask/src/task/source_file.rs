@@ -35,6 +35,13 @@ impl SourceFile {
         &self.path
     }
 
+    pub fn crate_name(&self) -> Option<&str> {
+        match self.path.strip_prefix("crates/") {
+            Some(inside) => inside.split('/').next(),
+            None => self.path.strip_prefix("xtask/").map(|_| "xtask"),
+        }
+    }
+
     pub fn text(&self) -> &str {
         &self.text
     }

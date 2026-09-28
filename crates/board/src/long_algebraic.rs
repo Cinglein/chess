@@ -87,12 +87,17 @@ impl FromStr for LongAlgebraic {
 mod tests {
     use super::LongAlgebraic;
     use crate::board::Board;
-    use crate::perft_position::PerftPosition;
+
+    const POSITIONS: [&str; 3] = [
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+        "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+    ];
 
     #[test]
     fn every_legal_move_roundtrips_through_its_text_and_resolves_to_itself() {
-        for position in &PerftPosition::REFERENCE {
-            let board: Board = position.fen().parse().unwrap();
+        for fen in POSITIONS {
+            let board: Board = fen.parse().unwrap();
             for legal in board.legal_moves() {
                 let notation = LongAlgebraic::from(legal);
                 assert_eq!(notation.to_string().parse(), Ok(notation));

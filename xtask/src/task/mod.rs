@@ -13,6 +13,7 @@ mod no_comments;
 mod no_forwarders;
 mod no_free_fns;
 mod private_fns;
+mod public_surface;
 mod report;
 mod site;
 mod source_file;
@@ -38,6 +39,7 @@ use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::private_fns::PrivateFns;
+use crate::task::public_surface::PublicSurface;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
 use crate::task::type_shape::TypeShape;
@@ -63,6 +65,7 @@ pub enum Task {
     NoForwarders,
     NoFreeFns,
     PrivateFns,
+    PublicSurface,
     StateGraph,
     TestBudget,
     TypeShape,
@@ -93,6 +96,7 @@ impl Task {
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
+            Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
