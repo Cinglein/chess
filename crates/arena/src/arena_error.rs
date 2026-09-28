@@ -14,6 +14,4 @@ pub enum ArenaError {
     Disconnected,
     #[error("the engine had no move")]
     NoMove,
-    #[error("usage: arena <white> <black>, each in-process or a path to a UCI engine")]
-    Usage,
 }

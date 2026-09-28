@@ -94,7 +94,7 @@ impl Game {
         ControlFlow::Continue(Game {
             board,
             record: self.record.extended(notation, board.hash()),
-            clock: self.clock.charged(side, spent),
+            clock: self.clock.minus_spent_plus_increment(side, spent),
         })
     }
 

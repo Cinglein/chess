@@ -46,7 +46,7 @@ impl Clock {
     }
 
     #[must_use]
-    pub fn charged(self, side: Color, spent: Duration) -> Clock {
+    pub fn minus_spent_plus_increment(self, side: Color, spent: Duration) -> Clock {
         match side {
             Color::White => Clock {
                 white: self.white.saturating_sub(spent) + self.white_increment,
@@ -91,9 +91,9 @@ mod tests {
     const LEFT: Duration = Duration::from_secs(62);
 
     #[test]
-    fn charging_a_side_subtracts_what_it_spent_and_adds_its_increment() {
-        let clock =
-            Clock::new(MINUTE, MINUTE, INCREMENT, Duration::ZERO).charged(Color::White, SPENT);
+    fn a_side_that_moved_loses_what_it_spent_and_gains_its_increment() {
+        let clock = Clock::new(MINUTE, MINUTE, INCREMENT, Duration::ZERO)
+            .minus_spent_plus_increment(Color::White, SPENT);
         assert_eq!(clock.remaining(Color::White), LEFT);
         assert_eq!(clock.remaining(Color::Black), MINUTE);
     }

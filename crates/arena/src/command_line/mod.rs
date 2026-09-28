@@ -1,28 +1,17 @@
-mod contestant;
-
-use std::env;
+mod arguments;
 
 use arena::{ArenaError, Game};
+use arguments::Arguments;
 use board::Board;
-use contestant::Contestant;
+use clap::Parser;
 
 pub struct CommandLine;
 
 impl CommandLine {
     pub fn play() -> Result<(), ArenaError> {
-        let [white, black]: [String; 2] = env::args()
-            .skip(1)
-            .collect::<Vec<String>>()
-            .try_into()
-            .map_err(|_| ArenaError::Usage)?;
-        let mut white = white
-            .parse::<Contestant>()
-            .map_err(|_| ArenaError::Usage)?
-            .opponent()?;
-        let mut black = black
-            .parse::<Contestant>()
-            .map_err(|_| ArenaError::Usage)?
-            .opponent()?;
+        let arguments = Arguments::parse();
+        let mut white = arguments.white().opponent()?;
+        let mut black = arguments.black().opponent()?;
         let finished = Game::from(Board::START).play(white.as_mut(), black.as_mut());
         println!("{finished}");
         Ok(())
