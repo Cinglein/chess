@@ -77,8 +77,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   paths, and tuples; anything else dispatches through a trait. Every struct field is private,
   including `pub(crate)` and `pub(super)`, so values are built by constructors alone.
 - A crate root re-exports exactly what another crate names. An export with no user outside its
-  crate is removed, and added back the day a user appears. `cargo xtask public-surface`
-  enforces it; a stacked PR may be red on it until the PR that brings the user lands on top.
+  crate is removed, and added back the day a user appears. A crate no other crate depends on
+  yet has no surface to check. `cargo xtask public-surface` enforces it.
 - A struct with no logic of its own (only constructors, field accessors, and `..self` updaters,
   no trait impls) that exactly one other file names is a parameter bag carrying values between
   that file's methods. Give it the logic that consumes it. `cargo xtask no-parameter-bags`

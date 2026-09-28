@@ -10,6 +10,7 @@ use crate::task::source_file::SourceFile;
 pub struct ForeignReferences {
     own_crate: String,
     names: BTreeSet<String>,
+    crates: BTreeSet<String>,
 }
 
 impl ForeignReferences {
@@ -17,6 +18,7 @@ impl ForeignReferences {
         let mut references = ForeignReferences {
             own_crate: file.crate_name().unwrap_or_default().to_owned(),
             names: BTreeSet::new(),
+            crates: BTreeSet::new(),
         };
         references.visit_file(file.syntax());
         references
@@ -24,7 +26,12 @@ impl ForeignReferences {
 
     pub fn absorb(mut self, other: ForeignReferences) -> ForeignReferences {
         self.names.extend(other.names);
+        self.crates.extend(other.crates);
         self
+    }
+
+    pub fn depends_on(&self, crate_name: &str) -> bool {
+        self.crates.contains(crate_name)
     }
 
     pub fn names(&self, export: &Export) -> bool {
@@ -52,6 +59,7 @@ impl ForeignReferences {
     fn record(&mut self, first: Option<&str>, name: &str) {
         if let Some(crate_name) = first.filter(|crate_name| *crate_name != self.own_crate) {
             self.names.insert(Self::key(crate_name, name));
+            self.crates.insert(crate_name.to_owned());
         }
     }
 }
