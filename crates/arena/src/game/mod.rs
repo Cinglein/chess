@@ -4,12 +4,13 @@ mod record;
 mod termination;
 
 use std::ops::ControlFlow;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use board::{Board, Color, HalfmoveClock, State};
 use uci::{Clock, GoLimits, Position};
 
 use crate::opponent::Opponent;
+use crate::rules::Rules;
 use finished::Finished;
 use outcome::Outcome;
 use record::Record;
@@ -19,24 +20,22 @@ pub struct Game {
     board: Board,
     record: Record,
     clock: Clock,
+    longest_game_plies: u16,
 }
 
 impl State for Game {}
 
 impl Game {
-    pub const DEFAULT_CLOCK: Clock = Clock::new(
-        Duration::from_secs(10),
-        Duration::from_secs(10),
-        Duration::from_millis(100),
-        Duration::from_millis(100),
-    );
-    const MAX_PLIES: u16 = 1000;
     const FIFTY_MOVES: HalfmoveClock = HalfmoveClock::new(100);
     const REPETITIONS: usize = 3;
 
     #[must_use]
-    pub fn timed(self, clock: Clock) -> Game {
-        Game { clock, ..self }
+    pub fn ruled_by(self, rules: Rules) -> Game {
+        Game {
+            clock: rules.clock(),
+            longest_game_plies: rules.longest_game_plies(),
+            ..self
+        }
     }
 
     #[must_use]
@@ -53,7 +52,8 @@ impl Game {
                 Outcome::new(Color::Black, Termination::Failure(error)),
             );
         }
-        match (0..Self::MAX_PLIES).try_fold(self, |game, _| game.advance(white, black)) {
+        let ceiling = self.longest_game_plies;
+        match (0..ceiling).try_fold(self, |game, _| game.advance(white, black)) {
             ControlFlow::Break(finished) => finished,
             ControlFlow::Continue(game) => Finished::new(
                 game.record,
@@ -98,6 +98,7 @@ impl Game {
             board,
             record: self.record.extended(notation, board),
             clock: self.clock.minus_spent_plus_increment(side, spent),
+            ..self
         })
     }
 
@@ -134,7 +135,8 @@ impl From<Board> for Game {
         Game {
             board,
             record: Record::new(board),
-            clock: Self::DEFAULT_CLOCK,
+            clock: Rules::DEFAULT.clock(),
+            longest_game_plies: Rules::DEFAULT.longest_game_plies(),
         }
     }
 }
@@ -148,6 +150,7 @@ mod tests {
 
     use super::Game;
     use crate::in_process_engine::InProcessEngine;
+    use crate::rules::Rules;
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
@@ -159,7 +162,12 @@ mod tests {
         fn played_between_two_engines(fen: &str) -> String {
             let board: Board = fen.parse().unwrap();
             Game::from(board)
-                .timed(Clock::new(QUICK, QUICK, Duration::ZERO, Duration::ZERO))
+                .ruled_by(Rules::DEFAULT.timed(Clock::new(
+                    QUICK,
+                    QUICK,
+                    Duration::ZERO,
+                    Duration::ZERO,
+                )))
                 .play(
                     &mut InProcessEngine::default(),
                     &mut InProcessEngine::default(),

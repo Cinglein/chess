@@ -16,6 +16,12 @@ pub struct Arguments {
         help = "Elo that every UCI engine is limited to with UCI_LimitStrength"
     )]
     limit_elo: u16,
+    #[arg(
+        long,
+        default_value_t = 1000,
+        help = "Plies after which an unfinished game is adjudicated a draw"
+    )]
+    longest_game: u16,
 }
 
 impl Arguments {
@@ -29,5 +35,9 @@ impl Arguments {
 
     pub const fn limit_elo(&self) -> u16 {
         self.limit_elo
+    }
+
+    pub const fn longest_game(&self) -> u16 {
+        self.longest_game
     }
 }
