@@ -67,6 +67,23 @@ impl<H: Hand> Placement<H> {
     }
 
     #[must_use]
+    pub fn lacks_mating_material(&self) -> bool {
+        let bishops = self.pieces(Color::White, PieceKind::Bishop)
+            | self.pieces(Color::Black, PieceKind::Bishop);
+        let knights = self.pieces(Color::White, PieceKind::Knight)
+            | self.pieces(Color::Black, PieceKind::Knight);
+        let kings =
+            self.pieces(Color::White, PieceKind::King) | self.pieces(Color::Black, PieceKind::King);
+        if self.occupied() != bishops | knights | kings {
+            return false;
+        }
+        (bishops | knights).count() <= 1
+            || (knights.is_empty()
+                && ((bishops & Bitboard::LIGHT_SQUARES).is_empty()
+                    || (bishops & !Bitboard::LIGHT_SQUARES).is_empty()))
+    }
+
+    #[must_use]
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
         Color::iter()
             .flat_map(|color| PieceKind::iter().map(move |kind| Piece::new(color, kind)))

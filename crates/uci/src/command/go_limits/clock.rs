@@ -44,6 +44,20 @@ impl Clock {
             Color::Black => self.black_increment,
         }
     }
+
+    #[must_use]
+    pub fn minus_spent_plus_increment(self, side: Color, spent: Duration) -> Clock {
+        match side {
+            Color::White => Clock {
+                white: self.white.saturating_sub(spent) + self.white_increment,
+                ..self
+            },
+            Color::Black => Clock {
+                black: self.black.saturating_sub(spent) + self.black_increment,
+                ..self
+            },
+        }
+    }
 }
 
 impl fmt::Display for Clock {
@@ -60,5 +74,27 @@ impl fmt::Display for Clock {
             GoKey::BInc,
             self.black_increment.as_millis()
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::time::Duration;
+
+    use board::Color;
+
+    use super::Clock;
+
+    const MINUTE: Duration = Duration::from_secs(60);
+    const INCREMENT: Duration = Duration::from_secs(4);
+    const SPENT: Duration = Duration::from_secs(2);
+    const LEFT: Duration = Duration::from_secs(62);
+
+    #[test]
+    fn a_side_that_moved_loses_what_it_spent_and_gains_its_increment() {
+        let clock = Clock::new(MINUTE, MINUTE, INCREMENT, Duration::ZERO)
+            .minus_spent_plus_increment(Color::White, SPENT);
+        assert_eq!(clock.remaining(Color::White), LEFT);
+        assert_eq!(clock.remaining(Color::Black), MINUTE);
     }
 }

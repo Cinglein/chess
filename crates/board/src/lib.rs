@@ -27,7 +27,7 @@ mod zobrist;
 mod zobrist_keys;
 
 pub use bitboard::{Bitboard, SubsetIter};
-pub use board::{Board, MoveList};
+pub use board::{Board, HalfmoveClock, MoveList};
 pub use chess_move::{ChessMove, MoveKind};
 pub use color::Color;
 pub use long_algebraic::LongAlgebraic;

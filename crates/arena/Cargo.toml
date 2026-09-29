@@ -8,8 +8,11 @@ repository.workspace = true
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
+clap = { version = "4", features = ["derive"] }
 engine = { version = "0.1.0", path = "../engine" }
+derive_more = { version = "2", features = ["display"] }
 thiserror = "2"
+strum = { version = "0.28", default-features = false, features = ["derive"] }
 uci = { version = "0.1.0", path = "../uci" }
 
 [dev-dependencies]
