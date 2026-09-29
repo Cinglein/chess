@@ -1,21 +1,22 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
+use board::NodeCount;
 use search::Interrupt;
 
 pub(super) struct Deadline<'flag> {
     stop: &'flag AtomicBool,
     hard: Option<Instant>,
-    node_limit: Option<u64>,
+    node_limit: Option<NodeCount>,
 }
 
 impl<'flag> Deadline<'flag> {
-    const CHECK_EVERY: u64 = 1024;
+    const CHECK_EVERY: NodeCount = NodeCount::new(1024);
 
     pub(super) const fn new(
         stop: &'flag AtomicBool,
         hard: Option<Instant>,
-        node_limit: Option<u64>,
+        node_limit: Option<NodeCount>,
     ) -> Self {
         Deadline {
             stop,
@@ -26,8 +27,8 @@ impl<'flag> Deadline<'flag> {
 }
 
 impl Interrupt for Deadline<'_> {
-    fn should_stop(&self, nodes: u64) -> bool {
-        nodes.is_multiple_of(Self::CHECK_EVERY)
+    fn should_stop(&self, nodes: NodeCount) -> bool {
+        nodes.count().is_multiple_of(Self::CHECK_EVERY.count())
             && (self.stop.load(Ordering::Relaxed)
                 || self.hard.is_some_and(|hard| Instant::now() >= hard)
                 || self.node_limit.is_some_and(|limit| nodes >= limit))

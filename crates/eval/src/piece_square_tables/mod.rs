@@ -14,8 +14,8 @@ pub struct PieceSquareTables;
 
 impl PieceSquareTables {
     #[rustfmt::skip]
-    const PLACEMENT: EnumMap<PieceKind, EnumMap<Square, i32>> = EnumMap::from_array([
-        EnumMap::from_array([
+    const PLACEMENT: EnumMap<PieceKind, EnumMap<Square, Score>> = EnumMap::from_array([
+        EnumMap::from_array(Score::table([
               0,   0,   0,   0,   0,   0,   0,   0,
               5,  10,  10, -20, -20,  10,  10,   5,
               5,  -5, -10,   0,   0, -10,  -5,   5,
@@ -24,8 +24,8 @@ impl PieceSquareTables {
              10,  10,  20,  30,  30,  20,  10,  10,
              50,  50,  50,  50,  50,  50,  50,  50,
               0,   0,   0,   0,   0,   0,   0,   0,
-        ]),
-        EnumMap::from_array([
+        ])),
+        EnumMap::from_array(Score::table([
             -50, -40, -30, -30, -30, -30, -40, -50,
             -40, -20,   0,   5,   5,   0, -20, -40,
             -30,   5,  10,  15,  15,  10,   5, -30,
@@ -34,8 +34,8 @@ impl PieceSquareTables {
             -30,   0,  10,  15,  15,  10,   0, -30,
             -40, -20,   0,   0,   0,   0, -20, -40,
             -50, -40, -30, -30, -30, -30, -40, -50,
-        ]),
-        EnumMap::from_array([
+        ])),
+        EnumMap::from_array(Score::table([
             -20, -10, -10, -10, -10, -10, -10, -20,
             -10,   5,   0,   0,   0,   0,   5, -10,
             -10,  10,  10,  10,  10,  10,  10, -10,
@@ -44,8 +44,8 @@ impl PieceSquareTables {
             -10,   0,   5,  10,  10,   5,   0, -10,
             -10,   0,   0,   0,   0,   0,   0, -10,
             -20, -10, -10, -10, -10, -10, -10, -20,
-        ]),
-        EnumMap::from_array([
+        ])),
+        EnumMap::from_array(Score::table([
               0,   0,   0,   5,   5,   0,   0,   0,
              -5,   0,   0,   0,   0,   0,   0,  -5,
              -5,   0,   0,   0,   0,   0,   0,  -5,
@@ -54,8 +54,8 @@ impl PieceSquareTables {
              -5,   0,   0,   0,   0,   0,   0,  -5,
               5,  10,  10,  10,  10,  10,  10,   5,
               0,   0,   0,   0,   0,   0,   0,   0,
-        ]),
-        EnumMap::from_array([
+        ])),
+        EnumMap::from_array(Score::table([
             -20, -10, -10,  -5,  -5, -10, -10, -20,
             -10,   0,   5,   0,   0,   0,   0, -10,
             -10,   5,   5,   5,   5,   5,   0, -10,
@@ -64,8 +64,8 @@ impl PieceSquareTables {
             -10,   0,   5,   5,   5,   5,   0, -10,
             -10,   0,   0,   0,   0,   0,   0, -10,
             -20, -10, -10,  -5,  -5, -10, -10, -20,
-        ]),
-        EnumMap::from_array([
+        ])),
+        EnumMap::from_array(Score::table([
              20,  30,  10,   0,   0,  10,  30,  20,
              20,  20,   0,   0,   0,   0,  20,  20,
             -10, -20, -20, -20, -20, -20, -20, -10,
@@ -74,7 +74,7 @@ impl PieceSquareTables {
             -30, -40, -40, -50, -50, -40, -40, -30,
             -30, -40, -40, -50, -50, -40, -40, -30,
             -30, -40, -40, -50, -50, -40, -40, -30,
-        ]),
+        ])),
     ]);
 
     #[must_use]
@@ -83,7 +83,7 @@ impl PieceSquareTables {
             Color::White => square,
             Color::Black => square.mirrored(),
         };
-        PieceKindValue::material(kind) + Score::new(Self::PLACEMENT[kind][from_white])
+        PieceKindValue::material(kind) + Self::PLACEMENT[kind][from_white]
     }
 
     fn side_value(board: &Board, color: Color) -> Score {

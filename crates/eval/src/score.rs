@@ -1,9 +1,11 @@
 use core::iter::Sum;
 use core::ops::{Add, Neg};
 
-use derive_more::{Add, Display, Sub};
+use derive_more::{Add, Display, FromStr, Sub};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display, FromStr,
+)]
 pub struct Score(i32);
 
 impl Score {
@@ -20,6 +22,19 @@ impl Score {
     #[must_use]
     pub const fn centipawns(self) -> i32 {
         self.0
+    }
+
+    #[must_use]
+    pub const fn table<const N: usize>(centipawns: [i32; N]) -> [Score; N] {
+        let mut scores = [Score::DRAW; N];
+        let mut remaining: &[i32] = &centipawns;
+        let mut written = 0;
+        while let [head, rest @ ..] = remaining {
+            scores[written] = Score(*head);
+            written += 1;
+            remaining = rest;
+        }
+        scores
     }
 
     #[must_use]

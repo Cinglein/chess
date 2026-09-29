@@ -1,6 +1,6 @@
-use derive_more::Display;
+use derive_more::{Display, FromStr};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, FromStr)]
 pub struct Depth(u8);
 
 impl Depth {

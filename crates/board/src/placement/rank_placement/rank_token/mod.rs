@@ -1,12 +1,15 @@
+mod empty_run;
+
 use core::iter;
 
+use empty_run::EmptyRun;
 use fen::FenError;
 
 use crate::piece::Piece;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum RankToken {
-    Empties(u8),
+    Empties(EmptyRun),
     Piece(Piece),
 }
 
@@ -24,7 +27,7 @@ impl RankToken {
 
     const fn count(self) -> usize {
         match self {
-            RankToken::Empties(empties) => empties as usize,
+            RankToken::Empties(run) => run.length(),
             RankToken::Piece(_) => 1,
         }
     }
@@ -37,8 +40,9 @@ impl TryFrom<char> for RankToken {
         match letter
             .to_digit(10)
             .and_then(|digit| u8::try_from(digit).ok())
+            .map(EmptyRun::new)
         {
-            Some(empties) => Ok(RankToken::Empties(empties)),
+            Some(run) => Ok(RankToken::Empties(run)),
             None => letter
                 .encode_utf8(&mut [0; 4])
                 .parse()

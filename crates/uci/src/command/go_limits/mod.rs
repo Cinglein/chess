@@ -7,6 +7,7 @@ pub use clock::Clock;
 use core::fmt;
 use core::time::Duration;
 
+use board::NodeCount;
 use go_builder::GoBuilder;
 use go_key::GoKey;
 use search::Depth;
@@ -15,7 +16,7 @@ use search::Depth;
 pub enum GoLimits {
     Infinite,
     Depth(Depth),
-    Nodes(u64),
+    Nodes(NodeCount),
     MoveTime(Duration),
     Clock(Clock),
 }
@@ -30,7 +31,7 @@ impl GoLimits {
     }
 
     #[must_use]
-    pub const fn nodes(&self) -> Option<u64> {
+    pub const fn nodes(&self) -> Option<NodeCount> {
         match self {
             GoLimits::Nodes(nodes) => Some(*nodes),
             _ => None,

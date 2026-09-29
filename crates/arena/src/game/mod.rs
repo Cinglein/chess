@@ -3,10 +3,11 @@ mod outcome;
 mod record;
 mod termination;
 
+use std::iter;
 use std::ops::ControlFlow;
 use std::time::Instant;
 
-use board::{Board, Color, HalfmoveClock, State};
+use board::{Board, Color, FullmoveNumber, HalfmoveClock, State};
 use uci::{Clock, GoLimits, Position};
 
 use crate::opponent::Opponent;
@@ -20,7 +21,7 @@ pub struct Game {
     board: Board,
     record: Record,
     clock: Clock,
-    longest_game_plies: u16,
+    move_limit: FullmoveNumber,
 }
 
 impl State for Game {}
@@ -33,7 +34,7 @@ impl Game {
     pub fn ruled_by(self, rules: Rules) -> Game {
         Game {
             clock: rules.clock(),
-            longest_game_plies: rules.longest_game_plies(),
+            move_limit: rules.longest_game(),
             ..self
         }
     }
@@ -52,8 +53,7 @@ impl Game {
                 Outcome::new(Color::Black, Termination::Failure(error)),
             );
         }
-        let ceiling = self.longest_game_plies;
-        match (0..ceiling).try_fold(self, |game, _| game.advance(white, black)) {
+        match iter::repeat(()).try_fold(self, |game, ()| game.advance(white, black)) {
             ControlFlow::Break(finished) => finished,
             ControlFlow::Continue(game) => Finished::new(
                 game.record,
@@ -103,6 +103,9 @@ impl Game {
     }
 
     fn natural_end(&self) -> Option<Termination> {
+        if self.board.fullmove_number() > self.move_limit {
+            return Some(Termination::MoveLimit);
+        }
         if self.board.legal_moves().is_empty() {
             return Some(if self.board.in_check() {
                 Termination::Checkmate
@@ -136,7 +139,7 @@ impl From<Board> for Game {
             board,
             record: Record::new(board),
             clock: Rules::DEFAULT.clock(),
-            longest_game_plies: Rules::DEFAULT.longest_game_plies(),
+            move_limit: Rules::DEFAULT.longest_game(),
         }
     }
 }

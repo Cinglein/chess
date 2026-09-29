@@ -1,11 +1,13 @@
+use std::num::NonZeroU16;
 use std::time::Duration;
 
+use board::FullmoveNumber;
 use uci::Clock;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rules {
     clock: Clock,
-    longest_game_plies: u16,
+    longest_game: FullmoveNumber,
 }
 
 impl Rules {
@@ -16,7 +18,7 @@ impl Rules {
             Duration::from_millis(100),
             Duration::from_millis(100),
         ),
-        longest_game_plies: 1000,
+        longest_game: FullmoveNumber::new(NonZeroU16::new(500).unwrap()),
     };
 
     #[must_use]
@@ -25,9 +27,9 @@ impl Rules {
     }
 
     #[must_use]
-    pub const fn lasting_at_most(self, longest_game_plies: u16) -> Rules {
+    pub const fn lasting_at_most(self, longest_game: FullmoveNumber) -> Rules {
         Rules {
-            longest_game_plies,
+            longest_game,
             ..self
         }
     }
@@ -38,7 +40,7 @@ impl Rules {
     }
 
     #[must_use]
-    pub const fn longest_game_plies(&self) -> u16 {
-        self.longest_game_plies
+    pub const fn longest_game(&self) -> FullmoveNumber {
+        self.longest_game
     }
 }

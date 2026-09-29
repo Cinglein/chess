@@ -4,7 +4,7 @@ mod info_key;
 use core::fmt;
 use core::time::Duration;
 
-use board::LongAlgebraic;
+use board::{LongAlgebraic, NodeCount};
 use eval::{Evaluator, Score};
 use info_builder::InfoBuilder;
 use info_key::InfoKey;
@@ -16,7 +16,7 @@ use crate::uci_error::UciError;
 pub struct SearchInfo {
     depth: Depth,
     score: Score,
-    nodes: u64,
+    nodes: NodeCount,
     elapsed: Duration,
     best_move: Option<LongAlgebraic>,
 }
@@ -87,7 +87,7 @@ impl fmt::Display for SearchInfo {
             InfoKey::Nodes,
             self.nodes,
             InfoKey::Nps,
-            self.nodes.saturating_mul(1000) / millis.max(1),
+            self.nodes.count().saturating_mul(1000) / millis.max(1),
             InfoKey::Time
         )?;
         self.best_move.map_or(Ok(()), |notation| {

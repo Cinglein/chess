@@ -8,6 +8,7 @@ impl SplitMix64 {
     const GOLDEN_GAMMA: u64 = 0x9E37_79B9_7F4A_7C15;
     const FIRST_MIXER: u64 = 0xBF58_476D_1CE4_E5B9;
     const SECOND_MIXER: u64 = 0x94D0_49BB_1331_11EB;
+    pub(crate) const SEEDED: SplitMix64 = SplitMix64::new(0x0C4E_55B0_A4D6_4C10);
 
     pub(crate) const fn new(seed: u64) -> SplitMix64 {
         SplitMix64 {
