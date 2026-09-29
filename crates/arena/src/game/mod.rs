@@ -7,7 +7,7 @@ use std::ops::ControlFlow;
 use std::time::{Duration, Instant};
 
 use board::{Board, Color, HalfmoveClock, State};
-use uci::{Clock, GoLimits};
+use uci::{Clock, GoLimits, Position};
 
 use crate::opponent::Opponent;
 use finished::Finished;
@@ -71,10 +71,13 @@ impl Game {
             return self.ended(termination);
         }
         let side = self.board.side_to_move();
+        let fen = self.record.start().to_string();
+        let moves = self.record.moves_text();
+        let position = Position::new(Some(&fen), &moves);
         let started = Instant::now();
         let chosen = match side {
-            Color::White => white.choose_move(self.record.position(), GoLimits::Clock(self.clock)),
-            Color::Black => black.choose_move(self.record.position(), GoLimits::Clock(self.clock)),
+            Color::White => white.choose_move(position, GoLimits::Clock(self.clock)),
+            Color::Black => black.choose_move(position, GoLimits::Clock(self.clock)),
         };
         let spent = started.elapsed();
         let notation = match chosen {
@@ -93,7 +96,7 @@ impl Game {
         };
         ControlFlow::Continue(Game {
             board,
-            record: self.record.extended(notation, board.hash()),
+            record: self.record.extended(notation, board),
             clock: self.clock.minus_spent_plus_increment(side, spent),
         })
     }
@@ -130,7 +133,7 @@ impl From<Board> for Game {
     fn from(board: Board) -> Game {
         Game {
             board,
-            record: Record::new(&board),
+            record: Record::new(board),
             clock: Self::DEFAULT_CLOCK,
         }
     }
