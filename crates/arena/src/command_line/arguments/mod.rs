@@ -6,10 +6,16 @@ use contestant::Contestant;
 #[derive(Debug, Parser)]
 #[command(about = "Play one game between two opponents at 10s+0.1s")]
 pub struct Arguments {
-    #[arg(help = "in-process, or a path to a UCI engine limited to Elo 1320")]
+    #[arg(help = "in-process, or a path to a UCI engine")]
     white: Contestant,
-    #[arg(help = "in-process, or a path to a UCI engine limited to Elo 1320")]
+    #[arg(help = "in-process, or a path to a UCI engine")]
     black: Contestant,
+    #[arg(
+        long,
+        default_value_t = 1320,
+        help = "Elo that every UCI engine is limited to with UCI_LimitStrength"
+    )]
+    limit_elo: u16,
 }
 
 impl Arguments {
@@ -19,5 +25,9 @@ impl Arguments {
 
     pub const fn black(&self) -> &Contestant {
         &self.black
+    }
+
+    pub const fn limit_elo(&self) -> u16 {
+        self.limit_elo
     }
 }

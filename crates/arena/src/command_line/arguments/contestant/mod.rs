@@ -17,14 +17,12 @@ pub enum Contestant {
 }
 
 impl Contestant {
-    const ANCHOR_ELO: u16 = 1320;
-
-    pub fn opponent(&self) -> Result<Box<dyn Opponent>, ArenaError> {
+    pub fn opponent(&self, limit_elo: u16) -> Result<Box<dyn Opponent>, ArenaError> {
         match self {
             Contestant::InProcess => Ok(Box::new(InProcessEngine::default())),
             Contestant::Program(path) => {
                 let limited = true.to_string();
-                let elo = Self::ANCHOR_ELO.to_string();
+                let elo = limit_elo.to_string();
                 let options = [
                     EngineOption::new(EngineSetting::LimitStrength.into(), &limited),
                     EngineOption::new(EngineSetting::Elo.into(), &elo),
