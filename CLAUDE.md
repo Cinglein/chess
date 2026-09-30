@@ -29,8 +29,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
-  `no-free-fns`, `no-parameter-bags`, `primitive-boundary`, `private-fns`, `public-surface`,
-  `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
+  `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
+  `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
   `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -96,6 +96,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The
   text clause covers `crates/`; xtask's values are text. `cargo xtask primitive-boundary`
   enforces both.
+- A binary is wiring. Every file reached from a `main.rs` under `crates/` is free of numeric
+  literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
+  data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
+  enforces it.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;

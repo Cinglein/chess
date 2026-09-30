@@ -1,0 +1,4 @@
+rounds = 1
+limit_elo = 1320
+longest_game = 500
+time_control = "10+0.1"

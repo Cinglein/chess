@@ -14,8 +14,6 @@ pub enum Contestant {
 }
 
 impl Contestant {
-    pub const STOCKFISH_FLOOR: Elo = Elo::new(1320);
-
     pub fn opponent(&self, limit_elo: Elo) -> Result<Box<dyn Opponent>, ArenaError> {
         match self {
             Contestant::InProcess => Ok(Box::new(InProcessEngine::default())),
