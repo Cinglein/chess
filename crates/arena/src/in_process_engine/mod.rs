@@ -1,18 +1,18 @@
-mod captured_best_move;
+mod captured_reply;
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-use board::LongAlgebraic;
-use captured_best_move::CapturedBestMove;
+use captured_reply::CapturedReply;
 use engine::Engine;
 use uci::{Command, GoLimits, Position};
 
 use crate::arena_error::ArenaError;
+use crate::chosen_move::ChosenMove;
 use crate::opponent::Opponent;
 
 pub struct InProcessEngine {
-    engine: Option<Engine<CapturedBestMove>>,
+    engine: Option<Engine<CapturedReply>>,
 }
 
 impl InProcessEngine {
@@ -26,7 +26,7 @@ impl Default for InProcessEngine {
         InProcessEngine {
             engine: Some(Engine::new(
                 Arc::new(AtomicBool::new(false)),
-                CapturedBestMove::default(),
+                CapturedReply::default(),
             )),
         }
     }
@@ -42,12 +42,14 @@ impl Opponent for InProcessEngine {
         &mut self,
         position: Position<'_>,
         limits: GoLimits,
-    ) -> Result<LongAlgebraic, ArenaError> {
+    ) -> Result<ChosenMove, ArenaError> {
         self.deliver(Command::Position(position));
         self.deliver(Command::Go(limits));
         self.engine
             .as_ref()
-            .and_then(|engine| engine.sink().best_move())
+            .and_then(|engine| {
+                ChosenMove::from_best_move(engine.sink().best_move(), engine.sink().score())
+            })
             .ok_or(ArenaError::NoMove)
     }
 }
@@ -71,6 +73,6 @@ mod tests {
                 GoLimits::Depth(Depth::new(2)),
             )
             .unwrap();
-        assert_eq!(chosen.to_string(), "a1a8");
+        assert_eq!(chosen.notation().to_string(), "a1a8");
     }
 }

@@ -20,6 +20,10 @@ pub enum Termination {
     IllegalMove,
     #[display("move limit")]
     MoveLimit,
+    #[display("resignation adjudicated")]
+    Resignation,
+    #[display("draw adjudicated")]
+    DrawAdjudicated,
     #[display("engine failure: {_0}")]
     Failure(ArenaError),
 }
@@ -30,6 +34,7 @@ impl Termination {
         matches!(
             self,
             Termination::Checkmate
+                | Termination::Resignation
                 | Termination::TimeForfeit
                 | Termination::IllegalMove
                 | Termination::Failure(_)

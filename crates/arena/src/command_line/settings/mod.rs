@@ -9,7 +9,7 @@ use std::num::NonZeroUsize;
 use std::path::Path;
 use std::thread;
 
-use arena::Rules;
+use arena::{DrawAdjudication, ResignAdjudication, Rules};
 use board::FullmoveNumber;
 use serde::{Deserialize, Serialize};
 use time_control::TimeControl;
@@ -23,6 +23,8 @@ pub struct Settings {
     limit_elo: Elo,
     longest_game: FullmoveNumber,
     time_control: TimeControl,
+    draw_adjudication: DrawAdjudication,
+    resign_adjudication: ResignAdjudication,
 }
 
 impl Settings {
@@ -57,6 +59,7 @@ impl Settings {
         Rules::DEFAULT
             .timed(Clock::from(self.time_control))
             .lasting_at_most(self.longest_game)
+            .adjudicated_by(self.draw_adjudication, self.resign_adjudication)
     }
 
     fn one_game_per_core() -> usize {

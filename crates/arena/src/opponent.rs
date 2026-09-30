@@ -1,7 +1,7 @@
-use board::LongAlgebraic;
 use uci::{GoLimits, Position};
 
 use crate::arena_error::ArenaError;
+use crate::chosen_move::ChosenMove;
 
 pub trait Opponent {
     fn begin_game(&mut self) -> Result<(), ArenaError>;
@@ -10,5 +10,5 @@ pub trait Opponent {
         &mut self,
         position: Position<'_>,
         limits: GoLimits,
-    ) -> Result<LongAlgebraic, ArenaError>;
+    ) -> Result<ChosenMove, ArenaError>;
 }
