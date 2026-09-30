@@ -4,3 +4,4 @@ exclude_globs = [
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
 test_workspace = true
+build_timeout_multiplier = 3.0
