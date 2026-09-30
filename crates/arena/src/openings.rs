@@ -1,5 +1,7 @@
 use board::Board;
 
+use crate::round_count::RoundCount;
+
 pub struct Openings;
 
 impl Openings {
@@ -16,6 +18,11 @@ impl Openings {
 
     pub fn boards() -> impl Iterator<Item = Board> {
         Self::FENS.iter().filter_map(|fen| fen.parse().ok())
+    }
+
+    #[must_use]
+    pub fn repeated(rounds: RoundCount) -> Vec<Board> {
+        (0..rounds.count()).flat_map(|_| Self::boards()).collect()
     }
 }
 

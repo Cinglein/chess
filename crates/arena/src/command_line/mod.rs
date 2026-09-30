@@ -5,7 +5,7 @@ mod settings;
 
 pub use command_line_error::CommandLineError;
 
-use arena::Series;
+use arena::{Openings, Series};
 use arguments::Arguments;
 use clap::Parser;
 use limited_contestant::LimitedContestant;
@@ -20,7 +20,7 @@ impl CommandLine {
         let challenger = LimitedContestant::new(arguments.challenger(), settings.limit_elo());
         let reference = LimitedContestant::new(arguments.reference(), settings.limit_elo());
         let tally = Series::new(&challenger, &reference, settings.rules()).play(
-            settings.rounds(),
+            Openings::repeated(settings.rounds()),
             settings.concurrency(),
             &|finished| println!("{finished}"),
         )?;
