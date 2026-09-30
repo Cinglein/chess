@@ -29,7 +29,7 @@ use crate::zobrist::Zobrist;
 use crate::zobrist_keys::ZobristKeys;
 use king_safety::KingSafety;
 
-pub type MoveList = ArrayVec<ChessMove, { Board::MAX_LEGAL_MOVES }>;
+pub type MoveList = ArrayVec<ChessMove, { Board::LEGAL_MOVE_CAPACITY }>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -44,7 +44,7 @@ pub struct Board {
 impl State for Board {}
 
 impl Board {
-    pub const MAX_LEGAL_MOVES: usize = 218;
+    pub const LEGAL_MOVE_CAPACITY: usize = 218;
     pub const START: Board = Board {
         placement: PiecePlacement::START,
         side_to_move: Color::White,

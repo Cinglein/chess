@@ -1,6 +1,7 @@
 mod finished;
 mod outcome;
 mod record;
+mod repetition_count;
 mod streaks;
 mod termination;
 
@@ -18,6 +19,7 @@ use crate::opponent::Opponent;
 use crate::rules::Rules;
 use outcome::Outcome;
 use record::Record;
+use repetition_count::RepetitionCount;
 use streaks::Streaks;
 use termination::Termination;
 
@@ -33,7 +35,7 @@ impl State for Game {}
 
 impl Game {
     const FIFTY_MOVES: HalfmoveClock = HalfmoveClock::new(100);
-    const REPETITIONS: usize = 3;
+    const REPETITIONS: RepetitionCount = RepetitionCount::new(3);
 
     #[must_use]
     pub fn ruled_by(self, rules: Rules) -> Game {

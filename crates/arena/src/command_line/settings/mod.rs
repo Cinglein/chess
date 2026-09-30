@@ -5,11 +5,9 @@ pub use settings_error::SettingsError;
 
 use std::fs;
 use std::io;
-use std::num::NonZeroUsize;
 use std::path::Path;
-use std::thread;
 
-use arena::{DrawAdjudication, ResignAdjudication, Rules};
+use arena::{DrawAdjudication, ResignAdjudication, RoundCount, Rules, WorkerCount};
 use board::FullmoveNumber;
 use serde::{Deserialize, Serialize};
 use time_control::TimeControl;
@@ -17,9 +15,9 @@ use uci::{Clock, Elo};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-    #[serde(default = "Settings::one_game_per_core")]
-    concurrency: usize,
-    rounds: usize,
+    #[serde(default = "WorkerCount::one_per_core")]
+    concurrency: WorkerCount,
+    rounds: RoundCount,
     limit_elo: Elo,
     longest_game: FullmoveNumber,
     time_control: TimeControl,
@@ -43,11 +41,11 @@ impl Settings {
         }
     }
 
-    pub const fn concurrency(&self) -> usize {
+    pub const fn concurrency(&self) -> WorkerCount {
         self.concurrency
     }
 
-    pub const fn rounds(&self) -> usize {
+    pub const fn rounds(&self) -> RoundCount {
         self.rounds
     }
 
@@ -60,12 +58,6 @@ impl Settings {
             .timed(Clock::from(self.time_control))
             .lasting_at_most(self.longest_game)
             .adjudicated_by(self.draw_adjudication, self.resign_adjudication)
-    }
-
-    fn one_game_per_core() -> usize {
-        thread::available_parallelism()
-            .unwrap_or(NonZeroUsize::MIN)
-            .get()
     }
 }
 

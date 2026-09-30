@@ -86,11 +86,14 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   enforces it.
 - Primitives only at the boundary. Numbers and text are wire forms; a value crosses into one at a
   type's door and never waits there. A primitive number type (`u8`..`u128`, `i8`..`i128`, `f32`,
-  `f64`; `usize` is an index and exempt) appears in a field, variant, const, or signature only in
+  `f64`) appears in a field, variant, const, or signature only in
   the file of a newtype over it (`Depth(u8)`, `NodeCount(u64)`, `Score(i32)`) or in a bit-boundary
   file (`square.rs`, `direction.rs`, `slider/magic.rs`, `slider/magics.rs`,
   `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `xtask/src/task/magics/`). Locals and
-  turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. Text is inspected
+  turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. A `usize` is a
+  container size or index: in `crates/` it may be declared only under a name that says so
+  (`length`, `capacity`, `size`, `bytes`, `index`); a `usize` named after what it counts is a
+  count and gets a newtype (`GameCount`, `RoundCount`, `PlyCount`). Text is inspected
   (`split_*`, `strip_*`, `trim`, `chars`) or produced (`format!`, `to_string`, `String::from`)
   only in a file that hand-writes a `FromStr`, `TryFrom`, or `Display` impl, or as the direct
   argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The

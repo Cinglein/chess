@@ -15,7 +15,7 @@ pub(super) enum RankToken {
 
 impl RankToken {
     pub(super) fn squares(self) -> impl Iterator<Item = Option<Piece>> {
-        iter::repeat_n(self.square(), self.count())
+        iter::repeat_n(self.square(), self.length())
     }
 
     const fn square(self) -> Option<Piece> {
@@ -25,7 +25,7 @@ impl RankToken {
         }
     }
 
-    const fn count(self) -> usize {
+    const fn length(self) -> usize {
         match self {
             RankToken::Empties(run) => run.length(),
             RankToken::Piece(_) => 1,

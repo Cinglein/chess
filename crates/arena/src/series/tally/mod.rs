@@ -1,9 +1,11 @@
+mod game_count;
 mod game_score;
 mod pentanomial;
 
 use std::fmt;
 
 use board::Color;
+use game_count::GameCount;
 use game_score::GameScore;
 use pentanomial::{PairScore, Pentanomial};
 
@@ -11,9 +13,9 @@ use crate::game::Verdict;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Tally {
-    wins: usize,
-    draws: usize,
-    losses: usize,
+    wins: GameCount,
+    draws: GameCount,
+    losses: GameCount,
     pairs: Pentanomial,
 }
 
@@ -39,22 +41,22 @@ impl Tally {
     }
 
     #[must_use]
-    pub const fn games(&self) -> usize {
+    pub fn games(&self) -> GameCount {
         self.wins + self.draws + self.losses
     }
 
     const fn counted(self, score: GameScore) -> Tally {
         match score {
             GameScore::Win => Tally {
-                wins: self.wins + 1,
+                wins: self.wins.incremented(),
                 ..self
             },
             GameScore::Draw => Tally {
-                draws: self.draws + 1,
+                draws: self.draws.incremented(),
                 ..self
             },
             GameScore::Loss => Tally {
-                losses: self.losses + 1,
+                losses: self.losses.incremented(),
                 ..self
             },
         }
@@ -63,7 +65,7 @@ impl Tally {
 
 impl fmt::Display for Tally {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let half_points = 2 * self.wins + self.draws;
+        let half_points = 2 * self.wins.count() + self.draws.count();
         write!(
             formatter,
             "+{} ={} -{} {}",

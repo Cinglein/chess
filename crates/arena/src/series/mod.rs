@@ -13,7 +13,9 @@ use tally::Tally;
 use crate::arena_error::ArenaError;
 use crate::entrant::Entrant;
 use crate::game::{Finished, Game};
+use crate::round_count::RoundCount;
 use crate::rules::Rules;
+use crate::worker_count::WorkerCount;
 
 pub struct Series<'entrants> {
     challenger: &'entrants dyn Entrant,
@@ -37,15 +39,18 @@ impl<'entrants> Series<'entrants> {
 
     pub fn play(
         &self,
-        rounds: usize,
-        concurrency: usize,
+        rounds: RoundCount,
+        concurrency: WorkerCount,
         report: &(dyn Fn(&Finished) + Sync),
     ) -> Result<Tally, ArenaError> {
-        let queue: Mutex<VecDeque<Board>> =
-            Mutex::new((0..rounds).flat_map(|_| Openings::boards()).collect());
+        let queue: Mutex<VecDeque<Board>> = Mutex::new(
+            (0..rounds.count())
+                .flat_map(|_| Openings::boards())
+                .collect(),
+        );
         thread::scope(|scope| {
             let workers: Vec<ScopedJoinHandle<'_, Result<Tally, ArenaError>>> = (0..concurrency
-                .max(1))
+                .at_least_one())
                 .map(|_| self.spawn_worker(scope, &queue, report))
                 .collect();
             workers
