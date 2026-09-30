@@ -1,4 +1,4 @@
-use board::FullmoveNumber;
+use board::{FullmoveNumber, PlyCount};
 use eval::Score;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct DrawAdjudication {
     after_move: FullmoveNumber,
     within_centipawns: Score,
-    for_plies: usize,
+    for_plies: PlyCount,
 }
 
 impl DrawAdjudication {
@@ -14,7 +14,7 @@ impl DrawAdjudication {
     pub const fn new(
         after_move: FullmoveNumber,
         within_centipawns: Score,
-        for_plies: usize,
+        for_plies: PlyCount,
     ) -> DrawAdjudication {
         DrawAdjudication {
             after_move,
@@ -29,7 +29,7 @@ impl DrawAdjudication {
     }
 
     #[must_use]
-    pub fn reached(&self, level_plies: usize, move_number: FullmoveNumber) -> bool {
+    pub fn reached(&self, level_plies: PlyCount, move_number: FullmoveNumber) -> bool {
         level_plies >= self.for_plies && move_number >= self.after_move
     }
 }

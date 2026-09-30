@@ -7,7 +7,7 @@ pub use resign_adjudication::ResignAdjudication;
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use board::FullmoveNumber;
+use board::{FullmoveNumber, PlyCount};
 use eval::Score;
 use uci::Clock;
 
@@ -31,9 +31,9 @@ impl Rules {
         draw: DrawAdjudication::new(
             FullmoveNumber::new(NonZeroU16::new(40).unwrap()),
             Score::new(10),
-            8,
+            PlyCount::new(8),
         ),
-        resign: ResignAdjudication::new(Score::new(800), 6),
+        resign: ResignAdjudication::new(Score::new(800), PlyCount::new(6)),
     };
 
     #[must_use]
