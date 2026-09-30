@@ -12,6 +12,7 @@ mod named_lifetimes;
 mod no_comments;
 mod no_forwarders;
 mod no_free_fns;
+mod no_numbers_in_binaries;
 mod no_parameter_bags;
 mod primitive_boundary;
 mod private_fns;
@@ -40,6 +41,7 @@ use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
+use crate::task::no_numbers_in_binaries::NoNumbersInBinaries;
 use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
@@ -68,6 +70,7 @@ pub enum Task {
     NoComments,
     NoForwarders,
     NoFreeFns,
+    NoNumbersInBinaries,
     NoParameterBags,
     PrimitiveBoundary,
     PrivateFns,
@@ -101,6 +104,9 @@ impl Task {
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
+            Task::NoNumbersInBinaries => {
+                NoNumbersInBinaries::report(&workspace.source_files()?).verdict()
+            }
             Task::NoParameterBags => NoParameterBags::report(&workspace.source_files()?).verdict(),
             Task::PrimitiveBoundary => {
                 PrimitiveBoundary::report(&workspace.source_files()?).verdict()

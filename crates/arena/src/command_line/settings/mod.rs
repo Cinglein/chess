@@ -15,10 +15,9 @@ use serde::{Deserialize, Serialize};
 use time_control::TimeControl;
 use uci::{Clock, Elo};
 
-use super::arguments::Contestant;
-
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default = "Settings::one_game_per_core")]
     concurrency: usize,
     rounds: usize,
     limit_elo: Elo,
@@ -27,6 +26,8 @@ pub struct Settings {
 }
 
 impl Settings {
+    const DEFAULTS: &str = include_str!("arena.default.toml");
+
     pub fn read_or_write_defaults(path: &Path) -> Result<Settings, SettingsError> {
         match fs::read_to_string(path) {
             Ok(text) => Ok(toml::from_str(&text)?),
@@ -57,28 +58,31 @@ impl Settings {
             .timed(Clock::from(self.time_control))
             .lasting_at_most(self.longest_game)
     }
+
+    fn one_game_per_core() -> usize {
+        thread::available_parallelism()
+            .unwrap_or(NonZeroUsize::MIN)
+            .get()
+    }
 }
 
 impl Default for Settings {
     fn default() -> Settings {
-        Settings {
-            concurrency: thread::available_parallelism().map_or(1, NonZeroUsize::get),
-            rounds: 1,
-            limit_elo: Contestant::STOCKFISH_FLOOR,
-            longest_game: Rules::DEFAULT.longest_game(),
-            time_control: TimeControl::from(Rules::DEFAULT.clock()),
-        }
+        toml::from_str(Self::DEFAULTS).expect("the embedded default settings parse")
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use arena::Rules;
+
     use super::Settings;
 
     #[test]
-    fn default_settings_survive_a_trip_through_toml() {
+    fn default_settings_survive_a_trip_through_toml_and_agree_with_the_library_rules() {
         let written = toml::to_string_pretty(&Settings::default()).unwrap();
         let read: Settings = toml::from_str(&written).unwrap();
         assert_eq!(read, Settings::default());
+        assert_eq!(read.rules(), Rules::DEFAULT);
     }
 }
