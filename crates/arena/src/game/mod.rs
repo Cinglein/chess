@@ -3,6 +3,9 @@ mod outcome;
 mod record;
 mod termination;
 
+pub use finished::Finished;
+pub use outcome::Verdict;
+
 use std::iter;
 use std::ops::ControlFlow;
 use std::time::Instant;
@@ -12,7 +15,6 @@ use uci::{Clock, GoLimits, Position};
 
 use crate::opponent::Opponent;
 use crate::rules::Rules;
-use finished::Finished;
 use outcome::Outcome;
 use record::Record;
 use termination::Termination;

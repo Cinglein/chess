@@ -8,6 +8,16 @@ pub enum Verdict {
     Draw,
 }
 
+impl Verdict {
+    #[must_use]
+    pub const fn winner(self) -> Option<Color> {
+        match self {
+            Verdict::Win(side) => Some(side),
+            Verdict::Draw => None,
+        }
+    }
+}
+
 impl fmt::Display for Verdict {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
