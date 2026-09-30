@@ -12,8 +12,12 @@ derive_more = { version = "2", default-features = false, features = ["display", 
 eval = { version = "0.1.0", path = "../eval" }
 itertools = { version = "0.14", default-features = false }
 search = { version = "0.1.0", path = "../search" }
+serde = { version = "1", default-features = false, features = ["derive"], optional = true }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 thiserror = { version = "2", default-features = false }
+
+[features]
+serde = ["dep:serde"]
 
 [lints]
 workspace = true

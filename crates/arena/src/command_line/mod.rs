@@ -1,22 +1,27 @@
 mod arguments;
+mod command_line_error;
 mod limited_contestant;
+mod settings;
 
-use arena::{ArenaError, Rules, Series};
+pub use command_line_error::CommandLineError;
+
+use arena::Series;
 use arguments::Arguments;
 use clap::Parser;
 use limited_contestant::LimitedContestant;
+use settings::Settings;
 
 pub struct CommandLine;
 
 impl CommandLine {
-    pub fn play() -> Result<(), ArenaError> {
+    pub fn play() -> Result<(), CommandLineError> {
         let arguments = Arguments::parse();
-        let challenger = LimitedContestant::new(arguments.challenger(), arguments.limit_elo());
-        let reference = LimitedContestant::new(arguments.reference(), arguments.limit_elo());
-        let rules = Rules::DEFAULT.lasting_at_most(arguments.longest_game());
-        let tally = Series::new(&challenger, &reference, rules).play(
-            arguments.rounds(),
-            arguments.concurrency(),
+        let settings = Settings::read_or_write_defaults(arguments.config())?;
+        let challenger = LimitedContestant::new(arguments.challenger(), settings.limit_elo());
+        let reference = LimitedContestant::new(arguments.reference(), settings.limit_elo());
+        let tally = Series::new(&challenger, &reference, settings.rules()).play(
+            settings.rounds(),
+            settings.concurrency(),
             &|finished| println!("{finished}"),
         )?;
         println!("{tally}");
