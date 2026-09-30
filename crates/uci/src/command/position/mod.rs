@@ -1,30 +1,38 @@
+mod moves;
 mod position_word;
+
+use moves::Moves;
 
 use core::fmt;
 
+use board::{Board, LongAlgebraic};
 use position_word::PositionWord;
 
 use crate::uci_error::UciError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Position<'line> {
-    fen: Option<&'line str>,
-    moves: &'line str,
+pub struct Position<'moves> {
+    start: Board,
+    moves: Moves<'moves>,
 }
 
-impl<'line> Position<'line> {
+impl<'moves> Position<'moves> {
     #[must_use]
-    pub const fn new(fen: Option<&'line str>, moves: &'line str) -> Position<'line> {
-        Position { fen, moves }
+    pub const fn played(start: Board, moves: &'moves [LongAlgebraic]) -> Position<'moves> {
+        Position {
+            start,
+            moves: Moves::Played(moves),
+        }
     }
 
     #[must_use]
-    pub const fn fen(&self) -> Option<&'line str> {
-        self.fen
+    pub const fn start(&self) -> Board {
+        self.start
     }
 
-    pub fn moves(&self) -> impl Iterator<Item = &'line str> {
-        self.moves.split_whitespace()
+    #[must_use]
+    pub const fn moves(&self) -> Moves<'moves> {
+        self.moves
     }
 }
 
@@ -37,23 +45,24 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
             .unwrap_or((rest, ""));
         let setup = setup.trim();
         let (head, fen) = setup.split_once(char::is_whitespace).unwrap_or((setup, ""));
-        let fen = match head.parse::<PositionWord>() {
-            Ok(PositionWord::StartPos) => None,
-            Ok(PositionWord::Fen) => Some(fen.trim()),
+        let start = match head.parse::<PositionWord>() {
+            Ok(PositionWord::StartPos) => Board::START,
+            Ok(PositionWord::Fen) => fen.trim().parse().map_err(|_| UciError::UnknownPosition)?,
             _ => return Err(UciError::UnknownPosition),
         };
         Ok(Position {
-            fen,
-            moves: moves.trim(),
+            start,
+            moves: Moves::Written(moves),
         })
     }
 }
 
 impl fmt::Display for Position<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.fen {
-            Some(fen) => write!(formatter, "{} {fen}", PositionWord::Fen)?,
-            None => write!(formatter, "{}", PositionWord::StartPos)?,
+        if self.start == Board::START {
+            write!(formatter, "{}", PositionWord::StartPos)?;
+        } else {
+            write!(formatter, "{} {}", PositionWord::Fen, self.start)?;
         }
         if self.moves.is_empty() {
             Ok(())

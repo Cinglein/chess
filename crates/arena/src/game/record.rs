@@ -1,7 +1,7 @@
 use std::fmt;
 
 use board::{Board, LongAlgebraic, Zobrist};
-use uci::Position;
+use uci::{Command, Position};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Record {
@@ -24,12 +24,8 @@ impl Record {
     }
 
     #[must_use]
-    pub fn moves_text(&self) -> String {
-        self.moves
-            .iter()
-            .map(ToString::to_string)
-            .collect::<Vec<String>>()
-            .join(" ")
+    pub fn moves(&self) -> &[LongAlgebraic] {
+        &self.moves
     }
 
     #[must_use]
@@ -52,12 +48,7 @@ impl Record {
 
 impl fmt::Display for Record {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let start = self.start().to_string();
-        let moves = self.moves_text();
-        write!(
-            formatter,
-            "position {}",
-            Position::new(Some(&start), &moves)
-        )
+        let position = Position::played(*self.start(), &self.moves);
+        write!(formatter, "{}", Command::Position(position))
     }
 }

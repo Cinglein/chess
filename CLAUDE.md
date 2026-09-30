@@ -11,7 +11,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/search`: `no_std` search: `Search<E: Evaluator>` deepens one ply per `deepen` edge
   with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
   newtype.
-- `crates/uci`: `no_std` protocol types: `Command` parsed by `TryFrom<&str>`, `Response`
+- `crates/uci`: `no_std` protocol types: `Command` parsed by `TryFrom<&str>` (its `Position` holds a
+  `Board` and typed `Moves`, its `EngineOption` typed variants), `Response`
   printed by `Display`, and the `Receiver` trait through which a command is delivered, so no
   other crate matches on `Command`.
 - `crates/engine`: `std` orchestration. `Engine<S: Sink>` owns the board, the transposition
@@ -89,8 +90,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   the file of a newtype over it (`Depth(u8)`, `NodeCount(u64)`, `Score(i32)`) or in a bit-boundary
   file (`square.rs`, `direction.rs`, `slider/magic.rs`, `slider/magics.rs`,
   `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `xtask/src/task/magics/`). Locals and
-  turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt.
-  `cargo xtask primitive-boundary` enforces it.
+  turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. Text is inspected
+  (`split_*`, `strip_*`, `trim`, `chars`) or produced (`format!`, `to_string`, `String::from`)
+  only in a file that hand-writes a `FromStr`, `TryFrom`, or `Display` impl, or as the direct
+  argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The
+  text clause covers `crates/`; xtask's values are text. `cargo xtask primitive-boundary`
+  enforces both.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;

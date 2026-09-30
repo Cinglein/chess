@@ -71,9 +71,7 @@ impl Game {
             return self.ended(termination);
         }
         let side = self.board.side_to_move();
-        let fen = self.record.start().to_string();
-        let moves = self.record.moves_text();
-        let position = Position::new(Some(&fen), &moves);
+        let position = Position::played(*self.record.start(), self.record.moves());
         let started = Instant::now();
         let chosen = match side {
             Color::White => white.choose_move(position, GoLimits::Clock(self.clock)),

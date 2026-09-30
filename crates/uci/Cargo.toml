@@ -8,7 +8,9 @@ repository.workspace = true
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
+derive_more = { version = "2", default-features = false, features = ["display", "from_str"] }
 eval = { version = "0.1.0", path = "../eval" }
+itertools = { version = "0.14", default-features = false }
 search = { version = "0.1.0", path = "../search" }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 thiserror = { version = "2", default-features = false }

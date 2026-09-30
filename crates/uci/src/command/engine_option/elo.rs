@@ -4,5 +4,8 @@ use derive_more::{Display, FromStr};
 pub struct Elo(u16);
 
 impl Elo {
-    pub const STOCKFISH_FLOOR: Elo = Elo(1320);
+    #[must_use]
+    pub const fn new(rating: u16) -> Elo {
+        Elo(rating)
+    }
 }

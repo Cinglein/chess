@@ -1,11 +1,10 @@
 mod contestant;
-mod elo;
 
 use arena::Rules;
 use board::FullmoveNumber;
 use clap::Parser;
 use contestant::Contestant;
-use elo::Elo;
+use uci::Elo;
 
 #[derive(Debug, Parser)]
 #[command(about = "Play one game between two opponents at 10s+0.1s")]
@@ -16,7 +15,7 @@ pub struct Arguments {
     black: Contestant,
     #[arg(
         long,
-        default_value_t = Elo::STOCKFISH_FLOOR,
+        default_value_t = Contestant::STOCKFISH_FLOOR,
         help = "Elo that every UCI engine is limited to with UCI_LimitStrength"
     )]
     limit_elo: Elo,

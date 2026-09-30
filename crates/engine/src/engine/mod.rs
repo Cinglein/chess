@@ -51,15 +51,15 @@ impl<S: Sink> Engine<S> {
     }
 
     fn board_after(position: &Position<'_>) -> Option<Board> {
-        let start = position
-            .fen()
-            .map_or(Some(Board::START), |fen| fen.parse().ok())?;
-        position.moves().try_fold(start, |board, text| {
-            text.parse()
-                .ok()
-                .and_then(|notation| board.resolve_move(notation))
-                .and_then(|chess_move| board.make_move(chess_move))
-        })
+        position
+            .moves()
+            .iter()
+            .try_fold(position.start(), |board, notation| {
+                notation
+                    .ok()
+                    .and_then(|notation| board.resolve_move(notation))
+                    .and_then(|chess_move| board.make_move(chess_move))
+            })
     }
 }
 

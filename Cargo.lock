@@ -698,7 +698,9 @@ name = "uci"
 version = "0.1.0"
 dependencies = [
  "board",
+ "derive_more",
  "eval",
+ "itertools",
  "search",
  "strum",
  "thiserror",
