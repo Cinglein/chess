@@ -1,4 +1,5 @@
 mod arena_error;
+mod entrant;
 mod game;
 mod in_process_engine;
 mod opponent;
@@ -7,6 +8,7 @@ mod series;
 mod uci_process;
 
 pub use arena_error::ArenaError;
+pub use entrant::Entrant;
 pub use game::Game;
 pub use in_process_engine::InProcessEngine;
 pub use opponent::Opponent;

@@ -14,4 +14,6 @@ pub enum ArenaError {
     Disconnected,
     #[error("the engine had no move")]
     NoMove,
+    #[error("a game thread panicked")]
+    Worker,
 }

@@ -9,6 +9,7 @@ use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
+use crate::task::no_numbers_in_binaries::NoNumbersInBinaries;
 use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
@@ -35,6 +36,7 @@ impl Lint {
             NoComments::report(&files),
             NoForwarders::report(&files),
             NoFreeFns::report(&files),
+            NoNumbersInBinaries::report(&files),
             NoParameterBags::report(&files),
             PrimitiveBoundary::report(&files),
             PrivateFns::report(&files),

@@ -29,6 +29,16 @@ impl Tally {
     }
 
     #[must_use]
+    pub fn merged(self, other: Tally) -> Tally {
+        Tally {
+            wins: self.wins + other.wins,
+            draws: self.draws + other.draws,
+            losses: self.losses + other.losses,
+            pairs: self.pairs.merged(other.pairs),
+        }
+    }
+
+    #[must_use]
     pub const fn games(&self) -> usize {
         self.wins + self.draws + self.losses
     }
