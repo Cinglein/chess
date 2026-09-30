@@ -11,3 +11,6 @@ thiserror = { version = "2", default-features = false }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+proptest = "1"

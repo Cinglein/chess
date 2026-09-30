@@ -43,3 +43,13 @@ impl From<PromotionPiece> for PieceKind {
         }
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for PromotionPiece {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<PromotionPiece>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<PromotionPiece as strum::VariantArray>::VARIANTS)
+    }
+}

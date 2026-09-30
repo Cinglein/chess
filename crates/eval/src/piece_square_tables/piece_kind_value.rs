@@ -14,3 +14,20 @@ impl PieceKindValue {
         Self::MATERIAL[kind]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::PieceKind;
+
+    use super::PieceKindValue;
+
+    #[test]
+    fn heavier_pieces_are_worth_more_material() {
+        assert!(
+            PieceKindValue::material(PieceKind::Queen) > PieceKindValue::material(PieceKind::Rook)
+        );
+        assert!(
+            PieceKindValue::material(PieceKind::Rook) > PieceKindValue::material(PieceKind::Pawn)
+        );
+    }
+}

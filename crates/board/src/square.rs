@@ -148,6 +148,16 @@ impl FromStr for Square {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Square {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<Square>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<Square as strum::VariantArray>::VARIANTS)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use enum_map::Enum;

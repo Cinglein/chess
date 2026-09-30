@@ -37,3 +37,13 @@ pub enum Rank {
     #[strum(serialize = "8")]
     Eight,
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Rank {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<Rank>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<Rank as strum::VariantArray>::VARIANTS)
+    }
+}
