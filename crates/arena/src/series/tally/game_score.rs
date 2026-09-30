@@ -3,14 +3,14 @@ use board::Color;
 use crate::game::Verdict;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum GameScore {
+pub(in crate::series::tally) enum GameScore {
     Win,
     Draw,
     Loss,
 }
 
 impl GameScore {
-    pub(super) fn new(verdict: Verdict, challenger: Color) -> GameScore {
+    pub(in crate::series::tally) fn new(verdict: Verdict, challenger: Color) -> GameScore {
         match verdict.winner() {
             Some(side) if side == challenger => GameScore::Win,
             Some(_) => GameScore::Loss,

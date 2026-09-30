@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
 clap = { version = "4", features = ["derive"] }
+enum-map = "3"
 engine = { version = "0.1.0", path = "../engine" }
 derive_more = { version = "2", features = ["display", "from_str"] }
 thiserror = "2"

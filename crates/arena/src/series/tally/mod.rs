@@ -1,9 +1,11 @@
 mod game_score;
+mod pentanomial;
 
 use std::fmt;
 
 use board::Color;
 use game_score::GameScore;
+use pentanomial::{PairScore, Pentanomial};
 
 use crate::game::Verdict;
 
@@ -12,12 +14,27 @@ pub struct Tally {
     wins: usize,
     draws: usize,
     losses: usize,
+    pairs: Pentanomial,
 }
 
 impl Tally {
     #[must_use]
-    pub fn recorded(self, verdict: Verdict, challenger: Color) -> Tally {
-        match GameScore::new(verdict, challenger) {
+    pub fn recorded_pair(self, as_white: Verdict, as_black: Verdict) -> Tally {
+        let white = GameScore::new(as_white, Color::White);
+        let black = GameScore::new(as_black, Color::Black);
+        Tally {
+            pairs: self.pairs.counted(PairScore::new(white, black)),
+            ..self.counted(white).counted(black)
+        }
+    }
+
+    #[must_use]
+    pub const fn games(&self) -> usize {
+        self.wins + self.draws + self.losses
+    }
+
+    const fn counted(self, score: GameScore) -> Tally {
+        match score {
             GameScore::Win => Tally {
                 wins: self.wins + 1,
                 ..self
@@ -31,11 +48,6 @@ impl Tally {
                 ..self
             },
         }
-    }
-
-    #[must_use]
-    pub const fn games(&self) -> usize {
-        self.wins + self.draws + self.losses
     }
 }
 
@@ -53,7 +65,7 @@ impl fmt::Display for Tally {
         if half_points % 2 == 1 {
             formatter.write_str(".5")?;
         }
-        write!(formatter, "/{}", self.games())
+        write!(formatter, "/{} {}", self.games(), self.pairs.estimate())
     }
 }
 
@@ -64,20 +76,15 @@ mod tests {
     use super::Tally;
     use crate::game::Verdict;
 
-    const VERDICTS: [Verdict; 3] = [
-        Verdict::Win(Color::White),
-        Verdict::Draw,
-        Verdict::Win(Color::Black),
-    ];
-    const AS_WHITE: &str = "+1 =1 -1 1.5/3";
+    const AS_WHITE: Verdict = Verdict::Win(Color::White);
+    const AS_BLACK: Verdict = Verdict::Win(Color::Black);
+    const ROUND: &str = "+3 =1 -0 3.5/4";
 
     #[test]
     fn a_tally_counts_from_the_challenger_side_and_prints_half_points() {
-        let tally = VERDICTS
-            .into_iter()
-            .fold(Tally::default(), |tally, verdict| {
-                tally.recorded(verdict, Color::White)
-            });
-        assert_eq!(tally.to_string(), AS_WHITE);
+        let tally = Tally::default()
+            .recorded_pair(AS_WHITE, AS_BLACK)
+            .recorded_pair(AS_WHITE, Verdict::Draw);
+        assert!(tally.to_string().starts_with(ROUND), "{tally}");
     }
 }
