@@ -3,7 +3,7 @@ mod engine_option;
 mod go_limits;
 mod position;
 
-pub use engine_option::EngineOption;
+pub use engine_option::{Elo, EngineOption, Switch};
 pub use go_limits::{Clock, GoLimits};
 pub use position::Position;
 
@@ -27,6 +27,11 @@ pub enum Command<'line> {
 }
 
 impl<'line> Command<'line> {
+    #[must_use]
+    pub const fn interrupts(&self) -> bool {
+        matches!(self, Command::Stop | Command::Quit)
+    }
+
     const fn word(&self) -> CommandWord {
         match self {
             Command::Uci => CommandWord::Uci,
@@ -94,7 +99,7 @@ impl fmt::Display for Command<'_> {
 mod tests {
     use core::time::Duration;
 
-    use board::Color;
+    use board::{Board, Color};
 
     use super::Command;
     use crate::command::{EngineOption, GoLimits, Position};
@@ -170,7 +175,10 @@ mod tests {
         let Command::Position(position) = Command::try_from(POSITION).unwrap() else {
             panic!("{POSITION}");
         };
-        assert_eq!((position.fen(), position.moves().count()), (None, 2));
+        assert_eq!(
+            (position.start(), position.moves().iter().count()),
+            (Board::START, 2)
+        );
         assert!(Command::try_from("dance").is_err());
     }
 

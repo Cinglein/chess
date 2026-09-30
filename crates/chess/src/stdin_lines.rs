@@ -5,11 +5,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use uci::Command;
+
 pub struct StdinLines;
 
 impl StdinLines {
-    const INTERRUPTING: [&str; 2] = ["stop", "quit"];
-
     pub fn spawn(stop: Arc<AtomicBool>) -> Receiver<String> {
         let (sender, receiver) = mpsc::channel();
         thread::spawn(move || {
@@ -23,7 +23,7 @@ impl StdinLines {
     }
 
     fn relay(stop: &AtomicBool, sender: &Sender<String>, line: String) -> ControlFlow<()> {
-        if Self::INTERRUPTING.contains(&line.trim()) {
+        if Command::try_from(line.as_str()).is_ok_and(|command| command.interrupts()) {
             stop.store(true, Ordering::Relaxed);
         }
         match sender.send(line) {

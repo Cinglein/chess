@@ -4,7 +4,9 @@ use syn::{
     Signature, TraitItemConst, TypePath,
 };
 
+use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
+use crate::task::violation::Violation;
 
 #[derive(Default)]
 pub struct NumberSites {
@@ -13,22 +15,41 @@ pub struct NumberSites {
 }
 
 impl NumberSites {
+    const BIT_BOUNDARY_FILES: [&str; 7] = [
+        "crates/board/src/square.rs",
+        "crates/board/src/direction.rs",
+        "crates/board/src/slider/magic.rs",
+        "crates/board/src/slider/magics.rs",
+        "crates/board/src/slider/attack_table.rs",
+        "crates/board/src/zobrist_keys/split_mix.rs",
+        "xtask/src/task/magics/",
+    ];
     const PRIMITIVES: [&str; 12] = [
         "u8", "u16", "u32", "u64", "u128", "i8", "i16", "i32", "i64", "i128", "f32", "f64",
     ];
 
-    pub fn in_file(file: &syn::File) -> NumberSites {
+    pub fn violations(file: &SourceFile) -> Vec<Violation> {
+        if Self::BIT_BOUNDARY_FILES
+            .iter()
+            .any(|boundary| file.path().starts_with(boundary))
+        {
+            return Vec::new();
+        }
         let mut sites = NumberSites::default();
-        sites.visit_file(file);
+        sites.visit_file(file.syntax());
+        if !sites.newtypes.is_empty() {
+            return Vec::new();
+        }
         sites
-    }
-
-    pub fn is_newtype_file(&self) -> bool {
-        !self.newtypes.is_empty()
-    }
-
-    pub fn found(self) -> Vec<Ident> {
-        self.found
+            .found
+            .into_iter()
+            .map(|ident| {
+                Violation::new(
+                    Site::Line(file.path().to_owned(), ident.span().start().line),
+                    format!("bare {ident}; name what it counts with a newtype"),
+                )
+            })
+            .collect()
     }
 
     fn is_primitive(path: &TypePath) -> bool {

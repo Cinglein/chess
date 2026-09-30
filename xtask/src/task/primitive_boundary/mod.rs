@@ -1,53 +1,27 @@
 mod number_sites;
+mod text_sites;
 
 use number_sites::NumberSites;
+use text_sites::TextSites;
 
 use crate::task::report::Report;
-use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
 
 pub struct PrimitiveBoundary;
 
 impl PrimitiveBoundary {
-    const BIT_BOUNDARY_FILES: [&str; 7] = [
-        "crates/board/src/square.rs",
-        "crates/board/src/direction.rs",
-        "crates/board/src/slider/magic.rs",
-        "crates/board/src/slider/magics.rs",
-        "crates/board/src/slider/attack_table.rs",
-        "crates/board/src/zobrist_keys/split_mix.rs",
-        "xtask/src/task/magics/",
-    ];
-
     pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "primitives appear only at a type's boundary",
             files
                 .iter()
-                .filter(|file| !Self::is_bit_boundary(file.path()))
                 .flat_map(|file| {
-                    let sites = NumberSites::in_file(file.syntax());
-                    let bare = if sites.is_newtype_file() {
-                        Vec::new()
-                    } else {
-                        sites.found()
-                    };
-                    bare.into_iter().map(move |ident| {
-                        Violation::new(
-                            Site::Line(file.path().to_owned(), ident.span().start().line),
-                            format!("bare {ident}; name what it counts with a newtype"),
-                        )
-                    })
+                    NumberSites::violations(file)
+                        .into_iter()
+                        .chain(TextSites::violations(file))
                 })
                 .collect(),
         )
-    }
-
-    fn is_bit_boundary(path: &str) -> bool {
-        Self::BIT_BOUNDARY_FILES
-            .iter()
-            .any(|boundary| path.starts_with(boundary))
     }
 }
 
@@ -66,6 +40,15 @@ mod tests {
     const FLAGGED_FILE: &str = "limits.rs";
     const FLAGGED_SITES: usize = 3;
     const KEPT: [&str; 2] = ["depth.rs", "bare u8"];
+    const DOOR: &str = "pub struct Word; impl core::str::FromStr for Word { type Err = (); fn from_str(text: &str) -> Result<Word, ()> { text.trim().parse() } } impl Word { fn shout(&self) -> String { format!(\"{self}\") } }";
+    const ROOM: &str = "pub struct Room; impl Room { fn label(&self, text: &str) -> bool { let kept = text.to_string(); text.trim().is_empty() } }";
+    const TEXT_FILES: [(&str, &str); 2] = [
+        ("crates/a/src/word.rs", DOOR),
+        ("crates/a/src/room.rs", ROOM),
+    ];
+    const TEXT_FLAGGED_FILE: &str = "room.rs";
+    const TEXT_FLAGGED_SITES: usize = 2;
+    const TEXT_KEPT: &str = "word.rs";
 
     #[test]
     fn flags_declared_primitives_outside_newtype_files_but_not_usize_or_locals() {
@@ -79,5 +62,19 @@ mod tests {
             "{report}"
         );
         assert!(KEPT.iter().all(|kept| !report.contains(kept)), "{report}");
+    }
+
+    #[test]
+    fn flags_text_handling_in_a_file_without_a_parsing_or_display_impl() {
+        let files = TEXT_FILES.map(|(path, text)| {
+            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
+        });
+        let report = PrimitiveBoundary::report(&files).to_string();
+        assert_eq!(
+            report.matches(TEXT_FLAGGED_FILE).count(),
+            TEXT_FLAGGED_SITES,
+            "{report}"
+        );
+        assert!(!report.contains(TEXT_KEPT), "{report}");
     }
 }

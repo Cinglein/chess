@@ -1,32 +1,26 @@
+mod elo;
+mod option_name;
 mod option_word;
+mod switch;
+
+pub use elo::Elo;
+pub use switch::Switch;
 
 use core::fmt;
 
+use option_name::OptionName;
 use option_word::OptionWord;
 
 use crate::uci_error::UciError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct EngineOption<'line> {
-    name: &'line str,
-    setting: &'line str,
-}
-
-impl<'line> EngineOption<'line> {
-    #[must_use]
-    pub const fn new(name: &'line str, setting: &'line str) -> EngineOption<'line> {
-        EngineOption { name, setting }
-    }
-
-    #[must_use]
-    pub const fn name(&self) -> &'line str {
-        self.name
-    }
-
-    #[must_use]
-    pub const fn setting(&self) -> &'line str {
-        self.setting
-    }
+pub enum EngineOption<'line> {
+    LimitStrength(Switch),
+    Elo(Elo),
+    Other {
+        name: &'line str,
+        setting: &'line str,
+    },
 }
 
 impl<'line> TryFrom<&'line str> for EngineOption<'line> {
@@ -38,22 +32,42 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
             .strip_prefix(<&str>::from(OptionWord::Name))
             .and_then(|named| named.split_once(<&str>::from(OptionWord::Value)))
             .ok_or(UciError::UnknownOption)?;
-        Ok(EngineOption {
-            name: name.trim(),
-            setting: setting.trim(),
-        })
+        let setting = setting.trim();
+        match name.trim().parse::<OptionName>() {
+            Ok(OptionName::LimitStrength) => setting
+                .parse()
+                .map(EngineOption::LimitStrength)
+                .map_err(|_| UciError::UnknownOption),
+            Ok(OptionName::Elo) => setting
+                .parse()
+                .map(EngineOption::Elo)
+                .map_err(|_| UciError::UnknownOption),
+            Err(_) => Ok(EngineOption::Other {
+                name: name.trim(),
+                setting,
+            }),
+        }
     }
 }
 
 impl fmt::Display for EngineOption<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "{} {} {} {}",
-            OptionWord::Name,
-            self.name,
-            OptionWord::Value,
-            self.setting
-        )
+        write!(formatter, "{} ", OptionWord::Name)?;
+        match self {
+            EngineOption::LimitStrength(switch) => {
+                write!(
+                    formatter,
+                    "{} {} {switch}",
+                    OptionName::LimitStrength,
+                    OptionWord::Value
+                )
+            }
+            EngineOption::Elo(elo) => {
+                write!(formatter, "{} {} {elo}", OptionName::Elo, OptionWord::Value)
+            }
+            EngineOption::Other { name, setting } => {
+                write!(formatter, "{name} {} {setting}", OptionWord::Value)
+            }
+        }
     }
 }

@@ -67,7 +67,7 @@ mod tests {
         in_process_engine.begin_game().unwrap();
         let chosen = in_process_engine
             .choose_move(
-                Position::new(Some(MATE_IN_ONE), ""),
+                Position::played(MATE_IN_ONE.parse().unwrap(), &[]),
                 GoLimits::Depth(Depth::new(2)),
             )
             .unwrap();

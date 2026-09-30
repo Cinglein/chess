@@ -124,17 +124,14 @@ mod tests {
     use std::time::Duration;
 
     use board::Board;
-    use uci::{EngineOption, GoLimits, Position};
+    use uci::{EngineOption, GoLimits, Position, Switch};
 
     use super::{Opponent, UciProcess};
 
     const PROGRAM: &str = "stockfish";
-    const START: Position<'static> = Position::new(None, "");
+    const START: Position<'static> = Position::played(Board::START, &[]);
     const THINK: GoLimits = GoLimits::MoveTime(Duration::from_millis(50));
-    const LIMITED: [EngineOption<'static>; 2] = [
-        EngineOption::new("UCI_LimitStrength", "true"),
-        EngineOption::new("UCI_Elo", "1320"),
-    ];
+    const LIMITED: [EngineOption<'static>; 1] = [EngineOption::LimitStrength(Switch::True)];
 
     #[test]
     #[ignore = "needs stockfish on the path"]
