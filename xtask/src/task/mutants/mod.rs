@@ -23,13 +23,14 @@ impl Mutants {
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
-        let _available = Self::refuse_if_memory_is_short()?;
+        let compiler_tasks = Self::half_the_cores();
+        let _available = Self::refuse_if_memory_is_short(compiler_tasks)?;
         let diff = workspace.git_output(&["diff", "--merge-base", Self::BASE])?;
         fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| Failure::Io {
             site: Site::File(Self::DIFF_FILE.to_owned()),
             error,
         })?;
-        let compiler_tasks = Self::half_the_cores().to_string();
+        let compiler_tasks = compiler_tasks.to_string();
         workspace.cargo(&[
             "mutants",
             "--in-diff",
@@ -74,12 +75,12 @@ impl Mutants {
         Ok(())
     }
 
-    fn refuse_if_memory_is_short() -> Result<AvailableGib, Failure> {
+    fn refuse_if_memory_is_short(compiler_tasks: usize) -> Result<AvailableGib, Failure> {
         let available = AvailableGib::measured();
-        if available < AvailableGib::MINIMUM {
+        let needed = AvailableGib::needed_for(compiler_tasks);
+        if available < needed {
             return Err(Failure::Refused(format!(
-                "{available} available, at least {} needed before mutating",
-                AvailableGib::MINIMUM
+                "{available} available, at least {needed} needed for {compiler_tasks} compiler tasks"
             )));
         }
         Ok(available)

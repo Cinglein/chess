@@ -6,12 +6,18 @@ use sysinfo::System;
 pub struct AvailableGib(u64);
 
 impl AvailableGib {
-    pub const MINIMUM: AvailableGib = AvailableGib(16);
+    const PER_COMPILER_TASK: u64 = 2;
+    const FOR_THE_TESTS: u64 = 2;
 
     pub fn measured() -> AvailableGib {
         let mut system = System::new();
         system.refresh_memory();
         AvailableGib(system.available_memory() >> 30)
+    }
+
+    pub fn needed_for(compiler_tasks: usize) -> AvailableGib {
+        let tasks = u64::try_from(compiler_tasks).unwrap_or(u64::MAX);
+        AvailableGib(tasks.saturating_mul(Self::PER_COMPILER_TASK) + Self::FOR_THE_TESTS)
     }
 }
 
