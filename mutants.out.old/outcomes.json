@@ -8,7 +8,7 @@
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 2.666121292,
+          "duration": 2.484836875,
           "process_status": "Success",
           "argv": [
             "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
@@ -20,7 +20,7 @@
         },
         {
           "phase": "Test",
-          "duration": 0.102705583,
+          "duration": 0.107525291,
           "process_status": "Success",
           "argv": [
             "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
@@ -71,7 +71,7 @@
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 30.44923125,
+          "duration": 32.758399542,
           "process_status": "Success",
           "argv": [
             "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
@@ -83,7 +83,7 @@
         },
         {
           "phase": "Test",
-          "duration": 0.111321292,
+          "duration": 0.1026725,
           "process_status": {
             "Failure": 101
           },
@@ -136,7 +136,7 @@
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 0.163195666,
+          "duration": 0.111091542,
           "process_status": {
             "Failure": 101
           },
@@ -190,7 +190,7 @@
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 30.7415135,
+          "duration": 33.013401875,
           "process_status": "Success",
           "argv": [
             "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
@@ -202,7 +202,7 @@
         },
         {
           "phase": "Test",
-          "duration": 0.106792625,
+          "duration": 0.106623,
           "process_status": {
             "Failure": 101
           },
@@ -222,7 +222,7 @@
   "timeout": 0,
   "unviable": 1,
   "success": 0,
-  "start_time": "2026-09-30T21:39:49.598501Z",
-  "end_time": "2026-09-30T21:40:23.594454Z",
+  "start_time": "2026-09-30T21:43:56.952459Z",
+  "end_time": "2026-09-30T21:44:33.008597Z",
   "cargo_mutants_version": "27.1.0"
 }

@@ -104,6 +104,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
   data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
   enforces it.
+- Memory budget: anything this session runs on the owner's laptop stays under 8 GiB, because
+  the laptop carries other work. `.cargo/config.toml` caps every cargo build at 3 compiler jobs,
+  the mutation task derives its caps from the same 8 GiB (`AvailableGib::GRANTED`), and long
+  runs go one at a time. More needs the owner's explicit permission, given per run.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
@@ -148,8 +152,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
-  `cargo-mutants` process already exists or less memory is free than its compiler tasks need
-  (2 GiB each plus 2), and caps the run at 2 jobs and half the cores of compiler tasks. The session hook denies a raw `cargo mutants`.
+  `cargo-mutants` process already exists or the granted budget is not free, and caps the run
+  at 2 jobs and the compiler tasks the budget allows (3). The session hook denies a raw `cargo mutants`.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
