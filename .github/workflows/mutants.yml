@@ -1,8 +1,7 @@
 name: Mutants
 
 on:
-  schedule:
-    - cron: "0 3 * * 0"
+  pull_request:
   workflow_dispatch:
 
 env:
