@@ -15,6 +15,11 @@ impl PlyCount {
     }
 
     #[must_use]
+    pub const fn plies(self) -> u16 {
+        self.0
+    }
+
+    #[must_use]
     pub const fn incremented(self) -> PlyCount {
         PlyCount(self.0.saturating_add(1))
     }

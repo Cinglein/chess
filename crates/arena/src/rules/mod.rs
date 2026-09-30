@@ -1,8 +1,10 @@
 mod draw_adjudication;
 mod resign_adjudication;
+mod thinking;
 
 pub use draw_adjudication::DrawAdjudication;
 pub use resign_adjudication::ResignAdjudication;
+pub use thinking::Thinking;
 
 use std::num::NonZeroU16;
 use std::time::Duration;
@@ -14,6 +16,7 @@ use uci::Clock;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rules {
     clock: Clock,
+    thinking: Thinking,
     longest_game: FullmoveNumber,
     draw: DrawAdjudication,
     resign: ResignAdjudication,
@@ -21,6 +24,7 @@ pub struct Rules {
 
 impl Rules {
     pub const DEFAULT: Rules = Rules {
+        thinking: Thinking::Timed,
         clock: Clock::new(
             Duration::from_secs(10),
             Duration::from_secs(10),
@@ -42,6 +46,11 @@ impl Rules {
     }
 
     #[must_use]
+    pub const fn thinking_by(self, thinking: Thinking) -> Rules {
+        Rules { thinking, ..self }
+    }
+
+    #[must_use]
     pub const fn lasting_at_most(self, longest_game: FullmoveNumber) -> Rules {
         Rules {
             longest_game,
@@ -56,6 +65,11 @@ impl Rules {
             resign,
             ..self
         }
+    }
+
+    #[must_use]
+    pub const fn thinking(&self) -> Thinking {
+        self.thinking
     }
 
     #[must_use]

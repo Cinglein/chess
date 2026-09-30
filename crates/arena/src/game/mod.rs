@@ -1,4 +1,5 @@
 mod finished;
+mod label;
 mod outcome;
 mod record;
 mod repetition_count;
@@ -6,6 +7,7 @@ mod streaks;
 mod termination;
 
 pub use finished::Finished;
+pub use label::Label;
 pub use outcome::Verdict;
 
 use std::iter;
@@ -13,7 +15,7 @@ use std::ops::ControlFlow;
 use std::time::Instant;
 
 use board::{Board, Color, HalfmoveClock, State};
-use uci::{Clock, GoLimits, Position};
+use uci::{Clock, Position};
 
 use crate::opponent::Opponent;
 use crate::rules::Rules;
@@ -80,9 +82,10 @@ impl Game {
         let side = self.board.side_to_move();
         let position = Position::played(*self.record.start(), self.record.moves());
         let started = Instant::now();
+        let limits = self.rules.thinking().limits(self.clock);
         let chosen = match side {
-            Color::White => white.choose_move(position, GoLimits::Clock(self.clock)),
-            Color::Black => black.choose_move(position, GoLimits::Clock(self.clock)),
+            Color::White => white.choose_move(position, limits),
+            Color::Black => black.choose_move(position, limits),
         };
         let spent = started.elapsed();
         let chosen = match chosen {
@@ -90,7 +93,11 @@ impl Game {
             Err(error) => return self.ended(Termination::Failure(error)),
         };
         let notation = chosen.notation();
-        if spent > self.clock.remaining(side) {
+        if self
+            .rules
+            .thinking()
+            .forfeits(spent, self.clock.remaining(side))
+        {
             return self.ended(Termination::TimeForfeit);
         }
         let Some(board) = self
@@ -102,7 +109,7 @@ impl Game {
         };
         ControlFlow::Continue(Game {
             board,
-            record: self.record.extended(notation, board),
+            record: self.record.extended(notation, board, chosen.score()),
             clock: self.clock.minus_spent_plus_increment(side, spent),
             streaks: self.streaks.after(side, chosen.score(), &self.rules),
             ..self
@@ -170,18 +177,19 @@ impl From<Board> for Game {
 mod tests {
     use std::time::Duration;
 
-    use board::Board;
+    use board::{Board, Color, NodeCount};
     use uci::Clock;
 
     use super::Game;
     use crate::in_process_engine::InProcessEngine;
-    use crate::rules::Rules;
+    use crate::rules::{Rules, Thinking};
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
     const QUICK: Duration = Duration::from_millis(64);
     const MATED: &str = "1-0 {checkmate}";
     const DEAD: &str = "1/2-1/2 {insufficient material}";
+    const FEW_NODES: NodeCount = NodeCount::new(64);
 
     impl Game {
         fn played_between_two_engines(fen: &str) -> String {
@@ -210,5 +218,19 @@ mod tests {
     #[test]
     fn bare_kings_end_the_game_before_anyone_moves() {
         assert_eq!(Game::played_between_two_engines(BARE_KINGS), DEAD);
+    }
+
+    #[test]
+    fn a_node_limited_game_labels_every_position_with_the_mover_score_and_the_verdict() {
+        let board: Board = MATE_IN_ONE.parse().unwrap();
+        let finished = Game::from(board)
+            .ruled_by(Rules::DEFAULT.thinking_by(Thinking::FixedNodes(FEW_NODES)))
+            .play(
+                &mut InProcessEngine::default(),
+                &mut InProcessEngine::default(),
+            );
+        let label = finished.labels().next().unwrap();
+        assert!(label.score_for(Color::White) > label.score_for(Color::Black));
+        assert_eq!(label.verdict().winner(), Some(Color::White));
     }
 }

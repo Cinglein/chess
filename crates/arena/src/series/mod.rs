@@ -1,4 +1,3 @@
-mod openings;
 mod tally;
 
 use std::collections::VecDeque;
@@ -7,13 +6,11 @@ use std::sync::Mutex;
 use std::thread::{self, Scope, ScopedJoinHandle};
 
 use board::Board;
-use openings::Openings;
 use tally::Tally;
 
 use crate::arena_error::ArenaError;
 use crate::entrant::Entrant;
 use crate::game::{Finished, Game};
-use crate::round_count::RoundCount;
 use crate::rules::Rules;
 use crate::worker_count::WorkerCount;
 
@@ -39,15 +36,11 @@ impl<'entrants> Series<'entrants> {
 
     pub fn play(
         &self,
-        rounds: RoundCount,
+        openings: Vec<Board>,
         concurrency: WorkerCount,
         report: &(dyn Fn(&Finished) + Sync),
     ) -> Result<Tally, ArenaError> {
-        let queue: Mutex<VecDeque<Board>> = Mutex::new(
-            (0..rounds.count())
-                .flat_map(|_| Openings::boards())
-                .collect(),
-        );
+        let queue: Mutex<VecDeque<Board>> = Mutex::new(openings.into_iter().collect());
         thread::scope(|scope| {
             let workers: Vec<ScopedJoinHandle<'_, Result<Tally, ArenaError>>> = (0..concurrency
                 .at_least_one())

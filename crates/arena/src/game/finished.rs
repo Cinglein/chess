@@ -2,6 +2,7 @@ use std::fmt;
 
 use board::State;
 
+use super::label::Label;
 use super::outcome::Outcome;
 use super::record::Record;
 
@@ -22,6 +23,10 @@ impl Finished {
     #[must_use]
     pub const fn outcome(&self) -> &Outcome {
         &self.outcome
+    }
+
+    pub fn labels(&self) -> impl Iterator<Item = Label> + '_ {
+        self.record.labelled(self.outcome.verdict())
     }
 }
 

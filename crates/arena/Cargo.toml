@@ -10,6 +10,7 @@ repository.workspace = true
 board = { version = "0.1.0", path = "../board", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
 enum-map = "3"
+rand = "0.10"
 eval = { version = "0.1.0", path = "../eval", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 engine = { version = "0.1.0", path = "../engine" }
