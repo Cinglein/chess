@@ -7,12 +7,20 @@ use contestant::Contestant;
 use uci::Elo;
 
 #[derive(Debug, Parser)]
-#[command(about = "Play one game between two opponents at 10s+0.1s")]
+#[command(
+    about = "Play paired games from a set of openings at 10s+0.1s and tally them for the challenger"
+)]
 pub struct Arguments {
     #[arg(help = "in-process, or a path to a UCI engine")]
-    white: Contestant,
+    challenger: Contestant,
     #[arg(help = "in-process, or a path to a UCI engine")]
-    black: Contestant,
+    reference: Contestant,
+    #[arg(
+        long,
+        default_value_t = 1,
+        help = "Times each opening is played from both sides"
+    )]
+    rounds: usize,
     #[arg(
         long,
         default_value_t = Contestant::STOCKFISH_FLOOR,
@@ -28,12 +36,16 @@ pub struct Arguments {
 }
 
 impl Arguments {
-    pub const fn white(&self) -> &Contestant {
-        &self.white
+    pub const fn challenger(&self) -> &Contestant {
+        &self.challenger
     }
 
-    pub const fn black(&self) -> &Contestant {
-        &self.black
+    pub const fn reference(&self) -> &Contestant {
+        &self.reference
+    }
+
+    pub const fn rounds(&self) -> usize {
+        self.rounds
     }
 
     pub const fn limit_elo(&self) -> Elo {
