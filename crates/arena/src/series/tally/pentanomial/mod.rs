@@ -18,6 +18,10 @@ impl Pentanomial {
         self
     }
 
+    pub(super) fn merged(self, other: Pentanomial) -> Pentanomial {
+        Pentanomial(EnumMap::from_fn(|score| self.0[score] + other.0[score]))
+    }
+
     pub(super) fn estimate(&self) -> EloEstimate {
         let mean = ScoreFraction::mean_of(&self.0);
         let margin = mean.margin_around(&self.0);

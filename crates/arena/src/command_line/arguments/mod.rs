@@ -1,9 +1,12 @@
 mod contestant;
 
+pub use contestant::Contestant;
+
+use std::thread;
+
 use arena::Rules;
 use board::FullmoveNumber;
 use clap::Parser;
-use contestant::Contestant;
 use uci::Elo;
 
 #[derive(Debug, Parser)]
@@ -21,6 +24,12 @@ pub struct Arguments {
         help = "Times each opening is played from both sides"
     )]
     rounds: usize,
+    #[arg(
+        long,
+        default_value_t = Arguments::half_the_cores(),
+        help = "Games played at once, each on its own pair of engines"
+    )]
+    concurrency: usize,
     #[arg(
         long,
         default_value_t = Contestant::STOCKFISH_FLOOR,
@@ -46,6 +55,14 @@ impl Arguments {
 
     pub const fn rounds(&self) -> usize {
         self.rounds
+    }
+
+    pub const fn concurrency(&self) -> usize {
+        self.concurrency
+    }
+
+    fn half_the_cores() -> usize {
+        thread::available_parallelism().map_or(1, |cores| (cores.get() / 2).max(1))
     }
 
     pub const fn limit_elo(&self) -> Elo {
