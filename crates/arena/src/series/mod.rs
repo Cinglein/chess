@@ -1,7 +1,7 @@
 mod openings;
 mod tally;
 
-use board::{Board, Color};
+use board::Board;
 use openings::Openings;
 use tally::Tally;
 
@@ -42,9 +42,7 @@ impl Series {
                     .ruled_by(self.rules)
                     .play(self.reference.as_mut(), self.challenger.as_mut());
                 report(&as_black);
-                tally
-                    .recorded(as_white.outcome().verdict(), Color::White)
-                    .recorded(as_black.outcome().verdict(), Color::Black)
+                tally.recorded_pair(as_white.outcome().verdict(), as_black.outcome().verdict())
             })
     }
 }
