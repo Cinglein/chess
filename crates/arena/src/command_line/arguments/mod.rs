@@ -2,6 +2,7 @@ mod contestant;
 
 pub use contestant::Contestant;
 
+use std::num::NonZeroUsize;
 use std::thread;
 
 use arena::Rules;
@@ -26,8 +27,8 @@ pub struct Arguments {
     rounds: usize,
     #[arg(
         long,
-        default_value_t = Arguments::half_the_cores(),
-        help = "Games played at once, each on its own pair of engines"
+        default_value_t = Arguments::one_game_per_core(),
+        help = "Games played at once; the two engines in a game think in turn, so one per core"
     )]
     concurrency: usize,
     #[arg(
@@ -61,8 +62,8 @@ impl Arguments {
         self.concurrency
     }
 
-    fn half_the_cores() -> usize {
-        thread::available_parallelism().map_or(1, |cores| (cores.get() / 2).max(1))
+    fn one_game_per_core() -> usize {
+        thread::available_parallelism().map_or(1, NonZeroUsize::get)
     }
 
     pub const fn limit_elo(&self) -> Elo {
