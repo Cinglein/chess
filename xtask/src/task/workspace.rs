@@ -38,6 +38,19 @@ impl Workspace {
             .ok_or_else(|| Failure::Cargo(args.join(" ")))
     }
 
+    pub fn git_output(&self, args: &[&str]) -> Result<String, Failure> {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(&self.root)
+            .output()
+            .map_err(|_| Failure::Git(args.join(" ")))?;
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+        } else {
+            Err(Failure::Git(args.join(" ")))
+        }
+    }
+
     pub fn source_files(&self) -> Result<Vec<SourceFile>, Failure> {
         let mut files = Self::rust_files_under(&self.root)?;
         files.sort();

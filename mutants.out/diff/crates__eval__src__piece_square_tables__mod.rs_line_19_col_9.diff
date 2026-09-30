@@ -1,0 +1,21 @@
+--- crates/eval/src/piece_square_tables/mod.rs
++++ replace PieceSquareTables::piece_value -> Score with Default::default()
+@@ -11,17 +11,17 @@
+ 
+ use crate::score::Score;
+ 
+ pub struct PieceSquareTables;
+ 
+ impl PieceSquareTables {
+     #[must_use]
+     pub fn piece_value(color: Color, kind: PieceKind, square: Square) -> Score {
+-        PieceKindValue::material(kind) + PlacementTable::bonus(color, kind, square)
++        Default::default() /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     fn side_value(board: &Board, color: Color) -> Score {
+         PieceKind::VARIANTS
+             .iter()
+             .flat_map(|kind| {
+                 board
+                     .placement()

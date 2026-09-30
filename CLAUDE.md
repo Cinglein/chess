@@ -31,6 +31,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
   `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
   `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
+  `cargo xtask mutants`,
   `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -139,9 +140,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most
   3 tests per file, 3 assertion sites, 20 lines, and 4 literals per test, no integer literal
-  above 64 in test code, on average at most 1 test per file, and test code at most 20% of all
-  lines. Prefer one exhaustive or oracle test over examples; randomness comes from `proptest`;
-  deep checks are `#[ignore]` and run outside the PR gate.
+  above 64 in test code. Prefer one exhaustive or oracle test over examples; randomness comes
+  from `proptest`; deep checks are `#[ignore]` and run outside the PR gate.
+- Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
+  lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
+  the diff must be caught or unviable. Tables of literals (`slider/magics.rs`, the
+  piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
+  crate runs are slow and memory-heavy: one at a time, never on a shared laptop at full width.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic

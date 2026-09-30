@@ -1,0 +1,6 @@
+exclude_globs = [
+    "xtask/**",
+    "crates/board/src/slider/magics.rs",
+    "crates/eval/src/piece_square_tables/placement_table.rs",
+]
+test_workspace = true

@@ -1,3 +1,4 @@
+mod measurement;
 mod test_counts;
 
 use test_counts::TestCounts;
@@ -9,9 +10,9 @@ use syn::visit::Visit;
 use syn::{Expr, ItemFn, ItemMod, LitInt, Macro, Token};
 
 use super::super::TestBudget;
-use super::super::measurement::Measurement;
 use crate::task::site::Site;
 use crate::task::violation::Violation;
+use measurement::Measurement;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,

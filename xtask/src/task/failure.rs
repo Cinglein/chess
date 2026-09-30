@@ -11,6 +11,8 @@ pub enum Failure {
     Usage(String),
     #[error("cargo {0} failed")]
     Cargo(String),
+    #[error("git {0} failed")]
+    Git(String),
     #[error("{site}: {error}")]
     Io { site: Site, error: io::Error },
     #[error("{site}: {error}")]

@@ -1,0 +1,2 @@
+crates/eval/src/piece_square_tables/mod.rs:19:40: replace + with - in PieceSquareTables::piece_value
+crates/eval/src/piece_square_tables/mod.rs:19:9: replace PieceSquareTables::piece_value -> Score with Default::default()

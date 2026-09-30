@@ -1,0 +1,228 @@
+{
+  "outcomes": [
+    {
+      "scenario": "Baseline",
+      "summary": "Success",
+      "log_path": "log/baseline.log",
+      "diff_path": null,
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.746638209,
+          "process_status": "Success",
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=eval@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.112433209,
+          "process_status": "Success",
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=eval@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "crates/eval/src/piece_square_tables/mod.rs:19:40: replace + with - in PieceSquareTables::piece_value",
+          "package": "eval",
+          "file": "crates/eval/src/piece_square_tables/mod.rs",
+          "function": {
+            "function_name": "PieceSquareTables::piece_value",
+            "return_type": "-> Score",
+            "span": {
+              "start": {
+                "line": 17,
+                "column": 5
+              },
+              "end": {
+                "line": 20,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 19,
+              "column": 40
+            },
+            "end": {
+              "line": 19,
+              "column": 41
+            }
+          },
+          "replacement": "-",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/crates__eval__src__piece_square_tables__mod.rs_line_19_col_40.log",
+      "diff_path": "diff/crates__eval__src__piece_square_tables__mod.rs_line_19_col_40.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 29.329347542,
+          "process_status": "Success",
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--workspace"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.111447833,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--workspace"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "crates/eval/src/piece_square_tables/mod.rs:19:9: replace PieceSquareTables::piece_value -> Score with Default::default()",
+          "package": "eval",
+          "file": "crates/eval/src/piece_square_tables/mod.rs",
+          "function": {
+            "function_name": "PieceSquareTables::piece_value",
+            "return_type": "-> Score",
+            "span": {
+              "start": {
+                "line": 17,
+                "column": 5
+              },
+              "end": {
+                "line": 20,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 19,
+              "column": 9
+            },
+            "end": {
+              "line": 19,
+              "column": 84
+            }
+          },
+          "replacement": "Default::default()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/crates__eval__src__piece_square_tables__mod.rs_line_19_col_9.log",
+      "diff_path": "diff/crates__eval__src__piece_square_tables__mod.rs_line_19_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 29.494450875,
+          "process_status": "Success",
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--workspace"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.111120083,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--workspace"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "crates/eval/src/piece_square_tables/mod.rs:19:40: replace + with * in PieceSquareTables::piece_value",
+          "package": "eval",
+          "file": "crates/eval/src/piece_square_tables/mod.rs",
+          "function": {
+            "function_name": "PieceSquareTables::piece_value",
+            "return_type": "-> Score",
+            "span": {
+              "start": {
+                "line": 17,
+                "column": 5
+              },
+              "end": {
+                "line": 20,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 19,
+              "column": 40
+            },
+            "end": {
+              "line": 19,
+              "column": 41
+            }
+          },
+          "replacement": "*",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "Unviable",
+      "log_path": "log/crates__eval__src__piece_square_tables__mod.rs_line_19_col_40_001.log",
+      "diff_path": "diff/crates__eval__src__piece_square_tables__mod.rs_line_19_col_40_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 0.158888042,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/jamesnovig/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--workspace"
+          ]
+        }
+      ]
+    }
+  ],
+  "total_mutants": 3,
+  "missed": 0,
+  "caught": 2,
+  "timeout": 0,
+  "unviable": 1,
+  "success": 0,
+  "start_time": "2026-09-30T21:34:05.815749Z",
+  "end_time": "2026-09-30T21:34:40.812929Z",
+  "cargo_mutants_version": "27.1.0"
+}

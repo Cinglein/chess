@@ -4,7 +4,7 @@ use syn::visit::Visit;
 use syn::{Block, Expr, ExprLit, ExprPath, Macro, Token};
 
 use super::super::super::TestBudget;
-use super::super::super::measurement::Measurement;
+use super::measurement::Measurement;
 
 #[derive(Default)]
 pub(super) struct TestCounts {
