@@ -33,6 +33,14 @@ impl Response<'_> {
     }
 
     #[must_use]
+    pub const fn info(&self) -> Option<SearchInfo> {
+        match self {
+            Response::Info(info) => Some(*info),
+            _ => None,
+        }
+    }
+
+    #[must_use]
     pub const fn is_best_move(&self) -> bool {
         matches!(self, Response::BestMove(_))
     }

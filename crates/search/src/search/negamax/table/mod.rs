@@ -21,14 +21,14 @@ impl<'store> TranspositionTable<'store> {
     }
 
     pub(crate) fn probe(&self, hash: Zobrist) -> Option<TableEntry> {
-        self.slot(hash)
+        self.slot_index(hash)
             .and_then(|index| self.entries.get(index))
             .copied()
             .filter(|entry| entry.hash() == hash)
     }
 
     pub(crate) fn store(&mut self, entry: TableEntry) {
-        let Some(index) = self.slot(entry.hash()) else {
+        let Some(index) = self.slot_index(entry.hash()) else {
             return;
         };
         if let Some(slot) = self.entries.get_mut(index)
@@ -38,7 +38,7 @@ impl<'store> TranspositionTable<'store> {
         }
     }
 
-    fn slot(&self, hash: Zobrist) -> Option<usize> {
+    fn slot_index(&self, hash: Zobrist) -> Option<usize> {
         let count = u64::try_from(self.entries.len()).ok()?;
         usize::try_from(hash.bits().checked_rem(count)?).ok()
     }

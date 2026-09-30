@@ -3,6 +3,8 @@ use std::fmt;
 use board::{Board, LongAlgebraic, Zobrist};
 use uci::{Command, Position};
 
+use super::repetition_count::RepetitionCount;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Record {
     positions: Vec<Board>,
@@ -38,11 +40,13 @@ impl Record {
     }
 
     #[must_use]
-    pub fn repetitions(&self, hash: Zobrist) -> usize {
-        self.positions
-            .iter()
-            .filter(|position| position.hash() == hash)
-            .count()
+    pub fn repetitions(&self, hash: Zobrist) -> RepetitionCount {
+        RepetitionCount::new(
+            self.positions
+                .iter()
+                .filter(|position| position.hash() == hash)
+                .count(),
+        )
     }
 }
 

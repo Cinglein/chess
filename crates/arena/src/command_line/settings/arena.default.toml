@@ -2,3 +2,12 @@ rounds = 1
 limit_elo = 1320
 longest_game = 500
 time_control = "10+0.1"
+
+[draw_adjudication]
+after_move = 40
+within_centipawns = 10
+for_plies = 8
+
+[resign_adjudication]
+beyond_centipawns = 800
+for_plies = 6

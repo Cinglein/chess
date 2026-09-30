@@ -1,6 +1,8 @@
 mod finished;
 mod outcome;
 mod record;
+mod repetition_count;
+mod streaks;
 mod termination;
 
 pub use finished::Finished;
@@ -10,33 +12,36 @@ use std::iter;
 use std::ops::ControlFlow;
 use std::time::Instant;
 
-use board::{Board, Color, FullmoveNumber, HalfmoveClock, State};
+use board::{Board, Color, HalfmoveClock, State};
 use uci::{Clock, GoLimits, Position};
 
 use crate::opponent::Opponent;
 use crate::rules::Rules;
 use outcome::Outcome;
 use record::Record;
+use repetition_count::RepetitionCount;
+use streaks::Streaks;
 use termination::Termination;
 
 pub struct Game {
     board: Board,
     record: Record,
     clock: Clock,
-    move_limit: FullmoveNumber,
+    rules: Rules,
+    streaks: Streaks,
 }
 
 impl State for Game {}
 
 impl Game {
     const FIFTY_MOVES: HalfmoveClock = HalfmoveClock::new(100);
-    const REPETITIONS: usize = 3;
+    const REPETITIONS: RepetitionCount = RepetitionCount::new(3);
 
     #[must_use]
     pub fn ruled_by(self, rules: Rules) -> Game {
         Game {
             clock: rules.clock(),
-            move_limit: rules.longest_game(),
+            rules,
             ..self
         }
     }
@@ -80,10 +85,11 @@ impl Game {
             Color::Black => black.choose_move(position, GoLimits::Clock(self.clock)),
         };
         let spent = started.elapsed();
-        let notation = match chosen {
-            Ok(notation) => notation,
+        let chosen = match chosen {
+            Ok(chosen) => chosen,
             Err(error) => return self.ended(Termination::Failure(error)),
         };
+        let notation = chosen.notation();
         if spent > self.clock.remaining(side) {
             return self.ended(Termination::TimeForfeit);
         }
@@ -98,13 +104,28 @@ impl Game {
             board,
             record: self.record.extended(notation, board),
             clock: self.clock.minus_spent_plus_increment(side, spent),
+            streaks: self.streaks.after(side, chosen.score(), &self.rules),
             ..self
         })
     }
 
     fn natural_end(&self) -> Option<Termination> {
-        if self.board.fullmove_number() > self.move_limit {
+        if self.board.fullmove_number() > self.rules.longest_game() {
             return Some(Termination::MoveLimit);
+        }
+        if self
+            .rules
+            .resign()
+            .reached(self.streaks.losing(self.board.side_to_move()))
+        {
+            return Some(Termination::Resignation);
+        }
+        if self
+            .rules
+            .draw()
+            .reached(self.streaks.level(), self.board.fullmove_number())
+        {
+            return Some(Termination::DrawAdjudicated);
         }
         if self.board.legal_moves().is_empty() {
             return Some(if self.board.in_check() {
@@ -139,7 +160,8 @@ impl From<Board> for Game {
             board,
             record: Record::new(board),
             clock: Rules::DEFAULT.clock(),
-            move_limit: Rules::DEFAULT.longest_game(),
+            rules: Rules::DEFAULT,
+            streaks: Streaks::default(),
         }
     }
 }

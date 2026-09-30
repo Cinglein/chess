@@ -4,13 +4,13 @@ use super::ordered_moves::Killers;
 use super::table::RootDistance;
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct KillerTable([Killers; KillerTable::MAX_PLY]);
+pub(crate) struct KillerTable([Killers; KillerTable::PLY_CAPACITY]);
 
 impl KillerTable {
-    pub(crate) const MAX_PLY: usize = 128;
+    pub(crate) const PLY_CAPACITY: usize = 128;
 
     pub(crate) const fn new() -> KillerTable {
-        KillerTable([Killers::NONE; Self::MAX_PLY])
+        KillerTable([Killers::NONE; Self::PLY_CAPACITY])
     }
 
     pub(crate) fn at_ply(&self, distance: RootDistance) -> Killers {

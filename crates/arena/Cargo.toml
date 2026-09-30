@@ -10,9 +10,10 @@ repository.workspace = true
 board = { version = "0.1.0", path = "../board", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
 enum-map = "3"
+eval = { version = "0.1.0", path = "../eval", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 engine = { version = "0.1.0", path = "../engine" }
-derive_more = { version = "2", features = ["display", "from_str"] }
+derive_more = { version = "2", features = ["add", "display", "from_str", "sum"] }
 thiserror = "2"
 toml = "0.9"
 strum = { version = "0.28", default-features = false, features = ["derive"] }

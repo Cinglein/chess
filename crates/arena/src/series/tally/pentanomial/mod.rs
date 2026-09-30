@@ -1,5 +1,6 @@
 mod elo_delta;
 mod elo_estimate;
+mod pair_count;
 mod pair_score;
 mod score_fraction;
 
@@ -7,14 +8,15 @@ pub use elo_estimate::EloEstimate;
 pub(super) use pair_score::PairScore;
 
 use enum_map::EnumMap;
+use pair_count::PairCount;
 use score_fraction::ScoreFraction;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct Pentanomial(EnumMap<PairScore, usize>);
+pub(super) struct Pentanomial(EnumMap<PairScore, PairCount>);
 
 impl Pentanomial {
     pub(super) fn counted(mut self, score: PairScore) -> Pentanomial {
-        self.0[score] += 1;
+        self.0[score] = self.0[score].incremented();
         self
     }
 

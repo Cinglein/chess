@@ -2,10 +2,13 @@ use core::iter::Sum;
 use core::ops::{Add, Neg};
 
 use derive_more::{Add, Display, FromStr, Sub};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display, FromStr,
 )]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct Score(i32);
 
 impl Score {

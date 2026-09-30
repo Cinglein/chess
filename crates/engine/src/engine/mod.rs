@@ -27,13 +27,13 @@ impl<S: Sink> Engine<S> {
     pub const NAME: &str = "chess";
     pub const AUTHOR: &str = "Cinglein";
     const TABLE_BYTES: usize = 16 << 20;
-    const ENTRY_COUNT: usize = Self::TABLE_BYTES / size_of::<TableEntry>();
+    const ENTRY_CAPACITY: usize = Self::TABLE_BYTES / size_of::<TableEntry>();
 
     #[must_use]
     pub fn new(stop: Arc<AtomicBool>, sink: S) -> Engine<S> {
         Engine {
             board: Board::START,
-            entries: vec![TableEntry::EMPTY; Self::ENTRY_COUNT],
+            entries: vec![TableEntry::EMPTY; Self::ENTRY_CAPACITY],
             stop,
             sink,
             lifecycle: Lifecycle::Running,
