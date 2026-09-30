@@ -14,6 +14,7 @@ pub struct Mutants;
 impl Mutants {
     const BASE: &str = "origin/main";
     const DIFF_FILE: &str = "target/mutants.diff";
+    const OUTPUT_DIRECTORY: &str = "target/mutants";
     const LOCK_FILE: &str = "target/mutants.lock";
     const PROCESS_NAME: &str = "cargo-mutants";
     const JOBS: &str = "2";
@@ -36,6 +37,8 @@ impl Mutants {
             Self::JOBS,
             "--jobserver-tasks",
             &compiler_tasks,
+            "--output",
+            Self::OUTPUT_DIRECTORY,
         ])
     }
 
