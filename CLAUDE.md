@@ -146,7 +146,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
   the diff must be caught or unviable. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
-  crate runs are slow and memory-heavy: one at a time, never on a shared laptop at full width.
+  crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
+  `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
+  `cargo-mutants` process already exists or fewer than 16 GiB are free, and caps the run at 2
+  jobs and half the cores of compiler tasks. The session hook denies a raw `cargo mutants`.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic

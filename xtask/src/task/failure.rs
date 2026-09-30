@@ -13,6 +13,8 @@ pub enum Failure {
     Cargo(String),
     #[error("git {0} failed")]
     Git(String),
+    #[error("refused: {0}")]
+    Refused(String),
     #[error("{site}: {error}")]
     Io { site: Site, error: io::Error },
     #[error("{site}: {error}")]
