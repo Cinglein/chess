@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
-derive_more = { version = "2", default-features = false, features = ["display"] }
+derive_more = { version = "2", default-features = false, features = ["display", "from_str"] }
 eval = { version = "0.1.0", path = "../eval" }
 
 [lints]

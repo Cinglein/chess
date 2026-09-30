@@ -121,22 +121,6 @@ impl Board {
     }
 
     #[must_use]
-    pub fn perft(self, depth: u8) -> u64 {
-        let Some(remaining) = depth.checked_sub(1) else {
-            return 1;
-        };
-        let moves = self.legal_moves();
-        if remaining == 0 {
-            return moves.len().try_into().unwrap_or(u64::MAX);
-        }
-        moves
-            .into_iter()
-            .filter_map(|chess_move| self.make_move(chess_move))
-            .map(|board| board.perft(remaining))
-            .sum()
-    }
-
-    #[must_use]
     pub fn make_move(self, chess_move: ChessMove) -> Option<Board> {
         let piece = self
             .placement

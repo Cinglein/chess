@@ -14,7 +14,7 @@ pub(crate) use window::{Bound, Lower, Window};
 
 use core::marker::PhantomData;
 
-use board::{Board, ChessMove};
+use board::{Board, ChessMove, NodeCount};
 use eval::{Evaluator, Score};
 
 use super::depth::Depth;
@@ -27,7 +27,7 @@ use progress::Progress;
 use quiescence::Quiescence;
 
 pub(crate) struct Negamax<'store, 'table, 'stop, E: Evaluator, I: Interrupt> {
-    nodes: u64,
+    nodes: NodeCount,
     killers: KillerTable,
     table: &'table mut TranspositionTable<'store>,
     interrupt: &'stop I,
@@ -41,7 +41,7 @@ impl<'store, 'table, 'stop, E: Evaluator, I: Interrupt> Negamax<'store, 'table, 
         interrupt: &'stop I,
     ) -> Self {
         Negamax {
-            nodes: 0,
+            nodes: NodeCount::ZERO,
             killers: KillerTable::new(),
             table,
             interrupt,
@@ -50,7 +50,7 @@ impl<'store, 'table, 'stop, E: Evaluator, I: Interrupt> Negamax<'store, 'table, 
         }
     }
 
-    pub(crate) const fn nodes(&self) -> u64 {
+    pub(crate) const fn nodes(&self) -> NodeCount {
         self.nodes
     }
 
@@ -65,7 +65,7 @@ impl<'store, 'table, 'stop, E: Evaluator, I: Interrupt> Negamax<'store, 'table, 
         distance: RootDistance,
         window: Window,
     ) -> Score {
-        self.nodes += 1;
+        self.nodes += NodeCount::ONE;
         if self.was_aborted() || self.interrupt.should_stop(self.nodes) {
             self.progress = Progress::Aborted;
             return Score::DRAW;

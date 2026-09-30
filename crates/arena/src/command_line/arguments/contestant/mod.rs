@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use arena::{ArenaError, InProcessEngine, Opponent, UciProcess};
 use engine_setting::EngineSetting;
+
+use super::elo::Elo;
 use strum::EnumString;
 use uci::EngineOption;
 
@@ -17,7 +19,7 @@ pub enum Contestant {
 }
 
 impl Contestant {
-    pub fn opponent(&self, limit_elo: u16) -> Result<Box<dyn Opponent>, ArenaError> {
+    pub fn opponent(&self, limit_elo: Elo) -> Result<Box<dyn Opponent>, ArenaError> {
         match self {
             Contestant::InProcess => Ok(Box::new(InProcessEngine::default())),
             Contestant::Program(path) => {

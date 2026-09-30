@@ -12,6 +12,7 @@ mod direction;
 mod file;
 mod leaper;
 mod long_algebraic;
+mod node_count;
 mod orthogonal;
 #[cfg(test)]
 mod perft_position;
@@ -27,10 +28,11 @@ mod zobrist;
 mod zobrist_keys;
 
 pub use bitboard::{Bitboard, SubsetIter};
-pub use board::{Board, HalfmoveClock, MoveList};
+pub use board::{Board, FullmoveNumber, HalfmoveClock, MoveList};
 pub use chess_move::{ChessMove, MoveKind};
 pub use color::Color;
 pub use long_algebraic::LongAlgebraic;
+pub use node_count::NodeCount;
 pub use piece_kind::PieceKind;
 pub use slider::{Bishop, Magic, Rook, Slider};
 pub use square::Square;

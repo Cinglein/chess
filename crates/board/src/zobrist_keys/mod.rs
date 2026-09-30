@@ -24,7 +24,6 @@ pub(crate) struct ZobristKeys {
 }
 
 impl ZobristKeys {
-    const SEED: u64 = 0x0C4E_55B0_A4D6_4C10;
     pub(crate) const KEYS: ZobristKeys = Self::generate();
 
     pub(crate) const fn piece(&self, piece: Piece, square: Square) -> Zobrist {
@@ -81,7 +80,7 @@ impl ZobristKeys {
     }
 
     const fn generate() -> ZobristKeys {
-        let mut generator = SplitMix64::new(Self::SEED);
+        let mut generator = SplitMix64::SEEDED;
         let mut pieces = [[[Zobrist::EMPTY; Square::COUNT]; PieceKind::COUNT]; Color::COUNT];
         let mut colors: &mut [[SquareKeys; PieceKind::COUNT]] = &mut pieces;
         while let [color, rest @ ..] = colors {

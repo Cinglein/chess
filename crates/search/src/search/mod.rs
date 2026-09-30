@@ -13,7 +13,7 @@ use uninterrupted::Uninterrupted;
 
 use core::marker::PhantomData;
 
-use board::{Board, ChessMove, State};
+use board::{Board, ChessMove, NodeCount, State};
 use eval::{Evaluator, Score};
 
 use negamax::{Negamax, RootDistance};
@@ -24,7 +24,7 @@ pub struct Search<E: Evaluator> {
     depth: Depth,
     best_move: Option<ChessMove>,
     score: Score,
-    nodes: u64,
+    nodes: NodeCount,
     evaluator: PhantomData<E>,
 }
 
@@ -52,7 +52,7 @@ impl<E: Evaluator> Search<E> {
     }
 
     #[must_use]
-    pub const fn nodes(&self) -> u64 {
+    pub const fn nodes(&self) -> NodeCount {
         self.nodes
     }
 
@@ -101,7 +101,7 @@ impl<E: Evaluator> From<Board> for Search<E> {
             depth: Depth::ZERO,
             best_move: None,
             score: E::evaluate(&board),
-            nodes: 0,
+            nodes: NodeCount::ZERO,
             evaluator: PhantomData,
         }
     }

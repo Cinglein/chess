@@ -67,7 +67,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
 
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
         if integer
-            .base10_parse::<u64>()
+            .base10_parse::<usize>()
             .is_ok_and(|value| value > TestBudget::MAX_INTEGER_LITERAL)
         {
             self.budget.violations.push(Violation::new(

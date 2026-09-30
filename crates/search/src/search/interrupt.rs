@@ -1,3 +1,5 @@
+use board::NodeCount;
+
 pub trait Interrupt {
-    fn should_stop(&self, nodes: u64) -> bool;
+    fn should_stop(&self, nodes: NodeCount) -> bool;
 }

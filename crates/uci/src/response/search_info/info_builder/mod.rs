@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use board::LongAlgebraic;
+use board::{LongAlgebraic, NodeCount};
 use eval::Score;
 use search::Depth;
 
@@ -11,11 +11,10 @@ use crate::uci_error::UciError;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct InfoBuilder {
     pending: Option<InfoKey>,
-    depth: Option<u8>,
-    centipawns: Option<i32>,
-    mate: Option<i32>,
-    nodes: Option<u64>,
-    millis: Option<u64>,
+    depth: Option<Depth>,
+    score: Option<Score>,
+    nodes: Option<NodeCount>,
+    elapsed: Option<Duration>,
     best_move: Option<LongAlgebraic>,
 }
 
@@ -32,16 +31,11 @@ impl InfoBuilder {
     }
 
     pub(super) fn info(self) -> Result<SearchInfo, UciError> {
-        let score = self
-            .mate
-            .map(Score::mating_in_moves)
-            .or_else(|| self.centipawns.map(Score::new))
-            .ok_or(UciError::IncompleteInfo)?;
         Ok(SearchInfo {
-            depth: self.depth.map(Depth::new).ok_or(UciError::IncompleteInfo)?,
-            score,
-            nodes: self.nodes.unwrap_or(0),
-            elapsed: Duration::from_millis(self.millis.unwrap_or(0)),
+            depth: self.depth.ok_or(UciError::IncompleteInfo)?,
+            score: self.score.ok_or(UciError::IncompleteInfo)?,
+            nodes: self.nodes.unwrap_or_default(),
+            elapsed: self.elapsed.unwrap_or_default(),
             best_move: self.best_move,
         })
     }
@@ -58,11 +52,11 @@ impl InfoBuilder {
                 ..cleared
             },
             InfoKey::Cp => InfoBuilder {
-                centipawns: token.parse().ok(),
+                score: token.parse().ok(),
                 ..cleared
             },
             InfoKey::Mate => InfoBuilder {
-                mate: token.parse().ok(),
+                score: token.parse::<i32>().ok().map(Score::mating_in_moves),
                 ..cleared
             },
             InfoKey::Nodes => InfoBuilder {
@@ -70,7 +64,7 @@ impl InfoBuilder {
                 ..cleared
             },
             InfoKey::Time => InfoBuilder {
-                millis: token.parse().ok(),
+                elapsed: token.parse::<u64>().ok().map(Duration::from_millis),
                 ..cleared
             },
             InfoKey::Pv => InfoBuilder {

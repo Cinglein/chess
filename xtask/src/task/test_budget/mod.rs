@@ -26,7 +26,7 @@ impl TestBudget {
     const MAX_ASSERTIONS_PER_TEST: usize = 3;
     const MAX_LINES_PER_TEST: usize = 20;
     const MAX_LITERALS_PER_TEST: usize = 4;
-    const MAX_INTEGER_LITERAL: u64 = 64;
+    const MAX_INTEGER_LITERAL: usize = 64;
     const MAX_AVERAGE_TESTS_PER_FILE: usize = 1;
     const MAX_TEST_LINE_PERCENT: usize = 20;
 

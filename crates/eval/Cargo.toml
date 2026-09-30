@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
-derive_more = { version = "2", default-features = false, features = ["add", "display", "not"] }
+derive_more = { version = "2", default-features = false, features = ["add", "display", "from_str", "not"] }
 enum-map = "3"
 strum = { version = "0.28", default-features = false }
 

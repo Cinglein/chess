@@ -13,6 +13,7 @@ mod no_comments;
 mod no_forwarders;
 mod no_free_fns;
 mod no_parameter_bags;
+mod primitive_boundary;
 mod private_fns;
 mod public_surface;
 mod report;
@@ -40,6 +41,7 @@ use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::no_parameter_bags::NoParameterBags;
+use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
 use crate::task::state_graph::StateGraph;
@@ -67,6 +69,7 @@ pub enum Task {
     NoForwarders,
     NoFreeFns,
     NoParameterBags,
+    PrimitiveBoundary,
     PrivateFns,
     PublicSurface,
     StateGraph,
@@ -99,6 +102,9 @@ impl Task {
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
             Task::NoParameterBags => NoParameterBags::report(&workspace.source_files()?).verdict(),
+            Task::PrimitiveBoundary => {
+                PrimitiveBoundary::report(&workspace.source_files()?).verdict()
+            }
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
