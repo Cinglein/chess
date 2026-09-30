@@ -1,5 +1,9 @@
 mod available_gib;
+mod scope;
 
+pub use scope::Scope;
+
+use std::env;
 use std::fs::{self, File};
 
 use available_gib::AvailableGib;
@@ -12,34 +16,38 @@ use crate::task::workspace::Workspace;
 pub struct Mutants;
 
 impl Mutants {
-    const BASE: &str = "origin/main";
-    const DIFF_FILE: &str = "target/mutants.diff";
-    const OUTPUT_DIRECTORY: &str = "target/mutants";
     const LOCK_FILE: &str = "target/mutants.lock";
+    const OUTPUT_DIRECTORY: &str = "target/mutants";
     const PROCESS_NAME: &str = "cargo-mutants";
+    const SHARD_VARIABLE: &str = "MUTANTS_SHARD";
     const JOBS: &str = "2";
 
-    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
+    pub fn run(workspace: &Workspace, scope: Scope) -> Result<(), Failure> {
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
         let budget = Self::refuse_if_memory_is_short()?;
-        let diff = workspace.git_output(&["diff", "--merge-base", Self::BASE])?;
-        fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| Failure::Io {
-            site: Site::File(Self::DIFF_FILE.to_owned()),
-            error,
-        })?;
-        let compiler_tasks = budget.compiler_tasks().to_string();
-        workspace.cargo(&[
-            "mutants",
-            "--in-diff",
-            Self::DIFF_FILE,
-            "--jobs",
-            Self::JOBS,
-            "--jobserver-tasks",
-            &compiler_tasks,
-            "--output",
-            Self::OUTPUT_DIRECTORY,
-        ])
+        let arguments: Vec<String> = [
+            String::from("mutants"),
+            String::from("--jobs"),
+            String::from(Self::JOBS),
+            String::from("--jobserver-tasks"),
+            budget.compiler_tasks().to_string(),
+            String::from("--output"),
+            String::from(Self::OUTPUT_DIRECTORY),
+        ]
+        .into_iter()
+        .chain(scope.arguments(workspace)?)
+        .chain(Self::shard())
+        .collect();
+        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
+        workspace.cargo(&borrowed)
+    }
+
+    fn shard() -> Vec<String> {
+        env::var(Self::SHARD_VARIABLE)
+            .ok()
+            .map(|shard| vec![String::from("--shard"), shard])
+            .unwrap_or_default()
     }
 
     fn exclusive_lock(workspace: &Workspace) -> Result<File, Failure> {

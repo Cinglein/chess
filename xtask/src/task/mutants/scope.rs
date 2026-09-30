@@ -1,0 +1,35 @@
+use std::fs;
+
+use crate::task::failure::Failure;
+use crate::task::site::Site;
+use crate::task::workspace::Workspace;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Scope {
+    ChangedLines,
+    Workspace,
+}
+
+impl Scope {
+    const BASE: &str = "origin/main";
+    const DIFF_FILE: &str = "target/mutants.diff";
+
+    pub fn arguments(self, workspace: &Workspace) -> Result<Vec<String>, Failure> {
+        match self {
+            Scope::ChangedLines => {
+                let diff = workspace.git_output(&["diff", "--merge-base", Self::BASE])?;
+                fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| {
+                    Failure::Io {
+                        site: Site::File(Self::DIFF_FILE.to_owned()),
+                        error,
+                    }
+                })?;
+                Ok(vec![
+                    String::from("--in-diff"),
+                    String::from(Self::DIFF_FILE),
+                ])
+            }
+            Scope::Workspace => Ok(Vec::new()),
+        }
+    }
+}
