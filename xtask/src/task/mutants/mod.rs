@@ -1,4 +1,5 @@
 mod available_gib;
+mod memory_watch;
 mod scope;
 
 pub use scope::Scope;
@@ -7,6 +8,7 @@ use std::env;
 use std::fs::{self, File};
 
 use available_gib::AvailableGib;
+use memory_watch::MemoryWatch;
 use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::failure::Failure;
@@ -40,7 +42,12 @@ impl Mutants {
         .chain(Self::shard())
         .collect();
         let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        workspace.cargo(&borrowed)
+        let mut child = workspace.spawn_cargo(&borrowed)?;
+        let status = MemoryWatch::over(&child, budget).guard(&mut child)?;
+        status
+            .success()
+            .then_some(())
+            .ok_or_else(|| Failure::Cargo(borrowed.join(" ")))
     }
 
     fn shard() -> Vec<String> {

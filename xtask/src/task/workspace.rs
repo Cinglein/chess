@@ -1,7 +1,7 @@
 use std::env;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Child, Command};
 
 use crate::task::failure::Failure;
 use crate::task::site::Site;
@@ -36,6 +36,15 @@ impl Workspace {
             .filter(std::process::ExitStatus::success)
             .map(|_| ())
             .ok_or_else(|| Failure::Cargo(args.join(" ")))
+    }
+
+    pub fn spawn_cargo(&self, args: &[&str]) -> Result<Child, Failure> {
+        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+        Command::new(cargo)
+            .args(args)
+            .current_dir(&self.root)
+            .spawn()
+            .map_err(|_| Failure::Cargo(args.join(" ")))
     }
 
     pub fn git_output(&self, args: &[&str]) -> Result<String, Failure> {

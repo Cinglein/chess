@@ -33,4 +33,4 @@ jobs:
         if: always()
         with:
           name: mutants-shard-${{ matrix.shard }}
-          path: target/mutants/mutants.out/*.txt
+          path: target/mutants/mutants.out

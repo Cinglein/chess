@@ -228,7 +228,7 @@ mod tests {
     use std::collections::HashSet;
 
     use proptest::prelude::*;
-    use strum::IntoEnumIterator;
+    use strum::{EnumCount, IntoEnumIterator};
 
     use super::{Bitboard, SubsetIter};
     use crate::direction::Direction;
@@ -254,7 +254,7 @@ mod tests {
         proptest!(|(left: u64, right: u64)| {
             let (left, right) = (Bitboard::from_bits(left), Bitboard::from_bits(right));
             prop_assert_eq!((left | right).count() + (left & right).count(), left.count() + right.count());
-            let squares: Vec<Square> = left.into_iter().collect();
+            let squares: Vec<Square> = left.into_iter().take(Square::COUNT + 1).collect();
             prop_assert!(squares.is_sorted() && squares.iter().copied().collect::<Bitboard>() == left);
             let listed: Vec<String> = squares.iter().map(ToString::to_string).collect();
             prop_assert_eq!(left.to_string(), listed.join(" "));
@@ -265,7 +265,7 @@ mod tests {
     fn subsets_of_a_mask_are_its_distinct_sub_bitboards() {
         proptest!(|(bits: u64)| {
             let mask = Bitboard::from_bits(bits) & Bitboard::rank(Rank::One);
-            let subsets: Vec<Bitboard> = SubsetIter::new(mask).collect();
+            let subsets: Vec<Bitboard> = SubsetIter::new(mask).take((1 << mask.count()) + 1).collect();
             prop_assert_eq!(subsets.len(), 1 << mask.count());
             prop_assert_eq!(subsets.iter().collect::<HashSet<_>>().len(), subsets.len());
             prop_assert!(subsets.iter().all(|subset| subset.difference(mask).is_empty()));
