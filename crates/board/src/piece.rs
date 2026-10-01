@@ -1,4 +1,4 @@
-use core::fmt;
+use core::fmt::{self, Write};
 use core::str::FromStr;
 
 use strum::ParseError;
@@ -31,14 +31,14 @@ impl Piece {
 
 impl fmt::Display for Piece {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for letter in self.kind.as_ref().chars() {
-            let letter = match self.color {
+        self.kind
+            .as_ref()
+            .chars()
+            .map(|letter| match self.color {
                 Color::White => letter.to_ascii_uppercase(),
                 Color::Black => letter,
-            };
-            write!(formatter, "{letter}")?;
-        }
-        Ok(())
+            })
+            .try_for_each(|letter| formatter.write_char(letter))
     }
 }
 

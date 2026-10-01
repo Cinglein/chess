@@ -48,9 +48,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
         let bishops = ours(PieceKind::Bishop).disjoint_union(queens);
         let rooks = ours(PieceKind::Rook).disjoint_union(queens);
         let occupied = self.occupied;
-        for from in pawns {
-            self.pawn_moves(from);
-        }
+        pawns.into_iter().for_each(|from| self.pawn_moves(from));
         self.pieces(knights, Knight::attacks);
         self.pieces(bishops, |from| Bishop::attacks(from, occupied));
         self.pieces(rooks, |from| Rook::attacks(from, occupied));

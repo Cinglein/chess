@@ -61,15 +61,16 @@ impl TableEntry {
         distance: RootDistance,
         window: Window,
     ) -> Option<Score> {
-        if self.depth < depth {
-            return None;
-        }
         let score = self.score.seen_from(distance);
-        match self.kind {
-            BoundKind::Exact => Some(score),
-            BoundKind::AtMost if window.lower().admits_no_more_than(score) => Some(score),
-            BoundKind::AtLeast if window.upper().excludes(score) => Some(score),
-            BoundKind::AtMost | BoundKind::AtLeast => None,
+        if self.depth < depth {
+            None
+        } else {
+            match self.kind {
+                BoundKind::Exact => Some(score),
+                BoundKind::AtMost if window.lower().admits_no_more_than(score) => Some(score),
+                BoundKind::AtLeast if window.upper().excludes(score) => Some(score),
+                BoundKind::AtMost | BoundKind::AtLeast => None,
+            }
         }
     }
 }

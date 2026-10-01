@@ -79,17 +79,18 @@ impl<E: Evaluator> Search<E> {
                 principal.improved(chess_move, score)
             });
         if negamax.was_aborted() {
-            return self;
-        }
-        Search {
-            depth,
-            best_move: principal.chess_move(),
-            score: principal.chess_move().map_or_else(
-                || Negamax::<E, I>::terminal(&self.board, RootDistance::ROOT),
-                |_| principal.score(),
-            ),
-            nodes: self.nodes + negamax.nodes(),
-            ..self
+            self
+        } else {
+            Search {
+                depth,
+                best_move: principal.chess_move(),
+                score: principal.chess_move().map_or_else(
+                    || Negamax::<E, I>::terminal(&self.board, RootDistance::ROOT),
+                    |_| principal.score(),
+                ),
+                nodes: self.nodes + negamax.nodes(),
+                ..self
+            }
         }
     }
 }

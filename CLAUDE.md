@@ -27,7 +27,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
   wasm), `datagen`, `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `const-shape`, `distinct-signatures`, `fn-shape`, `literal-names`,
+  and runs `const-shape`, `distinct-signatures`, `expression-flow`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
   `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
   `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
@@ -130,6 +130,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   two values that travel together are a struct. At most 4 parameters after the receiver. Control
   flow nests at most two deep, counting `if`, `match` arms, loops, and closure bodies, with
   `else if` chains flat. `cargo xtask fn-shape` enforces it.
+- Control flow is an expression. In `crates/`, outside tests and `const fn`s, a body has no
+  `return`, `break`, `continue`, `loop`, `for`, or `while`; every `if` has an `else`, and every
+  `if` or `match` yields a value that is used. Early exit goes through `?` on a `Result` or an
+  `Option`; a loop is an iterator driven by combinators or a `try_fold` over `ControlFlow`.
+  `cargo xtask expression-flow` enforces it; xtask's `syn` visitors are imperative by design and
+  exempt.
 - Iterators are driven by combinators. No `let mut` bound to an iterator, and no `for` loop whose
   body only pushes, extends, or inserts into a collection, even behind an `if`: use `format`,
   `collect`, `fold`, or `extend`. `cargo xtask manual-iteration` enforces it.

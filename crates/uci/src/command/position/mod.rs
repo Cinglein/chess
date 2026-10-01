@@ -46,10 +46,10 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
         let setup = setup.trim();
         let (head, fen) = setup.split_once(char::is_whitespace).unwrap_or((setup, ""));
         let start = match head.parse::<PositionWord>() {
-            Ok(PositionWord::StartPos) => Board::START,
-            Ok(PositionWord::Fen) => fen.trim().parse().map_err(|_| UciError::UnknownPosition)?,
-            _ => return Err(UciError::UnknownPosition),
-        };
+            Ok(PositionWord::StartPos) => Ok(Board::START),
+            Ok(PositionWord::Fen) => fen.trim().parse().map_err(|_| UciError::UnknownPosition),
+            _ => Err(UciError::UnknownPosition),
+        }?;
         Ok(Position {
             start,
             moves: Moves::Written(moves),
@@ -59,11 +59,12 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
 
 impl fmt::Display for Position<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.start == Board::START {
-            write!(formatter, "{}", PositionWord::StartPos)?;
+        let setup = if self.start == Board::START {
+            write!(formatter, "{}", PositionWord::StartPos)
         } else {
-            write!(formatter, "{} {}", PositionWord::Fen, self.start)?;
-        }
+            write!(formatter, "{} {}", PositionWord::Fen, self.start)
+        };
+        setup?;
         if self.moves.is_empty() {
             Ok(())
         } else {

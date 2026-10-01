@@ -1,15 +1,21 @@
+mod full_width;
+mod quiescence;
+mod regime;
+
 use core::ops::ControlFlow;
 
-use board::{Board, ChessMove, MoveKind};
+use board::{Board, ChessMove};
 use eval::{Evaluator, Score};
 
 use super::super::depth::Depth;
 use super::super::interrupt::Interrupt;
 use super::Negamax;
 use super::ordered_moves::OrderedMoves;
-use super::regime::Regime;
-use super::table::{RootDistance, TableEntry};
+use super::table::{Conclusion, RootDistance, TableEntry};
 use super::window::{Bounds, Window};
+use full_width::FullWidth;
+use quiescence::Quiescence;
+use regime::Regime;
 
 #[derive(Clone, Copy)]
 pub(crate) struct Node<'position> {
@@ -51,16 +57,55 @@ impl<'position> Node<'position> {
     ) -> Score {
         let floor = regime.floor::<E>(self.board);
         if self.window.upper().excludes(floor) {
-            return floor;
+            floor
+        } else {
+            self.explored(regime, negamax, floor)
         }
+    }
+
+    pub(crate) fn explore<E: Evaluator, I: Interrupt>(
+        self,
+        negamax: &mut Negamax<'_, '_, '_, E, I>,
+    ) -> Score {
+        match self.depth.decremented() {
+            Some(remaining) => self.at_depth(remaining).search(&FullWidth, negamax),
+            None if self.board.in_check() => self.search(&FullWidth, negamax),
+            None => self.search(&Quiescence, negamax),
+        }
+    }
+
+    fn explored<R: Regime, E: Evaluator, I: Interrupt>(
+        self,
+        regime: &R,
+        negamax: &mut Negamax<'_, '_, '_, E, I>,
+        floor: Score,
+    ) -> Score {
         let moves = OrderedMoves::from_board(
             self.board,
             negamax.killers.at_ply(self.distance),
             self.hash_move,
         );
         if moves.is_empty() {
-            return Negamax::<E, I>::terminal(self.board, self.distance);
+            Negamax::<E, I>::terminal(self.board, self.distance)
+        } else {
+            let conclusion = self.best_of(regime, negamax, moves, floor);
+            negamax.table.store(TableEntry::remember(
+                self.board.hash(),
+                self.depth.incremented(),
+                self.distance,
+                conclusion,
+            ));
+            conclusion.score()
         }
+    }
+
+    fn best_of<R: Regime, E: Evaluator, I: Interrupt>(
+        self,
+        regime: &R,
+        negamax: &mut Negamax<'_, '_, '_, E, I>,
+        moves: OrderedMoves,
+        floor: Score,
+    ) -> Conclusion {
         let searched = moves
             .into_iter()
             .filter(|chess_move| regime.considers(*chess_move, self.board))
@@ -74,23 +119,17 @@ impl<'position> Node<'position> {
                 |bounds, (chess_move, child)| {
                     let window = bounds.child_window();
                     let score = -negamax.score(&child, self.depth, self.distance.deeper(), window);
-                    let admitted = bounds.admit(chess_move, score);
-                    if admitted.is_break() && !chess_move.captures(self.board.placement()) {
-                        negamax.killers.remember(self.distance, chess_move);
-                    }
-                    admitted
+                    bounds.admit(chess_move, score).map_break(|cut| {
+                        negamax
+                            .killers
+                            .remember_quiet(self.distance, chess_move, self.board);
+                        cut
+                    })
                 },
             );
-        let conclusion = match searched {
+        match searched {
             ControlFlow::Break(bounds) | ControlFlow::Continue(bounds) => bounds.conclude(),
-        };
-        negamax.table.store(TableEntry::remember(
-            self.board.hash(),
-            self.depth.incremented(),
-            self.distance,
-            conclusion,
-        ));
-        conclusion.score()
+        }
     }
 }
 
@@ -99,10 +138,11 @@ mod tests {
     use board::{Board, LongAlgebraic, NodeCount};
     use eval::{PieceSquareTables, Score};
 
+    use super::super::Negamax;
     use super::super::ordered_moves::Killers;
     use super::super::table::{RootDistance, TableEntry, TranspositionTable};
     use super::super::window::{Bound, Window};
-    use super::super::{FullWidth, Negamax};
+    use super::FullWidth;
     use super::Node;
     use crate::search::Uninterrupted;
     use crate::search::depth::Depth;
