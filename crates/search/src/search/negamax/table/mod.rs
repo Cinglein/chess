@@ -28,14 +28,11 @@ impl<'store> TranspositionTable<'store> {
     }
 
     pub(crate) fn store(&mut self, entry: TableEntry) {
-        let Some(index) = self.slot_index(entry.hash()) else {
-            return;
-        };
-        if let Some(slot) = self.entries.get_mut(index)
-            && (slot.hash() != entry.hash() || slot.depth() <= entry.depth())
-        {
-            *slot = entry;
-        }
+        self.slot_index(entry.hash())
+            .and_then(|index| self.entries.get_mut(index))
+            .filter(|slot| slot.hash() != entry.hash() || slot.depth() <= entry.depth())
+            .into_iter()
+            .for_each(|slot| *slot = entry);
     }
 
     fn slot_index(&self, hash: Zobrist) -> Option<usize> {

@@ -3,7 +3,7 @@ mod time_budget;
 
 use std::ops::ControlFlow;
 use std::sync::atomic::AtomicBool;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use board::{Board, LongAlgebraic};
 use deadline::Deadline;
@@ -51,18 +51,13 @@ impl<'position, 'flag> Thinker<'position, 'flag> {
                 let before = search.depth();
                 let deepened = search.deepen(&mut table, &deadline);
                 if deepened.depth() == before {
-                    return ControlFlow::Break(deepened);
-                }
-                sink.emit(Response::Info(SearchInfo::from_search(
-                    &deepened,
-                    start.elapsed(),
-                )));
-                if allowance
-                    .is_some_and(|budget| TimeBudget::is_past_halfway(start.elapsed(), budget))
-                {
                     ControlFlow::Break(deepened)
                 } else {
-                    ControlFlow::Continue(deepened)
+                    sink.emit(Response::Info(SearchInfo::from_search(
+                        &deepened,
+                        start.elapsed(),
+                    )));
+                    Self::paced(deepened, start.elapsed(), allowance)
                 }
             },
         );
@@ -72,5 +67,17 @@ impl<'position, 'flag> Thinker<'position, 'flag> {
         sink.emit(Response::BestMove(
             search.best_move().map(LongAlgebraic::from),
         ));
+    }
+
+    fn paced(
+        deepened: Search<PieceSquareTables>,
+        elapsed: Duration,
+        allowance: Option<Duration>,
+    ) -> ControlFlow<Search<PieceSquareTables>, Search<PieceSquareTables>> {
+        if allowance.is_some_and(|budget| TimeBudget::is_past_halfway(elapsed, budget)) {
+            ControlFlow::Break(deepened)
+        } else {
+            ControlFlow::Continue(deepened)
+        }
     }
 }

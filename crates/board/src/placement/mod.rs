@@ -79,13 +79,11 @@ impl<H: Hand> Placement<H> {
         let kings = self
             .pieces(Color::White, PieceKind::King)
             .disjoint_union(self.pieces(Color::Black, PieceKind::King));
-        if self.occupied() != bishops.disjoint_union(knights).disjoint_union(kings) {
-            return false;
-        }
-        bishops.disjoint_union(knights).count() <= 1
-            || (knights.is_empty()
-                && ((bishops & Bitboard::LIGHT_SQUARES).is_empty()
-                    || (bishops & !Bitboard::LIGHT_SQUARES).is_empty()))
+        self.occupied() == bishops.disjoint_union(knights).disjoint_union(kings)
+            && (bishops.disjoint_union(knights).count() <= 1
+                || (knights.is_empty()
+                    && ((bishops & Bitboard::LIGHT_SQUARES).is_empty()
+                        || (bishops & !Bitboard::LIGHT_SQUARES).is_empty())))
     }
 
     #[must_use]
@@ -183,15 +181,16 @@ impl Placement<Holding> {
     #[must_use]
     pub fn land(self, square: Square) -> PiecePlacement {
         let piece = self.hand.piece();
-        let mut placement = Placement {
+        let vacated = Placement {
             pieces: self.pieces,
             hand: Empty,
             hash: self.hash,
         };
-        if let Some(occupant) = placement.lift(square) {
-            placement.pieces = occupant.pieces;
-            placement.hash = occupant.hash;
-        }
+        let mut placement = vacated.lift(square).map_or(vacated, |occupant| Placement {
+            pieces: occupant.pieces,
+            hand: Empty,
+            hash: occupant.hash,
+        });
         placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
         placement.hash ^= ZobristKeys::KEYS.piece(piece, square);
         placement
@@ -224,14 +223,15 @@ impl FromStr for PiecePlacement {
     type Err = FenError;
 
     fn from_str(text: &str) -> Result<PiecePlacement, FenError> {
-        if text.split('/').count() != Rank::COUNT {
-            return Err(FenError::RankCount);
-        }
         let ranks = Rank::iter().rev().zip(text.split('/')).map(|(rank, text)| {
             text.parse::<RankPlacement>()
                 .map(|placement| placement.pieces(rank))
         });
-        process_results(ranks, |ranks| ranks.flatten().collect())
+        if text.split('/').count() == Rank::COUNT {
+            process_results(ranks, |ranks| ranks.flatten().collect())
+        } else {
+            Err(FenError::RankCount)
+        }
     }
 }
 

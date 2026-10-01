@@ -68,16 +68,15 @@ impl fmt::Display for Tally {
         let half_points = 2 * self.wins.count() + self.draws.count();
         write!(
             formatter,
-            "+{} ={} -{} {}",
+            "+{} ={} -{} {}{}/{} {}",
             self.wins,
             self.draws,
             self.losses,
-            half_points / 2
-        )?;
-        if half_points % 2 == 1 {
-            formatter.write_str(".5")?;
-        }
-        write!(formatter, "/{} {}", self.games(), self.pairs.estimate())
+            half_points / 2,
+            if half_points % 2 == 1 { ".5" } else { "" },
+            self.games(),
+            self.pairs.estimate()
+        )
     }
 }
 

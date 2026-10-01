@@ -1,4 +1,4 @@
-use board::ChessMove;
+use board::{Board, ChessMove, MoveKind};
 
 use super::ordered_moves::Killers;
 use super::table::RootDistance;
@@ -20,10 +20,17 @@ impl KillerTable {
             .unwrap_or(Killers::NONE)
     }
 
-    pub(crate) fn remember(&mut self, distance: RootDistance, chess_move: ChessMove) {
-        if let Some(killers) = self.0.get_mut(usize::from(distance.plies())) {
-            *killers = killers.remembering(chess_move);
-        }
+    pub(crate) fn remember_quiet(
+        &mut self,
+        distance: RootDistance,
+        chess_move: ChessMove,
+        board: &Board,
+    ) {
+        self.0
+            .get_mut(usize::from(distance.plies()))
+            .filter(|_| !chess_move.captures(board.placement()))
+            .into_iter()
+            .for_each(|killers| *killers = killers.remembering(chess_move));
     }
 }
 
@@ -38,7 +45,7 @@ mod tests {
         let chess_move = Board::START.legal_moves()[0];
         let ply = RootDistance::ROOT.deeper();
         let mut table = KillerTable::new();
-        table.remember(ply, chess_move);
+        table.remember_quiet(ply, chess_move, &Board::START);
         assert!(table.at_ply(ply).remembers(chess_move));
         assert!(!table.at_ply(RootDistance::ROOT).remembers(chess_move));
     }

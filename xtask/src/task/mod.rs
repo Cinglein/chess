@@ -1,6 +1,7 @@
 mod ci;
 mod const_shape;
 mod distinct_signatures;
+mod expression_flow;
 mod failure;
 mod fn_shape;
 mod lint;
@@ -34,6 +35,7 @@ use strum::{EnumString, VariantNames};
 
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
+use crate::task::expression_flow::ExpressionFlow;
 use crate::task::failure::Failure;
 use crate::task::fn_shape::FnShape;
 use crate::task::lint::Lint;
@@ -66,6 +68,7 @@ pub enum Task {
     Ci,
     ConstShape,
     DistinctSignatures,
+    ExpressionFlow,
     FnShape,
     Lint,
     LiteralNames,
@@ -104,6 +107,7 @@ impl Task {
             Task::DistinctSignatures => {
                 DistinctSignatures::report(&workspace.source_files()?).verdict()
             }
+            Task::ExpressionFlow => ExpressionFlow::report(&workspace.source_files()?).verdict(),
             Task::FnShape => FnShape::report(&workspace.source_files()?).verdict(),
             Task::Lint => Lint::run(&workspace),
             Task::LiteralNames => LiteralNames::report(&workspace.source_files()?).verdict(),
