@@ -9,3 +9,4 @@ exclude_globs = [
 test_workspace = true
 additional_cargo_test_args = ["--lib"]
 minimum_test_timeout = 10.0
+cap_lints = false
