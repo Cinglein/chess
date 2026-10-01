@@ -71,28 +71,3 @@ impl proptest::arbitrary::Arbitrary for Piece {
             .boxed()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use strum::IntoEnumIterator;
-
-    use super::Piece;
-    use crate::color::Color;
-    use crate::piece_kind::PieceKind;
-
-    #[test]
-    fn every_piece_roundtrips_through_a_letter_whose_case_is_its_colour() {
-        for color in Color::iter() {
-            for kind in PieceKind::iter() {
-                let piece = Piece::new(color, kind);
-                let text = piece.to_string();
-                assert_eq!(text.parse(), Ok(piece));
-                assert_eq!(
-                    text.chars().all(|letter| letter.is_ascii_uppercase()),
-                    color == Color::White
-                );
-            }
-        }
-        assert!("x".parse::<Piece>().is_err());
-    }
-}

@@ -119,12 +119,12 @@ mod tests {
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
     const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
     const KNIGHT_FORK: &str = "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
-    const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const MATES: [(&str, u8, u8); 2] = [(MATE_IN_ONE, 2, 1), (MATE_IN_TWO, 3, 3)];
     const MATING_MOVE: &str = "a1a8";
     const GREEDY_CAPTURE: &str = "d1d5";
     const FORKING_CHECK: &str = "b5c7";
-    const ORDERING_DEPTH: u8 = 3;
+    const TABLE_DEPTH: u8 = 5;
     const TABLE_ENTRIES: usize = 1 << 16;
 
     struct Fixture;
@@ -171,8 +171,8 @@ mod tests {
 
     #[test]
     fn the_table_cuts_nodes_without_changing_the_score() {
-        let without = Fixture::searched(KIWIPETE, ORDERING_DEPTH, 0);
-        let with = Fixture::searched(KIWIPETE, ORDERING_DEPTH, TABLE_ENTRIES);
+        let without = Fixture::searched(START, TABLE_DEPTH, 0);
+        let with = Fixture::searched(START, TABLE_DEPTH, TABLE_ENTRIES);
         assert_eq!(with.score(), without.score());
         assert!(
             with.nodes() < without.nodes(),

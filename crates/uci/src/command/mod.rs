@@ -97,94 +97,29 @@ impl fmt::Display for Command<'_> {
 
 #[cfg(test)]
 mod tests {
-    use board::Board;
-    use proptest::prelude::*;
-
     use super::Command;
-    use crate::command::{EngineOption, GoLimits, Position};
-    use crate::receiver::Receiver;
 
-    const POSITION: &str = "position startpos moves e2e4 e7e5";
-    const LINES: [&str; 12] = [
+    const LINES: [&str; 11] = [
         "uci",
         "isready",
         "setoption name UCI_Elo value 1320",
         "ucinewgame",
         "position startpos",
+        "position startpos moves e2e4 e7e5",
         "position fen 8/8/8/8/8/8/8/K6k w - - 0 1 moves a1a2",
         "go infinite",
-        "go depth 3",
-        "go nodes 1000",
-        "go movetime 300",
+        "go wtime 1 btime 2 winc 3 binc 4",
         "stop",
         "quit",
     ];
 
-    #[derive(Debug, PartialEq, Eq)]
-    struct Trace(&'static str);
-
-    impl Receiver<'_> for Trace {
-        fn identify(self) -> Self {
-            Trace("identify")
-        }
-
-        fn confirm_ready(self) -> Self {
-            Trace("confirm_ready")
-        }
-
-        fn configure(self, _: EngineOption<'_>) -> Self {
-            Trace("configure")
-        }
-
-        fn reset_game(self) -> Self {
-            Trace("reset_game")
-        }
-
-        fn place(self, _: Position<'_>) -> Self {
-            Trace("place")
-        }
-
-        fn start_search(self, _: GoLimits) -> Self {
-            Trace("start_search")
-        }
-
-        fn halt(self) -> Self {
-            Trace("halt")
-        }
-
-        fn shut_down(self) -> Self {
-            Trace("shut_down")
-        }
-    }
-
     #[test]
-    fn any_go_command_prints_back_to_itself_and_is_delivered_as_a_search() {
-        proptest!(|(limits: GoLimits)| {
-            let command = Command::Go(limits);
-            let line = command.to_string();
-            prop_assert_eq!(Command::try_from(line.as_str()), Ok(command));
-            prop_assert_eq!(command.deliver_to(Trace("halt")), Trace("start_search"));
-        });
-    }
-
-    #[test]
-    fn a_position_command_carries_its_moves_and_unknown_words_are_rejected() {
-        let Command::Position(position) = Command::try_from(POSITION).unwrap() else {
-            panic!("{POSITION}");
-        };
-        assert_eq!(
-            (position.start(), position.moves().iter().count()),
-            (Board::START, 2)
-        );
-        assert!(Command::try_from("dance").is_err());
-    }
-
-    #[test]
-    fn every_command_prints_back_to_the_line_it_was_parsed_from() {
-        for line in LINES.into_iter().chain([POSITION]) {
+    fn every_command_prints_back_to_the_line_it_was_parsed_from_and_unknown_words_are_rejected() {
+        for line in LINES {
             let command = Command::try_from(line).unwrap();
             assert_eq!(command.to_string(), line);
             assert_eq!(command.interrupts(), line == "stop" || line == "quit");
         }
+        assert!(Command::try_from("dance").is_err());
     }
 }

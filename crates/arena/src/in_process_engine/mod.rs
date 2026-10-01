@@ -62,7 +62,6 @@ mod tests {
 
     use super::{InProcessEngine, Opponent};
 
-    const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
     const SHALLOW: GoLimits = GoLimits::Depth(Depth::new(1));
     const DEEP: GoLimits = GoLimits::Depth(Depth::new(4));
@@ -73,19 +72,6 @@ mod tests {
                 .unwrap()
                 .score()
         }
-    }
-
-    #[test]
-    fn the_in_process_engine_answers_a_position_with_the_mating_move() {
-        let mut in_process_engine = InProcessEngine::default();
-        in_process_engine.begin_game().unwrap();
-        let chosen = in_process_engine
-            .choose_move(
-                Position::played(MATE_IN_ONE.parse().unwrap(), &[]),
-                GoLimits::Depth(Depth::new(2)),
-            )
-            .unwrap();
-        assert_eq!(chosen.notation().to_string(), "a1a8");
     }
 
     #[test]

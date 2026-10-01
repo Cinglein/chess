@@ -61,6 +61,7 @@ impl Rays {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
     use strum::IntoEnumIterator;
 
     use super::Rays;
@@ -89,24 +90,19 @@ mod tests {
 
     #[test]
     fn every_ray_agrees_with_stepping_until_the_first_blocker() {
-        for square in Square::iter() {
-            for direction in Direction::iter() {
-                let blockers = Bitboard::rank(square.rank()) ^ Bitboard::file(square.file());
+        proptest!(|(blockers: Bitboard)| {
+            for square in Square::iter() {
+                for direction in Direction::iter() {
                 let mut expected = Bitboard::EMPTY;
                 let mut current = square + direction;
                 while let Some(next) = current {
                     expected = expected.including(next);
-                    current = (!blockers.contains(next))
-                        .then(|| next + direction)
-                        .flatten();
+                    current = (!blockers.contains(next)).then(|| next + direction).flatten();
                 }
                 let frontier = Bitboard::from_square(square).shift(direction);
-                assert_eq!(
-                    Rays::cast(frontier, direction, blockers),
-                    expected,
-                    "{square} {direction:?}"
-                );
+                prop_assert_eq!(Rays::cast(frontier, direction, blockers), expected, "{} {:?}", square, direction);
+                }
             }
-        }
+        });
     }
 }

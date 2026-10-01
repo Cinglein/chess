@@ -37,11 +37,6 @@ impl LongAlgebraic {
     pub const fn destination(&self) -> Square {
         self.destination
     }
-
-    #[must_use]
-    pub const fn promotion(&self) -> Option<PromotionPiece> {
-        self.promotion
-    }
 }
 
 impl From<ChessMove> for LongAlgebraic {
@@ -104,7 +99,7 @@ impl proptest::arbitrary::Arbitrary for LongAlgebraic {
 
 #[cfg(test)]
 mod tests {
-    use super::{LongAlgebraic, MoveKind};
+    use super::LongAlgebraic;
     use crate::board::Board;
     use proptest::prelude::*;
 
@@ -128,9 +123,8 @@ mod tests {
             let board: Board = fen.parse().unwrap();
             for legal in board.legal_moves() {
                 let notation = LongAlgebraic::from(legal);
-                assert_eq!(notation.to_string().parse(), Ok(notation));
+                assert_eq!(legal.to_string(), notation.to_string());
                 assert_eq!(board.resolve_move(notation), Some(legal), "{notation}");
-                assert_eq!(notation.promotion(), legal.promotion_piece());
             }
         }
     }

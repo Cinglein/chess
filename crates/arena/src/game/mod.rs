@@ -3,6 +3,8 @@ mod label;
 mod outcome;
 mod record;
 mod repetition_count;
+#[cfg(test)]
+mod script;
 mod streaks;
 mod termination;
 
@@ -179,10 +181,11 @@ mod tests {
     use std::ops::ControlFlow;
     use std::time::Duration;
 
-    use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
+    use board::{Board, FullmoveNumber, NodeCount, PlyCount};
     use eval::Score;
     use uci::Clock;
 
+    use super::script::Script;
     use super::{Finished, Game};
     use crate::in_process_engine::InProcessEngine;
     use crate::rules::{DrawAdjudication, ResignAdjudication, Rules, Thinking};
@@ -192,6 +195,9 @@ mod tests {
     const ROOK_EACH: &str = "4k3/r7/8/8/8/8/7R/4K3 w - - 0 1";
     const TWO_QUEENS_UP: &str = "k7/8/8/8/8/8/8/4KQQ1 w - - 0 1";
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
+    const HUNDRED_HALFMOVES: &str = "4k3/8/8/8/8/8/8/4K2R w - - 100 60";
+    const KNIGHTS_OUT_AND_BACK_TWICE: &str = "g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8";
     const QUICK: Rules = Rules::DEFAULT.thinking_by(Thinking::FixedNodes(NodeCount::new(64)));
     const NO_TIME: Clock = Clock::new(
         Duration::from_nanos(1),
@@ -214,8 +220,16 @@ mod tests {
         DrawAdjudication::new(ONE_MOVE, Score::INFINITY, PlyCount::new(4));
     const LOST_FOR_ONE_PLY: ResignAdjudication =
         ResignAdjudication::new(Score::new(64), PlyCount::new(1));
-    const FIXTURES: [(&str, Rules, &str, usize); 6] = [
+    const LEVEL_FOR_ONE_PLY: DrawAdjudication =
+        DrawAdjudication::new(ONE_MOVE, Score::new(10), PlyCount::new(1));
+    const FIXTURES: [(&str, Rules, &str, usize); 7] = [
         (MATE_IN_ONE, QUICK, "1-0 {checkmate}", 1),
+        (
+            MATE_IN_ONE,
+            QUICK.adjudicated_by(LEVEL_FOR_ONE_PLY, Rules::DEFAULT.resign()),
+            "1-0 {checkmate}",
+            1,
+        ),
         (BARE_KINGS, QUICK, "1/2-1/2 {insufficient material}", 0),
         (
             ROOK_EACH,
@@ -244,6 +258,29 @@ mod tests {
             4,
         ),
     ];
+    const SCRIPTED: [(&str, &str, &str); 5] = [
+        (
+            START,
+            KNIGHTS_OUT_AND_BACK_TWICE,
+            "position startpos moves g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8\n1/2-1/2 {threefold repetition}",
+        ),
+        (
+            STALEMATE,
+            "",
+            "position fen 7k/5Q2/6K1/8/8/8/8/8 b - - 0 1\n1/2-1/2 {stalemate}",
+        ),
+        (
+            HUNDRED_HALFMOVES,
+            "",
+            "position fen 4k3/8/8/8/8/8/8/4K2R w - - 100 60\n1/2-1/2 {fifty moves without progress}",
+        ),
+        (START, "e2e5", "position startpos\n0-1 {illegal move}"),
+        (
+            START,
+            "",
+            "position startpos\n0-1 {engine failure: the engine had no move}",
+        ),
+    ];
 
     impl Game {
         fn played_between_two_engines(fen: &str, rules: Rules) -> Finished {
@@ -256,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    fn games_end_the_way_their_position_and_rules_dictate() {
+    fn games_end_the_way_their_position_and_rules_dictate_and_every_label_carries_the_verdict() {
         for (fen, rules, outcome, plies) in FIXTURES {
             let finished = Game::played_between_two_engines(fen, rules);
             assert_eq!(
@@ -264,15 +301,25 @@ mod tests {
                 (outcome.to_owned(), plies),
                 "{fen}"
             );
+            let verdict = finished.outcome().verdict();
+            assert!(
+                finished.labels().all(|label| label.verdict() == verdict
+                    && verdict
+                        .winner()
+                        .is_none_or(|side| label.score_for(side) > label.score_for(!side))),
+                "{fen}"
+            );
         }
     }
 
     #[test]
-    fn a_node_limited_game_labels_every_position_with_the_mover_score_and_the_verdict() {
-        let finished = Game::played_between_two_engines(MATE_IN_ONE, QUICK);
-        let label = finished.labels().next().unwrap();
-        assert!(label.score_for(Color::White) > label.score_for(Color::Black));
-        assert_eq!(label.verdict().winner(), Some(Color::White));
+    fn scripted_games_end_by_repetition_stalemate_fifty_moves_an_illegal_move_or_a_failure() {
+        for (fen, moves, written) in SCRIPTED {
+            let script: Script = moves.parse().unwrap();
+            let board: Board = fen.parse().unwrap();
+            let finished = Game::from(board).play(&mut &script, &mut &script);
+            assert_eq!(finished.to_string(), written, "{fen}");
+        }
     }
 
     #[test]

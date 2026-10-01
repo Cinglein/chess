@@ -7,9 +7,11 @@ use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
 
 mod measurement;
+mod support_modules;
 mod test_scan;
 
 use measurement::Measurement;
+use support_modules::SupportModules;
 use test_scan::TestScan;
 
 #[derive(Default)]
@@ -27,18 +29,30 @@ impl TestBudget {
     const MAX_LINES_PER_TEST: usize = 20;
     const MAX_LITERALS_PER_TEST: usize = 4;
     const MAX_INTEGER_LITERAL: usize = 64;
-    const MAX_AVERAGE_TESTS_PER_FILE: usize = 1;
-    const MAX_TEST_LINE_PERCENT: usize = 20;
+    const MAX_TESTS_PER_HUNDRED_FILES: usize = 40;
+    const MAX_TEST_LINE_PERCENT: usize = 18;
 
     pub fn report(files: &[SourceFile]) -> Report {
-        files.iter().map(Self::measure).sum::<Self>().summarise()
+        let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
+        files
+            .iter()
+            .map(|file| Self::measure(file, &support))
+            .sum::<Self>()
+            .summarise()
     }
 
-    fn measure(file: &SourceFile) -> Self {
+    fn measure(file: &SourceFile, support: &[String]) -> Self {
+        let lines = file.text().lines().count();
+        let scanned = TestScan::budget(file.path(), file.syntax());
         Self {
             files: 1,
-            lines: file.text().lines().count(),
-            ..TestScan::budget(file.path(), file.syntax())
+            lines,
+            test_lines: if support.contains(&file.path().to_owned()) {
+                lines
+            } else {
+                scanned.test_lines
+            },
+            ..scanned
         }
     }
 
@@ -51,7 +65,7 @@ impl TestBudget {
             Measurement::new(
                 "tests across the workspace",
                 self.tests,
-                self.files * Self::MAX_AVERAGE_TESTS_PER_FILE,
+                self.files * Self::MAX_TESTS_PER_HUNDRED_FILES / 100,
             ),
             Measurement::new(
                 "test lines",

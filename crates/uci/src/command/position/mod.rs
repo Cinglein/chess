@@ -81,15 +81,7 @@ mod tests {
 
     #[test]
     fn a_played_position_prints_as_a_line_that_parses_to_the_same_start_and_moves() {
-        proptest!(|(board: Board, picks in proptest::collection::vec(any::<usize>(), 0..8))| {
-            let mut played: Vec<LongAlgebraic> = Vec::new();
-            let mut current = board;
-            for pick in picks {
-                let moves = current.legal_moves();
-                let Some(chess_move) = moves.get(pick % moves.len().max(1)) else { break };
-                played.push(LongAlgebraic::from(*chess_move));
-                current = current.make_move(*chess_move).unwrap();
-            }
+        proptest!(|(board: Board, played in proptest::collection::vec(any::<LongAlgebraic>(), 0..8))| {
             let line = Position::played(board, &played).to_string();
             let parsed = Position::try_from(line.as_str()).unwrap();
             prop_assert_eq!(parsed.start(), board);
