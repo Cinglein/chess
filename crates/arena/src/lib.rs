@@ -14,9 +14,8 @@ mod uci_process;
 mod worker_count;
 
 pub use arena_error::ArenaError;
-pub use chosen_move::ChosenMove;
 pub use entrant::Entrant;
-pub use game::{Finished, Game, Label};
+pub use game::{Finished, Game, Label, Verdict};
 pub use in_process_engine::InProcessEngine;
 pub use openings::Openings;
 pub use opponent::Opponent;

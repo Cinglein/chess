@@ -1,4 +1,6 @@
 use derive_more::{Add, AddAssign, Display, FromStr, Sum};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Clone,
@@ -16,6 +18,7 @@ use derive_more::{Add, AddAssign, Display, FromStr, Sum};
     Display,
     FromStr,
 )]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct NodeCount(u64);
 
 impl NodeCount {

@@ -10,6 +10,11 @@ pub struct WorkerCount(usize);
 
 impl WorkerCount {
     #[must_use]
+    pub const fn new(workers: usize) -> WorkerCount {
+        WorkerCount(workers)
+    }
+
+    #[must_use]
     pub fn one_per_core() -> WorkerCount {
         WorkerCount(
             thread::available_parallelism()

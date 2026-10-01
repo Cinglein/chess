@@ -24,8 +24,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
+- `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
+  itself at fixed nodes from `RandomOpenings` on worker threads and streams every `Finished`
+  game over a channel; `Example` turns each `Label` into bullet's 32-byte `ChessBoard` record
+  through the `bulletformat` crate; `datagen.toml` holds nodes per move, opening plies, the
+  position target, and concurrency, and `--seed` defaults to the clock.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
-  wasm), `datagen`, `trainer`. Crates are added when their milestone starts.
+  wasm), `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `expression-flow`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
