@@ -135,14 +135,15 @@ mod tests {
 
     #[test]
     fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_its_negation() {
-        proptest!(|(moves in -100i32..=100)| {
+        proptest!(|(moves: i8)| {
             prop_assume!(moves != 0);
+            let moves = i32::from(moves);
             prop_assert_eq!(Score::mating_in_moves(moves).mate_in_moves(), Some(moves));
             prop_assert_eq!((-Score::mating_in_moves(moves)).mate_in_moves(), Some(-moves));
         });
         assert_eq!(
-            (Score::mating_in_moves(1), Score::mating_in_moves(0)),
-            (Score::mate_in(1), Score::mated_in(0))
+            (Score::mating_in_moves(2), Score::mating_in_moves(0)),
+            (Score::mate_in(PLIES), Score::mated_in(0))
         );
     }
 

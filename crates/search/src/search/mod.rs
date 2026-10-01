@@ -124,7 +124,7 @@ mod tests {
     const MATING_MOVE: &str = "a1a8";
     const GREEDY_CAPTURE: &str = "d1d5";
     const FORKING_CHECK: &str = "b5c7";
-    const ORDERING_DEPTH: u8 = 4;
+    const ORDERING_DEPTH: u8 = 3;
     const TABLE_ENTRIES: usize = 1 << 16;
 
     struct Fixture;

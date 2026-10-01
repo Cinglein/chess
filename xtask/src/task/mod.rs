@@ -22,6 +22,7 @@ mod site;
 mod source_file;
 mod state_graph;
 mod test_budget;
+mod test_time;
 mod type_shape;
 mod violation;
 mod wasm;
@@ -48,6 +49,7 @@ use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
+use crate::task::test_time::TestTime;
 use crate::task::type_shape::TypeShape;
 use crate::task::wasm::Wasm;
 use crate::task::workspace::Workspace;
@@ -77,6 +79,7 @@ pub enum Task {
     PublicSurface,
     StateGraph,
     TestBudget,
+    TestTime,
     TypeShape,
     Wasm,
 }
@@ -115,6 +118,7 @@ impl Task {
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
+            Task::TestTime => TestTime::run(&workspace),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace),
         }
