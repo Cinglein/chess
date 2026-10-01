@@ -1,5 +1,6 @@
 mod available_gib;
 mod memory_watch;
+mod mutants_exit;
 mod scope;
 
 pub use scope::Scope;
@@ -9,6 +10,7 @@ use std::fs::{self, File};
 
 use available_gib::AvailableGib;
 use memory_watch::MemoryWatch;
+use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::failure::Failure;
@@ -42,8 +44,7 @@ impl Mutants {
         let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
         let mut child = workspace.spawn_cargo(&borrowed)?;
         let status = MemoryWatch::over(&child, budget).guard(&mut child)?;
-        status
-            .success()
+        MutantsExit::accepts(status)
             .then_some(())
             .ok_or_else(|| Failure::Cargo(borrowed.join(" ")))
     }

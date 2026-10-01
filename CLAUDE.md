@@ -152,9 +152,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   are `#[ignore]` and run outside the PR gate.
 - Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
   lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
-  the diff must be caught or unviable, so no PR adds debt. `cargo xtask mutants-full` mutates the
+  the diff must be caught, unviable, or a timeout (a mutant that hangs a test is a mutant the
+  tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
   whole workspace, optionally one `MUTANTS_SHARD=k/n`; the Mutants workflow runs it on every PR and
-  on demand in 16 shards, and a missed mutant anywhere fails the shard. Tables of literals (`slider/magics.rs`, the
+  on demand in 16 shards, and a missed mutant anywhere fails the shard. A mutant no test can
+  observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
