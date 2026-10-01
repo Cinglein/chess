@@ -59,8 +59,13 @@ jobs:
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: mutants
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants
       - run: cargo xtask mutants
+        env:
+          CARGO_INCREMENTAL: 1

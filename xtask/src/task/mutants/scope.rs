@@ -29,7 +29,7 @@ impl Scope {
                     String::from(Self::DIFF_FILE),
                 ])
             }
-            Scope::Workspace => Ok(Vec::new()),
+            Scope::Workspace => Ok(vec![String::from("--copy-target")]),
         }
     }
 }

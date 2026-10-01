@@ -17,6 +17,7 @@ missing_panics_doc = "allow"
 
 [profile.test]
 opt-level = 2
+debug = "line-tables-only"
 
 [profile.release]
 lto = "fat"
