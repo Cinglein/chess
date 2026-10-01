@@ -128,6 +128,7 @@ mod tests {
     use super::Score;
 
     const PLIES: u8 = 3;
+    const TWO_MOVES: i32 = 2;
 
     #[test]
     fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_a_quicker_mate_scores_higher()
@@ -142,7 +143,7 @@ mod tests {
             prop_assert!(Score::mating_in_moves(moves) > Score::mating_in_moves(moves + 1));
         });
         assert_eq!(
-            (Score::mating_in_moves(2), Score::mating_in_moves(0)),
+            (Score::mating_in_moves(TWO_MOVES), Score::mating_in_moves(0)),
             (Score::mate_in(PLIES), Score::mated_in(0))
         );
     }

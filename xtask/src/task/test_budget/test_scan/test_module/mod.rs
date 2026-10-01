@@ -1,12 +1,15 @@
+mod macro_arguments;
+mod scope;
 mod test_counts;
 
+use macro_arguments::MacroArguments;
+use scope::Scope;
 use test_counts::TestCounts;
 
 use proc_macro2::Span;
-use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
-use syn::{Expr, ItemFn, ItemMod, LitInt, Macro, Token};
+use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
 use super::super::measurement::Measurement;
@@ -15,6 +18,7 @@ use crate::task::violation::Violation;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,
+    scope: Scope,
     budget: TestBudget,
 }
 
@@ -22,6 +26,7 @@ impl<'scan> TestModule<'scan> {
     pub(super) fn budget(path: &'scan str, module: &ItemMod) -> TestBudget {
         let mut scan = TestModule {
             path,
+            scope: Scope::OutsideTest,
             budget: TestBudget {
                 test_lines: Self::line_count(module.span()),
                 ..TestBudget::default()
@@ -61,8 +66,10 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
             self.budget
                 .violations
                 .extend(self.test_violations(function));
+            self.scope = Scope::InsideTest;
         }
         syn::visit::visit_item_fn(self, function);
+        self.scope = Scope::OutsideTest;
     }
 
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
@@ -81,12 +88,12 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
     }
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
-        if let Ok(arguments) =
-            invocation.parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated)
-        {
-            arguments
-                .iter()
-                .for_each(|argument| self.visit_expr(argument));
+        if self.scope == Scope::OutsideTest && TestCounts::is_assertion(invocation) {
+            self.budget.violations.push(Violation::new(
+                Site::Line(self.path.to_owned(), invocation.span().start().line),
+                "assertion outside a test; helpers return values and tests assert them",
+            ));
         }
+        MacroArguments::parse(invocation).visit_with(self);
     }
 }

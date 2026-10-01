@@ -38,6 +38,20 @@ impl Workspace {
             .ok_or_else(|| Failure::Cargo(args.join(" ")))
     }
 
+    pub fn cargo_output(&self, args: &[&str]) -> Result<String, Failure> {
+        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+        let output = Command::new(cargo)
+            .args(args)
+            .current_dir(&self.root)
+            .output()
+            .map_err(|_| Failure::Cargo(args.join(" ")))?;
+        output
+            .status
+            .success()
+            .then(|| String::from_utf8_lossy(&output.stderr).into_owned())
+            .ok_or_else(|| Failure::Cargo(args.join(" ")))
+    }
+
     pub fn source_files(&self) -> Result<Vec<SourceFile>, Failure> {
         let mut files = Self::rust_files_under(&self.root)?;
         files.sort();

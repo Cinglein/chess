@@ -23,6 +23,7 @@ mod source_file;
 mod stacked;
 mod state_graph;
 mod test_budget;
+mod test_time;
 mod type_shape;
 mod violation;
 mod wasm;
@@ -50,6 +51,7 @@ use crate::task::public_surface::PublicSurface;
 use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
+use crate::task::test_time::TestTime;
 use crate::task::type_shape::TypeShape;
 use crate::task::wasm::Wasm;
 use crate::task::workspace::Workspace;
@@ -80,6 +82,7 @@ pub enum Task {
     Stacked,
     StateGraph,
     TestBudget,
+    TestTime,
     TypeShape,
     Wasm,
 }
@@ -119,6 +122,7 @@ impl Task {
             Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
+            Task::TestTime => TestTime::run(&workspace),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace),
         }
