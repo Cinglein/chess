@@ -91,6 +91,12 @@ impl Bitboard {
     }
 
     #[must_use]
+    pub const fn disjoint_union(self, other: Bitboard) -> Bitboard {
+        debug_assert!(self.intersection(other).is_empty());
+        self.union(other)
+    }
+
+    #[must_use]
     pub const fn intersection(self, other: Bitboard) -> Bitboard {
         Bitboard(self.0 & other.0)
     }

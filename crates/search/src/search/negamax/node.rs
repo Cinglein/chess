@@ -93,3 +93,61 @@ impl<'position> Node<'position> {
         conclusion.score()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::{Board, LongAlgebraic, NodeCount};
+    use eval::{PieceSquareTables, Score};
+
+    use super::super::ordered_moves::Killers;
+    use super::super::table::{RootDistance, TableEntry, TranspositionTable};
+    use super::super::window::{Bound, Window};
+    use super::super::{FullWidth, Negamax};
+    use super::Node;
+    use crate::search::Uninterrupted;
+    use crate::search::depth::Depth;
+
+    const KNIGHT_FORK: &str = "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
+    const HANGING_QUEEN: &str = "4k3/8/8/3q4/3Q4/8/8/4K3 w - - 0 1";
+    const FORKING_CHECK: &str = "b5c7";
+    const DEPTH: Depth = Depth::new(3);
+
+    struct Searched {
+        nodes: NodeCount,
+        root_killers: Killers,
+    }
+
+    impl Searched {
+        fn from_root(fen: &str, hash_move: Option<&str>, window: Window) -> Searched {
+            let board: Board = fen.parse().unwrap();
+            let hash_move = hash_move
+                .map(|text| text.parse::<LongAlgebraic>().unwrap())
+                .and_then(|notation| board.resolve_move(notation));
+            let mut store: [TableEntry; 0] = [];
+            let mut table = TranspositionTable::new(&mut store);
+            let mut negamax =
+                Negamax::<PieceSquareTables, Uninterrupted>::new(&mut table, &Uninterrupted);
+            Node::new(&board, DEPTH, RootDistance::ROOT, window)
+                .remembering(hash_move)
+                .search(&FullWidth, &mut negamax);
+            Searched {
+                nodes: negamax.nodes(),
+                root_killers: negamax.killers.at_ply(RootDistance::ROOT),
+            }
+        }
+    }
+
+    #[test]
+    fn a_remembered_best_move_is_tried_first_and_saves_nodes() {
+        let without = Searched::from_root(KNIGHT_FORK, None, Window::FULL).nodes;
+        let with = Searched::from_root(KNIGHT_FORK, Some(FORKING_CHECK), Window::FULL).nodes;
+        assert!(with < without, "{with} vs {without}");
+    }
+
+    #[test]
+    fn a_capture_that_cuts_the_search_is_not_remembered_as_a_killer() {
+        let narrow = Window::FULL.below(Bound::new(Score::DRAW));
+        let searched = Searched::from_root(HANGING_QUEEN, None, narrow);
+        assert_eq!(searched.root_killers, Killers::NONE);
+    }
+}

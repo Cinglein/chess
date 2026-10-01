@@ -176,6 +176,7 @@ impl From<Board> for Game {
 #[cfg(test)]
 mod tests {
     use std::num::NonZeroU16;
+    use std::ops::ControlFlow;
     use std::time::Duration;
 
     use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
@@ -198,6 +199,14 @@ mod tests {
         Duration::ZERO,
         Duration::ZERO,
     );
+    const GENEROUS: Clock = Clock::new(
+        Duration::from_secs(60),
+        Duration::from_secs(60),
+        Duration::from_secs(1),
+        Duration::ZERO,
+    );
+    const MOVER: Color = Color::White;
+    const WAITER: Color = Color::Black;
     const ONE_MOVE: FullmoveNumber = FullmoveNumber::new(NonZeroU16::MIN);
     const TWO_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(2).unwrap());
     const EIGHT_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(8).unwrap());
@@ -264,5 +273,24 @@ mod tests {
         let label = finished.labels().next().unwrap();
         assert!(label.score_for(Color::White) > label.score_for(Color::Black));
         assert_eq!(label.verdict().winner(), Some(Color::White));
+    }
+
+    #[test]
+    fn a_played_move_charges_the_mover_for_its_thinking_time_and_adds_the_increment() {
+        let board: Board = START.parse().unwrap();
+        let game = Game::from(board).ruled_by(QUICK.timed(GENEROUS));
+        let ControlFlow::Continue(after) = game.advance(
+            &mut InProcessEngine::default(),
+            &mut InProcessEngine::default(),
+        ) else {
+            panic!()
+        };
+        let charged = after.clock.remaining(MOVER);
+        let (before, increment) = (GENEROUS.remaining(MOVER), GENEROUS.increment(MOVER));
+        assert!(
+            charged > before && charged < before + increment,
+            "{charged:?}"
+        );
+        assert_eq!(after.clock.remaining(WAITER), GENEROUS.remaining(WAITER));
     }
 }
