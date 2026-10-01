@@ -42,11 +42,6 @@ impl SearchInfo {
     pub const fn score(&self) -> Score {
         self.score
     }
-
-    #[must_use]
-    pub const fn best_move(&self) -> Option<LongAlgebraic> {
-        self.best_move
-    }
 }
 
 impl TryFrom<&str> for SearchInfo {
@@ -93,5 +88,35 @@ impl fmt::Display for SearchInfo {
         self.best_move.map_or(Ok(()), |notation| {
             write!(formatter, " {} {notation}", InfoKey::Pv)
         })
+    }
+}
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for SearchInfo {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<SearchInfo>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        let score = proptest::prop_oneof![
+            (-29_999i32..=29_999).prop_map(Score::new),
+            (1i32..=100).prop_map(Score::mating_in_moves),
+            (-100i32..=-1).prop_map(Score::mating_in_moves),
+        ];
+        (
+            proptest::arbitrary::any::<Depth>(),
+            score,
+            proptest::arbitrary::any::<NodeCount>(),
+            proptest::arbitrary::any::<u32>(),
+            proptest::arbitrary::any::<Option<LongAlgebraic>>(),
+        )
+            .prop_map(|(depth, score, nodes, millis, best_move)| SearchInfo {
+                depth,
+                score,
+                nodes,
+                elapsed: Duration::from_millis(u64::from(millis)),
+                best_move,
+            })
+            .boxed()
     }
 }

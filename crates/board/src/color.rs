@@ -36,3 +36,13 @@ impl Not for Color {
         }
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Color {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<Color>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<Color as strum::VariantArray>::VARIANTS)
+    }
+}

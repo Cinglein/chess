@@ -10,10 +10,12 @@ repository.workspace = true
 board = { version = "0.1.0", path = "../board" }
 derive_more = { version = "2", default-features = false, features = ["add", "display", "from_str", "not"] }
 enum-map = "3"
+proptest = { version = "1", optional = true }
 serde = { version = "1", default-features = false, features = ["derive"], optional = true }
 strum = { version = "0.28", default-features = false }
 
 [features]
+proptest = ["dep:proptest"]
 serde = ["dep:serde"]
 
 [lints]

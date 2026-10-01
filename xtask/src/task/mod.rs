@@ -8,6 +8,7 @@ mod literal_names;
 mod magics;
 mod manual_iteration;
 mod module_nesting;
+mod mutants;
 mod named_lifetimes;
 mod no_comments;
 mod no_forwarders;
@@ -23,6 +24,7 @@ mod source_file;
 mod stacked;
 mod state_graph;
 mod test_budget;
+mod test_time;
 mod type_shape;
 mod violation;
 mod wasm;
@@ -38,6 +40,7 @@ use crate::task::lint::Lint;
 use crate::task::literal_names::LiteralNames;
 use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
+use crate::task::mutants::{Mutants, Scope};
 use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
@@ -50,6 +53,7 @@ use crate::task::public_surface::PublicSurface;
 use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
+use crate::task::test_time::TestTime;
 use crate::task::type_shape::TypeShape;
 use crate::task::wasm::Wasm;
 use crate::task::workspace::Workspace;
@@ -68,6 +72,8 @@ pub enum Task {
     Magics,
     ManualIteration,
     ModuleNesting,
+    Mutants,
+    MutantsFull,
     NamedLifetimes,
     NoComments,
     NoForwarders,
@@ -80,6 +86,7 @@ pub enum Task {
     Stacked,
     StateGraph,
     TestBudget,
+    TestTime,
     TypeShape,
     Wasm,
 }
@@ -103,6 +110,8 @@ impl Task {
             Task::Magics => Magics::run(&workspace),
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
             Task::ModuleNesting => ModuleNesting::report(&workspace.source_files()?).verdict(),
+            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines),
+            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace),
             Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
@@ -119,6 +128,7 @@ impl Task {
             Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
+            Task::TestTime => TestTime::run(&workspace),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace),
         }

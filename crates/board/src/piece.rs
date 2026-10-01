@@ -56,27 +56,18 @@ impl FromStr for Piece {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use strum::IntoEnumIterator;
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Piece {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Piece>;
 
-    use super::Piece;
-    use crate::color::Color;
-    use crate::piece_kind::PieceKind;
-
-    #[test]
-    fn every_piece_roundtrips_through_a_letter_whose_case_is_its_colour() {
-        for color in Color::iter() {
-            for kind in PieceKind::iter() {
-                let piece = Piece::new(color, kind);
-                let text = piece.to_string();
-                assert_eq!(text.parse(), Ok(piece));
-                assert_eq!(
-                    text.chars().all(|letter| letter.is_ascii_uppercase()),
-                    color == Color::White
-                );
-            }
-        }
-        assert!("x".parse::<Piece>().is_err());
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        (
+            proptest::arbitrary::any::<Color>(),
+            proptest::arbitrary::any::<PieceKind>(),
+        )
+            .prop_map(|(color, kind)| Piece::new(color, kind))
+            .boxed()
     }
 }

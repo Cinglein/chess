@@ -2,6 +2,8 @@ mod fullmove_number;
 mod halfmove_clock;
 mod king_safety;
 mod move_generator;
+#[cfg(any(test, feature = "proptest"))]
+mod playout;
 
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
@@ -22,12 +24,18 @@ use crate::leaper::{BlackPawn, WhitePawn};
 use crate::long_algebraic::LongAlgebraic;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
+#[cfg(any(test, feature = "proptest"))]
+use crate::ply_count::PlyCount;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::state::State;
 use crate::zobrist::Zobrist;
+#[cfg(any(test, feature = "proptest"))]
+use crate::zobrist_keys::SplitMix64;
 use crate::zobrist_keys::ZobristKeys;
 use king_safety::KingSafety;
+#[cfg(any(test, feature = "proptest"))]
+use playout::Playout;
 
 pub type MoveList = ArrayVec<ChessMove, { Board::LEGAL_MOVE_CAPACITY }>;
 
@@ -156,6 +164,13 @@ impl Board {
         }
     }
 
+    #[cfg(any(test, feature = "proptest"))]
+    fn random_playout(generator: SplitMix64, plies: PlyCount) -> Board {
+        (0..plies.plies())
+            .fold(Playout::new(generator), |playout, _| playout.advanced())
+            .board()
+    }
+
     fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
         text.parse::<DashOr<Square>>()
             .map(Option::<Square>::from)
@@ -219,17 +234,31 @@ impl FromStr for Board {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Board {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Board>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        (proptest::arbitrary::any::<u64>(), 0..=60u8)
+            .prop_map(|(seed, plies)| {
+                Board::random_playout(SplitMix64::new(seed), PlyCount::new(u16::from(plies)))
+            })
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use fen::FenError;
     use proptest::prelude::*;
-    use proptest::sample::select;
-    use strum::VariantArray;
 
     use super::Board;
     use crate::castling_right::CastlingRight;
-    use crate::chess_move::{Castling, ChessMove, DoublePush, EnPassant, Normal, Promotion};
-    use crate::color::Color;
+    use crate::chess_move::{
+        Castling, ChessMove, DoublePush, EnPassant, MoveKind, Normal, Promotion,
+    };
     use crate::promotion_piece::PromotionPiece;
     use crate::square::Square;
 
@@ -238,7 +267,11 @@ mod tests {
         "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2",
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
     ];
-    const REJECTED: [(&str, &str, FenError); 8] = [
+    const REJECTED: [(&str, &str, FenError); 12] = [
+        ("/RNBQKBNR ", " ", FenError::RankCount),
+        ("/pppppppp/", "/ppppppp/", FenError::RankWidth),
+        ("/8/8/8/8/", "/9/8/8/8/", FenError::RankWidth),
+        ("RNBQKBNR w", "RNBQKBNX w", FenError::Piece('X')),
         (" 0 1", " 0", FenError::FieldCount),
         (" 0 1", " 0 1 extra", FenError::FieldCount),
         (" w ", " x ", FenError::SideToMove),
@@ -248,36 +281,42 @@ mod tests {
         (" 0 1", " -1 1", FenError::HalfmoveClock),
         (" 0 1", " 0 0", FenError::FullmoveNumber),
     ];
-    const TRANSITIONS: [(&str, ChessMove, &str); 7] = [
+    const TRANSITIONS: [(&str, ChessMove, &str, bool); 7] = [
         (
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             ChessMove::DoublePush(DoublePush::new(Square::E2, Square::E4)),
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+            false,
         ),
         (
             "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
             ChessMove::Normal(Normal::new(Square::G8, Square::F6)),
             "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+            false,
         ),
         (
             "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
             ChessMove::Castling(Castling::new(CastlingRight::WhiteKingside)),
             "r3k2r/8/8/8/8/8/8/R4RK1 b kq - 1 1",
+            false,
         ),
         (
             "r3k2r/8/8/8/8/8/8/R4RK1 b kq - 1 1",
             ChessMove::Castling(Castling::new(CastlingRight::BlackQueenside)),
             "2kr3r/8/8/8/8/8/8/R4RK1 w - - 2 2",
+            false,
         ),
         (
             "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
             ChessMove::Normal(Normal::new(Square::A1, Square::A8)),
             "R3k2r/8/8/8/8/8/8/4K2R b Kk - 0 1",
+            true,
         ),
         (
             "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3",
             ChessMove::EnPassant(EnPassant::new(Square::E5, Square::D6)),
             "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3",
+            true,
         ),
         (
             "r3k3/1P6/8/8/8/8/8/4K3 w q - 0 1",
@@ -287,6 +326,7 @@ mod tests {
                 PromotionPiece::Queen,
             )),
             "Q3k3/8/8/8/8/8/8/4K3 b - - 0 1",
+            true,
         ),
     ];
 
@@ -304,22 +344,25 @@ mod tests {
 
     #[test]
     fn making_a_move_produces_the_position_fen_describes() {
-        for (before, chess_move, after) in TRANSITIONS {
-            let played = before
-                .parse::<Board>()
-                .unwrap()
-                .make_move(chess_move)
-                .unwrap();
+        for (before, chess_move, after, captures) in TRANSITIONS {
+            let board: Board = before.parse().unwrap();
+            let played = board.make_move(chess_move).unwrap();
             assert_eq!(played.to_string(), after, "{before} {chess_move}");
             assert_eq!(played.hash(), after.parse::<Board>().unwrap().hash());
+            assert_eq!(chess_move.captures(board.placement()), captures);
         }
     }
 
     #[test]
-    fn a_move_is_applied_exactly_when_the_side_to_move_owns_the_origin() {
-        proptest!(|(origin in select(Square::VARIANTS), destination in select(Square::VARIANTS))| {
-            let owned = Board::START.placement().occupied_by(Color::White).contains(origin);
-            prop_assert_eq!(Board::START.make_move(ChessMove::Normal(Normal::new(origin, destination))).is_some(), owned);
+    fn any_reachable_position_roundtrips_through_fen_and_its_hash_matches_a_fresh_parse() {
+        proptest!(|(board: Board)| {
+            let reparsed: Board = board.to_string().parse().unwrap();
+            prop_assert_eq!(reparsed, board);
+            prop_assert_eq!(board.en_passant_file(), board.en_passant_square().map(Square::file));
+            for chess_move in board.legal_moves() {
+                let next = board.make_move(chess_move).unwrap();
+                prop_assert_eq!(next.to_string().parse::<Board>().unwrap().hash(), next.hash());
+            }
         });
     }
 }

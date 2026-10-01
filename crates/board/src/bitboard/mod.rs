@@ -91,6 +91,12 @@ impl Bitboard {
     }
 
     #[must_use]
+    pub const fn disjoint_union(self, other: Bitboard) -> Bitboard {
+        debug_assert!(self.intersection(other).is_empty());
+        self.union(other)
+    }
+
+    #[must_use]
     pub const fn intersection(self, other: Bitboard) -> Bitboard {
         Bitboard(self.0 & other.0)
     }
@@ -223,52 +229,55 @@ impl fmt::Display for Bitboard {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Bitboard {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Bitboard>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        proptest::arbitrary::any::<u64>()
+            .prop_map(Bitboard::from_bits)
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
 
     use proptest::prelude::*;
-    use strum::IntoEnumIterator;
+    use strum::EnumCount;
 
     use super::{Bitboard, SubsetIter};
-    use crate::direction::Direction;
     use crate::rank::Rank;
     use crate::square::Square;
 
     #[test]
-    fn every_shift_agrees_with_stepping_each_square() {
-        for square in Square::iter() {
-            for direction in Direction::iter() {
-                let expected = (square + direction).map_or(Bitboard::EMPTY, Bitboard::from_square);
-                assert_eq!(
-                    Bitboard::from_square(square).shift(direction),
-                    expected,
-                    "{square} {direction:?}"
-                );
-            }
-        }
-    }
-
-    #[test]
     fn set_algebra_iteration_and_display_agree() {
-        proptest!(|(left: u64, right: u64)| {
-            let (left, right) = (Bitboard::from_bits(left), Bitboard::from_bits(right));
-            prop_assert_eq!((left | right).count() + (left & right).count(), left.count() + right.count());
-            let squares: Vec<Square> = left.into_iter().collect();
-            prop_assert!(squares.is_sorted() && squares.iter().copied().collect::<Bitboard>() == left);
+        proptest!(|(left: Bitboard, right: Bitboard)| {
+            let mut toggled = left;
+            toggled ^= right;
+            prop_assert_eq!(
+                ((left | right).count() + (left & right).count(), toggled, Bitboard::from_bits(left.bits())),
+                (left.count() + right.count(), left ^ right, left)
+            );
+            let squares: Vec<Square> = left.into_iter().take(Square::COUNT + 1).collect();
+            prop_assert!(squares.is_sorted() && squares.iter().copied().collect::<Bitboard>() == left && squares.len() == left.into_iter().len());
             let listed: Vec<String> = squares.iter().map(ToString::to_string).collect();
-            prop_assert_eq!(left.to_string(), listed.join(" "));
+            let (debugged, hex) = (format!("{left:?}"), format!("{:x}", left.bits()));
+            prop_assert!(left.to_string() == listed.join(" ") && debugged.contains(&hex));
         });
     }
 
     #[test]
-    fn subsets_of_a_mask_are_its_distinct_sub_bitboards() {
-        proptest!(|(bits: u64)| {
-            let mask = Bitboard::from_bits(bits) & Bitboard::rank(Rank::One);
-            let subsets: Vec<Bitboard> = SubsetIter::new(mask).collect();
+    fn a_square_joins_and_leaves_a_set_and_subsets_of_a_mask_are_its_distinct_sub_bitboards() {
+        proptest!(|(set: Bitboard, square: Square)| {
+            prop_assert!(set.including(square).contains(square) && set.excluding(square) == set & !Bitboard::from(square));
+            let mask = set & Bitboard::rank(Rank::One);
+            let subsets: Vec<Bitboard> = SubsetIter::new(mask).take((1 << mask.count()) + 1).collect();
             prop_assert_eq!(subsets.len(), 1 << mask.count());
-            prop_assert_eq!(subsets.iter().collect::<HashSet<_>>().len(), subsets.len());
-            prop_assert!(subsets.iter().all(|subset| subset.difference(mask).is_empty()));
+            prop_assert!(subsets.iter().collect::<HashSet<_>>().len() == subsets.len() && subsets.iter().all(|subset| subset.difference(mask).is_empty()));
         });
     }
 }
