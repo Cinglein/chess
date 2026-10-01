@@ -67,6 +67,13 @@ impl TestTime {
                 ),
             )
         });
-        Report::new("test time budget exceeded", slow.chain(whole).collect())
+        let none = self
+            .timings
+            .is_empty()
+            .then(|| Violation::new(Site::Workspace, "no tests were found to time"));
+        Report::new(
+            "test time budget exceeded",
+            slow.chain(whole).chain(none).collect(),
+        )
     }
 }

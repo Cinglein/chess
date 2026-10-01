@@ -15,11 +15,18 @@ impl TestBinary {
     const TEST_SUFFIX: &str = ": test";
 
     pub(super) fn discover(workspace: &Workspace) -> Result<Vec<TestBinary>, Failure> {
-        let built =
-            workspace.cargo_output(&["test", "--workspace", "--all-features", "--no-run"])?;
+        let built = workspace.cargo_output(&[
+            "test",
+            "--workspace",
+            "--all-features",
+            "--no-run",
+            "--color",
+            "never",
+        ])?;
         Ok(built
             .lines()
-            .filter_map(|line| line.trim().strip_prefix(Self::EXECUTABLE))
+            .filter_map(|line| line.split_once(Self::EXECUTABLE))
+            .map(|(_, rest)| rest)
             .filter_map(|rest| rest.rsplit_once('('))
             .map(|(_, path)| TestBinary {
                 path: workspace.root().join(path.trim_end_matches(')')),
