@@ -253,7 +253,9 @@ mod tests {
         ),
         (
             START,
-            QUICK.lasting_at_most(TWO_MOVES),
+            QUICK
+                .lasting_at_most(TWO_MOVES)
+                .adjudicated_by(Rules::DEFAULT.draw(), LOST_FOR_ONE_PLY),
             "1/2-1/2 {move limit}",
             4,
         ),

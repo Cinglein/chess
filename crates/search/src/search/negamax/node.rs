@@ -145,9 +145,16 @@ mod tests {
     }
 
     #[test]
-    fn a_capture_that_cuts_the_search_is_not_remembered_as_a_killer() {
+    fn a_capture_that_cuts_the_search_saves_nodes_and_is_not_remembered_as_a_killer() {
         let narrow = Window::FULL.below(Bound::new(Score::DRAW));
         let searched = Searched::from_root(HANGING_QUEEN, None, narrow);
+        let wide = Searched::from_root(HANGING_QUEEN, None, Window::FULL);
         assert_eq!(searched.root_killers, Killers::NONE);
+        assert!(
+            searched.nodes < wide.nodes,
+            "{} vs {}",
+            searched.nodes,
+            wide.nodes
+        );
     }
 }
