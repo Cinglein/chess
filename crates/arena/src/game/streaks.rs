@@ -13,18 +13,24 @@ pub struct Streaks {
 impl Streaks {
     #[must_use]
     pub fn after(self, mover: Color, score: Option<Score>, rules: &Rules) -> Streaks {
-        let mut losing = self.losing;
-        losing[mover] = match score {
-            Some(score) if rules.resign().is_lost(score) => self.losing[mover].incremented(),
-            _ => PlyCount::ZERO,
-        };
+        let lost = score.filter(|score| rules.resign().is_lost(*score));
         Streaks {
-            level: match score {
-                Some(score) if rules.draw().is_level(score) => self.level.incremented(),
-                _ => PlyCount::ZERO,
-            },
-            losing,
+            level: Self::lengthened(
+                self.level,
+                score.filter(|score| rules.draw().is_level(*score)),
+            ),
+            losing: self.losing.map(|side, run| {
+                if side == mover {
+                    Self::lengthened(run, lost)
+                } else {
+                    run
+                }
+            }),
         }
+    }
+
+    fn lengthened(run: PlyCount, continued: Option<Score>) -> PlyCount {
+        continued.map_or(PlyCount::ZERO, |_| run.incremented())
     }
 
     #[must_use]
