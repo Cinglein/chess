@@ -1,3 +1,4 @@
+mod binary_files;
 mod ci;
 mod const_shape;
 mod distinct_signatures;

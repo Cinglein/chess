@@ -4,6 +4,7 @@ use syn::visit::Visit;
 use syn::{ItemUse, Path, UseTree};
 
 use super::export::Export;
+use crate::task::binary_files::BinaryFiles;
 use crate::task::source_file::SourceFile;
 
 #[derive(Default)]
@@ -14,9 +15,13 @@ pub struct ForeignReferences {
 }
 
 impl ForeignReferences {
-    pub fn in_file(file: &SourceFile) -> ForeignReferences {
+    pub fn in_file(file: &SourceFile, binaries: &BinaryFiles) -> ForeignReferences {
         let mut references = ForeignReferences {
-            own_crate: file.crate_name().unwrap_or_default().to_owned(),
+            own_crate: file
+                .crate_name()
+                .filter(|_| !binaries.contains(file.path()))
+                .unwrap_or_default()
+                .to_owned(),
             names: BTreeSet::new(),
             crates: BTreeSet::new(),
         };
