@@ -92,3 +92,45 @@ impl Rules {
         self.resign
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroU16;
+    use std::time::Duration;
+
+    use board::{FullmoveNumber, NodeCount, PlyCount};
+    use eval::Score;
+    use uci::Clock;
+
+    use super::{DrawAdjudication, ResignAdjudication, Rules, Thinking};
+
+    const CLOCK: Clock = Clock::new(
+        Duration::from_secs(1),
+        Duration::from_secs(2),
+        Duration::ZERO,
+        Duration::ZERO,
+    );
+    const THINKING: Thinking = Thinking::FixedNodes(NodeCount::new(64));
+    const LONGEST: FullmoveNumber = FullmoveNumber::new(NonZeroU16::MIN);
+    const DRAW: DrawAdjudication = DrawAdjudication::new(LONGEST, Score::DRAW, PlyCount::ZERO);
+    const RESIGN: ResignAdjudication = ResignAdjudication::new(Score::DRAW, PlyCount::ZERO);
+
+    #[test]
+    fn every_rule_a_builder_sets_is_read_back_by_its_accessor() {
+        let rules = Rules::DEFAULT
+            .timed(CLOCK)
+            .thinking_by(THINKING)
+            .lasting_at_most(LONGEST)
+            .adjudicated_by(DRAW, RESIGN);
+        assert_eq!(
+            (
+                rules.clock(),
+                rules.thinking(),
+                rules.longest_game(),
+                rules.draw(),
+                rules.resign()
+            ),
+            (CLOCK, THINKING, LONGEST, DRAW, RESIGN)
+        );
+    }
+}

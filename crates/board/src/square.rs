@@ -161,28 +161,46 @@ impl proptest::arbitrary::Arbitrary for Square {
 #[cfg(test)]
 mod tests {
     use enum_map::Enum;
-    use strum::{EnumCount, IntoEnumIterator};
+    use proptest::prelude::*;
+    use proptest::sample::select;
+    use strum::{EnumCount, IntoEnumIterator, VariantArray};
 
     use super::Square;
+    use crate::diagonal::Diagonal;
+    use crate::direction::Direction;
     use crate::file::File;
+    use crate::orthogonal::Orthogonal;
 
     const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
 
     #[test]
-    fn squares_are_numbered_rank_by_rank_from_a1() {
-        for square in Square::iter() {
+    fn every_square_is_numbered_rank_by_rank_from_a1_and_roundtrips_through_coordinates_and_text() {
+        for (index, square) in (0u8..).zip(Square::iter()) {
             let expected = square.rank().into_usize() * File::COUNT + square.file().into_usize();
             assert_eq!(square.into_usize(), expected, "{square}");
+            assert_eq!(
+                (
+                    Square::from_repr(index),
+                    Square::new(square.file(), square.rank()),
+                    square.to_string().parse()
+                ),
+                (Some(square), square, Ok(square))
+            );
         }
     }
 
     #[test]
-    fn every_square_roundtrips_through_its_index_coordinates_and_text() {
-        for (index, square) in (0u8..).zip(Square::iter()) {
-            assert_eq!(Square::from_repr(index), Some(square));
-            assert_eq!(Square::new(square.file(), square.rank()), square);
-            assert_eq!(square.to_string().parse(), Ok(square));
-        }
+    fn stepping_an_optional_square_steps_its_square_and_aligned_squares_lie_on_their_line() {
+        proptest!(|(origin: Square, other: Square, orthogonal in select(Orthogonal::VARIANTS), diagonal in select(Diagonal::VARIANTS))| {
+            let direction = Direction::from(orthogonal);
+            prop_assert_eq!(
+                (Some(origin) + direction, Some(origin) + orthogonal, Some(origin) + diagonal),
+                (origin + direction, origin + orthogonal, origin + diagonal)
+            );
+            let line = origin.line_through(other);
+            prop_assert!(line.is_empty() || (line.contains(origin) && line.contains(other)));
+            prop_assert!(origin.between(other).difference(line).is_empty() && line == other.line_through(origin));
+        });
     }
 
     #[test]

@@ -27,3 +27,21 @@ impl Killers {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::Board;
+
+    use super::Killers;
+
+    #[test]
+    fn the_two_latest_distinct_moves_are_remembered_and_the_newest_is_not_pushed_down_by_itself() {
+        let [first, second, third, ..] = Board::START.legal_moves()[..] else {
+            panic!()
+        };
+        let killers = Killers::NONE.remembering(first).remembering(second);
+        assert!(killers.remembers(first) && killers.remembers(second) && !killers.remembers(third));
+        assert_eq!(killers.remembering(second), killers);
+        assert!(!killers.remembering(third).remembers(first));
+    }
+}

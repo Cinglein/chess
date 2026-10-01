@@ -57,3 +57,23 @@ impl Neg for Bound<Upper> {
         Bound::new(-self.score)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use eval::Score;
+    use proptest::prelude::*;
+
+    use super::{Bound, Lower};
+
+    #[test]
+    fn a_raised_lower_bound_admits_up_to_the_higher_score_and_negates_into_the_matching_upper_bound()
+     {
+        proptest!(|(bound: i16, raise: i16, probe: i16)| {
+            let (bound, raise, probe) = (Score::new(i32::from(bound)), Score::new(i32::from(raise)), Score::new(i32::from(probe)));
+            let lower = Bound::<Lower>::new(bound);
+            prop_assert_eq!(lower.raised(raise).admits_no_more_than(probe), probe <= bound.max(raise));
+            prop_assert_eq!((-lower).excludes(probe), probe >= -bound);
+            prop_assert_eq!(-(-lower), lower);
+        });
+    }
+}

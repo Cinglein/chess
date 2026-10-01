@@ -104,7 +104,7 @@ impl proptest::arbitrary::Arbitrary for LongAlgebraic {
 
 #[cfg(test)]
 mod tests {
-    use super::LongAlgebraic;
+    use super::{LongAlgebraic, MoveKind};
     use crate::board::Board;
     use proptest::prelude::*;
 
@@ -129,6 +129,7 @@ mod tests {
                 let notation = LongAlgebraic::from(legal);
                 assert_eq!(notation.to_string().parse(), Ok(notation));
                 assert_eq!(board.resolve_move(notation), Some(legal), "{notation}");
+                assert_eq!(notation.promotion(), legal.promotion_piece());
             }
         }
     }

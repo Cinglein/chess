@@ -43,3 +43,19 @@ impl MoveKind for EnPassant {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{EnPassant, MoveKind, PiecePlacement, Square};
+
+    const BEFORE: &str = "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR";
+    const AFTER: &str = "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR";
+    const CAPTURE: EnPassant = EnPassant::new(Square::E5, Square::D6);
+
+    #[test]
+    fn an_en_passant_capture_takes_the_pawn_that_passed_rather_than_the_square_it_lands_on() {
+        let placement: PiecePlacement = BEFORE.parse().unwrap();
+        assert_eq!(CAPTURE.victim(&placement), placement.piece_at(Square::D5));
+        assert_eq!(CAPTURE.play(placement).unwrap().to_string(), AFTER);
+    }
+}

@@ -48,3 +48,51 @@ impl CaptureGain {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::{Board, ChessMove};
+
+    use super::{Killers, MovePriority};
+
+    const BOARD: &str = "r3k3/1P6/8/3p4/4P3/8/8/4K3 w - - 0 1";
+    const PRINCIPAL: &str = "e1d1";
+    const PROMOTION: &str = "b7a8q";
+    const CAPTURE: &str = "e4d5";
+    const KILLER: &str = "e4e5";
+    const QUIET: &str = "e1e2";
+    const RANKED: [(&str, MovePriority); 4] = [
+        (PRINCIPAL, MovePriority::Principal),
+        (PROMOTION, MovePriority::Promotion),
+        (KILLER, MovePriority::Killer),
+        (QUIET, MovePriority::Quiet),
+    ];
+
+    struct Fixture;
+
+    impl Fixture {
+        fn resolved(board: &Board, text: &str) -> ChessMove {
+            board.resolve_move(text.parse().unwrap()).unwrap()
+        }
+    }
+
+    #[test]
+    fn each_move_is_ranked_by_what_it_does_for_the_search() {
+        let board: Board = BOARD.parse().unwrap();
+        let killers = Killers::NONE.remembering(Fixture::resolved(&board, KILLER));
+        let principal = Some(Fixture::resolved(&board, PRINCIPAL));
+        for (text, priority) in RANKED {
+            let chess_move = Fixture::resolved(&board, text);
+            assert_eq!(
+                MovePriority::rank(chess_move, &board, killers, principal),
+                priority,
+                "{text}"
+            );
+        }
+        let capture = Fixture::resolved(&board, CAPTURE);
+        assert!(matches!(
+            MovePriority::rank(capture, &board, killers, principal),
+            MovePriority::Capture(_)
+        ));
+    }
+}

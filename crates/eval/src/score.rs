@@ -140,12 +140,17 @@ mod tests {
             prop_assert_eq!(Score::mating_in_moves(moves).mate_in_moves(), Some(moves));
             prop_assert_eq!((-Score::mating_in_moves(moves)).mate_in_moves(), Some(-moves));
         });
+        assert_eq!(
+            (Score::mating_in_moves(1), Score::mating_in_moves(0)),
+            (Score::mate_in(1), Score::mated_in(0))
+        );
     }
 
     #[test]
     fn centipawns_never_read_as_a_mate_and_a_table_scores_each_entry() {
         proptest!(|(score: Score, centipawns: [i32; 4])| {
             prop_assert_eq!(score.mate_in_moves().is_none(), score > -Score::LONGEST_MATE && score < Score::LONGEST_MATE);
+            prop_assert_eq!(Score::new(score.centipawns()), score);
             prop_assert!(Score::table(centipawns).iter().zip(centipawns).all(|(scored, raw)| *scored == Score::new(raw)));
         });
     }

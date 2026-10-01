@@ -347,6 +347,7 @@ mod tests {
         proptest!(|(board: Board)| {
             let reparsed: Board = board.to_string().parse().unwrap();
             prop_assert_eq!(reparsed, board);
+            prop_assert_eq!(board.en_passant_file(), board.en_passant_square().map(Square::file));
             for chess_move in board.legal_moves() {
                 let next = board.make_move(chess_move).unwrap();
                 prop_assert_eq!(next.to_string().parse::<Board>().unwrap().hash(), next.hash());

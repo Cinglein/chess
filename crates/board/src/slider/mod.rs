@@ -54,10 +54,10 @@ mod tests {
         }
 
         fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
-            proptest!(|(bits: u64)| {
-                let occupied = Bitboard::from_bits(bits);
+            proptest!(|(occupied: Bitboard)| {
                 for square in Square::iter() {
-                    prop_assert_eq!(Self::attacks(square, occupied), Self::attacks_by_ray(square, occupied));
+                    let relevant = occupied & Self::relevant_occupancy(square);
+                    prop_assert_eq!(Self::attacks(square, occupied), Self::attacks_by_ray(square, relevant));
                 }
             });
         }
