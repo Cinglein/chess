@@ -181,7 +181,7 @@ mod tests {
     use std::ops::ControlFlow;
     use std::time::Duration;
 
-    use board::{Board, FullmoveNumber, NodeCount, PlyCount};
+    use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
     use eval::Score;
     use uci::Clock;
 
