@@ -240,7 +240,8 @@ mod tests {
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     const MIXED: &str = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
-    const MATERIAL: [(&str, bool); 9] = [
+    const MATERIAL: [(&str, bool); 10] = [
+        ("1b2k3/8/8/8/8/8/8/2B1K3", true),
         ("8/8/8/4k3/8/8/8/4K3", true),
         ("8/8/8/4k3/8/8/8/4KB2", true),
         ("8/8/8/4k3/8/8/8/4KN2", true),

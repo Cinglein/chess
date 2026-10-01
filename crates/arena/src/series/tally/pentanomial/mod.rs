@@ -47,6 +47,7 @@ mod tests {
         PairScore::Split,
     ];
     const ESTIMATED: &str = "Elo +0 (-297 to +297) inconclusive";
+    const SWEPT: &str = "Elo +1320 (+1320 to +1320) decisive";
 
     impl Pentanomial {
         fn repeating(score: PairScore) -> Pentanomial {
@@ -55,16 +56,17 @@ mod tests {
     }
 
     #[test]
-    fn split_pairs_estimate_even_and_a_sweep_either_way_is_decisive() {
+    fn split_pairs_estimate_even_and_a_sweep_either_way_is_decisive_at_the_clamped_extreme() {
         assert!(
             !Pentanomial::repeating(PairScore::Split)
                 .estimate()
                 .excludes_even()
         );
-        assert!(
+        assert_eq!(
             Pentanomial::repeating(PairScore::TwoWins)
                 .estimate()
-                .excludes_even()
+                .to_string(),
+            SWEPT
         );
         assert!(
             Pentanomial::repeating(PairScore::TwoLosses)
