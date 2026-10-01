@@ -21,6 +21,7 @@ mod public_surface;
 mod report;
 mod site;
 mod source_file;
+mod stacked;
 mod state_graph;
 mod test_budget;
 mod test_time;
@@ -49,6 +50,7 @@ use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
+use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
 use crate::task::test_time::TestTime;
@@ -81,6 +83,7 @@ pub enum Task {
     PrimitiveBoundary,
     PrivateFns,
     PublicSurface,
+    Stacked,
     StateGraph,
     TestBudget,
     TestTime,
@@ -122,6 +125,7 @@ impl Task {
             }
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
+            Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
             Task::TestTime => TestTime::run(&workspace),
