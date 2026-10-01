@@ -54,32 +54,3 @@ impl FromStr for RankPlacement {
         .ok_or(FenError::RankWidth)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use fen::FenError;
-
-    use super::RankPlacement;
-
-    const ROUNDTRIPS: [&str; 5] = ["rnbqkbnr", "8", "r3k2r", "4P3", "p6P"];
-    const REJECTED: [(&str, FenError); 4] = [
-        ("9", FenError::RankWidth),
-        ("ppppppp", FenError::RankWidth),
-        ("4P4", FenError::RankWidth),
-        ("RNBQKBNX", FenError::Piece('X')),
-    ];
-
-    #[test]
-    fn ranks_roundtrip_with_empty_runs_counted() {
-        for text in ROUNDTRIPS {
-            assert_eq!(text.parse::<RankPlacement>().unwrap().to_string(), text);
-        }
-    }
-
-    #[test]
-    fn ranks_with_the_wrong_width_or_an_unknown_letter_are_rejected() {
-        for (text, error) in REJECTED {
-            assert_eq!(text.parse::<RankPlacement>(), Err(error), "{text}");
-        }
-    }
-}

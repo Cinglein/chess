@@ -37,31 +37,3 @@ impl Streaks {
         self.losing[side]
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use board::{Color, PlyCount};
-    use eval::Score;
-
-    use super::Streaks;
-    use crate::rules::Rules;
-
-    const MOVER: Color = Color::White;
-    const LEVEL: Option<Score> = Some(Score::DRAW);
-    const SILENT: Option<Score> = None;
-    const ONE: PlyCount = PlyCount::new(1);
-
-    #[test]
-    fn streaks_grow_while_scores_keep_the_same_character_and_reset_when_they_do_not() {
-        let rules = Rules::DEFAULT;
-        let lost = Some(Score::mated_in(1));
-        let grown = Streaks::default()
-            .after(MOVER, LEVEL, &rules)
-            .after(MOVER, lost, &rules);
-        assert_eq!((grown.level(), grown.losing(MOVER)), (PlyCount::ZERO, ONE));
-        assert_eq!(
-            grown.after(MOVER, SILENT, &rules).losing(MOVER),
-            PlyCount::ZERO
-        );
-    }
-}

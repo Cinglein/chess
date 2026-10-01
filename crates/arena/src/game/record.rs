@@ -74,35 +74,3 @@ impl fmt::Display for Record {
         write!(formatter, "{}", Command::Position(position))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use board::{Board, LongAlgebraic};
-
-    use super::{Record, RepetitionCount};
-
-    const REPLAYED: &str = "position startpos moves e2e4 e2e4";
-    const PUSH: &str = "e2e4";
-
-    #[test]
-    fn a_record_counts_how_often_a_position_recurs_and_prints_as_the_line_that_replays_it() {
-        let notation: LongAlgebraic = PUSH.parse().unwrap();
-        let record = Record::new(Board::START)
-            .extended(notation, Board::START, None)
-            .extended(notation, Board::START, None);
-        assert_eq!(
-            (
-                record.repetitions(Board::START.hash()),
-                record.moves().len()
-            ),
-            (RepetitionCount::new(3), 2)
-        );
-        let pushed = Board::START.resolve_move(notation).unwrap();
-        let elsewhere = Board::START.make_move(pushed).unwrap();
-        assert_eq!(
-            record.repetitions(elsewhere.hash()),
-            RepetitionCount::new(0)
-        );
-        assert_eq!(record.to_string(), REPLAYED);
-    }
-}

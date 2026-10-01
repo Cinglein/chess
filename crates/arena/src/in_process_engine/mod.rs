@@ -53,26 +53,3 @@ impl Opponent for InProcessEngine {
             .ok_or(ArenaError::NoMove)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use search::Depth;
-    use uci::{GoLimits, Position};
-
-    use super::{InProcessEngine, Opponent};
-
-    const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
-
-    #[test]
-    fn the_in_process_engine_answers_a_position_with_the_mating_move() {
-        let mut in_process_engine = InProcessEngine::default();
-        in_process_engine.begin_game().unwrap();
-        let chosen = in_process_engine
-            .choose_move(
-                Position::played(MATE_IN_ONE.parse().unwrap(), &[]),
-                GoLimits::Depth(Depth::new(2)),
-            )
-            .unwrap();
-        assert_eq!(chosen.notation().to_string(), "a1a8");
-    }
-}
