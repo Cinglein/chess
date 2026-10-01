@@ -25,3 +25,13 @@ impl CastlingRight {
         }
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for CastlingRight {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<CastlingRight>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<CastlingRight as strum::VariantArray>::VARIANTS)
+    }
+}

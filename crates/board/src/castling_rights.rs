@@ -102,9 +102,23 @@ impl FromStr for CastlingRights {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for CastlingRights {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<CastlingRights>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        proptest::arbitrary::any::<u8>()
+            .prop_map(|bits| CastlingRights(EnumSet::from_u8_truncated(bits)))
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use fen::FenError;
+    use fen::{DashOr, FenError};
+    use proptest::prelude::*;
 
     use super::CastlingRights;
 
@@ -117,6 +131,15 @@ mod tests {
             assert_eq!(text.parse::<CastlingRights>().unwrap().to_string(), text);
         }
         assert_eq!("qK".parse::<CastlingRights>().unwrap().to_string(), "Kq");
+    }
+
+    #[test]
+    fn any_set_of_rights_prints_as_a_fen_field_that_parses_back() {
+        proptest!(|(rights: CastlingRights)| {
+            let field = DashOr::from((!rights.is_none()).then_some(rights)).to_string();
+            let parsed: Option<CastlingRights> = field.parse::<DashOr<CastlingRights>>().unwrap().into();
+            prop_assert_eq!(parsed.unwrap_or(CastlingRights::NONE), rights);
+        });
     }
 
     #[test]

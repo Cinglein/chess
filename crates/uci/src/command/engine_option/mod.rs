@@ -71,3 +71,26 @@ impl fmt::Display for EngineOption<'_> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    use super::{Elo, EngineOption, Switch};
+
+    const OTHER: EngineOption<'static> = EngineOption::Other {
+        name: "Hash",
+        setting: "16",
+    };
+
+    #[test]
+    fn typed_and_foreign_options_print_back_to_themselves() {
+        proptest!(|(rating: u16, limited: bool)| {
+            let switch = if limited { Switch::True } else { Switch::False };
+            for option in [EngineOption::Elo(Elo::new(rating)), EngineOption::LimitStrength(switch), OTHER] {
+                let line = option.to_string();
+                prop_assert_eq!(EngineOption::try_from(line.as_str()), Ok(option));
+            }
+        });
+    }
+}

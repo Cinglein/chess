@@ -2,6 +2,8 @@ mod fullmove_number;
 mod halfmove_clock;
 mod king_safety;
 mod move_generator;
+#[cfg(any(test, feature = "proptest"))]
+mod playout;
 
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
@@ -22,12 +24,18 @@ use crate::leaper::{BlackPawn, WhitePawn};
 use crate::long_algebraic::LongAlgebraic;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
+#[cfg(any(test, feature = "proptest"))]
+use crate::ply_count::PlyCount;
 use crate::rank::Rank;
 use crate::square::Square;
 use crate::state::State;
 use crate::zobrist::Zobrist;
+#[cfg(any(test, feature = "proptest"))]
+use crate::zobrist_keys::SplitMix64;
 use crate::zobrist_keys::ZobristKeys;
 use king_safety::KingSafety;
+#[cfg(any(test, feature = "proptest"))]
+use playout::Playout;
 
 pub type MoveList = ArrayVec<ChessMove, { Board::LEGAL_MOVE_CAPACITY }>;
 
@@ -156,6 +164,13 @@ impl Board {
         }
     }
 
+    #[cfg(any(test, feature = "proptest"))]
+    fn random_playout(generator: SplitMix64, plies: PlyCount) -> Board {
+        (0..plies.plies())
+            .fold(Playout::new(generator), |playout, _| playout.advanced())
+            .board()
+    }
+
     fn parse_en_passant(side_to_move: Color, text: &str) -> Result<Option<File>, FenError> {
         text.parse::<DashOr<Square>>()
             .map(Option::<Square>::from)
@@ -219,17 +234,29 @@ impl FromStr for Board {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Board {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Board>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        (proptest::arbitrary::any::<u64>(), 0..=60u8)
+            .prop_map(|(seed, plies)| {
+                Board::random_playout(SplitMix64::new(seed), PlyCount::new(u16::from(plies)))
+            })
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use fen::FenError;
     use proptest::prelude::*;
-    use proptest::sample::select;
-    use strum::VariantArray;
 
     use super::Board;
     use crate::castling_right::CastlingRight;
     use crate::chess_move::{Castling, ChessMove, DoublePush, EnPassant, Normal, Promotion};
-    use crate::color::Color;
     use crate::promotion_piece::PromotionPiece;
     use crate::square::Square;
 
@@ -316,10 +343,14 @@ mod tests {
     }
 
     #[test]
-    fn a_move_is_applied_exactly_when_the_side_to_move_owns_the_origin() {
-        proptest!(|(origin in select(Square::VARIANTS), destination in select(Square::VARIANTS))| {
-            let owned = Board::START.placement().occupied_by(Color::White).contains(origin);
-            prop_assert_eq!(Board::START.make_move(ChessMove::Normal(Normal::new(origin, destination))).is_some(), owned);
+    fn any_reachable_position_roundtrips_through_fen_and_its_hash_matches_a_fresh_parse() {
+        proptest!(|(board: Board)| {
+            let reparsed: Board = board.to_string().parse().unwrap();
+            prop_assert_eq!(reparsed, board);
+            for chess_move in board.legal_moves() {
+                let next = board.make_move(chess_move).unwrap();
+                prop_assert_eq!(next.to_string().parse::<Board>().unwrap().hash(), next.hash());
+            }
         });
     }
 }

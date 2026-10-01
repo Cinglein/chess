@@ -223,6 +223,19 @@ impl fmt::Display for Bitboard {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Bitboard {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Bitboard>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        proptest::arbitrary::any::<u64>()
+            .prop_map(Bitboard::from_bits)
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;

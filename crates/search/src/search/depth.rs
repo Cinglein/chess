@@ -29,3 +29,16 @@ impl Depth {
         }
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Depth {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Depth>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        proptest::arbitrary::any::<u8>()
+            .prop_map(Depth::new)
+            .boxed()
+    }
+}
