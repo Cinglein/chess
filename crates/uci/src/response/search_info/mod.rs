@@ -42,11 +42,6 @@ impl SearchInfo {
     pub const fn score(&self) -> Score {
         self.score
     }
-
-    #[must_use]
-    pub const fn best_move(&self) -> Option<LongAlgebraic> {
-        self.best_move
-    }
 }
 
 impl TryFrom<&str> for SearchInfo {
@@ -123,30 +118,5 @@ impl proptest::arbitrary::Arbitrary for SearchInfo {
                 best_move,
             })
             .boxed()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use board::LongAlgebraic;
-    use eval::Score;
-    use search::Depth;
-
-    use super::SearchInfo;
-
-    const REPORT: &str = "depth 1 score cp 0 nodes 0 nps 0 time 0 pv e2e4";
-    const PRINCIPAL: &str = "e2e4";
-
-    #[test]
-    fn a_parsed_report_exposes_its_depth_score_and_principal_move() {
-        let info = SearchInfo::try_from(REPORT).unwrap();
-        assert_eq!(
-            (info.depth(), info.score(), info.best_move()),
-            (
-                Depth::new(1),
-                Score::DRAW,
-                PRINCIPAL.parse::<LongAlgebraic>().ok()
-            )
-        );
     }
 }

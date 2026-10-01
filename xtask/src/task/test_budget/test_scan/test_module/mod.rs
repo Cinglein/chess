@@ -1,5 +1,4 @@
 mod macro_arguments;
-mod measurement;
 mod scope;
 mod test_counts;
 
@@ -15,7 +14,7 @@ use syn::{ItemFn, ItemMod, LitInt, Macro};
 use super::super::TestBudget;
 use crate::task::site::Site;
 use crate::task::violation::Violation;
-use measurement::Measurement;
+use super::super::measurement::Measurement;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,

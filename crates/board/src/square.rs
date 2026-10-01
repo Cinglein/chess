@@ -6,10 +6,8 @@ use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
 use crate::bitboard::Bitboard;
-use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
-use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 use crate::slider::{Bishop, Rook, Slider};
 
@@ -108,29 +106,14 @@ impl<D: Into<Direction>> Add<D> for Square {
     }
 }
 
-impl Add<Direction> for Option<Square> {
-    type Output = Option<Square>;
-
-    fn add(self, direction: Direction) -> Option<Square> {
-        self.and_then(|square| square + direction)
+const _: () = {
+    let mut squares = Square::VARIANTS;
+    while let [square, rest @ ..] = squares {
+        assert!(*square as usize == square.rank() as usize * File::COUNT + square.file() as usize);
+        assert!(Square::new(square.file(), square.rank()) as u8 == *square as u8);
+        squares = rest;
     }
-}
-
-impl Add<Orthogonal> for Option<Square> {
-    type Output = Option<Square>;
-
-    fn add(self, direction: Orthogonal) -> Option<Square> {
-        self.and_then(|square| square + direction)
-    }
-}
-
-impl Add<Diagonal> for Option<Square> {
-    type Output = Option<Square>;
-
-    fn add(self, direction: Diagonal) -> Option<Square> {
-        self.and_then(|square| square + direction)
-    }
-}
+};
 
 impl fmt::Display for Square {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -161,43 +144,15 @@ impl proptest::arbitrary::Arbitrary for Square {
 
 #[cfg(test)]
 mod tests {
-    use enum_map::Enum;
     use proptest::prelude::*;
-    use proptest::sample::select;
-    use strum::{EnumCount, IntoEnumIterator, VariantArray};
 
     use super::Square;
-    use crate::diagonal::Diagonal;
-    use crate::direction::Direction;
-    use crate::file::File;
-    use crate::orthogonal::Orthogonal;
 
     const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
 
     #[test]
-    fn every_square_is_numbered_rank_by_rank_from_a1_and_roundtrips_through_coordinates_and_text() {
-        for (index, square) in (0u8..).zip(Square::iter()) {
-            let expected = square.rank().into_usize() * File::COUNT + square.file().into_usize();
-            assert_eq!(square.into_usize(), expected, "{square}");
-            assert_eq!(
-                (
-                    Square::from_repr(index),
-                    Square::new(square.file(), square.rank()),
-                    square.to_string().parse()
-                ),
-                (Some(square), square, Ok(square))
-            );
-        }
-    }
-
-    #[test]
-    fn stepping_an_optional_square_steps_its_square_and_aligned_squares_lie_on_their_line() {
-        proptest!(|(origin: Square, other: Square, orthogonal in select(Orthogonal::VARIANTS), diagonal in select(Diagonal::VARIANTS))| {
-            let direction = Direction::from(orthogonal);
-            prop_assert_eq!(
-                (Some(origin) + direction, Some(origin) + orthogonal, Some(origin) + diagonal),
-                (origin + direction, origin + orthogonal, origin + diagonal)
-            );
+    fn aligned_squares_lie_on_their_line_and_between_lies_inside_it() {
+        proptest!(|(origin: Square, other: Square)| {
             let line = origin.line_through(other);
             prop_assert!(line.is_empty() || (line.contains(origin) && line.contains(other)));
             prop_assert!(origin.between(other).difference(line).is_empty() && line == other.line_through(origin));

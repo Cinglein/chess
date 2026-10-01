@@ -4,7 +4,7 @@ use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::TestBudget;
 use super::macro_arguments::MacroArguments;
-use super::measurement::Measurement;
+use super::super::super::measurement::Measurement;
 
 #[derive(Default)]
 pub(super) struct TestCounts {

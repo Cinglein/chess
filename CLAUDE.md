@@ -144,9 +144,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most
   3 tests per file, 3 assertion sites, 20 lines, and 4 literals per test, no integer literal
-  above 64 in test code, on average at most 1 test per file, and test code at most 20% of all
-  lines. The lint reads inside `proptest!` closures, and every assertion sits in a `#[test]`
-  fn: helpers return values and the test asserts them. `cargo xtask test-time` runs each test
+  above 64 in test code, at most 40 tests per 100 files, and test code at most 18% of all lines,
+  where a file declared by a `#[cfg(test)] mod` counts whole. The lint reads inside `proptest!`
+  closures, and every assertion sits in a `#[test]` fn: helpers return values and the test
+  asserts them. `cargo xtask test-time` runs each test
   alone and enforces the time budget: at most 1 s per test and 4 s for the whole suite. Prefer
   one exhaustive or oracle test over examples; randomness comes from `proptest`; deep checks
   are `#[ignore]` and run outside the PR gate.
