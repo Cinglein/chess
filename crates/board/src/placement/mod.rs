@@ -58,26 +58,31 @@ impl<H: Hand> Placement<H> {
     pub fn occupied_by(&self, color: Color) -> Bitboard {
         self.pieces[color]
             .values()
-            .fold(Bitboard::EMPTY, |occupied, pieces| occupied | *pieces)
+            .copied()
+            .fold(Bitboard::EMPTY, Bitboard::disjoint_union)
     }
 
     #[must_use]
     pub fn occupied(&self) -> Bitboard {
-        self.occupied_by(Color::White) | self.occupied_by(Color::Black)
+        self.occupied_by(Color::White)
+            .disjoint_union(self.occupied_by(Color::Black))
     }
 
     #[must_use]
     pub fn lacks_mating_material(&self) -> bool {
-        let bishops = self.pieces(Color::White, PieceKind::Bishop)
-            | self.pieces(Color::Black, PieceKind::Bishop);
-        let knights = self.pieces(Color::White, PieceKind::Knight)
-            | self.pieces(Color::Black, PieceKind::Knight);
-        let kings =
-            self.pieces(Color::White, PieceKind::King) | self.pieces(Color::Black, PieceKind::King);
-        if self.occupied() != bishops | knights | kings {
+        let bishops = self
+            .pieces(Color::White, PieceKind::Bishop)
+            .disjoint_union(self.pieces(Color::Black, PieceKind::Bishop));
+        let knights = self
+            .pieces(Color::White, PieceKind::Knight)
+            .disjoint_union(self.pieces(Color::Black, PieceKind::Knight));
+        let kings = self
+            .pieces(Color::White, PieceKind::King)
+            .disjoint_union(self.pieces(Color::Black, PieceKind::King));
+        if self.occupied() != bishops.disjoint_union(knights).disjoint_union(kings) {
             return false;
         }
-        (bishops | knights).count() <= 1
+        bishops.disjoint_union(knights).count() <= 1
             || (knights.is_empty()
                 && ((bishops & Bitboard::LIGHT_SQUARES).is_empty()
                     || (bishops & !Bitboard::LIGHT_SQUARES).is_empty()))
@@ -98,10 +103,16 @@ impl<H: Hand> Placement<H> {
         };
         let queens = self.pieces(by, PieceKind::Queen);
         (pawn_attacks & self.pieces(by, PieceKind::Pawn))
-            | (Knight::attacks(square) & self.pieces(by, PieceKind::Knight))
-            | (King::attacks(square) & self.pieces(by, PieceKind::King))
-            | (Bishop::attacks(square, occupied) & (self.pieces(by, PieceKind::Bishop) | queens))
-            | (Rook::attacks(square, occupied) & (self.pieces(by, PieceKind::Rook) | queens))
+            .disjoint_union(Knight::attacks(square) & self.pieces(by, PieceKind::Knight))
+            .disjoint_union(King::attacks(square) & self.pieces(by, PieceKind::King))
+            .disjoint_union(
+                Bishop::attacks(square, occupied)
+                    & self.pieces(by, PieceKind::Bishop).disjoint_union(queens),
+            )
+            .disjoint_union(
+                Rook::attacks(square, occupied)
+                    & self.pieces(by, PieceKind::Rook).disjoint_union(queens),
+            )
     }
 
     fn rank_placement(&self, rank: Rank) -> RankPlacement {

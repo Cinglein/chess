@@ -23,3 +23,18 @@ impl WorkerCount {
         self.0.max(NonZeroUsize::MIN.get())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::WorkerCount;
+
+    const THREE: WorkerCount = WorkerCount(3);
+    const NONE: WorkerCount = WorkerCount(0);
+    const ONE: WorkerCount = WorkerCount(1);
+
+    #[test]
+    fn a_worker_count_keeps_its_value_but_never_falls_below_one() {
+        assert_eq!((THREE.at_least_one(), NONE.at_least_one()), (3, 1));
+        assert!(WorkerCount::one_per_core() >= ONE);
+    }
+}

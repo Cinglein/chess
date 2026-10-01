@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::process::Command;
 
 use arena::{ArenaError, InProcessEngine, Opponent, UciProcess};
 use strum::EnumString;
@@ -22,7 +23,7 @@ impl Contestant {
                     EngineOption::LimitStrength(Switch::True),
                     EngineOption::Elo(limit_elo),
                 ];
-                Ok(Box::new(UciProcess::spawn(path, &options)?))
+                Ok(Box::new(UciProcess::spawn(Command::new(path), &options)?))
             }
         }
     }

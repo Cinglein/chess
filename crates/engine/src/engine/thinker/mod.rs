@@ -57,7 +57,9 @@ impl<'position, 'flag> Thinker<'position, 'flag> {
                     &deepened,
                     start.elapsed(),
                 )));
-                if allowance.is_some_and(|budget| start.elapsed() * 2 >= budget) {
+                if allowance
+                    .is_some_and(|budget| TimeBudget::is_past_halfway(start.elapsed(), budget))
+                {
                     ControlFlow::Break(deepened)
                 } else {
                     ControlFlow::Continue(deepened)

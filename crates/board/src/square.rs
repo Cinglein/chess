@@ -75,12 +75,13 @@ impl Square {
 
     #[must_use]
     pub fn line_through(self, other: Square) -> Bitboard {
-        let ends = Bitboard::from_square(self) | Bitboard::from_square(other);
+        let ends = Bitboard::from_square(self).including(other);
         if self.aligned_by::<Rook>(other) {
-            (Rook::attacks(self, Bitboard::EMPTY) & Rook::attacks(other, Bitboard::EMPTY)) | ends
+            (Rook::attacks(self, Bitboard::EMPTY) & Rook::attacks(other, Bitboard::EMPTY))
+                .disjoint_union(ends)
         } else if self.aligned_by::<Bishop>(other) {
             (Bishop::attacks(self, Bitboard::EMPTY) & Bishop::attacks(other, Bitboard::EMPTY))
-                | ends
+                .disjoint_union(ends)
         } else {
             Bitboard::EMPTY
         }

@@ -54,33 +54,46 @@ mod tests {
 
     const DEEP: Depth = Depth::new(2);
     const SHALLOW: Depth = Depth::new(1);
+    const SLOTS: usize = 2;
 
     impl TableEntry {
         fn exact(hash: Zobrist, depth: Depth) -> TableEntry {
             let conclusion = Conclusion::new(None, Score::DRAW, BoundKind::Exact);
             TableEntry::remember(hash, depth, RootDistance::ROOT, conclusion)
         }
+
+        fn child_hash_sharing_the_slot(shared: bool) -> Zobrist {
+            let slot_of = |hash: Zobrist| usize::try_from(hash.bits()).unwrap_or_default() % SLOTS;
+            Board::START
+                .legal_moves()
+                .into_iter()
+                .map(|chess_move| Board::START.make_move(chess_move).unwrap().hash())
+                .find(|hash| (slot_of(*hash) == slot_of(Board::START.hash())) == shared)
+                .unwrap()
+        }
     }
 
     #[test]
-    fn a_slot_keeps_the_deeper_entry_for_its_position_and_yields_to_any_other_position() {
+    fn a_slot_keeps_the_deeper_entry_for_its_position_and_yields_only_to_a_position_sharing_it() {
         let start = Board::START.hash();
-        let moved = Board::START
-            .make_move(Board::START.legal_moves()[0])
-            .unwrap()
-            .hash();
-        let mut store = [TableEntry::EMPTY];
+        let (elsewhere, sharing) = (
+            TableEntry::child_hash_sharing_the_slot(false),
+            TableEntry::child_hash_sharing_the_slot(true),
+        );
+        let mut store = [TableEntry::EMPTY; SLOTS];
         let mut table = TranspositionTable::new(&mut store);
         table.store(TableEntry::exact(start, DEEP));
         table.store(TableEntry::exact(start, SHALLOW));
-        assert_eq!(table.probe(start).map(|entry| entry.depth()), Some(DEEP));
-        table.store(TableEntry::exact(moved, Depth::ZERO));
+        table.store(TableEntry::exact(elsewhere, Depth::ZERO));
+        let depth_of = |hash| table.probe(hash).map(|entry| entry.depth());
         assert_eq!(
-            (
-                table.probe(start),
-                table.probe(moved).map(|entry| entry.depth())
-            ),
-            (None, Some(Depth::ZERO))
+            (depth_of(start), depth_of(elsewhere)),
+            (Some(DEEP), Some(Depth::ZERO))
+        );
+        table.store(TableEntry::exact(sharing, Depth::ZERO));
+        assert_eq!(
+            (table.probe(start), table.probe(sharing).is_some()),
+            (None, true)
         );
     }
 }
