@@ -30,8 +30,6 @@ impl Mutants {
         scope.warm_build_directory(workspace)?;
         let arguments: Vec<String> = [
             String::from("mutants"),
-            String::from("--jobs"),
-            String::from(scope.parallel_jobs()),
             String::from("--jobserver-tasks"),
             budget.compiler_tasks().to_string(),
             String::from("--output"),

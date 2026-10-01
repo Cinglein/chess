@@ -13,13 +13,7 @@ pub enum Scope {
 impl Scope {
     const BASE: &str = "origin/main";
     const DIFF_FILE: &str = "target/mutants.diff";
-
-    pub const fn parallel_jobs(self) -> &'static str {
-        match self {
-            Scope::ChangedLines => "2",
-            Scope::Workspace => "1",
-        }
-    }
+    const PARALLEL_JOBS: &str = "2";
 
     pub fn warm_build_directory(self, workspace: &Workspace) -> Result<(), Failure> {
         match self {
@@ -39,6 +33,8 @@ impl Scope {
                     }
                 })?;
                 Ok(vec![
+                    String::from("--jobs"),
+                    String::from(Self::PARALLEL_JOBS),
                     String::from("--in-diff"),
                     String::from(Self::DIFF_FILE),
                 ])
