@@ -103,7 +103,10 @@ impl fmt::Display for Response<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::Response;
+    use board::LongAlgebraic;
+    use proptest::prelude::*;
+
+    use super::{Response, SearchInfo};
     use crate::uci_error::UciError;
 
     const OWN_LINES: [&str; 7] = [
@@ -132,6 +135,19 @@ mod tests {
         for line in OWN_LINES {
             assert_eq!(Response::try_from(line).unwrap().to_string(), line);
         }
+    }
+
+    #[test]
+    fn any_search_report_or_best_move_prints_back_to_itself_and_is_seen_through_its_view() {
+        proptest!(|(info: SearchInfo, notation: Option<LongAlgebraic>)| {
+            let (report, best) = (Response::Info(info), Response::BestMove(notation));
+            for response in [report, best] {
+                let line = response.to_string();
+                prop_assert_eq!(Response::try_from(line.as_str()), Ok(response));
+            }
+            prop_assert_eq!(report.info(), Some(info));
+            prop_assert_eq!((best.best_move(), best.is_best_move(), report.is_best_move()), (notation, true, false));
+        });
     }
 
     #[test]

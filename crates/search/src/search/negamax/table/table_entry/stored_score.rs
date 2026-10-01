@@ -40,8 +40,7 @@ mod tests {
 
     #[test]
     fn storing_and_recalling_a_score_at_the_same_distance_is_the_identity() {
-        proptest!(|(centipawns in -31_000_i32..=31_000, ply: u8)| {
-            let score = Score::new(centipawns);
+        proptest!(|(score: Score, ply: u8)| {
             let distance = (0..ply).fold(RootDistance::ROOT, |distance, _| distance.deeper());
             prop_assert_eq!(StoredScore::new(score, distance).seen_from(distance), score);
         });

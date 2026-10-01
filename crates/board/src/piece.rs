@@ -56,6 +56,22 @@ impl FromStr for Piece {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for Piece {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Piece>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        (
+            proptest::arbitrary::any::<Color>(),
+            proptest::arbitrary::any::<PieceKind>(),
+        )
+            .prop_map(|(color, kind)| Piece::new(color, kind))
+            .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use strum::IntoEnumIterator;

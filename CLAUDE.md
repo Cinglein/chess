@@ -31,7 +31,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
   `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
   `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask mutants`, `cargo xtask mutants-full`,
+  `cargo xtask test-time`, `cargo xtask mutants`, `cargo xtask mutants-full`,
   `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -144,13 +144,17 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most
   3 tests per file, 3 assertion sites, 20 lines, and 4 literals per test, no integer literal
-  above 64 in test code. Prefer one exhaustive or oracle test over examples; randomness comes
-  from `proptest`; deep checks are `#[ignore]` and run outside the PR gate.
+  above 64 in test code, on average at most 1 test per file, and test code at most 20% of all
+  lines. The lint reads inside `proptest!` closures, and every assertion sits in a `#[test]`
+  fn: helpers return values and the test asserts them. `cargo xtask test-time` runs each test
+  alone and enforces the time budget: at most 1 s per test and 4 s for the whole suite. Prefer
+  one exhaustive or oracle test over examples; randomness comes from `proptest`; deep checks
+  are `#[ignore]` and run outside the PR gate.
 - Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
   lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
   the diff must be caught or unviable, so no PR adds debt. `cargo xtask mutants-full` mutates the
-  whole workspace, optionally one `MUTANTS_SHARD=k/n`; the Mutants workflow runs it weekly and on
-  demand in four shards, and it stays red until the existing debt is paid. Tables of literals (`slider/magics.rs`, the
+  whole workspace, optionally one `MUTANTS_SHARD=k/n`; the Mutants workflow runs it on every PR and
+  on demand in 16 shards, and a missed mutant anywhere fails the shard. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a

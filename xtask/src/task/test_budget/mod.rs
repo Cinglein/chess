@@ -81,12 +81,25 @@ mod tests {
         assert_ne!(\"a\", \"b\");
         assert_eq!(seed(), 0x2545_F491);
     }
+
+    #[test]
+    fn property() {
+        proptest!(|(count in 0..100usize, flag: bool)| {
+            prop_assert!(count < 100 || flag);
+        });
+    }
+
+    fn helper() {
+        assert!(true);
+    }
 }
 ";
-    const REPORTED: [&str; 3] = [
+    const REPORTED: [&str; 5] = [
         "has 4 assertions",
         "has 6 literals",
         "integer literal 0x2545_F491",
+        "integer literal 100usize",
+        "assertion outside a test",
     ];
 
     #[test]

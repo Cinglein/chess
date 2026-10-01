@@ -24,3 +24,16 @@ impl PlyCount {
         PlyCount(self.0.saturating_add(1))
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for PlyCount {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<PlyCount>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        proptest::arbitrary::any::<u16>()
+            .prop_map(PlyCount::new)
+            .boxed()
+    }
+}

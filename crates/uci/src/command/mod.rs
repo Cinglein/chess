@@ -97,15 +97,13 @@ impl fmt::Display for Command<'_> {
 
 #[cfg(test)]
 mod tests {
-    use core::time::Duration;
-
-    use board::{Board, Color};
+    use board::Board;
+    use proptest::prelude::*;
 
     use super::Command;
     use crate::command::{EngineOption, GoLimits, Position};
     use crate::receiver::Receiver;
 
-    const GO: &str = "go wtime 60 btime 40 winc 1 binc 1";
     const POSITION: &str = "position startpos moves e2e4 e7e5";
     const LINES: [&str; 12] = [
         "uci",
@@ -160,14 +158,13 @@ mod tests {
     }
 
     #[test]
-    fn a_clock_go_command_parses_both_sides_and_is_delivered_as_a_search() {
-        let command = Command::try_from(GO).unwrap();
-        let Command::Go(limits) = command else {
-            unreachable!();
-        };
-        let clock = limits.clock().unwrap();
-        assert_eq!(clock.remaining(Color::Black), Duration::from_millis(40));
-        assert_eq!(command.deliver_to(Trace("halt")), Trace("start_search"));
+    fn any_go_command_prints_back_to_itself_and_is_delivered_as_a_search() {
+        proptest!(|(limits: GoLimits)| {
+            let command = Command::Go(limits);
+            let line = command.to_string();
+            prop_assert_eq!(Command::try_from(line.as_str()), Ok(command));
+            prop_assert_eq!(command.deliver_to(Trace("halt")), Trace("start_search"));
+        });
     }
 
     #[test]
@@ -184,8 +181,10 @@ mod tests {
 
     #[test]
     fn every_command_prints_back_to_the_line_it_was_parsed_from() {
-        for line in LINES.into_iter().chain([GO, POSITION]) {
-            assert_eq!(Command::try_from(line).unwrap().to_string(), line);
+        for line in LINES.into_iter().chain([POSITION]) {
+            let command = Command::try_from(line).unwrap();
+            assert_eq!(command.to_string(), line);
+            assert_eq!(command.interrupts(), line == "stop" || line == "quit");
         }
     }
 }

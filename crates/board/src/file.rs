@@ -30,3 +30,13 @@ pub enum File {
     G,
     H,
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for File {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<File>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<File as strum::VariantArray>::VARIANTS)
+    }
+}

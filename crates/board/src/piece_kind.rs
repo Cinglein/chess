@@ -35,3 +35,13 @@ pub enum PieceKind {
     #[strum(serialize = "k")]
     King,
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for PieceKind {
+    type Parameters = ();
+    type Strategy = proptest::sample::Select<PieceKind>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        proptest::sample::select(<PieceKind as strum::VariantArray>::VARIANTS)
+    }
+}

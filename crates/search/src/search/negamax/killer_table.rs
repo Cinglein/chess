@@ -26,3 +26,20 @@ impl KillerTable {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::Board;
+
+    use super::{KillerTable, RootDistance};
+
+    #[test]
+    fn a_move_remembered_at_a_ply_is_recalled_there_and_nowhere_else() {
+        let chess_move = Board::START.legal_moves()[0];
+        let ply = RootDistance::ROOT.deeper();
+        let mut table = KillerTable::new();
+        table.remember(ply, chess_move);
+        assert!(table.at_ply(ply).remembers(chess_move));
+        assert!(!table.at_ply(RootDistance::ROOT).remembers(chess_move));
+    }
+}

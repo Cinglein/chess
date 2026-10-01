@@ -95,3 +95,58 @@ impl fmt::Display for SearchInfo {
         })
     }
 }
+
+#[cfg(any(test, feature = "proptest"))]
+impl proptest::arbitrary::Arbitrary for SearchInfo {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<SearchInfo>;
+
+    fn arbitrary_with((): ()) -> Self::Strategy {
+        use proptest::strategy::Strategy;
+        let score = proptest::prop_oneof![
+            (-29_999i32..=29_999).prop_map(Score::new),
+            (1i32..=100).prop_map(Score::mating_in_moves),
+            (-100i32..=-1).prop_map(Score::mating_in_moves),
+        ];
+        (
+            proptest::arbitrary::any::<Depth>(),
+            score,
+            proptest::arbitrary::any::<NodeCount>(),
+            proptest::arbitrary::any::<u32>(),
+            proptest::arbitrary::any::<Option<LongAlgebraic>>(),
+        )
+            .prop_map(|(depth, score, nodes, millis, best_move)| SearchInfo {
+                depth,
+                score,
+                nodes,
+                elapsed: Duration::from_millis(u64::from(millis)),
+                best_move,
+            })
+            .boxed()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use board::LongAlgebraic;
+    use eval::Score;
+    use search::Depth;
+
+    use super::SearchInfo;
+
+    const REPORT: &str = "depth 1 score cp 0 nodes 0 nps 0 time 0 pv e2e4";
+    const PRINCIPAL: &str = "e2e4";
+
+    #[test]
+    fn a_parsed_report_exposes_its_depth_score_and_principal_move() {
+        let info = SearchInfo::try_from(REPORT).unwrap();
+        assert_eq!(
+            (info.depth(), info.score(), info.best_move()),
+            (
+                Depth::new(1),
+                Score::DRAW,
+                PRINCIPAL.parse::<LongAlgebraic>().ok()
+            )
+        );
+    }
+}

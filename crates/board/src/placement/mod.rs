@@ -239,6 +239,19 @@ mod tests {
     use crate::square::Square;
 
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    const MIXED: &str = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
+    const MATERIAL: [(&str, bool); 10] = [
+        ("1b2k3/8/8/8/8/8/8/2B1K3", true),
+        ("8/8/8/4k3/8/8/8/4K3", true),
+        ("8/8/8/4k3/8/8/8/4KB2", true),
+        ("8/8/8/4k3/8/8/8/4KN2", true),
+        ("b3k3/8/8/8/8/8/8/4KB2", true),
+        ("b3k3/8/8/8/8/8/8/2B1K3", false),
+        ("8/8/8/4k3/8/8/8/3BKN2", false),
+        ("8/8/8/4k3/8/8/8/3NKN2", false),
+        ("8/8/8/4k3/8/8/4P3/4K3", false),
+        ("4k3/8/8/8/8/8/8/R3K3", false),
+    ];
 
     #[test]
     fn a_placed_piece_is_found_on_its_square_and_nowhere_else() {
@@ -252,18 +265,23 @@ mod tests {
     }
 
     #[test]
-    fn placements_roundtrip_through_fen() {
-        assert_eq!(PiecePlacement::START.to_string(), START);
-        assert_eq!(START.parse::<PiecePlacement>(), Ok(PiecePlacement::START));
-        let mixed = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
-        assert_eq!(mixed.parse::<PiecePlacement>().unwrap().to_string(), mixed);
+    fn placements_roundtrip_through_fen_and_need_exactly_eight_ranks() {
+        assert_eq!(
+            (PiecePlacement::START.to_string(), START.parse()),
+            (START.to_owned(), Ok(PiecePlacement::START))
+        );
+        assert_eq!(MIXED.parse::<PiecePlacement>().unwrap().to_string(), MIXED);
+        assert_eq!(
+            START.rsplit_once('/').unwrap().0.parse::<PiecePlacement>(),
+            Err(FenError::RankCount)
+        );
     }
 
     #[test]
-    fn a_placement_needs_exactly_eight_ranks() {
-        assert_eq!(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP".parse::<PiecePlacement>(),
-            Err(FenError::RankCount)
-        );
+    fn material_fixtures_say_whether_either_side_could_still_mate() {
+        for (fen, lacks) in MATERIAL {
+            let placement: PiecePlacement = fen.parse().unwrap();
+            assert_eq!(placement.lacks_mating_material(), lacks, "{fen}");
+        }
     }
 }

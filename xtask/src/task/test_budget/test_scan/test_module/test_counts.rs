@@ -1,9 +1,9 @@
-use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
-use syn::{Block, Expr, ExprLit, ExprPath, Macro, Token};
+use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::TestBudget;
+use super::macro_arguments::MacroArguments;
 use super::measurement::Measurement;
 
 #[derive(Default)]
@@ -49,7 +49,7 @@ impl TestCounts {
         counts
     }
 
-    fn is_assertion(invocation: &Macro) -> bool {
+    pub(super) fn is_assertion(invocation: &Macro) -> bool {
         invocation
             .path
             .segments
@@ -89,12 +89,6 @@ impl<'ast> Visit<'ast> for TestCounts {
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
         self.assertions += usize::from(Self::is_assertion(invocation));
-        if let Ok(arguments) =
-            invocation.parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated)
-        {
-            arguments
-                .iter()
-                .for_each(|argument| self.visit_expr(argument));
-        }
+        MacroArguments::parse(invocation).visit_with(self);
     }
 }
