@@ -49,6 +49,23 @@ impl<H: Hand> Placement<H> {
         self.pieces[color][kind]
     }
 
+    fn toggled(self, piece: Piece, square: Square) -> Placement<H> {
+        let kinds = self.pieces[piece.color()].map(|kind, squares| {
+            if kind == piece.kind() {
+                squares ^ Bitboard::from_square(square)
+            } else {
+                squares
+            }
+        });
+        Placement {
+            pieces: self
+                .pieces
+                .map(|color, kept| if color == piece.color() { kinds } else { kept }),
+            hash: self.hash ^ ZobristKeys::KEYS.piece(piece, square),
+            ..self
+        }
+    }
+
     #[must_use]
     pub const fn hash(&self) -> Zobrist {
         self.hash
@@ -158,12 +175,11 @@ impl Placement<Empty> {
     #[must_use]
     pub fn lift(self, square: Square) -> Option<Placement<Holding>> {
         self.piece_at(square).map(|piece| {
-            let mut pieces = self.pieces;
-            pieces[piece.color()][piece.kind()] &= !Bitboard::from_square(square);
+            let lifted = self.toggled(piece, square);
             Placement {
-                pieces,
+                pieces: lifted.pieces,
                 hand: Holding::new(piece),
-                hash: self.hash ^ ZobristKeys::KEYS.piece(piece, square),
+                hash: lifted.hash,
             }
         })
     }
@@ -186,14 +202,14 @@ impl Placement<Holding> {
             hand: Empty,
             hash: self.hash,
         };
-        let mut placement = vacated.lift(square).map_or(vacated, |occupant| Placement {
-            pieces: occupant.pieces,
-            hand: Empty,
-            hash: occupant.hash,
-        });
-        placement.pieces[piece.color()][piece.kind()] |= Bitboard::from_square(square);
-        placement.hash ^= ZobristKeys::KEYS.piece(piece, square);
-        placement
+        vacated
+            .lift(square)
+            .map_or(vacated, |occupant| Placement {
+                pieces: occupant.pieces,
+                hand: Empty,
+                hash: occupant.hash,
+            })
+            .toggled(piece, square)
     }
 }
 
@@ -201,11 +217,8 @@ impl FromIterator<PlacedPiece> for PiecePlacement {
     fn from_iter<I: IntoIterator<Item = PlacedPiece>>(pieces: I) -> PiecePlacement {
         pieces
             .into_iter()
-            .fold(PiecePlacement::EMPTY, |mut placement, placed| {
-                placement.pieces[placed.piece().color()][placed.piece().kind()] |=
-                    Bitboard::from_square(placed.square());
-                placement.hash ^= ZobristKeys::KEYS.piece(placed.piece(), placed.square());
-                placement
+            .fold(PiecePlacement::EMPTY, |placement, placed| {
+                placement.toggled(placed.piece(), placed.square())
             })
     }
 }
