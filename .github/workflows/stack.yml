@@ -18,5 +18,4 @@ jobs:
       - run: cargo xtask stacked
         env:
           GH_TOKEN: ${{ github.token }}
-          BASE_REF: ${{ github.base_ref }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
