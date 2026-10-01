@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+sysinfo = "0.39"
 board = { path = "../crates/board" }
 enum-map = "3"
 proc-macro2 = { version = "1", features = ["span-locations"] }

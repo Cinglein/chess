@@ -31,7 +31,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
   `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
   `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask magics`). Lints return a `Report` of
+  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask mutants`,
+  `cargo xtask mutants-full`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
@@ -107,6 +108,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
   data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
   enforces it.
+- Memory budget: anything this session runs on the owner's laptop stays under 8 GiB, because
+  the laptop carries other work. `.cargo/config.toml` caps every cargo build at 3 compiler jobs,
+  the mutation task derives its caps from the same 8 GiB (`AvailableGib::GRANTED`), and long
+  runs go one at a time. More needs the owner's explicit permission, given per run.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;
@@ -150,6 +155,18 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   alone and enforces the time budget: at most 1 s per test and 4 s for the whole suite. Prefer
   one exhaustive or oracle test over examples; randomness comes from `proptest`; deep checks
   are `#[ignore]` and run outside the PR gate.
+- Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
+  lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
+  the diff must be caught, unviable, or a timeout (a mutant that hangs a test is a mutant the
+  tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
+  whole workspace, optionally one `MUTANTS_SHARD=k/n`; the Mutants workflow runs it on every PR and
+  on demand in 16 shards, and a missed mutant anywhere fails the shard. A mutant no test can
+  observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
+  piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
+  crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
+  `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
+  `cargo-mutants` process already exists or the granted budget is not free, and caps the run
+  at 2 jobs and the compiler tasks the budget allows (3). The session hook denies a raw `cargo mutants`.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic

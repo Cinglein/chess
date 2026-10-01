@@ -8,6 +8,7 @@ mod literal_names;
 mod magics;
 mod manual_iteration;
 mod module_nesting;
+mod mutants;
 mod named_lifetimes;
 mod no_comments;
 mod no_forwarders;
@@ -39,6 +40,7 @@ use crate::task::lint::Lint;
 use crate::task::literal_names::LiteralNames;
 use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
+use crate::task::mutants::{Mutants, Scope};
 use crate::task::named_lifetimes::NamedLifetimes;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
@@ -70,6 +72,8 @@ pub enum Task {
     Magics,
     ManualIteration,
     ModuleNesting,
+    Mutants,
+    MutantsFull,
     NamedLifetimes,
     NoComments,
     NoForwarders,
@@ -106,6 +110,8 @@ impl Task {
             Task::Magics => Magics::run(&workspace),
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
             Task::ModuleNesting => ModuleNesting::report(&workspace.source_files()?).verdict(),
+            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines),
+            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace),
             Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
