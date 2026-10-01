@@ -31,6 +31,9 @@ impl<S: Sink> Engine<S> {
 
     #[must_use]
     pub fn new(stop: Arc<AtomicBool>, sink: S) -> Engine<S> {
+        const {
+            assert!(Self::ENTRY_CAPACITY * size_of::<TableEntry>() == Self::TABLE_BYTES);
+        }
         Engine {
             board: Board::START,
             entries: vec![TableEntry::EMPTY; Self::ENTRY_CAPACITY],
