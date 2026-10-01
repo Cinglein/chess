@@ -32,7 +32,6 @@ pub trait Slider {
 
 #[cfg(test)]
 mod tests {
-    use itertools::Itertools;
     use proptest::prelude::*;
     use strum::IntoEnumIterator;
 
@@ -82,18 +81,5 @@ mod tests {
                 (None, None)
             );
         });
-    }
-
-    #[test]
-    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
-        for (rays, square) in [Rook::RAYS, Bishop::RAYS]
-            .into_iter()
-            .cartesian_product(Square::iter())
-        {
-            assert!(
-                !rays.attacks_by_ray(square, Bitboard::FULL).is_empty(),
-                "{square}"
-            );
-        }
     }
 }

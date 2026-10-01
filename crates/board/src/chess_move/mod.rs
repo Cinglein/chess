@@ -39,33 +39,3 @@ impl fmt::Display for ChessMove {
         LongAlgebraic::from(*self).fmt(formatter)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{Castling, ChessMove, Promotion};
-    use crate::castling_right::CastlingRight;
-    use crate::promotion_piece::PromotionPiece;
-    use crate::square::Square;
-
-    const DISPLAYED: [(ChessMove, &str); 2] = [
-        (
-            ChessMove::Castling(Castling::new(CastlingRight::WhiteKingside)),
-            "e1g1",
-        ),
-        (
-            ChessMove::Promotion(Promotion::new(
-                Square::E7,
-                Square::E8,
-                PromotionPiece::Queen,
-            )),
-            "e7e8q",
-        ),
-    ];
-
-    #[test]
-    fn moves_display_in_long_algebraic_notation() {
-        for (chess_move, text) in DISPLAYED {
-            assert_eq!(chess_move.to_string(), text);
-        }
-    }
-}

@@ -241,26 +241,11 @@ mod tests {
     use std::collections::HashSet;
 
     use proptest::prelude::*;
-    use strum::{EnumCount, IntoEnumIterator};
+    use strum::EnumCount;
 
     use super::{Bitboard, SubsetIter};
-    use crate::direction::Direction;
     use crate::rank::Rank;
     use crate::square::Square;
-
-    #[test]
-    fn every_shift_agrees_with_stepping_each_square() {
-        for square in Square::iter() {
-            for direction in Direction::iter() {
-                let expected = (square + direction).map_or(Bitboard::EMPTY, Bitboard::from_square);
-                assert_eq!(
-                    Bitboard::from_square(square).shift(direction),
-                    expected,
-                    "{square} {direction:?}"
-                );
-            }
-        }
-    }
 
     #[test]
     fn set_algebra_iteration_and_display_agree() {

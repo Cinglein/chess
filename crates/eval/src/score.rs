@@ -117,6 +117,10 @@ impl proptest::arbitrary::Arbitrary for Score {
     }
 }
 
+const _: () = assert!(
+    Score::LONGEST_MATE.0 < Score::MATE.0 - u8::MAX as i32 && Score::MATE.0 < Score::INFINITY.0
+);
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
@@ -124,25 +128,22 @@ mod tests {
     use super::Score;
 
     const PLIES: u8 = 3;
+    const TWO_MOVES: i32 = 2;
 
     #[test]
-    fn faster_mates_score_higher_and_being_mated_is_the_negation() {
-        let mate = Score::mate_in(PLIES);
-        assert!(Score::INFINITY > mate && mate > Score::mate_in(PLIES + 1));
-        assert!(Score::mate_in(PLIES + 1) > Score::new(i32::from(u8::MAX)));
-        assert_eq!(Score::mated_in(PLIES), -mate);
-    }
-
-    #[test]
-    fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_its_negation() {
+    fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_a_quicker_mate_scores_higher()
+    {
         proptest!(|(moves: i8)| {
             prop_assume!(moves != 0);
             let moves = i32::from(moves);
-            prop_assert_eq!(Score::mating_in_moves(moves).mate_in_moves(), Some(moves));
-            prop_assert_eq!((-Score::mating_in_moves(moves)).mate_in_moves(), Some(-moves));
+            prop_assert_eq!(
+                (Score::mating_in_moves(moves).mate_in_moves(), (-Score::mating_in_moves(moves)).mate_in_moves()),
+                (Some(moves), Some(-moves))
+            );
+            prop_assert!(Score::mating_in_moves(moves) > Score::mating_in_moves(moves + 1));
         });
         assert_eq!(
-            (Score::mating_in_moves(2), Score::mating_in_moves(0)),
+            (Score::mating_in_moves(TWO_MOVES), Score::mating_in_moves(0)),
             (Score::mate_in(PLIES), Score::mated_in(0))
         );
     }

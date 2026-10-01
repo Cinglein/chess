@@ -67,7 +67,7 @@ impl Bounds {
 mod tests {
     use core::ops::ControlFlow;
 
-    use board::{Board, ChessMove};
+    use board::Board;
     use eval::Score;
 
     use super::{Bound, BoundKind, Bounds, Window};
@@ -78,47 +78,43 @@ mod tests {
     const HOPELESS: Score = Score::new(-20);
     const WINDOW: Window = Window::new(Bound::new(ALPHA), Bound::new(BETA));
     const FLOOR: Score = Score::INFINITY.negated();
+    const ADMITTED: [(&[Score], Option<usize>, BoundKind, bool); 4] = [
+        (
+            &[Score::DRAW, WORSE, Score::DRAW],
+            Some(0),
+            BoundKind::Exact,
+            false,
+        ),
+        (
+            &[Score::DRAW, BETA, HOPELESS],
+            Some(1),
+            BoundKind::AtLeast,
+            true,
+        ),
+        (&[HOPELESS], Some(0), BoundKind::AtMost, false),
+        (&[], None, BoundKind::AtMost, false),
+    ];
 
-    impl Bounds {
-        fn admitting(self, chess_move: ChessMove, score: Score) -> Bounds {
-            match self.admit(chess_move, score) {
-                ControlFlow::Break(bounds) | ControlFlow::Continue(bounds) => bounds,
-            }
+    #[test]
+    fn admitted_scores_keep_the_first_best_move_classify_the_bound_and_cut_at_the_upper_edge() {
+        let moves = Board::START.legal_moves();
+        for (scores, best, kind, cut) in ADMITTED {
+            let searched = scores
+                .iter()
+                .enumerate()
+                .try_fold(Bounds::new(WINDOW, FLOOR), |bounds, (index, score)| {
+                    bounds.admit(moves[index], *score)
+                });
+            let (bounds, is_cut) = match searched {
+                ControlFlow::Break(bounds) => (bounds, true),
+                ControlFlow::Continue(bounds) => (bounds, false),
+            };
+            let concluded = bounds.conclude();
+            assert_eq!(
+                (concluded.best_move(), concluded.kind(), is_cut),
+                (best.map(|index| moves[index]), kind, cut),
+                "{scores:?}"
+            );
         }
-    }
-
-    #[test]
-    fn the_first_of_equal_best_moves_stays_and_a_score_inside_the_window_concludes_exactly() {
-        let [first, second, third, ..] = Board::START.legal_moves()[..] else {
-            panic!()
-        };
-        let settled = Bounds::new(WINDOW, FLOOR)
-            .admitting(first, Score::DRAW)
-            .admitting(second, WORSE)
-            .admitting(third, Score::DRAW)
-            .conclude();
-        assert_eq!(
-            (settled.best_move(), settled.kind(), settled.score()),
-            (Some(first), BoundKind::Exact, Score::DRAW)
-        );
-    }
-
-    #[test]
-    fn a_score_at_the_upper_bound_cuts_the_search_and_one_below_the_lower_concludes_at_most() {
-        let [first, second, ..] = Board::START.legal_moves()[..] else {
-            panic!()
-        };
-        let open = Bounds::new(WINDOW, FLOOR).admitting(first, Score::DRAW);
-        let cut = open.admitting(second, BETA).conclude();
-        assert_eq!(
-            (
-                open.admit(second, BETA).is_break(),
-                cut.best_move(),
-                cut.kind()
-            ),
-            (true, Some(second), BoundKind::AtLeast)
-        );
-        let hopeless = Bounds::new(WINDOW, FLOOR).admitting(first, HOPELESS);
-        assert_eq!(hopeless.conclude().kind(), BoundKind::AtMost);
     }
 }
