@@ -12,9 +12,9 @@ use syn::visit::Visit;
 use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
+use super::super::measurement::Measurement;
 use crate::task::site::Site;
 use crate::task::violation::Violation;
-use super::super::measurement::Measurement;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,

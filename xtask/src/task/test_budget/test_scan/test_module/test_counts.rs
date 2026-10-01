@@ -3,8 +3,8 @@ use syn::visit::Visit;
 use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::TestBudget;
-use super::macro_arguments::MacroArguments;
 use super::super::super::measurement::Measurement;
+use super::macro_arguments::MacroArguments;
 
 #[derive(Default)]
 pub(super) struct TestCounts {
