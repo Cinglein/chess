@@ -23,9 +23,10 @@ impl StdinLines {
     }
 
     fn relay(stop: &AtomicBool, sender: &Sender<String>, line: String) -> ControlFlow<()> {
-        if Command::try_from(line.as_str()).is_ok_and(|command| command.interrupts()) {
-            stop.store(true, Ordering::Relaxed);
-        }
+        stop.fetch_or(
+            Command::try_from(line.as_str()).is_ok_and(|command| command.interrupts()),
+            Ordering::Relaxed,
+        );
         match sender.send(line) {
             Ok(()) => ControlFlow::Continue(()),
             Err(_) => ControlFlow::Break(()),

@@ -54,11 +54,12 @@ impl TryFrom<&str> for SearchInfo {
             .and_then(|head| head.parse::<InfoKey>().ok())
             == Some(InfoKey::String)
         {
-            return Err(UciError::IncompleteInfo);
+            Err(UciError::IncompleteInfo)
+        } else {
+            rest.split_whitespace()
+                .fold(InfoBuilder::default(), InfoBuilder::absorb)
+                .info()
         }
-        rest.split_whitespace()
-            .fold(InfoBuilder::default(), InfoBuilder::absorb)
-            .info()
     }
 }
 
@@ -72,10 +73,11 @@ impl fmt::Display for SearchInfo {
             self.depth,
             InfoKey::Score
         )?;
-        match self.score.mate_in_moves() {
-            Some(moves) => write!(formatter, "{} {moves}", InfoKey::Mate)?,
-            None => write!(formatter, "{} {}", InfoKey::Cp, self.score)?,
-        }
+        let mate_or_centipawns = match self.score.mate_in_moves() {
+            Some(moves) => write!(formatter, "{} {moves}", InfoKey::Mate),
+            None => write!(formatter, "{} {}", InfoKey::Cp, self.score),
+        };
+        mate_or_centipawns?;
         write!(
             formatter,
             " {} {} {} {} {} {millis}",

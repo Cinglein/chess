@@ -1,5 +1,6 @@
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
+use crate::task::expression_flow::ExpressionFlow;
 use crate::task::failure::Failure;
 use crate::task::fn_shape::FnShape;
 use crate::task::literal_names::LiteralNames;
@@ -28,6 +29,7 @@ impl Lint {
         let reports: Vec<Report> = [
             ConstShape::report(&files),
             DistinctSignatures::report(&files),
+            ExpressionFlow::report(&files),
             FnShape::report(&files),
             LiteralNames::report(&files),
             ManualIteration::report(&files),

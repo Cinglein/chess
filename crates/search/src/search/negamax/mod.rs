@@ -1,10 +1,7 @@
-mod full_width;
 mod killer_table;
 mod node;
 mod ordered_moves;
 mod progress;
-mod quiescence;
-mod regime;
 mod table;
 mod window;
 
@@ -19,12 +16,10 @@ use eval::{Evaluator, Score};
 
 use super::depth::Depth;
 use super::interrupt::Interrupt;
-use full_width::FullWidth;
 use killer_table::KillerTable;
 use node::Node;
 use ordered_moves::OrderedMoves;
 use progress::Progress;
-use quiescence::Quiescence;
 
 pub(crate) struct Negamax<'store, 'table, 'stop, E: Evaluator, I: Interrupt> {
     nodes: NodeCount,
@@ -68,18 +63,17 @@ impl<'store, 'table, 'stop, E: Evaluator, I: Interrupt> Negamax<'store, 'table, 
         self.nodes += NodeCount::ONE;
         if self.was_aborted() || self.interrupt.should_stop(self.nodes) {
             self.progress = Progress::Aborted;
-            return Score::DRAW;
-        }
-        let remembered = self.table.probe(board.hash());
-        if let Some(score) = remembered.and_then(|entry| entry.settles(depth, distance, window)) {
-            return score;
-        }
-        let node = Node::new(board, depth, distance, window)
-            .remembering(remembered.and_then(|entry| entry.best_move()));
-        match depth.decremented() {
-            Some(remaining) => node.at_depth(remaining).search(&FullWidth, self),
-            None if board.in_check() => node.search(&FullWidth, self),
-            None => node.search(&Quiescence, self),
+            Score::DRAW
+        } else {
+            let remembered = self.table.probe(board.hash());
+            let hash_move = remembered.and_then(|entry| entry.best_move());
+            remembered
+                .and_then(|entry| entry.settles(depth, distance, window))
+                .unwrap_or_else(|| {
+                    Node::new(board, depth, distance, window)
+                        .remembering(hash_move)
+                        .explore(self)
+                })
         }
     }
 

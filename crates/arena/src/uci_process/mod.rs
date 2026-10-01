@@ -1,12 +1,13 @@
 mod line_reader;
 
 use std::io::Write;
+use std::iter;
+use std::ops::ControlFlow;
 use std::process::{Child, ChildStdin, Command as ProcessCommand, Stdio};
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
 
 use board::Color;
-use eval::Score;
 use line_reader::LineReader;
 use uci::{Command, EngineOption, GoLimits, Position, Response};
 
@@ -43,8 +44,12 @@ impl UciProcess {
             lines: LineReader::spawn(stdout),
         };
         process.send(Command::Uci)?;
-        process.await_response(Self::HANDSHAKE, |response| {
-            (response == Response::UciOk).then_some(())
+        process.await_response(Self::HANDSHAKE, (), |(), response| {
+            if response == Response::UciOk {
+                ControlFlow::Break(())
+            } else {
+                ControlFlow::Continue(())
+            }
         })?;
         options
             .iter()
@@ -59,26 +64,35 @@ impl UciProcess {
 
     fn synchronise(&mut self) -> Result<(), ArenaError> {
         self.send(Command::IsReady)?;
-        self.await_response(Self::HANDSHAKE, |response| {
-            (response == Response::ReadyOk).then_some(())
+        self.await_response(Self::HANDSHAKE, (), |(), response| {
+            if response == Response::ReadyOk {
+                ControlFlow::Break(())
+            } else {
+                ControlFlow::Continue(())
+            }
         })
     }
 
-    fn await_response<T>(
+    fn await_response<T, S>(
         &self,
         within: Duration,
-        mut pick: impl FnMut(Response<'_>) -> Option<T>,
+        seed: S,
+        mut step: impl FnMut(S, Response<'_>) -> ControlFlow<T, S>,
     ) -> Result<T, ArenaError> {
         let deadline = Instant::now() + within;
-        loop {
-            let line = self
-                .lines
+        iter::repeat_with(|| {
+            self.lines
                 .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-                .map_err(|_| ArenaError::Unresponsive)?;
-            if let Some(picked) = Response::try_from(line.as_str()).ok().and_then(&mut pick) {
-                return Ok(picked);
+        })
+        .try_fold(seed, |state, line| {
+            match line.as_deref().map(Response::try_from) {
+                Err(_) => ControlFlow::Break(Err(ArenaError::Unresponsive)),
+                Ok(Err(_)) => ControlFlow::Continue(state),
+                Ok(Ok(response)) => step(state, response).map_break(Ok),
             }
-        }
+        })
+        .break_value()
+        .unwrap_or(Err(ArenaError::Unresponsive))
     }
 
     fn allowance(limits: &GoLimits) -> Duration {
@@ -108,12 +122,13 @@ impl Opponent for UciProcess {
     ) -> Result<ChosenMove, ArenaError> {
         self.send(Command::Position(position))?;
         self.send(Command::Go(limits))?;
-        let mut score: Option<Score> = None;
-        self.await_response(Self::allowance(&limits), |response| {
-            score = response.info().map(|info| info.score()).or(score);
-            response
-                .is_best_move()
-                .then(|| ChosenMove::from_best_move(response.best_move(), score))
+        self.await_response(Self::allowance(&limits), None, |score, response| {
+            let score = response.info().map(|info| info.score()).or(score);
+            if response.is_best_move() {
+                ControlFlow::Break(ChosenMove::from_best_move(response.best_move(), score))
+            } else {
+                ControlFlow::Continue(score)
+            }
         })?
         .ok_or(ArenaError::NoMove)
     }
