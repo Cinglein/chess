@@ -37,11 +37,6 @@ impl LongAlgebraic {
     pub const fn destination(&self) -> Square {
         self.destination
     }
-
-    #[must_use]
-    pub const fn promotion(&self) -> Option<PromotionPiece> {
-        self.promotion
-    }
 }
 
 impl From<ChessMove> for LongAlgebraic {
@@ -108,7 +103,8 @@ mod tests {
     use crate::board::Board;
     use proptest::prelude::*;
 
-    const POSITIONS: [&str; 3] = [
+    const POSITIONS: [&str; 4] = [
+        "r3k3/1P6/8/8/8/8/8/4K3 w q - 0 1",
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
         "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
@@ -127,7 +123,7 @@ mod tests {
             let board: Board = fen.parse().unwrap();
             for legal in board.legal_moves() {
                 let notation = LongAlgebraic::from(legal);
-                assert_eq!(notation.to_string().parse(), Ok(notation));
+                assert_eq!(legal.to_string(), notation.to_string());
                 assert_eq!(board.resolve_move(notation), Some(legal), "{notation}");
             }
         }

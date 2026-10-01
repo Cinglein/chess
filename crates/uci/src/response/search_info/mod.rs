@@ -42,11 +42,6 @@ impl SearchInfo {
     pub const fn score(&self) -> Score {
         self.score
     }
-
-    #[must_use]
-    pub const fn best_move(&self) -> Option<LongAlgebraic> {
-        self.best_move
-    }
 }
 
 impl TryFrom<&str> for SearchInfo {

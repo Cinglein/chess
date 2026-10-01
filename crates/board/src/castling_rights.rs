@@ -122,16 +122,7 @@ mod tests {
 
     use super::CastlingRights;
 
-    const ROUNDTRIPS: [&str; 4] = ["KQkq", "Kq", "K", "q"];
     const REJECTED: [&str; 3] = ["KK", "x", ""];
-
-    #[test]
-    fn rights_display_and_parse_as_fen_letters_in_canonical_order() {
-        for text in ROUNDTRIPS {
-            assert_eq!(text.parse::<CastlingRights>().unwrap().to_string(), text);
-        }
-        assert_eq!("qK".parse::<CastlingRights>().unwrap().to_string(), "Kq");
-    }
 
     #[test]
     fn any_set_of_rights_prints_as_a_fen_field_that_parses_back() {

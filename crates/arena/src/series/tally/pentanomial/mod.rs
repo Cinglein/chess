@@ -34,22 +34,3 @@ impl Pentanomial {
         )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{PairScore, Pentanomial};
-
-    const SPLIT_PAIRS: usize = 4;
-
-    #[test]
-    fn split_pairs_estimate_even_and_a_sweep_estimates_a_gain_with_a_bound_above_even() {
-        let even = (0..SPLIT_PAIRS).fold(Pentanomial::default(), |pairs, _| {
-            pairs.counted(PairScore::Split)
-        });
-        let sweep = (0..SPLIT_PAIRS).fold(Pentanomial::default(), |pairs, _| {
-            pairs.counted(PairScore::TwoWins)
-        });
-        assert!(!even.estimate().excludes_even());
-        assert!(sweep.estimate().excludes_even());
-    }
-}

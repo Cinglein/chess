@@ -32,7 +32,6 @@ pub trait Slider {
 
 #[cfg(test)]
 mod tests {
-    use itertools::Itertools;
     use proptest::prelude::*;
     use strum::IntoEnumIterator;
 
@@ -54,10 +53,10 @@ mod tests {
         }
 
         fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
-            proptest!(|(bits: u64)| {
-                let occupied = Bitboard::from_bits(bits);
+            proptest!(|(occupied: Bitboard)| {
                 for square in Square::iter() {
-                    prop_assert_eq!(Self::attacks(square, occupied), Self::attacks_by_ray(square, occupied));
+                    let relevant = occupied & Self::relevant_occupancy(square);
+                    prop_assert_eq!(Self::attacks(square, occupied), Self::attacks_by_ray(square, relevant));
                 }
             });
         }
@@ -75,18 +74,5 @@ mod tests {
     fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
         Rook::lookups_ignore_pieces_outside_the_relevant_occupancy();
         Bishop::lookups_ignore_pieces_outside_the_relevant_occupancy();
-    }
-
-    #[test]
-    fn attacks_are_never_empty_so_zero_marks_an_unfilled_slot() {
-        for (rays, square) in [Rook::RAYS, Bishop::RAYS]
-            .into_iter()
-            .cartesian_product(Square::iter())
-        {
-            assert!(
-                !rays.attacks_by_ray(square, Bitboard::FULL).is_empty(),
-                "{square}"
-            );
-        }
     }
 }

@@ -95,34 +95,27 @@ mod tests {
         }
     }
 
+    impl PerftPosition {
+        fn first_mismatch(depth_limit: usize) -> Option<String> {
+            Self::REFERENCE.iter().find_map(|position| {
+                let board: Board = position.fen().parse().unwrap();
+                (1..)
+                    .zip(position.nodes_by_depth())
+                    .take(depth_limit)
+                    .find(|(depth, nodes)| board.perft(*depth) != *nodes)
+                    .map(|(depth, _)| format!("{} depth {depth}", position.fen()))
+            })
+        }
+    }
+
     #[test]
     fn shallow_perft_counts_match_the_reference_positions() {
-        for position in &PerftPosition::REFERENCE {
-            let board: Board = position.fen().parse().unwrap();
-            for (depth, nodes) in (1..).zip(position.nodes_by_depth()).take(3) {
-                assert_eq!(
-                    board.perft(depth),
-                    nodes,
-                    "{} depth {depth}",
-                    position.fen()
-                );
-            }
-        }
+        assert_eq!(PerftPosition::first_mismatch(3), None);
     }
 
     #[test]
     #[ignore = "millions of nodes per position; run with --ignored"]
     fn deep_perft_counts_match_the_reference_positions() {
-        for position in &PerftPosition::REFERENCE {
-            let board: Board = position.fen().parse().unwrap();
-            for (depth, nodes) in (1..).zip(position.nodes_by_depth()) {
-                assert_eq!(
-                    board.perft(depth),
-                    nodes,
-                    "{} depth {depth}",
-                    position.fen()
-                );
-            }
-        }
+        assert_eq!(PerftPosition::first_mismatch(4), None);
     }
 }

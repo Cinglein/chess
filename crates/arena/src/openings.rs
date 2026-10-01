@@ -30,12 +30,16 @@ impl Openings {
 mod tests {
     use board::Board;
 
-    use super::Openings;
+    use super::{Openings, RoundCount};
 
     #[test]
-    fn every_opening_parses_and_offers_a_legal_move_from_the_side_to_move() {
+    fn every_opening_parses_and_offers_a_legal_move_and_a_round_repeats_them_all() {
         let boards: Vec<Board> = Openings::boards().collect();
         assert_eq!(boards.len(), Openings::FENS.len());
         assert!(boards.iter().all(|board| !board.legal_moves().is_empty()));
+        assert_eq!(
+            Openings::repeated(RoundCount::new(2)).len(),
+            2 * Openings::FENS.len()
+        );
     }
 }

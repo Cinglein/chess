@@ -115,10 +115,16 @@ mod tests {
     use super::{Search, TableEntry, TranspositionTable, Uninterrupted};
 
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+    const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
     const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
-    const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-    const ORDERING_DEPTH: u8 = 4;
+    const KNIGHT_FORK: &str = "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
+    const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const MATES: [(&str, u8, u8); 2] = [(MATE_IN_ONE, 2, 1), (MATE_IN_TWO, 3, 3)];
+    const MATING_MOVE: &str = "a1a8";
+    const GREEDY_CAPTURE: &str = "d1d5";
+    const FORKING_CHECK: &str = "b5c7";
+    const TABLE_DEPTH: u8 = 5;
     const TABLE_ENTRIES: usize = 1 << 16;
 
     struct Fixture;
@@ -135,29 +141,38 @@ mod tests {
     }
 
     #[test]
-    fn mate_in_one_is_found_and_stalemate_has_no_move_and_a_drawn_score() {
-        let search = Fixture::searched(MATE_IN_ONE, 2, TABLE_ENTRIES);
-        let best = search.best_move().map(|chess_move| chess_move.to_string());
+    fn mates_are_found_at_the_depth_that_reaches_them_and_stalemate_has_no_move_and_a_drawn_score()
+    {
+        for (fen, depth, plies) in MATES {
+            let search = Fixture::searched(fen, depth, TABLE_ENTRIES);
+            assert_eq!(search.score(), Score::mate_in(plies), "{fen}");
+        }
+        let best = Fixture::searched(MATE_IN_ONE, 2, TABLE_ENTRIES).best_move();
         assert_eq!(
-            (best.as_deref(), search.score()),
-            (Some("a1a8"), Score::mate_in(1))
+            best.map(|chess_move| chess_move.to_string()).as_deref(),
+            Some(MATING_MOVE)
         );
         let search = Fixture::searched(STALEMATE, 1, TABLE_ENTRIES);
         assert_eq!((search.best_move(), search.score()), (None, Score::DRAW));
     }
 
     #[test]
-    fn a_defended_pawn_is_not_taken_at_depth_one_because_the_recapture_is_seen() {
+    fn at_depth_one_a_defended_pawn_is_left_alone_and_a_check_that_forks_the_queen_is_played() {
         let search = Fixture::searched(DEFENDED_PAWN, 1, TABLE_ENTRIES);
         let best = search.best_move().map(|chess_move| chess_move.to_string());
-        assert_ne!(best.as_deref(), Some("d1d5"));
-        assert!(search.score() > Score::DRAW);
+        assert!(best.as_deref() != Some(GREEDY_CAPTURE) && search.score() > Score::DRAW);
+        let search = Fixture::searched(KNIGHT_FORK, 1, TABLE_ENTRIES);
+        let best = search.best_move().map(|chess_move| chess_move.to_string());
+        assert_eq!(
+            (best.as_deref(), search.score() > Score::DRAW),
+            (Some(FORKING_CHECK), true)
+        );
     }
 
     #[test]
     fn the_table_cuts_nodes_without_changing_the_score() {
-        let without = Fixture::searched(KIWIPETE, ORDERING_DEPTH, 0);
-        let with = Fixture::searched(KIWIPETE, ORDERING_DEPTH, TABLE_ENTRIES);
+        let without = Fixture::searched(START, TABLE_DEPTH, 0);
+        let with = Fixture::searched(START, TABLE_DEPTH, TABLE_ENTRIES);
         assert_eq!(with.score(), without.score());
         assert!(
             with.nodes() < without.nodes(),

@@ -31,6 +31,9 @@ impl<S: Sink> Engine<S> {
 
     #[must_use]
     pub fn new(stop: Arc<AtomicBool>, sink: S) -> Engine<S> {
+        const {
+            assert!(Self::ENTRY_CAPACITY > 0);
+        }
         Engine {
             board: Board::START,
             entries: vec![TableEntry::EMPTY; Self::ENTRY_CAPACITY],
@@ -114,7 +117,9 @@ impl<'line, S: Sink> Receiver<'line> for Engine<S> {
 mod tests {
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
+    use std::time::{Duration, Instant};
 
+    use search::Depth;
     use uci::{Command, Response};
 
     use super::{Engine, Sink};
@@ -122,6 +127,9 @@ mod tests {
     const PLACE: &str = "position fen 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const SEARCH: &str = "go depth 2";
     const EXPECTED: &str = "bestmove a1a8";
+    const QUIT: &str = "quit";
+    const TIMED: &str = "go wtime 3000 btime 3000 winc 100 binc 100";
+    const SETTLED_DEPTH: Depth = Depth::new(4);
 
     impl Sink for Vec<String> {
         fn emit(&mut self, response: Response<'_>) {
@@ -130,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    fn a_placed_position_searched_to_depth_two_announces_the_mate() {
+    fn a_placed_position_searched_to_depth_two_announces_the_mate_and_quit_ends_the_engine() {
         let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
         let placed = Command::try_from(PLACE).unwrap().deliver_to(fresh);
         let engine = Command::try_from(SEARCH).unwrap().deliver_to(placed);
@@ -140,5 +148,27 @@ mod tests {
             "{announced:?}"
         );
         assert!(!engine.is_ending());
+        assert!(
+            Command::try_from(QUIT)
+                .unwrap()
+                .deliver_to(engine)
+                .is_ending()
+        );
+    }
+
+    #[test]
+    fn a_timed_search_deepens_past_the_opening_plies_and_stops_inside_its_allowance() {
+        let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
+        let started = Instant::now();
+        let engine = Command::try_from(TIMED).unwrap().deliver_to(fresh);
+        let elapsed = started.elapsed();
+        let deepest = engine
+            .sink()
+            .iter()
+            .filter_map(|line| Response::try_from(line.as_str()).ok()?.info())
+            .map(|info| info.depth())
+            .max();
+        assert!(deepest >= Some(SETTLED_DEPTH), "{deepest:?}");
+        assert!(elapsed < Duration::from_secs(1), "{elapsed:?}");
     }
 }

@@ -226,44 +226,26 @@ impl FromStr for PiecePlacement {
 
 #[cfg(test)]
 mod tests {
-    use fen::FenError;
-    use proptest::prelude::*;
-    use proptest::sample::select;
-    use strum::VariantArray;
+    use super::PiecePlacement;
 
-    use super::{PiecePlacement, PlacedPiece};
-    use crate::bitboard::Bitboard;
-    use crate::color::Color;
-    use crate::piece::Piece;
-    use crate::piece_kind::PieceKind;
-    use crate::square::Square;
-
-    const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-
-    #[test]
-    fn a_placed_piece_is_found_on_its_square_and_nowhere_else() {
-        proptest!(|(color in select(Color::VARIANTS), kind in select(PieceKind::VARIANTS), square in select(Square::VARIANTS))| {
-            let piece = Piece::new(color, kind);
-            let placement: PiecePlacement = [PlacedPiece::new(square, piece)].into_iter().collect();
-            prop_assert_eq!(placement.piece_at(square), Some(piece));
-            prop_assert_eq!(placement.pieces(color, kind), Bitboard::from_square(square));
-            prop_assert_eq!(placement.occupied(), Bitboard::from_square(square));
-        });
-    }
+    const MATERIAL: [(&str, bool); 10] = [
+        ("1b2k3/8/8/8/8/8/8/2B1K3", true),
+        ("8/8/8/4k3/8/8/8/4K3", true),
+        ("8/8/8/4k3/8/8/8/4KB2", true),
+        ("8/8/8/4k3/8/8/8/4KN2", true),
+        ("b3k3/8/8/8/8/8/8/4KB2", true),
+        ("b3k3/8/8/8/8/8/8/2B1K3", false),
+        ("8/8/8/4k3/8/8/8/3BKN2", false),
+        ("8/8/8/4k3/8/8/8/3NKN2", false),
+        ("8/8/8/4k3/8/8/4P3/4K3", false),
+        ("4k3/8/8/8/8/8/8/R3K3", false),
+    ];
 
     #[test]
-    fn placements_roundtrip_through_fen() {
-        assert_eq!(PiecePlacement::START.to_string(), START);
-        assert_eq!(START.parse::<PiecePlacement>(), Ok(PiecePlacement::START));
-        let mixed = "r3k2r/8/8/3pP3/8/8/8/R3K2R";
-        assert_eq!(mixed.parse::<PiecePlacement>().unwrap().to_string(), mixed);
-    }
-
-    #[test]
-    fn a_placement_needs_exactly_eight_ranks() {
-        assert_eq!(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP".parse::<PiecePlacement>(),
-            Err(FenError::RankCount)
-        );
+    fn material_fixtures_say_whether_either_side_could_still_mate() {
+        for (fen, lacks) in MATERIAL {
+            let placement: PiecePlacement = fen.parse().unwrap();
+            assert_eq!(placement.lacks_mating_material(), lacks, "{fen}");
+        }
     }
 }

@@ -39,6 +39,7 @@ impl<const SIZE: usize> AttackTable<SIZE> {
         let mut offset = 0;
         let mut squares = Square::VARIANTS;
         while let [square, rest @ ..] = squares {
+            assert!(!rays.attacks_by_ray(*square, Bitboard::FULL).is_empty());
             let mask = rays.relevant_occupancy(*square);
             let magic = Magic::new(mask, multipliers.as_array()[*square as usize], offset);
             magics[*square as usize] = magic;

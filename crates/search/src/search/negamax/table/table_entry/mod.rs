@@ -73,3 +73,51 @@ impl TableEntry {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use board::Board;
+    use eval::Score;
+
+    use super::super::super::window::Bound;
+    use super::{BoundKind, Conclusion, Depth, RootDistance, TableEntry, Window, Zobrist};
+
+    const DEEP: Depth = Depth::new(2);
+    const ALPHA: Score = Score::new(-10);
+    const BETA: Score = Score::new(10);
+    const SETTLED: [(BoundKind, Score, Option<Score>); 5] = [
+        (BoundKind::Exact, Score::DRAW, Some(Score::DRAW)),
+        (BoundKind::AtMost, ALPHA, Some(ALPHA)),
+        (BoundKind::AtMost, Score::DRAW, None),
+        (BoundKind::AtLeast, BETA, Some(BETA)),
+        (BoundKind::AtLeast, Score::DRAW, None),
+    ];
+
+    impl TableEntry {
+        fn concluding(kind: BoundKind, score: Score) -> TableEntry {
+            let conclusion = Conclusion::new(None, score, kind);
+            TableEntry::remember(Zobrist::EMPTY, DEEP, RootDistance::ROOT, conclusion)
+        }
+    }
+
+    #[test]
+    fn an_entry_settles_a_node_only_when_deep_enough_and_its_bound_falls_outside_the_window() {
+        let window = Window::new(Bound::new(ALPHA), Bound::new(BETA));
+        for (kind, score, settled) in SETTLED {
+            let entry = TableEntry::concluding(kind, score);
+            assert_eq!(
+                entry.settles(DEEP, RootDistance::ROOT, window),
+                settled,
+                "{kind:?} {score}"
+            );
+            assert_eq!(
+                entry.settles(DEEP.incremented(), RootDistance::ROOT, window),
+                None
+            );
+        }
+        let chess_move = Board::START.legal_moves()[0];
+        let conclusion = Conclusion::new(Some(chess_move), Score::DRAW, BoundKind::Exact);
+        let remembered = TableEntry::remember(Zobrist::EMPTY, DEEP, RootDistance::ROOT, conclusion);
+        assert_eq!(remembered.best_move(), Some(chess_move));
+    }
+}
