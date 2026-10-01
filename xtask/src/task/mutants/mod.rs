@@ -22,7 +22,6 @@ impl Mutants {
     const OUTPUT_DIRECTORY: &str = "target/mutants";
     const PROCESS_NAME: &str = "cargo-mutants";
     const SHARD_VARIABLE: &str = "MUTANTS_SHARD";
-    const JOBS: &str = "2";
 
     pub fn run(workspace: &Workspace, scope: Scope) -> Result<(), Failure> {
         let _lock = Self::exclusive_lock(workspace)?;
@@ -32,7 +31,7 @@ impl Mutants {
         let arguments: Vec<String> = [
             String::from("mutants"),
             String::from("--jobs"),
-            String::from(Self::JOBS),
+            String::from(scope.parallel_jobs()),
             String::from("--jobserver-tasks"),
             budget.compiler_tasks().to_string(),
             String::from("--output"),
