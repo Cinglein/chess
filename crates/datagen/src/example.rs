@@ -28,8 +28,11 @@ impl TryFrom<Label> for Example {
 
     fn try_from(label: Label) -> Result<Example, DatagenError> {
         let placement = label.board().placement();
-        let both =
-            |kind| placement.pieces(Color::White, kind) | placement.pieces(Color::Black, kind);
+        let both = |kind| {
+            placement
+                .pieces(Color::White, kind)
+                .disjoint_union(placement.pieces(Color::Black, kind))
+        };
         let bitboards = [
             placement.occupied_by(Color::White).bits(),
             placement.occupied_by(Color::Black).bits(),
