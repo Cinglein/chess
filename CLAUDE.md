@@ -31,12 +31,16 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
   `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
   `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask test-time`, `cargo xtask magics`). Lints return a `Report` of
+  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
 
 - All changes land through pull requests. `main` is protected; never push to it directly.
+- A chain of dependent PRs is a GitHub stack. Link the branches bottom to top with
+  `gh stack link <bottom> ... <top>` (or `gh stack submit`), never `gh pr create --base <branch>`.
+  The Stack workflow runs `cargo xtask stacked` and fails any PR whose base is not `main` and
+  that belongs to no stack; the session hook denies the `--base` form.
 - Never merge or approve a PR. Open it, wait for CI, report the link, and stop. The owner reads,
   comments, requests edits, and merges on GitHub. A PreToolUse hook in `.claude/settings.json`
   denies merge, approve, branch protection, repo settings, and push-to-main commands. It matches
