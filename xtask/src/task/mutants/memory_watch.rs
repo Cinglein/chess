@@ -115,6 +115,7 @@ impl MemoryWatch {
         self.system
             .processes()
             .values()
+            .filter(|process| process.thread_kind().is_none())
             .filter(|process| !members.contains(&process.pid()))
             .filter(|process| {
                 process
