@@ -1,7 +1,6 @@
 mod line_reader;
 
 use std::io::Write;
-use std::path::Path;
 use std::process::{Child, ChildStdin, Command as ProcessCommand, Stdio};
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
@@ -26,8 +25,11 @@ impl UciProcess {
     const GRACE: Duration = Duration::from_secs(2);
     const UNBOUNDED: Duration = Duration::from_hours(1);
 
-    pub fn spawn(program: &Path, options: &[EngineOption<'_>]) -> Result<UciProcess, ArenaError> {
-        let mut child = ProcessCommand::new(program)
+    pub fn spawn(
+        mut program: ProcessCommand,
+        options: &[EngineOption<'_>],
+    ) -> Result<UciProcess, ArenaError> {
+        let mut child = program
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -126,23 +128,101 @@ impl Drop for UciProcess {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-    use std::time::Duration;
+    use std::env;
+    use std::io::{self, BufRead};
+    use std::ops::ControlFlow;
+    use std::process::Command as ProcessCommand;
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::thread;
+    use std::time::{Duration, Instant};
 
     use board::Board;
-    use uci::{EngineOption, GoLimits, Position, Switch};
+    use engine::{Engine, Sink};
+    use uci::{Command, EngineOption, GoLimits, Position, Response, Switch};
 
     use super::{Opponent, UciProcess};
 
     const PROGRAM: &str = "stockfish";
+    const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+    const MATING_MOVE: &str = "a1a8";
     const START: Position<'static> = Position::played(Board::START, &[]);
     const THINK: GoLimits = GoLimits::MoveTime(Duration::from_millis(50));
     const LIMITED: [EngineOption<'static>; 1] = [EngineOption::LimitStrength(Switch::True)];
 
+    struct EngineProcess;
+
+    impl EngineProcess {
+        const ENTRY: &str = "ARENA_ENGINE_PROCESS";
+        const ENTRY_TEST: &str =
+            "uci_process::tests::the_engine_process_serves_uci_over_its_standard_streams";
+        const SETUP: Duration = Duration::from_millis(20);
+
+        fn command() -> ProcessCommand {
+            let mut command = ProcessCommand::new(env::current_exe().unwrap());
+            command
+                .args(["--ignored", "--exact", Self::ENTRY_TEST, "--nocapture"])
+                .env(Self::ENTRY, "1");
+            command
+        }
+
+        fn serve() {
+            let engine = Engine::new(Arc::new(AtomicBool::new(false)), EngineProcess);
+            let _finished = io::stdin().lock().lines().map_while(Result::ok).try_fold(
+                engine,
+                |engine, line| {
+                    let engine = match Command::try_from(line.as_str()) {
+                        Ok(command) => command.deliver_to(engine),
+                        Err(_) => engine,
+                    };
+                    if engine.is_ending() {
+                        ControlFlow::Break(engine)
+                    } else {
+                        ControlFlow::Continue(engine)
+                    }
+                },
+            );
+        }
+    }
+
+    impl Sink for EngineProcess {
+        fn emit(&mut self, response: Response<'_>) {
+            if response == Response::ReadyOk {
+                thread::sleep(Self::SETUP);
+            }
+            let acted_on = response.is_best_move()
+                || response.info().is_some()
+                || response == Response::UciOk
+                || response == Response::ReadyOk;
+            if acted_on {
+                println!("{response}");
+            }
+        }
+    }
+
+    #[test]
+    #[ignore = "the engine behind the handshake test, which spawns it with ARENA_ENGINE_PROCESS set"]
+    fn the_engine_process_serves_uci_over_its_standard_streams() {
+        if env::var_os(EngineProcess::ENTRY).is_some() {
+            EngineProcess::serve();
+        }
+    }
+
+    #[test]
+    fn a_spawned_engine_is_ready_before_the_game_starts_and_answers_a_timed_go_with_the_mate() {
+        let mut engine = UciProcess::spawn(EngineProcess::command(), &LIMITED).unwrap();
+        let started = Instant::now();
+        engine.begin_game().unwrap();
+        assert!(started.elapsed() >= EngineProcess::SETUP);
+        let position = Position::played(MATE_IN_ONE.parse().unwrap(), &[]);
+        let chosen = engine.choose_move(position, THINK).unwrap();
+        assert_eq!(chosen.notation().to_string(), MATING_MOVE);
+    }
+
     #[test]
     #[ignore = "needs stockfish on the path"]
     fn stockfish_completes_the_handshake_and_answers_with_a_legal_move() {
-        let mut stockfish = UciProcess::spawn(Path::new(PROGRAM), &LIMITED).unwrap();
+        let mut stockfish = UciProcess::spawn(ProcessCommand::new(PROGRAM), &LIMITED).unwrap();
         stockfish.begin_game().unwrap();
         let chosen = stockfish.choose_move(START, THINK).unwrap();
         assert!(Board::START.resolve_move(chosen.notation()).is_some());

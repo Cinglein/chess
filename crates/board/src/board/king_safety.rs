@@ -56,14 +56,19 @@ impl KingSafety {
     fn pins(placement: &PiecePlacement, king: Square, us: Color, occupied: Bitboard) -> Bitboard {
         let theirs = |kind| placement.pieces(!us, kind);
         let queens = theirs(PieceKind::Queen);
-        let snipers = (Rook::attacks(king, Bitboard::EMPTY) & (theirs(PieceKind::Rook) | queens))
-            | (Bishop::attacks(king, Bitboard::EMPTY) & (theirs(PieceKind::Bishop) | queens));
+        let ours = placement.occupied_by(us);
+        let snipers = (Rook::attacks(king, Bitboard::EMPTY)
+            & theirs(PieceKind::Rook).disjoint_union(queens))
+        .disjoint_union(
+            Bishop::attacks(king, Bitboard::EMPTY)
+                & theirs(PieceKind::Bishop).disjoint_union(queens),
+        );
         snipers
             .into_iter()
             .map(|sniper| king.between(sniper) & occupied)
-            .filter(|blockers| {
-                blockers.count() == 1 && !(*blockers & placement.occupied_by(us)).is_empty()
-            })
-            .fold(Bitboard::EMPTY, |pinned, blocker| pinned | blocker)
+            .filter(|blockers| blockers.count() == 1)
+            .filter_map(Bitboard::least_significant_bit)
+            .filter(|blocker| ours.contains(*blocker))
+            .collect()
     }
 }

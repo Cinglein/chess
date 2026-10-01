@@ -13,6 +13,10 @@ impl TimeBudget {
     const SAFETY_MARGIN: Duration = Duration::from_millis(50);
     const LEAST: Duration = Duration::from_millis(1);
 
+    pub(super) fn is_past_halfway(elapsed: Duration, allowance: Duration) -> bool {
+        elapsed * 2 >= allowance
+    }
+
     pub(super) fn allot(clock: &Clock, side: Color) -> Duration {
         let remaining = clock.remaining(side);
         (Self::MOVES_TO_GO.share_of(remaining) + clock.increment(side))
@@ -44,6 +48,9 @@ mod tests {
     );
     const SHARE_PLUS_INCREMENT: Duration = Duration::from_secs(3);
     const SHARE_ALONE: Duration = Duration::from_secs(2);
+    const ALLOWANCE: Duration = Duration::from_secs(4);
+    const HALF: Duration = Duration::from_secs(2);
+    const JUST_UNDER_HALF: Duration = HALF.saturating_sub(Duration::from_nanos(1));
 
     #[test]
     fn a_move_gets_a_thirtieth_of_its_clock_plus_its_increment_but_never_more_than_the_clock_holds()
@@ -57,5 +64,11 @@ mod tests {
             TimeBudget::allot(&NEARLY_OUT, Color::White),
             TimeBudget::LEAST
         );
+    }
+
+    #[test]
+    fn deepening_stops_once_half_the_allowance_is_spent() {
+        assert!(!TimeBudget::is_past_halfway(JUST_UNDER_HALF, ALLOWANCE));
+        assert!(TimeBudget::is_past_halfway(HALF, ALLOWANCE));
     }
 }

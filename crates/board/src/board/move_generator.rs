@@ -45,8 +45,8 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
         let queens = ours(PieceKind::Queen);
         let pawns = ours(PieceKind::Pawn);
         let knights = ours(PieceKind::Knight);
-        let bishops = ours(PieceKind::Bishop) | queens;
-        let rooks = ours(PieceKind::Rook) | queens;
+        let bishops = ours(PieceKind::Bishop).disjoint_union(queens);
+        let rooks = ours(PieceKind::Rook).disjoint_union(queens);
         let occupied = self.occupied;
         for from in pawns {
             self.pawn_moves(from);
@@ -66,7 +66,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
             .and_then(|to| to + P::PUSH)
             .filter(|to| !self.occupied.contains(*to) && allowed.contains(*to));
         let single = push.map_or(Bitboard::EMPTY, Bitboard::from_square);
-        let destinations = (single | (P::attacks(from) & self.theirs)) & allowed;
+        let destinations = single.disjoint_union(P::attacks(from) & self.theirs) & allowed;
         let promoting = destinations & Bitboard::rank(P::PROMOTION_RANK);
         let en_passant = self
             .board
@@ -139,8 +139,10 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
     ) -> bool {
         let placement = board.placement();
         let squares = CastlingSquares::new(right);
-        let king_path = squares.king_origin().between(squares.king_destination())
-            | Bitboard::from_square(squares.king_destination());
+        let king_path = squares
+            .king_origin()
+            .between(squares.king_destination())
+            .including(squares.king_destination());
         !safety.in_check()
             && right.color() == P::COLOR
             && board.castling_rights().contains(right)
