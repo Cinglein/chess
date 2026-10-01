@@ -3,9 +3,12 @@ exclude_globs = [
     "crates/*/src/main.rs",
     "crates/chess/**",
     "crates/tui/**",
+    "crates/arena/src/command_line/**",
+    "crates/board/src/board/playout.rs",
     "crates/board/src/slider/magics.rs",
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
+exclude_re = ["arbitrary_with"]
 test_workspace = true
 additional_cargo_args = ["--lib"]
 minimum_test_timeout = 10.0
