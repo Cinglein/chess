@@ -28,6 +28,7 @@ impl Mutants {
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
         let budget = Self::refuse_if_memory_is_short()?;
+        scope.warm_build_directory(workspace)?;
         let arguments: Vec<String> = [
             String::from("mutants"),
             String::from("--jobs"),

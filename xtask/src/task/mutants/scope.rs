@@ -14,6 +14,13 @@ impl Scope {
     const BASE: &str = "origin/main";
     const DIFF_FILE: &str = "target/mutants.diff";
 
+    pub fn warm_build_directory(self, workspace: &Workspace) -> Result<(), Failure> {
+        match self {
+            Scope::ChangedLines => Ok(()),
+            Scope::Workspace => workspace.cargo(&["test", "--workspace", "--lib", "--no-run"]),
+        }
+    }
+
     pub fn arguments(self, workspace: &Workspace) -> Result<Vec<String>, Failure> {
         match self {
             Scope::ChangedLines => {
