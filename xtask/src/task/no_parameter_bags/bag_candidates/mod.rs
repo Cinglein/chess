@@ -41,10 +41,10 @@ impl BagCandidates {
             .map(|segment| segment.ident.to_string())
     }
 
-    fn carries_logic(item: &ItemImpl) -> bool {
+    fn carries_logic(item: &ItemImpl, self_name: &str) -> bool {
         item.trait_.is_some()
             || item.items.iter().any(|member| match member {
-                ImplItem::Fn(function) => !MethodShape::classify(function).is_trivial(),
+                ImplItem::Fn(function) => !MethodShape::classify(function, self_name).is_trivial(),
                 _ => false,
             })
     }
@@ -63,7 +63,7 @@ impl<'ast> Visit<'ast> for BagCandidates {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if let Some(name) = Self::self_name(item).filter(|_| Self::carries_logic(item)) {
+        if let Some(name) = Self::self_name(item).filter(|name| Self::carries_logic(item, name)) {
             self.disqualified.insert(name);
         }
     }
