@@ -1,0 +1,27 @@
+[package]
+name = "trainer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bulletformat = "1.8.0"
+clap = { version = "4", features = ["derive"] }
+derive_more = { version = "2", features = ["display", "from_str"] }
+eval = { version = "0.1.0", path = "../eval" }
+rand = "0.10"
+serde = { version = "1", features = ["derive"] }
+strum = { version = "0.28", default-features = false, features = ["derive"] }
+thiserror = "2"
+toml = "0.9"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf91c6ccac47e72d561062a46b5", features = ["metal"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf91c6ccac47e72d561062a46b5" }
+
+[lints]
+workspace = true
