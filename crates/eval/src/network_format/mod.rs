@@ -19,3 +19,5 @@ impl NetworkFormat {
         Self::HIDDEN_QUANTISATION.times(Self::OUTPUT_QUANTISATION);
     pub const EVAL_SCALE: EvalScale = EvalScale::new(400);
 }
+
+const _: () = assert!(NetworkFormat::INPUT_SIZE == 768);

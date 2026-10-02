@@ -53,6 +53,7 @@ mod tests {
 
     const RECORDS: usize = 16;
     const SEED: ShuffleSeed = ShuffleSeed::new(5);
+    const OTHER_SEED: ShuffleSeed = ShuffleSeed::new(6);
 
     struct Fixture;
 
@@ -92,7 +93,10 @@ mod tests {
                 &Fixture::first_bytes(again.path())
             )
         );
-        assert_ne!(order, Fixture::first_bytes(&input));
+        let other = ShuffledData::written_beside(&input, OTHER_SEED).unwrap();
+        assert!(
+            order != Fixture::first_bytes(&input) && order != Fixture::first_bytes(other.path())
+        );
     }
 
     #[test]
