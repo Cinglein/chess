@@ -4,6 +4,8 @@ mod foreign_references;
 use export::Export;
 use foreign_references::ForeignReferences;
 
+use crate::task::binary_files::BinaryFiles;
+
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -13,9 +15,10 @@ pub struct PublicSurface;
 
 impl PublicSurface {
     pub fn report(files: &[SourceFile]) -> Report {
+        let binaries = BinaryFiles::collect(files);
         let references = files
             .iter()
-            .map(ForeignReferences::in_file)
+            .map(|file| ForeignReferences::in_file(file, &binaries))
             .fold(ForeignReferences::default(), ForeignReferences::absorb);
         Report::new(
             "a crate exports exactly what another crate uses",
@@ -47,19 +50,21 @@ mod tests {
     use super::PublicSurface;
     use crate::task::source_file::SourceFile;
 
-    const LIB: &str = "mod x; pub use x::{Used, Unused}; pub use x::Original as Seen;";
+    const LIB: &str = "mod x; pub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
     const MAIN: &str = "use a::Used; fn main() { a::Seen::go(); }";
+    const OWN_BINARY: &str = "use a::Wired; fn main() {}";
     const LONELY: &str = "mod y; pub use y::Lonely;";
-    const FILES: [(&str, &str); 3] = [
+    const FILES: [(&str, &str); 4] = [
         ("crates/a/src/lib.rs", LIB),
+        ("crates/a/src/main.rs", OWN_BINARY),
         ("crates/b/src/main.rs", MAIN),
         ("crates/c/src/lib.rs", LONELY),
     ];
     const FLAGGED: &str = "Unused is exported";
-    const KEPT: [&str; 3] = ["Used is exported", "Seen", "Lonely"];
+    const KEPT: [&str; 4] = ["Used is exported", "Seen", "Wired", "Lonely"];
 
     #[test]
-    fn flags_an_unnamed_reexport_of_a_crate_that_has_a_dependent() {
+    fn flags_an_unnamed_reexport_but_counts_the_crates_own_binary_as_a_user() {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });

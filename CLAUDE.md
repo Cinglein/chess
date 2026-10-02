@@ -24,8 +24,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
+- `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
+  itself at fixed nodes from `RandomOpenings` on worker threads and streams every `Finished`
+  game over a channel; `Example` turns each `Label` into bullet's 32-byte `ChessBoard` record
+  through the `bulletformat` crate; `datagen.toml` holds nodes per move, opening plies, the
+  position target, and concurrency, and `--seed` defaults to the clock.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
-  wasm), `datagen`, `trainer`. Crates are added when their milestone starts.
+  wasm), `trainer`. Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `expression-flow`, `fn-shape`, `literal-names`,
   `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
@@ -82,9 +87,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   variants of a data-carrying enum outside that enum's file may only fill a table of literals,
   paths, and tuples; anything else dispatches through a trait. Every struct field is private,
   including `pub(crate)` and `pub(super)`, so values are built by constructors alone.
-- A crate root re-exports exactly what another crate names. An export with no user outside its
-  crate is removed, and added back the day a user appears. A crate no other crate depends on
-  yet has no surface to check. `cargo xtask public-surface` enforces it.
+- A crate root re-exports exactly what another crate names. A crate's own binary target is
+  another crate: what its `main.rs` tree names counts. An export with no user outside the library
+  is removed, and added back the day a user appears. A library no other crate depends on yet has
+  no surface to check. `cargo xtask public-surface` enforces it.
 - A struct with no logic of its own (only constructors, field accessors, and `..self` updaters,
   no trait impls) that exactly one other file names is a parameter bag carrying values between
   that file's methods. Give it the logic that consumes it. `cargo xtask no-parameter-bags`

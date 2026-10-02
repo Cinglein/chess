@@ -1,9 +1,7 @@
-mod binary_files;
-
-use binary_files::BinaryFiles;
 use syn::visit::Visit;
 use syn::{ItemMod, LitFloat, LitInt};
 
+use crate::task::binary_files::BinaryFiles;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
