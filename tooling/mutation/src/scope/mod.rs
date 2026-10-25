@@ -45,26 +45,11 @@ impl Scope {
                 let line = line
                     .argument(MutantsArgument::InDiff)
                     .argument(Self::DIFF_FILE);
-                let line = match env::var(Self::SLICE_VARIABLE) {
-                    Ok(spelled) => line
-                        .argument(MutantsArgument::Shard)
-                        .argument(spelled.parse::<Slice>()?),
-                    Err(_) => line,
-                };
-                let reaches = Changes::SinceMain.reaches(workspace)?;
-                let changed: BTreeSet<CrateName> =
-                    reaches.iter().filter_map(Reach::package).collect();
-                if reaches.contains(&Reach::Everything) || changed.is_empty() {
-                    Ok(vec![MutantsRun::new(
-                        line.argument(MutantsArgument::Output)
-                            .argument(output.root().display())
-                            .argument(MutantsArgument::TestWorkspaceOn),
-                        output.root().to_path_buf(),
-                    )])
-                } else {
-                    let line = line.argument(MutantsArgument::BaselineSkip);
-                    Self::one_shard(&line, workspace, &output, &Shard::Whole(changed))
-                }
+                let slice = env::var(Self::SLICE_VARIABLE)
+                    .ok()
+                    .map(|spelled| spelled.parse::<Slice>())
+                    .transpose()?;
+                Self::changed_lines(line, workspace, &output, slice)
             }
             Scope::Workspace => match env::var(Self::SHARD_VARIABLE) {
                 Ok(spelled) => Self::one_shard(&line, workspace, &output, &spelled.parse()?),
@@ -76,6 +61,40 @@ impl Scope {
                     output.root().to_path_buf(),
                 )]),
             },
+        }
+    }
+
+    fn changed_lines(
+        line: CommandLine,
+        workspace: &Workspace,
+        output: &OutputDirectory,
+        slice: Option<Slice>,
+    ) -> Result<Vec<MutantsRun>, Failure> {
+        let reaches = Changes::SinceMain.reaches(workspace)?;
+        let changed: BTreeSet<CrateName> = reaches.iter().filter_map(Reach::package).collect();
+        let sliced = |line: CommandLine| match slice {
+            Some(slice) => line.argument(MutantsArgument::Shard).argument(slice),
+            None => line,
+        };
+        if reaches.contains(&Reach::Everything) || changed.is_empty() {
+            Ok(vec![MutantsRun::new(
+                sliced(line)
+                    .argument(MutantsArgument::Output)
+                    .argument(output.root().display())
+                    .argument(MutantsArgument::TestWorkspaceOn),
+                output.root().to_path_buf(),
+            )])
+        } else {
+            let line = line.argument(MutantsArgument::BaselineSkip);
+            match slice.and_then(|slice| slice.picked(changed.iter().cloned().collect())) {
+                Some(picked) => Self::one_shard(
+                    &line,
+                    workspace,
+                    output,
+                    &Shard::Whole(picked.into_iter().collect()),
+                ),
+                None => Self::one_shard(&sliced(line), workspace, output, &Shard::Whole(changed)),
+            }
         }
     }
 

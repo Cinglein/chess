@@ -16,6 +16,18 @@ impl Slice {
     pub const fn new(index: usize, count: usize) -> Slice {
         Slice { index, count }
     }
+
+    #[must_use]
+    pub fn picked<T>(&self, items: Vec<T>) -> Option<Vec<T>> {
+        (items.len() >= self.count).then(|| {
+            items
+                .into_iter()
+                .enumerate()
+                .filter(|(position, _)| position % self.count == self.index)
+                .map(|(_, item)| item)
+                .collect()
+        })
+    }
 }
 
 impl fmt::Display for Slice {

@@ -23,7 +23,7 @@ exclude_re = [
     "Affected::run",
     "Affected::loads",
     "Changes::reaches",
-    "Scope::(applied|one_shard|write_diff)",
+    "Scope::(applied|changed_lines|one_shard|write_diff)",
     "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",
