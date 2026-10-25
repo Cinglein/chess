@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use quote::ToTokens;
 use syn::visit::Visit;
-use syn::{FnArg, ImplItem, ItemImpl, ItemMod, ReturnType, Signature};
+use syn::{FnArg, ImplItem, ImplItemFn, ItemImpl, ItemMod, ReturnType, Signature};
 
 use task::Report;
 use task::Site;
@@ -95,6 +95,15 @@ impl std::fmt::Display for Shape {
 #[derive(Default)]
 struct SignatureIndex(BTreeMap<Shape, Vec<String>>);
 
+impl SignatureIndex {
+    fn functions(item: &ItemImpl) -> impl Iterator<Item = &ImplItemFn> {
+        item.items.iter().filter_map(|member| match member {
+            ImplItem::Fn(function) => Some(function),
+            _ => None,
+        })
+    }
+}
+
 impl<'ast> Visit<'ast> for SignatureIndex {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
         match SourceFile::walk(module) {
@@ -104,18 +113,14 @@ impl<'ast> Visit<'ast> for SignatureIndex {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if item.trait_.is_some() {
-            return;
-        }
-        let helpers = item.items.iter().filter_map(|member| match member {
-            ImplItem::Fn(function) => Some((
-                Shape::describe(item, &function.sig),
-                function.sig.ident.to_string(),
-            )),
-            _ => None,
-        });
-        for (shape, name) in helpers {
-            self.0.entry(shape).or_default().push(name);
+        match Walk::inherent_impls(item) {
+            Walk::Entered => Self::functions(item).for_each(|function| {
+                self.0
+                    .entry(Shape::describe(item, &function.sig))
+                    .or_default()
+                    .push(function.sig.ident.to_string());
+            }),
+            Walk::Skipped => {}
         }
     }
 }

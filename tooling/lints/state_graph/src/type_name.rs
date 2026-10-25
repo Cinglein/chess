@@ -31,20 +31,20 @@ impl TypeName {
     }
 
     fn unwrapped(ty: &Type) -> &Type {
-        let Type::Path(path) = ty else { return ty };
-        let Some(segment) = path.path.segments.last() else {
-            return ty;
+        let last = match ty {
+            Type::Path(path) => path.path.segments.last(),
+            _ => None,
         };
-        if !Self::WRAPPERS.contains(&segment.ident.to_string().as_str()) {
-            return ty;
-        }
-        let PathArguments::AngleBracketed(arguments) = &segment.arguments else {
-            return ty;
-        };
-        match arguments.args.first() {
-            Some(GenericArgument::Type(inner)) => inner,
-            _ => ty,
-        }
+        last.filter(|segment| Self::WRAPPERS.contains(&segment.ident.to_string().as_str()))
+            .and_then(|segment| match &segment.arguments {
+                PathArguments::AngleBracketed(arguments) => arguments.args.first(),
+                _ => None,
+            })
+            .and_then(|argument| match argument {
+                GenericArgument::Type(inner) => Some(inner),
+                _ => None,
+            })
+            .unwrap_or(ty)
     }
 }
 

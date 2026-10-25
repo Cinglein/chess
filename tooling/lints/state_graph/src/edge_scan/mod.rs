@@ -90,30 +90,31 @@ impl<'scan> EdgeScan<'scan> {
 
     fn check_function(&mut self, context: &ImplContext, function: &ImplItemFn) {
         let shape = FunctionShape::describe(&self.path, function, context, self.declarations);
-        if shape.returns().holds_vertex_in_tuple() {
-            self.violations.push(Violation::new(
-                shape.site().clone(),
-                "returns a tuple holding a vertex; return the vertex",
-            ));
-        }
-        match (function.sig.receiver(), shape.returns().vertex()) {
-            (None, Some(target)) if context.in_trait() => {
-                let edge = shape
-                    .vertex_parameters()
-                    .first()
-                    .map(|source| Edge::new(source.clone(), target.clone()));
-                self.check_edge(context, function, &shape, edge);
+        self.violations
+            .extend(shape.returns().holds_vertex_in_tuple().then(|| {
+                Violation::new(
+                    shape.site().clone(),
+                    "returns a tuple holding a vertex; return the vertex",
+                )
+            }));
+        let receiver = function.sig.receiver();
+        let source = shape.vertex_parameters().first();
+        match (receiver, shape.returns().vertex(), source) {
+            (None, Some(target), Some(source)) if context.in_trait() => {
+                let edge = Edge::new(source.clone(), target.clone());
+                self.record_edge(context, function, &shape, edge);
             }
-            (None, Some(target)) if !shape.vertex_parameters().is_empty() => {
+            (None, Some(target), Some(_)) => {
                 self.violations.push(Violation::new(
                     shape.site().clone(),
                     format!("takes a vertex and returns {target}; make it a method on its source"),
                 ));
             }
-            (Some(receiver), _) if receiver.reference.is_some() => {
-                self.check_view(context, receiver, &shape);
+            (Some(receiver), _, _) if receiver.reference.is_some() => {
+                self.violations
+                    .extend(Self::view_fault(context, receiver, &shape));
             }
-            (Some(_), Some(target)) => {
+            (Some(_), Some(target), _) => {
                 let edge = context
                     .edge_source(&shape)
                     .map(|source| Edge::new(source, target.clone()));
@@ -129,18 +130,6 @@ impl<'scan> EdgeScan<'scan> {
                 }
             }
             _ => {}
-        }
-    }
-
-    fn check_edge(
-        &mut self,
-        context: &ImplContext,
-        function: &ImplItemFn,
-        shape: &FunctionShape,
-        edge: Option<Edge>,
-    ) {
-        if let Some(edge) = edge {
-            self.record_edge(context, function, shape, edge);
         }
     }
 
@@ -165,26 +154,34 @@ impl<'scan> EdgeScan<'scan> {
         }
     }
 
-    fn check_view(&mut self, context: &ImplContext, receiver: &Receiver, shape: &FunctionShape) {
+    fn view_fault(
+        context: &ImplContext,
+        receiver: &Receiver,
+        shape: &FunctionShape,
+    ) -> Option<Violation> {
         if receiver.mutability.is_some() {
-            if context.kind().forbids_mutation() {
-                self.violations.push(Violation::new(
+            context.kind().forbids_mutation().then(|| {
+                Violation::new(
                     shape.site().clone(),
                     format!(
                         "takes &mut self on vertex {}; transitions consume self",
                         context.self_type()
                     ),
-                ));
-            }
-        } else if let Some(target) = shape.returns().vertex()
-            && !shape.body().projects_field()
-        {
-            self.violations.push(Violation::new(
-                shape.site().clone(),
-                format!(
-                    "is a view returning vertex {target}; take self by value or return a reference"
-                ),
-            ));
+                )
+            })
+        } else {
+            shape
+                .returns()
+                .vertex()
+                .filter(|_| !shape.body().projects_field())
+                .map(|target| {
+                    Violation::new(
+                        shape.site().clone(),
+                        format!(
+                            "is a view returning vertex {target}; take self by value or return a reference"
+                        ),
+                    )
+                })
         }
     }
 }
@@ -192,12 +189,13 @@ impl<'scan> EdgeScan<'scan> {
 impl<'ast> Visit<'ast> for EdgeScan<'_> {
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
         let context = ImplContext::describe(item, self.declarations);
-        for function in item.items.iter().filter_map(|item| match item {
-            ImplItem::Fn(function) => Some(function),
-            _ => None,
-        }) {
-            self.check_function(&context, function);
-        }
+        item.items
+            .iter()
+            .filter_map(|item| match item {
+                ImplItem::Fn(function) => Some(function),
+                _ => None,
+            })
+            .for_each(|function| self.check_function(&context, function));
         syn::visit::visit_item_impl(self, item);
     }
 }

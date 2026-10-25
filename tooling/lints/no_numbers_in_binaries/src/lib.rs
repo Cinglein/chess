@@ -47,9 +47,9 @@ impl<'ast> Visit<'ast> for Numbers {
     }
 
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
-        if !NamedNumbers::is_unit(literal.base10_digits()) {
-            self.0.push(literal.span().start().line);
-        }
+        self.0.extend(
+            (!NamedNumbers::is_unit(literal.base10_digits())).then(|| literal.span().start().line),
+        );
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {

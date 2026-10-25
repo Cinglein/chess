@@ -1,4 +1,4 @@
-use syn::{Item, UseTree, Visibility};
+use syn::{Item, ItemUse, UseTree, Visibility};
 
 use task::CrateName;
 use task::SourceFile;
@@ -12,22 +12,21 @@ pub struct Export {
 
 impl Export {
     pub fn in_root(file: &SourceFile) -> Vec<Export> {
-        let Some(crate_name) = file
-            .crate_name()
+        file.crate_name()
             .filter(|_| file.path().ends_with("src/lib.rs"))
             .and_then(|name| name.parse::<CrateName>().ok())
-        else {
-            return Vec::new();
-        };
-        file.syntax()
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                Item::Use(used) if !matches!(used.vis, Visibility::Inherited) => Some(used),
-                _ => None,
+            .map_or_else(Vec::new, |crate_name| {
+                Self::reexports(file)
+                    .flat_map(|used| Self::leaves(&crate_name, &used.tree))
+                    .collect()
             })
-            .flat_map(|used| Self::leaves(&crate_name, &used.tree))
-            .collect()
+    }
+
+    fn reexports(file: &SourceFile) -> impl Iterator<Item = &ItemUse> {
+        file.syntax().items.iter().filter_map(|item| match item {
+            Item::Use(used) if !matches!(used.vis, Visibility::Inherited) => Some(used),
+            _ => None,
+        })
     }
 
     pub fn crate_name(&self) -> &CrateName {

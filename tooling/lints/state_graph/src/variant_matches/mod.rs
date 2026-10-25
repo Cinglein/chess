@@ -6,7 +6,7 @@ use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use syn::{Expr, ExprLet, ExprMatch, Local, Pat};
+use syn::{Arm, Expr, ExprLet, ExprMatch, Local, Pat};
 
 use super::declarations::Declarations;
 use task::Site;
@@ -39,11 +39,17 @@ impl<'scan> VariantMatches<'scan> {
             .find(|enum_name| self.declarations.is_foreign_sum_type(enum_name, self.path))
     }
 
-    fn report(&mut self, pat: &Pat, enum_name: &str) {
-        self.violations.push(Violation::new(
+    fn violation(&self, pat: &Pat, enum_name: &str) -> Violation {
+        Violation::new(
             Site::Line(self.path.into(), pat.span().start().line),
             format!("match on {enum_name} outside its file; dispatch through a trait"),
-        ));
+        )
+    }
+
+    fn foreign_match(&self, arm: &Arm) -> Option<Violation> {
+        self.foreign_variant(&arm.pat)
+            .filter(|_| !Self::is_table(&arm.body))
+            .map(|enum_name| self.violation(&arm.pat, &enum_name))
     }
 
     fn is_table(expr: &Expr) -> bool {
@@ -60,32 +66,31 @@ impl<'scan> VariantMatches<'scan> {
 
 impl<'ast> Visit<'ast> for VariantMatches<'_> {
     fn visit_expr_match(&mut self, expr: &'ast ExprMatch) {
-        for arm in &expr.arms {
-            if let Some(enum_name) = self.foreign_variant(&arm.pat)
-                && !Self::is_table(&arm.body)
-            {
-                self.report(&arm.pat, &enum_name);
-            }
-        }
+        let found: Vec<Violation> = expr
+            .arms
+            .iter()
+            .filter_map(|arm| self.foreign_match(arm))
+            .collect();
+        self.violations.extend(found);
         syn::visit::visit_expr_match(self, expr);
     }
 
     fn visit_expr_let(&mut self, expr: &'ast ExprLet) {
-        if let Some(enum_name) = self.foreign_variant(&expr.pat) {
-            self.report(&expr.pat, &enum_name);
-        }
+        let found = self
+            .foreign_variant(&expr.pat)
+            .map(|enum_name| self.violation(&expr.pat, &enum_name));
+        self.violations.extend(found);
         syn::visit::visit_expr_let(self, expr);
     }
 
     fn visit_local(&mut self, local: &'ast Local) {
-        if local
+        let found = local
             .init
             .as_ref()
-            .is_some_and(|init| init.diverge.is_some())
-            && let Some(enum_name) = self.foreign_variant(&local.pat)
-        {
-            self.report(&local.pat, &enum_name);
-        }
+            .filter(|init| init.diverge.is_some())
+            .and_then(|_| self.foreign_variant(&local.pat))
+            .map(|enum_name| self.violation(&local.pat, &enum_name));
+        self.violations.extend(found);
         syn::visit::visit_local(self, local);
     }
 }
