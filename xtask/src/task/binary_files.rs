@@ -8,7 +8,7 @@ use crate::task::source_file::SourceFile;
 pub struct BinaryFiles(BTreeSet<String>);
 
 impl BinaryFiles {
-    const PRODUCT_CRATES: &str = "crates/";
+    const PRODUCT_CRATES: &str = "";
     const BINARY_ROOT: &str = "/src/main.rs";
 
     pub fn collect(files: &[SourceFile]) -> BinaryFiles {
@@ -49,7 +49,7 @@ impl BinaryFiles {
             .for_each(|child| Self::gather(child, by_path, members));
     }
 
-    fn declared_files(parent: &str, module: &ItemMod) -> [String; 2] {
+    fn declared_files(parent: &str, module: &ItemMod) -> Vec<String> {
         let parent = Path::new(parent);
         let directory = if parent.ends_with("main.rs") || parent.ends_with("mod.rs") {
             parent.parent().map(Path::to_path_buf)
@@ -58,7 +58,7 @@ impl BinaryFiles {
         }
         .unwrap_or_default();
         let name = module.ident.to_string();
-        [
+        vec![
             directory.join(format!("{name}.rs")).display().to_string(),
             directory.join(&name).join("mod.rs").display().to_string(),
         ]

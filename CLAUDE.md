@@ -128,15 +128,19 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   enforces it. A settings struct lives in the binary, implements `settings::EmbeddedDefaults`
   with its default file, and every struct that derives `Deserialize` with named fields carries
   `#[serde(deny_unknown_fields)]`, so a misspelt key is an error; `cargo xtask settings-shape`
-  enforces that in `crates/`, since xtask reads external schemas such as `cargo metadata`.
+  enforces that for every struct reachable through the fields of an `EmbeddedDefaults`
+  implementor, which is how it tells a file we write from an external schema such as `cargo
+  metadata`. xtask is such a binary: its lint budgets are settings in `xtask/policy.toml`, read
+  through `Policy`, and the xtask package is a library of tasks plus a `main.rs` that only parses
+  the command line, so every lint applies to it.
 - A number has a name. In `crates/`, outside tests, test support files, and the bit boundary
   files, a numeric literal other than 0 and 1 appears only inside a `const` item, so every
   tunable can be found by name and moved to a setting or a parameter when its value is measured.
   Literals inside macro arguments count. `cargo xtask named-numbers` enforces it.
 - Memory budget: anything this session runs on the owner's laptop stays under 8 GiB, because
   the laptop carries other work. `.cargo/config.toml` caps every cargo build at 3 compiler jobs,
-  the mutation task derives its caps from the same 8 GiB (`AvailableGib::GRANTED`), and long
-  runs go one at a time. More needs the owner's explicit permission, given per run.
+  the mutation task derives its caps from the same 8 GiB (`granted_gib` in `xtask/policy.toml`),
+  and long runs go one at a time. More needs the owner's explicit permission, given per run.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.
 - No free functions. Every `fn` is a method or associated function of a struct, enum, or trait;

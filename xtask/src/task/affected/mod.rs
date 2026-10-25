@@ -10,6 +10,7 @@ use reach::Reach;
 
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
+use crate::task::policy::MutationPolicy;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
 
@@ -18,9 +19,9 @@ pub struct Affected;
 impl Affected {
     const BASE: &str = "origin/main";
 
-    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
+    pub fn run(workspace: &Workspace, policy: &MutationPolicy) -> Result<(), Failure> {
         let crates = Self::reached(workspace)?;
-        let plan = Plan::new(&crates, Self::mutant_count(workspace, &crates)?);
+        let plan = Plan::new(&crates, Self::mutant_count(workspace, &crates)?, policy);
         println!("{}", serde_json::to_string(&plan)?);
         Ok(())
     }

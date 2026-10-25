@@ -2,9 +2,9 @@ use syn::spanned::Spanned;
 use syn::visit::Visit;
 use syn::{Block, ExprLit, ExprPath, Macro};
 
-use super::super::super::TestBudget;
 use super::super::super::measurement::Measurement;
 use super::macro_arguments::MacroArguments;
+use crate::task::policy::TestPolicy;
 
 #[derive(Default)]
 pub(super) struct TestCounts {
@@ -14,23 +14,27 @@ pub(super) struct TestCounts {
 }
 
 impl TestCounts {
-    pub(super) fn measurements(&self) -> [Measurement; 3] {
-        [
+    pub(super) fn measurements(&self, policy: &TestPolicy) -> Vec<Measurement> {
+        vec![
             Measurement::new(
                 "assertions",
                 self.assertions,
-                TestBudget::MAX_ASSERTIONS_PER_TEST,
+                policy.assertions_per_test().count(),
             ),
             Measurement::new(
                 "body lines",
                 self.body_lines,
-                TestBudget::MAX_LINES_PER_TEST,
+                policy.lines_per_test().count(),
             ),
-            Measurement::new("literals", self.literals, TestBudget::MAX_LITERALS_PER_TEST),
+            Measurement::new(
+                "literals",
+                self.literals,
+                policy.literals_per_test().count(),
+            ),
         ]
     }
 
-    const ASSERTIONS: [&str; 6] = [
+    const ASSERTIONS: &[&str] = &[
         "assert",
         "assert_eq",
         "assert_ne",
@@ -58,14 +62,12 @@ impl TestCounts {
     }
 
     fn is_variant_path(path: &ExprPath) -> bool {
-        path.path
-            .segments
-            .iter()
-            .rev()
-            .take(2)
-            .filter(|segment| Self::is_camel_case(&segment.ident.to_string()))
-            .count()
-            == 2
+        matches!(
+            path.path.segments.iter().rev().collect::<Vec<_>>().as_slice(),
+            [variant, parent, ..]
+                if Self::is_camel_case(&variant.ident.to_string())
+                    && Self::is_camel_case(&parent.ident.to_string())
+        )
     }
 
     fn is_camel_case(name: &str) -> bool {

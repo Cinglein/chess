@@ -1,3 +1,5 @@
+use settings::EmbeddedDefaults;
+
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
 use crate::task::expression_flow::ExpressionFlow;
@@ -13,6 +15,7 @@ use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::no_numbers_in_binaries::NoNumbersInBinaries;
 use crate::task::no_parameter_bags::NoParameterBags;
+use crate::task::policy::Policy;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
@@ -28,15 +31,16 @@ pub struct Lint;
 impl Lint {
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
         let files = workspace.source_files()?;
+        let policy = Policy::defaults();
         let reports: Vec<Report> = [
             ConstShape::report(&files),
             DistinctSignatures::report(&files),
             ExpressionFlow::report(&files),
-            FnShape::report(&files),
-            LiteralNames::report(&files),
+            FnShape::report(&files, policy.fn_shape()),
+            LiteralNames::report(&files, policy.names()),
             ManualIteration::report(&files),
-            ModuleNesting::report(&files),
-            NamedLifetimes::report(&files),
+            ModuleNesting::report(&files, policy.module_nesting()),
+            NamedLifetimes::report(&files, policy.names()),
             NamedNumbers::report(&files),
             NoComments::report(&files),
             NoForwarders::report(&files),
@@ -44,11 +48,11 @@ impl Lint {
             NoNumbersInBinaries::report(&files),
             NoParameterBags::report(&files),
             PrimitiveBoundary::report(&files),
-            PrivateFns::report(&files),
+            PrivateFns::report(&files, policy.private_fns()),
             PublicSurface::report(&files),
             SettingsShape::report(&files),
-            StateGraph::report(&files),
-            TestBudget::report(&files),
+            StateGraph::report(&files, policy.state_graph()),
+            TestBudget::report(&files, policy.test_budget()),
             TypeShape::report(&files),
         ]
         .into_iter()

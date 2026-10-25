@@ -1,15 +1,13 @@
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct AvailableGib(u64);
 
 impl AvailableGib {
-    pub const GRANTED: AvailableGib = AvailableGib(8);
-    pub const RESERVE: AvailableGib = AvailableGib(1);
-    const PER_COMPILER_TASK: u64 = 2;
-    const FOR_THE_TESTS: u64 = 2;
     const GIB_SHIFT: u32 = 30;
 
     pub const fn from_bytes(bytes: u64) -> AvailableGib {
@@ -26,12 +24,12 @@ impl AvailableGib {
         self.0 << Self::GIB_SHIFT
     }
 
-    pub const fn minus_reserve(self) -> AvailableGib {
-        AvailableGib(self.0.saturating_sub(Self::RESERVE.0))
+    pub const fn minus(self, other: AvailableGib) -> AvailableGib {
+        AvailableGib(self.0.saturating_sub(other.0))
     }
 
-    pub const fn compiler_tasks(self) -> usize {
-        (self.0.saturating_sub(Self::FOR_THE_TESTS) / Self::PER_COMPILER_TASK) as usize
+    pub fn divided_by(self, other: AvailableGib) -> usize {
+        usize::try_from(self.0 / other.0).unwrap_or(usize::MAX)
     }
 }
 

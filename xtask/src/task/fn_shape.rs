@@ -6,6 +6,7 @@ use syn::{
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
 };
 
+use crate::task::policy::FnShapePolicy;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -14,9 +15,7 @@ use crate::task::violation::Violation;
 pub struct FnShape;
 
 impl FnShape {
-    const MAX_PARAMETERS: usize = 4;
-    const MAX_NESTING: usize = 2;
-    const BOOLEAN_METHODS: [&str; 7] = [
+    const BOOLEAN_METHODS: &[&str] = &[
         "contains",
         "all",
         "any",
@@ -26,16 +25,20 @@ impl FnShape {
         "ne",
     ];
 
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &FnShapePolicy) -> Report {
         Report::new(
             "hairy control flow; booleans and tuples become types, nesting becomes methods",
-            files.iter().flat_map(Self::violations).collect(),
+            files
+                .iter()
+                .flat_map(|file| Self::violations(file, policy))
+                .collect(),
         )
     }
 
-    fn violations(file: &SourceFile) -> Vec<Violation> {
+    fn violations(file: &SourceFile, policy: &FnShapePolicy) -> Vec<Violation> {
         let mut shapes = Shapes {
             path: file.path(),
+            policy,
             depth: 0,
             violations: Vec::new(),
         };
@@ -82,6 +85,7 @@ impl FnShape {
 
 struct Shapes<'scan> {
     path: &'scan str,
+    policy: &'scan FnShapePolicy,
     depth: usize,
     violations: Vec<Violation>,
 }
@@ -96,10 +100,13 @@ impl Shapes<'_> {
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
         self.depth += 1;
-        if self.depth == FnShape::MAX_NESTING + 1 {
+        if self.depth == self.policy.nesting().count() + 1 {
             self.report(
                 span,
-                "control flow nested deeper than two levels; lift the inner part into a method",
+                &format!(
+                    "control flow nested deeper than {} levels; lift the inner part into a method",
+                    self.policy.nesting().count()
+                ),
             );
         }
         visit(self);
@@ -120,11 +127,14 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
             .iter()
             .filter(|argument| matches!(argument, FnArg::Typed(_)))
             .count()
-            > FnShape::MAX_PARAMETERS
+            > self.policy.parameters().count()
         {
             self.report(
                 signature.ident.span(),
-                "more than four parameters; group the ones that travel together into a struct",
+                &format!(
+                    "more than {} parameters; group the ones that travel together into a struct",
+                    self.policy.parameters().count()
+                ),
             );
         }
         syn::visit::visit_signature(self, signature);
@@ -208,7 +218,10 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::FnShape;
+    use crate::task::policy::Policy;
     use crate::task::source_file::SourceFile;
 
     const SOURCE: &str = "
@@ -223,7 +236,7 @@ impl Wide {
 }
 ";
     const REPORTED: [&str; 5] = [
-        ":3: more than four parameters",
+        ":3: more than 4 parameters",
         ":5: boolean local",
         ":6: tuple literal bound",
         ":7: tuple accumulator",
@@ -233,7 +246,8 @@ impl Wide {
     #[test]
     fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting() {
         let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = FnShape::report(core::slice::from_ref(&file)).to_string();
+        let report = FnShape::report(core::slice::from_ref(&file), Policy::defaults().fn_shape())
+            .to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

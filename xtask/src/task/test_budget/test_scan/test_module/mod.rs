@@ -13,19 +13,26 @@ use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
 use super::super::measurement::Measurement;
+use crate::task::policy::TestPolicy;
 use crate::task::site::Site;
 use crate::task::violation::Violation;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,
+    policy: &'scan TestPolicy,
     scope: Scope,
     budget: TestBudget,
 }
 
 impl<'scan> TestModule<'scan> {
-    pub(super) fn budget(path: &'scan str, module: &ItemMod) -> TestBudget {
+    pub(super) fn budget(
+        path: &'scan str,
+        module: &ItemMod,
+        policy: &'scan TestPolicy,
+    ) -> TestBudget {
         let mut scan = TestModule {
             path,
+            policy,
             scope: Scope::OutsideTest,
             budget: TestBudget {
                 test_lines: Self::line_count(module.span()),
@@ -40,7 +47,7 @@ impl<'scan> TestModule<'scan> {
         let name = &function.sig.ident;
         let site = Site::Line(self.path.to_owned(), name.span().start().line);
         TestCounts::tally(&function.block)
-            .measurements()
+            .measurements(self.policy)
             .into_iter()
             .filter(Measurement::exceeded)
             .map(|measurement| Violation::new(site.clone(), format!("fn {name} {measurement}")))
@@ -75,13 +82,13 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
         if integer
             .base10_parse::<usize>()
-            .is_ok_and(|value| value > TestBudget::MAX_INTEGER_LITERAL)
+            .is_ok_and(|value| value > self.policy.largest_integer().count())
         {
             self.budget.violations.push(Violation::new(
                 Site::Line(self.path.to_owned(), integer.span().start().line),
                 format!(
                     "integer literal {integer} in test code, at most {} allowed",
-                    TestBudget::MAX_INTEGER_LITERAL
+                    self.policy.largest_integer().count()
                 ),
             ));
         }

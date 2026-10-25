@@ -1,0 +1,46 @@
+[fn_shape]
+parameters = 4
+nesting = 2
+
+[names]
+shortest_fn = 3
+shortest_lifetime = 2
+vague = [
+    "with", "from", "into", "for", "get", "set", "make", "check", "build", "create", "init",
+    "process", "handle", "helper", "util", "data", "value", "item", "thing", "execute",
+    "perform", "update", "compute", "manage",
+]
+
+[module_nesting]
+reexports = 8
+
+[private_fns]
+most = 4
+
+[state_graph]
+edges_per_vertex = 4
+
+[test_budget]
+tests_per_file = 3
+assertions_per_test = 3
+lines_per_test = 20
+literals_per_test = 4
+largest_integer = 64
+tests_per_hundred_files = 40
+test_line_percent = 18
+
+[test_time]
+per_test_millis = 1000
+total_millis = 4000
+slowest_shown = 5
+
+[mutants]
+granted_gib = 8
+reserve_gib = 1
+gib_per_compiler_task = 2
+gib_for_the_tests = 2
+parallel_jobs = 2
+sample_every_millis = 20
+discover_every_millis = 100
+mutants_per_shard = 64
+most_shards = 16

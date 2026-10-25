@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use serde::Serialize;
 
 use crate::task::crate_name::CrateName;
+use crate::task::policy::MutationPolicy;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Plan {
@@ -12,13 +13,10 @@ pub struct Plan {
 }
 
 impl Plan {
-    const MUTANTS_PER_SHARD: usize = 64;
-    const MOST_SHARDS: usize = 16;
-
-    pub fn new(crates: &BTreeSet<CrateName>, mutants: usize) -> Plan {
+    pub fn new(crates: &BTreeSet<CrateName>, mutants: usize, policy: &MutationPolicy) -> Plan {
         let shard_count = mutants
-            .div_ceil(Self::MUTANTS_PER_SHARD)
-            .min(Self::MOST_SHARDS);
+            .div_ceil(policy.mutants_per_shard().count())
+            .min(policy.most_shards().count());
         Plan {
             crates: crates.iter().map(ToString::to_string).collect(),
             shards: (0..shard_count).collect(),
@@ -31,21 +29,26 @@ impl Plan {
 mod tests {
     use std::collections::BTreeSet;
 
-    use super::Plan;
+    use settings::EmbeddedDefaults;
 
-    const SOME: usize = Plan::MUTANTS_PER_SHARD * 2 + 2;
-    const MANY: usize = Plan::MUTANTS_PER_SHARD * Plan::MOST_SHARDS * 2;
+    use super::Plan;
+    use crate::task::policy::Policy;
+
+    const SOME: usize = 2;
     const THREE: usize = 3;
 
     #[test]
-    fn shards_grow_with_the_mutants_up_to_sixteen_and_an_empty_selection_has_none() {
+    fn shards_grow_with_the_mutants_up_to_the_most_and_an_empty_selection_has_none() {
+        let policy = Policy::defaults();
+        let per_shard = policy.mutants().mutants_per_shard().count();
+        let most = policy.mutants().most_shards().count();
         let eval = BTreeSet::from(["eval".parse().unwrap()]);
-        let some = Plan::new(&eval, SOME);
-        let many = Plan::new(&eval, MANY);
-        let none = Plan::new(&BTreeSet::new(), 0);
+        let some = Plan::new(&eval, per_shard * SOME + SOME, policy.mutants());
+        let many = Plan::new(&eval, per_shard * most * SOME, policy.mutants());
+        let none = Plan::new(&BTreeSet::new(), 0, policy.mutants());
         assert_eq!(
             (some.shards.len(), many.shard_count, none.shards.len()),
-            (THREE, Plan::MOST_SHARDS, 0)
+            (THREE, most, 0)
         );
         assert!(none.crates.is_empty() && !some.crates.is_empty());
     }

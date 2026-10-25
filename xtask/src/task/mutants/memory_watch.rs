@@ -1,30 +1,34 @@
 use std::process::{Child, ExitStatus};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use sysinfo::{Pid, Process, ProcessRefreshKind, ProcessesToUpdate, System};
 
-use super::available_gib::AvailableGib;
+use crate::task::available_gib::AvailableGib;
 use crate::task::failure::Failure;
+use crate::task::policy::MutationPolicy;
 use crate::task::site::Site;
 
-pub struct MemoryWatch {
+pub struct MemoryWatch<'policy> {
     root: Pid,
     budget: AvailableGib,
+    policy: &'policy MutationPolicy,
     system: System,
     members: Vec<Pid>,
     last_discovery: Instant,
     killed: Vec<String>,
 }
 
-impl MemoryWatch {
-    const SAMPLE_EVERY: Duration = Duration::from_millis(20);
-    const DISCOVER_EVERY: Duration = Duration::from_millis(100);
-
-    pub fn over(child: &Child, budget: AvailableGib) -> MemoryWatch {
+impl<'policy> MemoryWatch<'policy> {
+    pub fn over(
+        child: &Child,
+        budget: AvailableGib,
+        policy: &'policy MutationPolicy,
+    ) -> MemoryWatch<'policy> {
         MemoryWatch {
             root: Pid::from_u32(child.id()),
             budget,
+            policy,
             system: System::new(),
             members: vec![Pid::from_u32(child.id())],
             last_discovery: Instant::now(),
@@ -42,7 +46,7 @@ impl MemoryWatch {
                 break status;
             }
             self.sample();
-            thread::sleep(Self::SAMPLE_EVERY);
+            thread::sleep(self.policy.sample_every().duration());
         };
         if self.killed.is_empty() {
             return Ok(status);
@@ -56,7 +60,7 @@ impl MemoryWatch {
 
     fn sample(&mut self) {
         self.system.refresh_memory();
-        if self.last_discovery.elapsed() >= Self::DISCOVER_EVERY {
+        if self.last_discovery.elapsed() >= self.policy.discover_every().duration() {
             self.system.refresh_processes_specifics(
                 ProcessesToUpdate::All,
                 true,
@@ -83,8 +87,8 @@ impl MemoryWatch {
             .filter_map(|pid| self.system.process(*pid))
             .collect();
         let used: u64 = tree.iter().map(|process| process.memory()).sum();
-        if used <= self.budget.minus_reserve().bytes()
-            && self.system.available_memory() >= AvailableGib::RESERVE.bytes()
+        if used <= self.budget.minus(self.policy.reserve()).bytes()
+            && self.system.available_memory() >= self.policy.reserve().bytes()
         {
             return None;
         }
@@ -131,12 +135,17 @@ impl MemoryWatch {
 mod tests {
     use std::process::Command;
 
+    use settings::EmbeddedDefaults;
+
     use super::{AvailableGib, Failure, MemoryWatch};
+    use crate::task::policy::Policy;
 
     #[test]
     fn a_tree_over_its_budget_is_killed_and_the_run_is_refused() {
+        let policy = Policy::defaults();
         let mut child = Command::new("sleep").arg("30").spawn().unwrap();
-        let outcome = MemoryWatch::over(&child, AvailableGib::from_bytes(0)).guard(&mut child);
+        let outcome = MemoryWatch::over(&child, AvailableGib::from_bytes(0), policy.mutants())
+            .guard(&mut child);
         assert!(matches!(outcome, Err(Failure::Refused(_))));
     }
 }

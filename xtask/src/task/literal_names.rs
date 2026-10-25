@@ -1,6 +1,7 @@
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
+use crate::task::policy::NamePolicy;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -9,20 +10,13 @@ use crate::task::violation::Violation;
 pub struct LiteralNames;
 
 impl LiteralNames {
-    const MIN_LENGTH: usize = 3;
-    const VAGUE: [&str; 24] = [
-        "with", "from", "into", "for", "get", "set", "make", "check", "build", "create", "init",
-        "process", "handle", "helper", "util", "data", "value", "item", "thing", "execute",
-        "perform", "update", "compute", "manage",
-    ];
-
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &NamePolicy) -> Report {
         Report::new(
             "function names say what the function does",
             files
                 .iter()
                 .flat_map(|file| {
-                    Self::vague_names(file.syntax())
+                    Self::vague_names(file.syntax(), policy)
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
@@ -35,22 +29,30 @@ impl LiteralNames {
         )
     }
 
-    fn vague_names(file: &syn::File) -> Vec<Ident> {
-        let mut names = VagueNames::default();
+    fn vague_names(file: &syn::File, policy: &NamePolicy) -> Vec<Ident> {
+        let mut names = VagueNames {
+            policy,
+            found: Vec::new(),
+        };
         names.visit_file(file);
-        names.0
-    }
-
-    fn is_vague(name: &Ident) -> bool {
-        let text = name.to_string();
-        text.len() < Self::MIN_LENGTH || Self::VAGUE.contains(&text.as_str())
+        names.found
     }
 }
 
-#[derive(Default)]
-struct VagueNames(Vec<Ident>);
+struct VagueNames<'scan> {
+    policy: &'scan NamePolicy,
+    found: Vec<Ident>,
+}
 
-impl<'ast> Visit<'ast> for VagueNames {
+impl VagueNames<'_> {
+    fn note(&mut self, name: &Ident) {
+        if self.policy.is_vague(&name.to_string()) {
+            self.found.push(name.clone());
+        }
+    }
+}
+
+impl<'ast> Visit<'ast> for VagueNames<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
         if !SourceFile::is_test_module(module) {
             syn::visit::visit_item_mod(self, module);
@@ -64,30 +66,27 @@ impl<'ast> Visit<'ast> for VagueNames {
     }
 
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        if LiteralNames::is_vague(&function.sig.ident) {
-            self.0.push(function.sig.ident.clone());
-        }
+        self.note(&function.sig.ident);
         syn::visit::visit_item_fn(self, function);
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {
-        if LiteralNames::is_vague(&function.sig.ident) {
-            self.0.push(function.sig.ident.clone());
-        }
+        self.note(&function.sig.ident);
         syn::visit::visit_impl_item_fn(self, function);
     }
 
     fn visit_trait_item_fn(&mut self, function: &'ast TraitItemFn) {
-        if LiteralNames::is_vague(&function.sig.ident) {
-            self.0.push(function.sig.ident.clone());
-        }
+        self.note(&function.sig.ident);
         syn::visit::visit_trait_item_fn(self, function);
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::LiteralNames;
+    use crate::task::policy::Policy;
 
     const SOURCE: &str = "
 struct W;
@@ -105,7 +104,7 @@ trait T { fn do_it(&self); fn go(&self); }
     #[test]
     fn flags_prepositions_and_vague_verbs_but_not_new_or_trait_impls() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let names: Vec<String> = LiteralNames::vague_names(&parsed)
+        let names: Vec<String> = LiteralNames::vague_names(&parsed, Policy::defaults().names())
             .iter()
             .map(ToString::to_string)
             .collect();

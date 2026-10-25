@@ -1,6 +1,7 @@
 use std::iter::Sum;
 use std::ops::Add;
 
+use crate::task::policy::TestPolicy;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -23,26 +24,18 @@ pub struct TestBudget {
 }
 
 impl TestBudget {
-    const MAX_TESTS_PER_FILE: usize = 3;
-    const MAX_ASSERTIONS_PER_TEST: usize = 3;
-    const MAX_LINES_PER_TEST: usize = 20;
-    const MAX_LITERALS_PER_TEST: usize = 4;
-    const MAX_INTEGER_LITERAL: usize = 64;
-    const MAX_TESTS_PER_HUNDRED_FILES: usize = 40;
-    const MAX_TEST_LINE_PERCENT: usize = 18;
-
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &TestPolicy) -> Report {
         let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
         files
             .iter()
-            .map(|file| Self::measure(file, &support))
+            .map(|file| Self::measure(file, &support, policy))
             .sum::<Self>()
-            .summarise()
+            .summarise(policy)
     }
 
-    fn measure(file: &SourceFile, support: &[String]) -> Self {
+    fn measure(file: &SourceFile, support: &[String], policy: &TestPolicy) -> Self {
         let lines = file.text().lines().count();
-        let scanned = TestScan::budget(file.path(), file.syntax());
+        let scanned = TestScan::budget(file.path(), file.syntax(), policy);
         Self {
             files: 1,
             lines,
@@ -55,7 +48,7 @@ impl TestBudget {
         }
     }
 
-    fn summarise(self) -> Report {
+    fn summarise(self, policy: &TestPolicy) -> Report {
         println!(
             "test budget: {} tests in {} files, {} of {} lines",
             self.tests, self.files, self.test_lines, self.lines
@@ -64,12 +57,12 @@ impl TestBudget {
             Measurement::new(
                 "tests across the workspace",
                 self.tests,
-                self.files * Self::MAX_TESTS_PER_HUNDRED_FILES / 100,
+                policy.tests_per_hundred_files().applied_to(self.files),
             ),
             Measurement::new(
                 "test lines",
                 self.test_lines,
-                self.lines * Self::MAX_TEST_LINE_PERCENT / 100,
+                policy.test_line_percent().applied_to(self.lines),
             ),
         ]
         .into_iter()
@@ -104,7 +97,10 @@ impl Sum for TestBudget {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::TestScan;
+    use crate::task::policy::Policy;
 
     const SOURCE: &str = "
 #[cfg(test)]
@@ -141,11 +137,12 @@ mod tests {
     #[test]
     fn counts_assertions_literals_and_variants_inside_macros() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let joined: Vec<String> = TestScan::budget("example.rs", &parsed)
-            .violations
-            .iter()
-            .map(ToString::to_string)
-            .collect();
+        let joined: Vec<String> =
+            TestScan::budget("example.rs", &parsed, Policy::defaults().test_budget())
+                .violations
+                .iter()
+                .map(ToString::to_string)
+                .collect();
         let joined = joined.join("\n");
         assert!(
             REPORTED.iter().all(|report| joined.contains(report)),

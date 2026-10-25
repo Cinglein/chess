@@ -92,11 +92,11 @@ impl<'ast> Visit<'ast> for TextSites {
 
     fn visit_expr_call(&mut self, call: &'ast ExprCall) {
         if let Expr::Path(path) = &*call.func
-            && path.path.segments.len() == 2
-            && path.path.segments[0].ident == "String"
-            && path.path.segments[1].ident == "from"
+            && let [first, second] = path.path.segments.iter().collect::<Vec<_>>().as_slice()
+            && first.ident == "String"
+            && second.ident == "from"
         {
-            self.found.push(path.path.segments[1].ident.clone());
+            self.found.push(second.ident.clone());
         }
         syn::visit::visit_expr_call(self, call);
     }

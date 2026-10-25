@@ -4,6 +4,7 @@ use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, Visibility};
 
+use crate::task::policy::PrivateFnPolicy;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -12,9 +13,7 @@ use crate::task::violation::Violation;
 pub struct PrivateFns;
 
 impl PrivateFns {
-    const MAX_PRIVATE_FNS_PER_TYPE: usize = 4;
-
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &PrivateFnPolicy) -> Report {
         Report::new(
             "too many private fns; a type's logic belongs in its interface or in more types",
             files
@@ -22,14 +21,14 @@ impl PrivateFns {
                 .flat_map(|file| {
                     Self::private_fns(file.syntax())
                         .into_iter()
-                        .filter(|(_, names)| names.len() > Self::MAX_PRIVATE_FNS_PER_TYPE)
+                        .filter(|(_, names)| names.len() > policy.most().count())
                         .map(move |(type_name, names)| {
                             Violation::new(
                                 Site::File(file.path().to_owned()),
                                 format!(
                                     "{type_name} has {} private fns, at most {} allowed: {}",
                                     names.len(),
-                                    Self::MAX_PRIVATE_FNS_PER_TYPE,
+                                    policy.most().count(),
                                     names.join(", ")
                                 ),
                             )

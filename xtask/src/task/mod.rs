@@ -1,4 +1,5 @@
 mod affected;
+mod available_gib;
 mod binary_files;
 mod bit_boundary;
 mod ci;
@@ -22,6 +23,7 @@ mod no_forwarders;
 mod no_free_fns;
 mod no_numbers_in_binaries;
 mod no_parameter_bags;
+mod policy;
 mod primitive_boundary;
 mod private_fns;
 mod public_surface;
@@ -41,6 +43,7 @@ mod violation;
 mod wasm;
 mod workspace;
 
+use settings::EmbeddedDefaults;
 use strum::{EnumString, VariantNames};
 
 use crate::task::affected::Affected;
@@ -62,6 +65,7 @@ use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::no_numbers_in_binaries::NoNumbersInBinaries;
 use crate::task::no_parameter_bags::NoParameterBags;
+use crate::task::policy::Policy;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
@@ -116,6 +120,7 @@ pub enum Task {
 }
 
 impl Task {
+    #[must_use]
     pub fn usage() -> Failure {
         Failure::Usage(format!(
             "usage: cargo xtask <{}> [--affected]",
@@ -126,8 +131,9 @@ impl Task {
     pub fn run(self, flags: impl Iterator<Item = String>) -> Result<(), Failure> {
         let workspace = Workspace::locate();
         let selection = Selection::from_flags(flags, &workspace)?;
+        let policy = Policy::defaults();
         match self {
-            Task::Affected => Affected::run(&workspace),
+            Task::Affected => Affected::run(&workspace, policy.mutants()),
             Task::Ci => Ci::run(&workspace, &selection),
             Task::Clippy => Clippy::run(&workspace, &selection),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
@@ -135,15 +141,30 @@ impl Task {
                 DistinctSignatures::report(&workspace.source_files()?).verdict()
             }
             Task::ExpressionFlow => ExpressionFlow::report(&workspace.source_files()?).verdict(),
-            Task::FnShape => FnShape::report(&workspace.source_files()?).verdict(),
+            Task::FnShape => {
+                FnShape::report(&workspace.source_files()?, policy.fn_shape()).verdict()
+            }
             Task::Lint => Lint::run(&workspace),
-            Task::LiteralNames => LiteralNames::report(&workspace.source_files()?).verdict(),
+            Task::LiteralNames => {
+                LiteralNames::report(&workspace.source_files()?, policy.names()).verdict()
+            }
             Task::Magics => Magics::run(&workspace),
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
-            Task::ModuleNesting => ModuleNesting::report(&workspace.source_files()?).verdict(),
-            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines, &selection),
-            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace, &selection),
-            Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
+            Task::ModuleNesting => {
+                ModuleNesting::report(&workspace.source_files()?, policy.module_nesting()).verdict()
+            }
+            Task::Mutants => Mutants::run(
+                &workspace,
+                Scope::ChangedLines,
+                &selection,
+                policy.mutants(),
+            ),
+            Task::MutantsFull => {
+                Mutants::run(&workspace, Scope::Workspace, &selection, policy.mutants())
+            }
+            Task::NamedLifetimes => {
+                NamedLifetimes::report(&workspace.source_files()?, policy.names()).verdict()
+            }
             Task::NamedNumbers => NamedNumbers::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
@@ -155,14 +176,20 @@ impl Task {
             Task::PrimitiveBoundary => {
                 PrimitiveBoundary::report(&workspace.source_files()?).verdict()
             }
-            Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
+            Task::PrivateFns => {
+                PrivateFns::report(&workspace.source_files()?, policy.private_fns()).verdict()
+            }
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::SettingsShape => SettingsShape::report(&workspace.source_files()?).verdict(),
             Task::Stacked => Stacked::run(),
-            Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
+            Task::StateGraph => {
+                StateGraph::report(&workspace.source_files()?, policy.state_graph()).verdict()
+            }
             Task::Test => Test::run(&workspace, &selection),
-            Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
-            Task::TestTime => TestTime::run(&workspace, &selection),
+            Task::TestBudget => {
+                TestBudget::report(&workspace.source_files()?, policy.test_budget()).verdict()
+            }
+            Task::TestTime => TestTime::run(&workspace, &selection, policy.test_time()),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace, &selection),
         }
