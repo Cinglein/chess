@@ -1,36 +1,25 @@
 use task::CrateName;
 use task::Millis;
+use task::{Interval, Policy};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrateLoad {
     name: CrateName,
-    tested_packages: usize,
     cost: Millis,
 }
 
 impl CrateLoad {
     #[must_use]
-    pub fn new(
-        name: CrateName,
-        mutants: usize,
-        tested_packages: usize,
-        millis_each: Millis,
-    ) -> CrateLoad {
-        CrateLoad {
-            name,
-            tested_packages,
-            cost: millis_each.times(mutants),
-        }
+    pub fn new(name: CrateName, mutants: usize, millis_each: Millis, policy: &Policy) -> CrateLoad {
+        let cost = policy
+            .interval(Interval::PerCrate)
+            .plus(millis_each.times(mutants));
+        CrateLoad { name, cost }
     }
 
     #[must_use]
     pub fn name(&self) -> &CrateName {
         &self.name
-    }
-
-    #[must_use]
-    pub fn tested_packages(&self) -> usize {
-        self.tested_packages
     }
 
     #[must_use]

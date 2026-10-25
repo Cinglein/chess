@@ -215,7 +215,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   set of whole crates, and a shard runs only the tests of its crates and of the dependents that
   have tests, so a lint mutant never relinks xtask. The Mutants workflow costs each crate's mutants
   by the measured `mutant_millis` for that crate (unlisted crates take the default), slices a
-  crate that costs more than `per_shard`, packs the rest by shared test sets, and runs the shards on every push
+  crate that costs more than `per_shard` (every crate also pays `per_crate` for its own discovery and
+  baseline), packs the rest by cost, largest first, and runs each crate of a shard as its own
+  `cargo-mutants` run so no mutant pays for another crate's tests; the shards run on every push
   to `main`, on the Monday schedule, and on demand, never on a pull request: a PR is gated by
   the in-diff run, the whole-workspace run costs about 4300 runner-seconds and cannot fit the
   PR budget on 20 runners, and a miss it finds on `main` gets its own PR (when a shard runs long, download

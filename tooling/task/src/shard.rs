@@ -29,6 +29,17 @@ impl Shard {
     }
 
     #[must_use]
+    pub fn runs(&self) -> Vec<Shard> {
+        match self {
+            Shard::Whole(crates) => crates
+                .iter()
+                .map(|name| Shard::Whole(BTreeSet::from([name.clone()])))
+                .collect(),
+            Shard::Slice { .. } => vec![self.clone()],
+        }
+    }
+
+    #[must_use]
     pub fn arguments(&self) -> Vec<String> {
         let packages = self
             .crates()
