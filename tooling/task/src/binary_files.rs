@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use syn::{Item, ItemMod};
 
+use crate::name::Name;
 use crate::source_file::SourceFile;
 
 pub struct BinaryFiles(BTreeSet<PathBuf>);
@@ -68,9 +69,9 @@ impl BinaryFiles {
             parent.with_extension("").into()
         }
         .unwrap_or_default();
-        let name = module.ident.to_string();
+        let name = Name::from(&module.ident);
         vec![
-            directory.join(format!("{name}.rs")),
+            directory.join(&name).with_extension("rs"),
             directory.join(&name).join("mod.rs"),
         ]
     }

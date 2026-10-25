@@ -1,22 +1,23 @@
-use syn::{FnArg, Pat, Path};
+use syn::{FnArg, Ident, Pat, Path};
 
 use super::struct_fields::StructFields;
+use task::Name;
 
 pub struct Parameter {
-    name: String,
-    type_name: Option<String>,
+    name: Name,
+    type_name: Option<Name>,
 }
 
 impl Parameter {
     pub fn describe(input: &FnArg) -> Option<Parameter> {
         match input {
-            FnArg::Receiver(_) => Some(Parameter {
-                name: String::from("self"),
+            FnArg::Receiver(receiver) => Some(Parameter {
+                name: Name::from(&Ident::from(receiver.self_token)),
                 type_name: None,
             }),
             FnArg::Typed(typed) => match &*typed.pat {
                 Pat::Ident(ident) => Some(Parameter {
-                    name: ident.ident.to_string(),
+                    name: Name::from(&ident.ident),
                     type_name: StructFields::type_name(&typed.ty),
                 }),
                 _ => None,
@@ -28,11 +29,11 @@ impl Parameter {
         params: &'params [Parameter],
         path: &Path,
     ) -> Option<&'params Parameter> {
-        let ident = path.get_ident()?.to_string();
-        params.iter().find(|parameter| parameter.name == ident)
+        let ident = path.get_ident()?;
+        params.iter().find(|parameter| parameter.name == *ident)
     }
 
-    pub fn type_name(&self) -> Option<&str> {
-        self.type_name.as_deref()
+    pub fn type_name(&self) -> Option<&Name> {
+        self.type_name.as_ref()
     }
 }

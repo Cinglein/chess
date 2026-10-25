@@ -11,6 +11,7 @@ use task::Site;
 use task::SourceFile;
 use task::Violation;
 use task::Walk;
+use task::{Name, Whole};
 
 pub struct ManualIteration;
 
@@ -43,7 +44,7 @@ impl ManualIteration {
                 Self::accumulates(&branch.then_branch)
             }
             [Stmt::Expr(Expr::MethodCall(call), _)] => {
-                Self::ACCUMULATORS.contains(&call.method.to_string().as_str())
+                Name::from(&call.method).matches::<Whole>(&Self::ACCUMULATORS)
                     && matches!(*call.receiver, Expr::Path(_) | Expr::Field(_))
             }
             _ => false,
@@ -108,7 +109,7 @@ struct IteratorCalls(usize);
 impl<'ast> Visit<'ast> for IteratorCalls {
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
         self.0 += usize::from(
-            ManualIteration::ITERATOR_CONSTRUCTORS.contains(&call.method.to_string().as_str()),
+            Name::from(&call.method).matches::<Whole>(&ManualIteration::ITERATOR_CONSTRUCTORS),
         );
         syn::visit::visit_expr_method_call(self, call);
     }

@@ -1,13 +1,15 @@
 use syn::Ident;
 
+use super::callee::Callee;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Forwarder {
     name: Ident,
-    callee: String,
+    callee: Callee,
 }
 
 impl Forwarder {
-    pub fn new(name: Ident, callee: String) -> Forwarder {
+    pub fn new(name: Ident, callee: Callee) -> Forwarder {
         Forwarder { name, callee }
     }
 
@@ -15,7 +17,7 @@ impl Forwarder {
         &self.name
     }
 
-    pub fn callee(&self) -> &str {
+    pub fn callee(&self) -> &Callee {
         &self.callee
     }
 }

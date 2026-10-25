@@ -4,12 +4,13 @@ use syn::visit::Visit;
 use syn::{ItemImpl, ItemStruct, Type};
 
 use super::deserialized_struct::DeserializedStruct;
+use task::Name;
 use task::SourceFile;
 
 pub struct SchemaScan {
     path: PathBuf,
     structs: Vec<DeserializedStruct>,
-    seeds: Vec<String>,
+    seeds: Vec<Name>,
 }
 
 impl SchemaScan {
@@ -29,11 +30,11 @@ impl SchemaScan {
         self.structs.iter()
     }
 
-    pub fn seeds(&self) -> impl Iterator<Item = &String> {
+    pub fn seeds(&self) -> impl Iterator<Item = &Name> {
         self.seeds.iter()
     }
 
-    fn implements_owned_schema(item: &ItemImpl) -> Option<String> {
+    fn implements_owned_schema(item: &ItemImpl) -> Option<Name> {
         let implemented = item
             .trait_
             .as_ref()
@@ -42,7 +43,7 @@ impl SchemaScan {
             Type::Path(self_type) => (implemented.ident == Self::OWNED_SCHEMA)
                 .then_some(self_type)
                 .and_then(|self_type| self_type.path.segments.last())
-                .map(|segment| segment.ident.to_string()),
+                .map(|segment| Name::from(&segment.ident)),
             _ => None,
         }
     }

@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 
 use syn::Item;
 
+use task::Name;
+
 pub struct ModuleFile {
     directory: PathBuf,
     parent: PathBuf,
@@ -55,7 +57,7 @@ impl ModuleFile {
                 _ => None,
             })
             .filter(|module| module.content.is_none())
-            .map(|module| module.ident.to_string())
+            .map(|module| Name::from(&module.ident))
             .filter_map(|name| Self::deepest_known(&self.directory, &[name], known))
             .collect()
     }
@@ -69,7 +71,11 @@ impl ModuleFile {
         }
     }
 
-    fn deepest_known(start: &Path, rest: &[String], known: &BTreeSet<&Path>) -> Option<PathBuf> {
+    fn deepest_known<Segment: AsRef<Path>>(
+        start: &Path,
+        rest: &[Segment],
+        known: &BTreeSet<&Path>,
+    ) -> Option<PathBuf> {
         (0..=rest.len()).rev().find_map(|depth| {
             let directory = rest[..depth]
                 .iter()

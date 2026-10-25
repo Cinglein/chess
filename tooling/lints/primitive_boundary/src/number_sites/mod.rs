@@ -20,13 +20,14 @@ use task::SourceFile;
 use task::Violation;
 use task::Walk;
 use task::WireType;
+use task::{LoweredInfix, Name, Whole};
 
 pub struct NumberSites<'scan> {
     path: PathBuf,
     policy: &'scan Policy,
     aliases: UseAliases,
-    context: String,
-    newtypes: Vec<String>,
+    context: Name,
+    newtypes: Vec<Name>,
     numbers: Vec<Violation>,
     sizes: Vec<Violation>,
 }
@@ -46,7 +47,7 @@ impl<'scan> NumberSites<'scan> {
                 path: file.path().to_owned(),
                 policy,
                 aliases: UseAliases::in_file(file.syntax()),
-                context: String::new(),
+                context: Name::default(),
                 newtypes: Vec::new(),
                 numbers: Vec::new(),
                 sizes: Vec::new(),
@@ -65,23 +66,18 @@ impl<'scan> NumberSites<'scan> {
             && path
                 .path
                 .get_ident()
-                .is_some_and(|ident| names.contains(&ident.to_string().as_str()))
+                .is_some_and(|ident| Name::from(ident).matches::<Whole>(names))
     }
 
-    fn newtype(&self, item: &ItemStruct) -> Option<String> {
+    fn newtype(&self, item: &ItemStruct) -> Option<Name> {
         match &item.fields {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => fields
                 .unnamed
                 .first()
                 .filter(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES) || self.policy.lists::<WireType>(&self.aliases.resolve(&path.path))))
-                .map(|_| item.ident.to_string()),
+                .map(|_| Name::from(&item.ident)),
             _ => None,
         }
-    }
-
-    fn names_a_size(&self) -> bool {
-        let lowered = self.context.to_lowercase();
-        Self::SIZE_WORDS.iter().any(|word| lowered.contains(word))
     }
 
     fn sighting(&self, path: &TypePath) -> Sighting {
@@ -106,7 +102,9 @@ impl<'scan> NumberSites<'scan> {
                     self.context
                 ),
             ))
-        } else if Self::is_named(path, &Self::SIZES) && !self.names_a_size() {
+        } else if Self::is_named(path, &Self::SIZES)
+            && !self.context.matches::<LoweredInfix>(&Self::SIZE_WORDS)
+        {
             Sighting::Size(Violation::new(
                 site,
                 format!(
@@ -137,12 +135,12 @@ impl<'ast> Visit<'ast> for NumberSites<'_> {
 
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
         self.newtypes.extend(self.newtype(item));
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_item_struct(self, item);
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_item_enum(self, item);
     }
 
@@ -154,32 +152,32 @@ impl<'ast> Visit<'ast> for NumberSites<'_> {
         self.context = field
             .ident
             .as_ref()
-            .map_or_else(|| self.context.clone(), ToString::to_string);
+            .map_or_else(|| self.context.clone(), Name::from);
         syn::visit::visit_type(self, &field.ty);
     }
 
     fn visit_item_const(&mut self, item: &'ast ItemConst) {
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_type(self, &item.ty);
     }
 
     fn visit_impl_item_const(&mut self, item: &'ast ImplItemConst) {
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_type(self, &item.ty);
     }
 
     fn visit_trait_item_const(&mut self, item: &'ast TraitItemConst) {
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_type(self, &item.ty);
     }
 
     fn visit_item_type(&mut self, item: &'ast ItemType) {
-        self.context = item.ident.to_string();
+        self.context = Name::from(&item.ident);
         syn::visit::visit_type(self, &item.ty);
     }
 
     fn visit_signature(&mut self, signature: &'ast Signature) {
-        self.context = signature.ident.to_string();
+        self.context = Name::from(&signature.ident);
         syn::visit::visit_signature(self, signature);
     }
 

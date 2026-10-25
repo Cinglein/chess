@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
+use syn::Ident;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -13,5 +14,11 @@ impl FromStr for CrateName {
 
     fn from_str(name: &str) -> Result<CrateName, Infallible> {
         Ok(CrateName(name.to_owned()))
+    }
+}
+
+impl From<&Ident> for CrateName {
+    fn from(ident: &Ident) -> CrateName {
+        CrateName(ident.to_string())
     }
 }
