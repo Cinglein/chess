@@ -1,6 +1,5 @@
 use crate::task::affected::{Affected, Job, Plan};
 use crate::task::failure::Failure;
-use crate::task::policy::Policy;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
 
@@ -15,11 +14,10 @@ impl Coverage {
     pub fn from_flags(
         mut flags: impl Iterator<Item = String>,
         workspace: &Workspace,
-        policy: &Policy,
     ) -> Result<Coverage, Failure> {
         flags.try_fold(Coverage::Everything, |_, flag| {
             if flag == Self::AFFECTED_FLAG {
-                Affected::plan(workspace, policy).map(Coverage::Planned)
+                Affected::plan(workspace).map(Coverage::Planned)
             } else {
                 Err(Failure::Usage(format!(
                     "unknown flag {flag}; the only flag is {}",

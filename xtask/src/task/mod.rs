@@ -135,7 +135,7 @@ impl Task {
     pub fn run(self, flags: impl Iterator<Item = String>) -> Result<(), Failure> {
         let workspace = Workspace::locate();
         let policy = Policy::defaults();
-        let coverage = Coverage::from_flags(flags, &workspace, &policy)?;
+        let coverage = Coverage::from_flags(flags, &workspace)?;
         match self {
             Task::Affected => Affected::run(&workspace, &policy),
             Task::Ci => Ci::run(&workspace, &coverage),

@@ -31,14 +31,20 @@ impl Affected {
     const TOOL: &str = "xtask";
 
     pub fn run(workspace: &Workspace, policy: &Policy) -> Result<(), Failure> {
-        println!(
-            "{}",
-            serde_json::to_string(&Self::plan(workspace, policy)?)?
-        );
+        let plan = Self::plan(workspace)?;
+        let full = plan
+            .job(Job::Full)
+            .map(|full| Self::mutant_count(workspace, &full.selection()))
+            .transpose()?;
+        let sharded = match full {
+            Some(mutants) => plan.with_full_sharded(mutants, policy),
+            None => plan,
+        };
+        println!("{}", serde_json::to_string(&sharded)?);
         Ok(())
     }
 
-    pub fn plan(workspace: &Workspace, policy: &Policy) -> Result<Plan, Failure> {
+    pub fn plan(workspace: &Workspace) -> Result<Plan, Failure> {
         let changed = workspace
             .line(Program::Git)
             .argument(GitArgument::Diff)
@@ -55,19 +61,7 @@ impl Affected {
         let reaches: Vec<Reach> = changed.lines().map(Reach::reached_by).collect();
         let graph = PackageGraph::from_metadata(&metadata)?;
         let tool_graph = ToolGraph::from_files(&workspace.source_files()?);
-        let jobs = Self::jobs(&graph, &tool_graph, &reaches);
-        let full = jobs
-            .get(&Job::Full)
-            .map(|plan| Self::mutant_count(workspace, &plan.selection()))
-            .transpose()?;
-        Ok(Plan::new(
-            jobs.into_iter()
-                .map(|(job, plan)| match (job, full) {
-                    (Job::Full, Some(mutants)) => (job, plan.sharded(mutants, policy)),
-                    _ => (job, plan),
-                })
-                .collect(),
-        ))
+        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches)))
     }
 
     fn jobs(
