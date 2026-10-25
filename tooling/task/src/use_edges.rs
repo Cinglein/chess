@@ -1,14 +1,16 @@
 use syn::visit::Visit;
 use syn::{Item, ItemUse, UseTree, Visibility};
 
+use crate::name::Name;
 use crate::reexport_count::ReexportCount;
+use crate::use_path::UsePath;
 
 #[derive(Default)]
-pub struct UseEdges(Vec<Vec<String>>);
+pub struct UseEdges(Vec<UsePath>);
 
 impl UseEdges {
     #[must_use]
-    pub fn in_file(file: &syn::File) -> Vec<Vec<String>> {
+    pub fn in_file(file: &syn::File) -> Vec<UsePath> {
         let mut edges = UseEdges::default();
         edges.visit_file(file);
         edges.0
@@ -35,19 +37,14 @@ impl UseEdges {
         }
     }
 
-    fn walk(&mut self, prefix: &[String], tree: &UseTree) {
+    fn walk(&mut self, prefix: &UsePath, tree: &UseTree) {
         match tree {
             UseTree::Path(path) => {
-                let longer: Vec<String> = prefix
-                    .iter()
-                    .cloned()
-                    .chain(Some(path.ident.to_string()))
-                    .collect();
-                self.walk(&longer, &path.tree);
+                self.walk(&prefix.extended(Name::from(&path.ident)), &path.tree);
             }
             UseTree::Group(group) => group.items.iter().for_each(|item| self.walk(prefix, item)),
             UseTree::Name(_) | UseTree::Rename(_) | UseTree::Glob(_) => {
-                self.0.push(prefix.to_vec());
+                self.0.push(prefix.clone());
             }
         }
     }
@@ -55,6 +52,6 @@ impl UseEdges {
 
 impl<'ast> Visit<'ast> for UseEdges {
     fn visit_item_use(&mut self, item: &'ast ItemUse) {
-        self.walk(&[], &item.tree);
+        self.walk(&UsePath::default(), &item.tree);
     }
 }

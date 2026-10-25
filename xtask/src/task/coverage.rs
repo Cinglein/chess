@@ -19,10 +19,10 @@ impl Coverage {
             if flag == Self::AFFECTED_FLAG {
                 Affected::plan(workspace, Changes::SinceMain).map(Coverage::Planned)
             } else {
-                Err(Failure::Usage(format!(
-                    "unknown flag {flag}; the only flag is {}",
-                    Self::AFFECTED_FLAG
-                )))
+                Err(Failure::UnknownFlag {
+                    flag,
+                    known: Self::AFFECTED_FLAG,
+                })
             }
         })
     }

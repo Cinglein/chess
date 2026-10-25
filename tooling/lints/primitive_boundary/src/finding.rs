@@ -1,10 +1,11 @@
 use std::fmt;
 
 use task::Name;
+use task::UsePath;
 
 pub enum Finding {
     BarePrimitive { primitive: Name, context: Name },
-    WireForm { wire: String, context: Name },
+    WireForm { wire: UsePath, context: Name },
     UnnamedSize { context: Name },
     TextOutsideDoor { handler: Name },
 }

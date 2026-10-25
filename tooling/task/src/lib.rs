@@ -18,6 +18,7 @@ mod site;
 mod source_file;
 mod support_modules;
 mod use_edges;
+mod use_path;
 mod violation;
 mod walk;
 mod workspace;
@@ -29,7 +30,7 @@ pub use command_line::{
     CargoArgument, CommandLine, GitArgument, MutantsArgument, Program, Stderr, Stdout,
 };
 pub use crate_name::CrateName;
-pub use failure::Failure;
+pub use failure::{FailedRuns, Failure, KilledProcess, KilledProcesses};
 pub use line_number::LineNumber;
 pub use mutant_count::MutantCount;
 pub use name::{Casing, LoweredInfix, Name, Prefix, Whole};
@@ -44,6 +45,7 @@ pub use site::Site;
 pub use source_file::SourceFile;
 pub use support_modules::SupportModules;
 pub use use_edges::UseEdges;
+pub use use_path::UsePath;
 pub use violation::Violation;
 pub use walk::Walk;
 pub use workspace::Workspace;

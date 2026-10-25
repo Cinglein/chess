@@ -10,6 +10,7 @@ use task::ReexportCount;
 use task::Site;
 use task::SourceFile;
 use task::UseEdges;
+use task::UsePath;
 use task::Violation;
 use task::{Limit, Policy};
 
@@ -82,7 +83,7 @@ impl ModuleTree {
         }
     }
 
-    fn absorbing(mut self, module: &ModulePath, path: &[String]) -> ModuleTree {
+    fn absorbing(mut self, module: &ModulePath, path: &UsePath) -> ModuleTree {
         match ModulePath::from_use(module, path, &self.modules) {
             Some(target) => {
                 let used = ModulePath::deepest_module_containing(&self.modules, &target, module);
