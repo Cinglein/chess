@@ -70,13 +70,16 @@ impl Scope {
         output: &OutputDirectory,
         slice: Option<Slice>,
     ) -> Result<Vec<MutantsRun>, Failure> {
-        let reaches = Changes::SinceMain.reaches(workspace)?;
-        let changed: BTreeSet<CrateName> = reaches.iter().filter_map(Reach::package).collect();
+        let changed: BTreeSet<CrateName> = Changes::SinceMain
+            .reaches(workspace)?
+            .iter()
+            .filter_map(Reach::package)
+            .collect();
         let sliced = |line: CommandLine| match slice {
             Some(slice) => line.argument(MutantsArgument::Shard).argument(slice),
             None => line,
         };
-        if reaches.contains(&Reach::Everything) || changed.is_empty() {
+        if changed.is_empty() {
             Ok(vec![MutantsRun::new(
                 sliced(line)
                     .argument(MutantsArgument::Output)
