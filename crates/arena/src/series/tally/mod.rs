@@ -80,11 +80,9 @@ impl fmt::Display for Tally {
 
 #[cfg(test)]
 mod tests {
-    use board::Color;
-
     use super::Tally;
     use crate::game::Verdict;
-
+    use board::Color;
     const WHITE_WIN: Verdict = Verdict::Win(Color::White);
     const BLACK_WIN: Verdict = Verdict::Win(Color::Black);
     const TALLIED: [(&[(Verdict, Verdict)], &str); 4] = [

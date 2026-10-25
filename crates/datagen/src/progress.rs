@@ -62,7 +62,6 @@ impl fmt::Display for Progress {
 #[cfg(test)]
 mod tests {
     use super::{PositionCount, Progress};
-
     const TARGET: PositionCount = PositionCount::new(4);
     const TWO: PositionCount = PositionCount::new(2);
 

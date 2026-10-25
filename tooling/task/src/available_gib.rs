@@ -47,7 +47,6 @@ impl fmt::Display for AvailableGib {
 #[cfg(test)]
 mod tests {
     use super::AvailableGib;
-
     const SIX: AvailableGib = AvailableGib(6);
     const TWO: AvailableGib = AvailableGib(2);
     const THIRDS: usize = 3;

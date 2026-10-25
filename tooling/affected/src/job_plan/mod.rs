@@ -50,14 +50,11 @@ impl JobPlan {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
-
-    use settings::EmbeddedDefaults;
-
     use super::JobPlan;
     use crate::crate_load::CrateLoad;
+    use settings::EmbeddedDefaults;
+    use std::collections::BTreeSet;
     use task::{Interval, Policy};
-
     const SOME: usize = 2;
     const ONE: usize = 1;
 

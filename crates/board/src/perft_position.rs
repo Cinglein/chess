@@ -77,7 +77,6 @@ impl PerftPosition {
 mod tests {
     use super::{NodeCount, PerftPosition};
     use crate::board::Board;
-
     impl Board {
         fn perft(self, depth: u8) -> NodeCount {
             let Some(remaining) = depth.checked_sub(1) else {

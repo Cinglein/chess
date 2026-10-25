@@ -229,11 +229,9 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::FnShape;
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const SOURCE: &str = "
 impl Wide { fn four(a: u8, b: u8, c: u8, d: u8) {}
     fn five(a: u8, b: u8, c: u8, d: u8, e: u8) {}

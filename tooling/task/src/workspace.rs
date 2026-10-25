@@ -90,11 +90,9 @@ impl Workspace {
 
 #[cfg(test)]
 mod tests {
+    use super::Workspace;
     use std::fs;
     use std::path::{Path, PathBuf};
-
-    use super::Workspace;
-
     const TREE: [&str; 4] = ["a.rs", "nested/b.rs", "target/skipped.rs", "notes.txt"];
     const FOUND: [&str; 2] = ["a.rs", "nested/b.rs"];
     const FIRST: &str = "a.rs";

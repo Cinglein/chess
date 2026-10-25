@@ -149,11 +149,9 @@ impl Affected {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
-
     use super::{Affected, Job, JobPlan, PackageGraph, Reach, ToolGraph};
+    use std::collections::BTreeMap;
     use task::SourceFile;
-
     const METADATA: &str = r#"{"packages": [
         {"name": "board", "dependencies": []},
         {"name": "eval", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},

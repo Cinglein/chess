@@ -41,11 +41,9 @@ impl Principal {
 
 #[cfg(test)]
 mod tests {
+    use super::Principal;
     use board::Board;
     use eval::Score;
-
-    use super::Principal;
-
     const BETTER: Score = Score::new(10);
 
     #[test]

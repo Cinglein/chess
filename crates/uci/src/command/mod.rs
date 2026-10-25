@@ -98,7 +98,6 @@ impl fmt::Display for Command<'_> {
 #[cfg(test)]
 mod tests {
     use super::Command;
-
     const LINES: [&str; 11] = [
         "uci",
         "isready",

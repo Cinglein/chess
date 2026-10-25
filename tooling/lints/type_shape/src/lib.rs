@@ -144,7 +144,6 @@ impl<'ast> Visit<'ast> for TypeFindings {
 mod tests {
     use super::TypeShape;
     use task::SourceFile;
-
     const SOURCE: &str = "
 struct Flags { ready: bool, pair: (u8, u8) }
 impl Flags { fn split(&self) -> (u8, u8) { self.pair } fn load(&self) -> Result<u8, String> { Ok(0) } fn unit(&self) -> () {} }

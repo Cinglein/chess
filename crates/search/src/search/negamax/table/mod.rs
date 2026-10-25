@@ -43,12 +43,10 @@ impl<'store> TranspositionTable<'store> {
 
 #[cfg(test)]
 mod tests {
-    use board::{Board, Zobrist};
-    use eval::Score;
-
     use super::{BoundKind, Conclusion, RootDistance, TableEntry, TranspositionTable};
     use crate::search::depth::Depth;
-
+    use board::{Board, Zobrist};
+    use eval::Score;
     const DEEP: Depth = Depth::new(2);
     const SHALLOW: Depth = Depth::new(1);
     const SLOTS: usize = 2;

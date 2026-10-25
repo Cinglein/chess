@@ -51,11 +51,9 @@ impl<'ast> Visit<'ast> for SupportModules {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use super::SupportModules;
     use crate::source_file::SourceFile;
-
+    use std::path::PathBuf;
     const SOURCE: &str =
         "#[cfg(test)] mod fixtures; mod inline {} #[cfg(test)] mod tests {} mod sibling;";
     const PATHS: [&str; 2] = ["crates/a/src/fixtures.rs", "crates/a/src/fixtures/mod.rs"];

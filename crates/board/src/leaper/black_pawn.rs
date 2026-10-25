@@ -19,14 +19,12 @@ impl Pawn for BlackPawn {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
-
     use super::BlackPawn;
     use crate::bitboard::Bitboard;
     use crate::diagonal::Diagonal;
     use crate::leaper::Leaper;
     use crate::square::Square;
-
+    use strum::IntoEnumIterator;
     #[test]
     fn every_black_pawn_entry_agrees_with_stepping_diagonally_south() {
         for square in Square::iter() {

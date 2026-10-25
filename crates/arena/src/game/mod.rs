@@ -143,19 +143,16 @@ impl From<Board> for Game {
 
 #[cfg(test)]
 mod tests {
-    use std::num::NonZeroU16;
-    use std::ops::ControlFlow;
-    use std::time::Duration;
-
-    use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
-    use eval::Score;
-    use uci::{Clock, Increment, Remaining};
-
     use super::script::Script;
     use super::{Finished, Game};
     use crate::in_process_engine::InProcessEngine;
     use crate::rules::{DrawAdjudication, ResignAdjudication, Rules, Thinking};
-
+    use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
+    use eval::Score;
+    use std::num::NonZeroU16;
+    use std::ops::ControlFlow;
+    use std::time::Duration;
+    use uci::{Clock, Increment, Remaining};
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
     const ROOK_EACH: &str = "4k3/r7/8/8/8/8/7R/4K3 w - - 0 1";

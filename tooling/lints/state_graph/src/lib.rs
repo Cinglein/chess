@@ -49,11 +49,9 @@ impl StateGraph {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::{Declarations, EdgeScan, StateGraph};
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const VERTICES: &str = "
 pub struct Hub; impl State for Hub {} pub struct Spoke; impl State for Spoke {}
 pub struct Rim; pub type Edge = Rim; impl State for Edge {}

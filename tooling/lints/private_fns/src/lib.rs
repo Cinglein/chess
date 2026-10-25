@@ -78,11 +78,9 @@ impl<'ast> Visit<'ast> for PrivateFnCounter {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::PrivateFns;
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const SOURCE: &str = "
 struct Wide;
 impl Wide { fn a() {} fn b() {} pub fn c() {} }

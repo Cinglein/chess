@@ -214,18 +214,14 @@ impl proptest::arbitrary::Arbitrary for Bitboard {
 #[cfg(test)]
 mod tests {
     use super::SetOperation;
-
     const JOIN: SetOperation = SetOperation::Union;
     const LEAVE: SetOperation = SetOperation::Difference;
-    use std::collections::HashSet;
-
-    use proptest::prelude::*;
-    use strum::EnumCount;
-
     use super::{Bitboard, SubsetIter};
     use crate::rank::Rank;
     use crate::square::Square;
-
+    use proptest::prelude::*;
+    use std::collections::HashSet;
+    use strum::EnumCount;
     #[test]
     fn set_algebra_iteration_and_display_agree() {
         proptest!(|(left: Bitboard, right: Bitboard)| {

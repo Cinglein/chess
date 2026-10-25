@@ -61,7 +61,6 @@ impl<'ast> Visit<'ast> for Numbers {
 mod tests {
     use super::NoNumbersInBinaries;
     use task::SourceFile;
-
     const WORKER: &str = "pub struct W; impl W { pub fn size() -> usize { 42 } pub fn rate() -> f64 { 2.5 } }\nmod inner { pub fn depth() -> u8 { 7 } }\n#[cfg(test)]\nmod tests { fn depth() -> u8 { 7 } }";
     const FILES: [(&str, &str); 3] = [
         ("crates/a/src/main.rs", "mod worker; fn main() {}"),

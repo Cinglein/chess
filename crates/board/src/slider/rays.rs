@@ -73,15 +73,13 @@ impl Rays {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-    use strum::IntoEnumIterator;
-
     use super::Rays;
     use crate::bitboard::{Bitboard, SetOperation};
     use crate::direction::Direction;
     use crate::slider::{Bishop, Rook, Slider};
     use crate::square::Square;
-
+    use proptest::prelude::*;
+    use strum::IntoEnumIterator;
     const RELEVANT_SQUARES: [(Square, u32, u32); 2] = [(Square::A1, 12, 6), (Square::D4, 10, 9)];
 
     #[test]

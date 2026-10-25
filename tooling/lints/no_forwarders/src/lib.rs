@@ -54,7 +54,6 @@ impl NoForwarders {
 mod tests {
     use super::NoForwarders;
     use task::SourceFile;
-
     const SOURCE: &str = "
 struct Own; enum Mode { Fast } trait Rule { fn apply(x: u8) -> u8; }
 struct W { inner: Own, raw: u64 }

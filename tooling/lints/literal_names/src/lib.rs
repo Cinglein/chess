@@ -89,11 +89,9 @@ impl<'ast> Visit<'ast> for VagueNames<'_> {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::LiteralNames;
+    use settings::EmbeddedDefaults;
     use task::Policy;
-
     const SOURCE: &str = "
 struct W;
 impl W { fn of(x: u8) -> W { W } fn check(&self) {} fn new() -> W { W } fn least_significant_bit(&self) -> u8 { 0 } }
