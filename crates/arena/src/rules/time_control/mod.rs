@@ -4,23 +4,15 @@ use std::fmt;
 use std::str::FromStr;
 use std::time::Duration;
 
-use board::Color;
 use serde::{Deserialize, Serialize};
 use time_control_error::TimeControlError;
 use uci::Clock;
-use uci::{Increment, Remaining};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct TimeControl {
     base: Duration,
     increment: Duration,
-}
-
-impl TimeControl {
-    pub const fn new(base: Duration, increment: Duration) -> TimeControl {
-        TimeControl { base, increment }
-    }
 }
 
 impl From<TimeControl> for Clock {
@@ -31,15 +23,6 @@ impl From<TimeControl> for Clock {
             time_control.increment,
             time_control.increment,
         )
-    }
-}
-
-impl From<Clock> for TimeControl {
-    fn from(clock: Clock) -> TimeControl {
-        TimeControl {
-            base: clock.time::<Remaining>(Color::White),
-            increment: clock.time::<Increment>(Color::White),
-        }
     }
 }
 
@@ -89,6 +72,10 @@ mod tests {
     fn a_time_control_reads_as_seconds_plus_increment_and_prints_back_the_same() {
         let parsed: TimeControl = WRITTEN.parse().unwrap();
         assert_eq!(parsed.to_string(), WRITTEN);
+        assert_eq!(
+            TimeControl::try_from(String::from(parsed)).ok(),
+            Some(parsed)
+        );
         assert!("10".parse::<TimeControl>().is_err());
     }
 }

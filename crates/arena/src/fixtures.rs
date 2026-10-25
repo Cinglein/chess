@@ -5,10 +5,10 @@ use crate::entrant::Entrant;
 use crate::game::{Finished, Game};
 use crate::in_process_engine::InProcessEngine;
 use crate::opponent::Opponent;
-use crate::rules::{Rules, Thinking};
+use crate::rules::Rules;
 
 pub const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
-pub const QUICK: Rules = Rules::DEFAULT.thinking_by(Thinking::FixedNodes(NodeCount::new(64)));
+pub const QUICK: Rules = Rules::at_fixed_nodes(NodeCount::new(64));
 
 pub struct InProcess;
 

@@ -9,7 +9,7 @@ use std::io::{BufWriter, Write};
 use std::time::Instant;
 
 use ::settings::EmbeddedDefaults;
-use arena::RandomOpenings;
+use arena::{RandomOpenings, Rules};
 use arguments::{Arguments, Config, Output};
 use clap::Parser;
 use datagen::{Example, Progress, SelfPlay};
@@ -26,7 +26,7 @@ impl CommandLine {
         );
         let games = SelfPlay::new(
             RandomOpenings::seeded(arguments.seed(), settings.opening_plies()),
-            settings.rules(),
+            Rules::at_fixed_nodes(settings.nodes_per_move()),
             settings.positions(),
         )
         .play(settings.concurrency());
