@@ -2,6 +2,10 @@ name: Mutants
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -10,19 +14,45 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
 jobs:
+  affected:
+    runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - id: plan
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
+          else
+            echo 'plan={"crates":["all"],"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}' >> "$GITHUB_OUTPUT"
+          fi
+
   full:
+    needs: affected
+    if: fromJSON(needs.affected.outputs.plan).shard_count > 0
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        shard: ${{ fromJSON(needs.affected.outputs.plan).shards }}
     env:
-      MUTANTS_SHARD: ${{ matrix.shard }}/16
+      MUTANTS_SHARD: ${{ matrix.shard }}/${{ fromJSON(needs.affected.outputs.plan).shard_count }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
@@ -32,7 +62,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants
-      - run: cargo xtask mutants-full
+      - run: cargo xtask mutants-full $SCOPE
         env:
           CARGO_INCREMENTAL: 1
       - uses: actions/upload-artifact@v4
@@ -40,3 +70,12 @@ jobs:
         with:
           name: mutants-shard-${{ matrix.shard }}
           path: target/mutants/mutants.out
+
+  mutants-gate:
+    needs: [affected, full]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"' && exit 1
+          echo "every shard passed or none was needed"

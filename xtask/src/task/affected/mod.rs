@@ -1,13 +1,16 @@
 mod package_graph;
+mod plan;
 mod reach;
 
 use std::collections::BTreeSet;
 
 use package_graph::PackageGraph;
+use plan::Plan;
 use reach::Reach;
 
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
+use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
 
 pub struct Affected;
@@ -16,12 +19,22 @@ impl Affected {
     const BASE: &str = "origin/main";
 
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
-        let crates: Vec<String> = Self::reached(workspace)?
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        println!("{}", serde_json::to_string(&crates)?);
+        let crates = Self::reached(workspace)?;
+        let plan = Plan::new(&crates, Self::mutant_count(workspace, &crates)?);
+        println!("{}", serde_json::to_string(&plan)?);
         Ok(())
+    }
+
+    fn mutant_count(workspace: &Workspace, crates: &BTreeSet<CrateName>) -> Result<usize, Failure> {
+        if crates.is_empty() {
+            return Ok(0);
+        }
+        let arguments: Vec<String> = [String::from("mutants"), String::from("--list")]
+            .into_iter()
+            .chain(Selection::Crates(crates.clone()).explicit_packages())
+            .collect();
+        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
+        Ok(workspace.cargo_stdout(&borrowed)?.lines().count())
     }
 
     pub fn reached(workspace: &Workspace) -> Result<BTreeSet<CrateName>, Failure> {
