@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+derive_more = { version = "2", features = ["display"] }
 sysinfo = "0.39"
 board = { path = "../crates/board" }
 enum-map = "3"

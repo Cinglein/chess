@@ -4,10 +4,11 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use metadata::Metadata;
 
+use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 
 pub struct PackageGraph {
-    dependents: BTreeMap<String, BTreeSet<String>>,
+    dependents: BTreeMap<CrateName, BTreeSet<CrateName>>,
 }
 
 impl PackageGraph {
@@ -15,14 +16,14 @@ impl PackageGraph {
         let metadata: Metadata = serde_json::from_str(json)?;
         let dependents = metadata.packages().iter().fold(
             BTreeMap::new(),
-            |graph: BTreeMap<String, BTreeSet<String>>, package| {
+            |graph: BTreeMap<CrateName, BTreeSet<CrateName>>, package| {
                 package
                     .local_dependencies()
                     .fold(graph, |mut graph, dependency| {
                         graph
-                            .entry(dependency.to_owned())
+                            .entry(dependency.clone())
                             .or_default()
-                            .insert(package.name().to_owned());
+                            .insert(package.name().clone());
                         graph
                     })
             },
@@ -31,7 +32,7 @@ impl PackageGraph {
             dependents: metadata
                 .packages()
                 .iter()
-                .map(|package| (package.name().to_owned(), BTreeSet::new()))
+                .map(|package| (package.name().clone(), BTreeSet::new()))
                 .chain(dependents)
                 .fold(BTreeMap::new(), |mut all, (name, direct)| {
                     all.entry(name).or_default().extend(direct);
@@ -40,12 +41,12 @@ impl PackageGraph {
         })
     }
 
-    pub fn names(&self) -> BTreeSet<String> {
+    pub fn names(&self) -> BTreeSet<CrateName> {
         self.dependents.keys().cloned().collect()
     }
 
-    pub fn dependents_closure(&self, seeds: BTreeSet<String>) -> BTreeSet<String> {
-        let grown: BTreeSet<String> = seeds
+    pub fn dependents_closure(&self, seeds: BTreeSet<CrateName>) -> BTreeSet<CrateName> {
+        let grown: BTreeSet<CrateName> = seeds
             .iter()
             .flat_map(|seed| self.dependents.get(seed).into_iter().flatten().cloned())
             .chain(seeds.iter().cloned())
@@ -76,9 +77,13 @@ mod tests {
     #[test]
     fn the_closure_of_a_crate_is_every_crate_that_depends_on_it_transitively_and_itself() {
         let graph = PackageGraph::from_metadata(METADATA).unwrap();
-        let closure = graph.dependents_closure(BTreeSet::from([BOARD.to_owned()]));
+        let closure = graph.dependents_closure(BTreeSet::from([BOARD.parse().unwrap()]));
         assert_eq!(
-            (closure.len(), graph.names().len(), closure.contains(ENGINE)),
+            (
+                closure.len(),
+                graph.names().len(),
+                closure.contains(&ENGINE.parse().unwrap())
+            ),
             (CRATES, CRATES, true)
         );
     }

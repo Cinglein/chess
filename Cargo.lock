@@ -1548,6 +1548,7 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "board",
+ "derive_more",
  "enum-map",
  "proc-macro2",
  "quote",

@@ -1,5 +1,8 @@
+use crate::task::clippy::Clippy;
 use crate::task::failure::Failure;
 use crate::task::lint::Lint;
+use crate::task::selection::Selection;
+use crate::task::test::Test;
 use crate::task::test_time::TestTime;
 use crate::task::wasm::Wasm;
 use crate::task::workspace::Workspace;
@@ -7,20 +10,13 @@ use crate::task::workspace::Workspace;
 pub struct Ci;
 
 impl Ci {
-    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
+    pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
+        println!("ci: checking {selection}");
         workspace.cargo(&["fmt", "--all", "--check"])?;
-        workspace.cargo(&[
-            "clippy",
-            "--workspace",
-            "--all-targets",
-            "--all-features",
-            "--",
-            "-D",
-            "warnings",
-        ])?;
-        Wasm::run(workspace)?;
-        workspace.cargo(&["test", "--workspace", "--all-features"])?;
-        TestTime::run(workspace)?;
+        Clippy::run(workspace, selection)?;
+        Wasm::run(workspace, selection)?;
+        Test::run(workspace, selection)?;
+        TestTime::run(workspace, selection)?;
         Lint::run(workspace)
     }
 }

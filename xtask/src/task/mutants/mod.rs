@@ -14,6 +14,7 @@ use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::failure::Failure;
+use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
 
@@ -25,11 +26,15 @@ impl Mutants {
     const PROCESS_NAME: &str = "cargo-mutants";
     const SHARD_VARIABLE: &str = "MUTANTS_SHARD";
 
-    pub fn run(workspace: &Workspace, scope: Scope) -> Result<(), Failure> {
+    pub fn run(workspace: &Workspace, scope: Scope, selection: &Selection) -> Result<(), Failure> {
+        if scope == Scope::Workspace && selection.is_empty() {
+            println!("mutants: no crate affected");
+            return Ok(());
+        }
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
         let budget = Self::refuse_if_memory_is_short()?;
-        scope.warm_build_directory(workspace)?;
+        scope.warm_build_directory(workspace, selection)?;
         let arguments: Vec<String> = [
             String::from("mutants"),
             String::from("--jobserver-tasks"),
@@ -38,7 +43,7 @@ impl Mutants {
             String::from(Self::OUTPUT_DIRECTORY),
         ]
         .into_iter()
-        .chain(scope.arguments(workspace)?)
+        .chain(scope.arguments(workspace, selection)?)
         .chain(Self::shard())
         .collect();
         let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();

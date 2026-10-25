@@ -1,10 +1,12 @@
 use std::path::Path;
 
+use crate::task::crate_name::CrateName;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Reach {
     Everything,
     Nothing,
-    Package(String),
+    Package(CrateName),
 }
 
 impl Reach {
@@ -25,7 +27,7 @@ impl Reach {
         }
     }
 
-    pub fn package(&self) -> Option<String> {
+    pub fn package(&self) -> Option<CrateName> {
         match self {
             Reach::Package(name) => Some(name.clone()),
             Reach::Everything | Reach::Nothing => None,
@@ -43,11 +45,11 @@ impl Reach {
             })
     }
 
-    fn first_component(inside: &Path) -> Option<String> {
+    fn first_component(inside: &Path) -> Option<CrateName> {
         inside
             .components()
             .next()
-            .map(|component| component.as_os_str().to_string_lossy().into_owned())
+            .and_then(|component| component.as_os_str().to_string_lossy().parse().ok())
     }
 }
 
@@ -55,20 +57,26 @@ impl Reach {
 mod tests {
     use super::Reach;
 
-    const REACHES: [(&str, Reach); 6] = [
-        ("crates/eval/src/score.rs", Reach::Package(String::new())),
-        ("xtask/src/main.rs", Reach::Everything),
-        ("Cargo.lock", Reach::Everything),
-        (".github/workflows/ci.yml", Reach::Everything),
-        ("README.md", Reach::Nothing),
-        (".claude/settings.json", Reach::Nothing),
-    ];
+    const PACKAGE_PATHS: [&str; 1] = ["crates/eval/src/score.rs"];
+    const EVERYTHING_PATHS: [&str; 3] = ["xtask/src/main.rs", "Cargo.lock", ".github/ci.yml"];
+    const NOTHING_PATHS: [&str; 2] = ["README.md", ".claude/settings.json"];
 
     #[test]
     fn a_path_reaches_its_crate_everything_or_nothing() {
-        assert!(REACHES.iter().all(|(path, expected)| match expected {
-            Reach::Package(_) => Reach::reached_by(path) == Reach::Package("eval".to_owned()),
-            other => Reach::reached_by(path) == *other,
-        }));
+        assert!(
+            PACKAGE_PATHS
+                .iter()
+                .all(|path| Reach::reached_by(path).package() == "eval".parse().ok())
+        );
+        assert!(
+            EVERYTHING_PATHS
+                .iter()
+                .all(|path| Reach::reached_by(path) == Reach::Everything)
+        );
+        assert!(
+            NOTHING_PATHS
+                .iter()
+                .all(|path| Reach::reached_by(path) == Reach::Nothing)
+        );
     }
 }
