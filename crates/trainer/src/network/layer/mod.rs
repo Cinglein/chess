@@ -25,10 +25,8 @@ impl Layer {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
-
     use super::{Biases, Layer, Weights};
-
+    use strum::IntoEnumIterator;
     #[test]
     fn weight_and_bias_ids_are_the_layer_name_with_bullets_suffixes() {
         assert!(Layer::iter().all(|layer| {

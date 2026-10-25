@@ -72,10 +72,8 @@ impl fmt::Display for Selection {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
-
     use super::{CargoTool, Selection};
-
+    use std::collections::BTreeSet;
     const EVAL: &str = "eval";
     const SEARCH: &str = "search";
     const BOARD: &str = "board";

@@ -36,10 +36,8 @@ impl KillerTable {
 
 #[cfg(test)]
 mod tests {
-    use board::Board;
-
     use super::{KillerTable, RootDistance};
-
+    use board::Board;
     #[test]
     fn a_move_remembered_at_a_ply_is_recalled_there_and_nowhere_else() {
         let chess_move = Board::START.legal_moves()[0];

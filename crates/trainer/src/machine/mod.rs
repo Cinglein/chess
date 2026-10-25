@@ -28,7 +28,6 @@ impl Machine {
 #[cfg(test)]
 mod tests {
     use super::Machine;
-
     const WRITTEN: &str = "
         threads = 3
         batch_queue_size = 4

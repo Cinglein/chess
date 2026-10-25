@@ -92,7 +92,6 @@ mod tests {
     use std::path::Path;
     use std::time::Duration;
     use task::{Interval, Policy};
-
     const NAMES: [&str; 4] = ["target/debug/deps/bin-1a2b3c", "exact", "slow", "bulk"];
     const TICK: Duration = Duration::from_millis(1);
     const WHOLE_IN_UNITS: usize = 4;

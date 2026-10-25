@@ -281,7 +281,6 @@ impl FromStr for PiecePlacement {
 #[cfg(test)]
 mod tests {
     use super::PiecePlacement;
-
     const MATERIAL: [(&str, bool); 10] = [
         ("1b2k3/8/8/8/8/8/8/2B1K3", true),
         ("8/8/8/4k3/8/8/8/4K3", true),

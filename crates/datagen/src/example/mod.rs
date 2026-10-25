@@ -61,16 +61,13 @@ impl TryFrom<Label> for Example {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
+    use super::Example;
     use arena::{Label, Verdict};
     use board::{Board, Color};
     use bulletformat::ChessBoard;
     use eval::Score;
     use proptest::prelude::*;
-
-    use super::Example;
-
+    use std::str::FromStr;
     struct Oracle;
 
     impl Oracle {

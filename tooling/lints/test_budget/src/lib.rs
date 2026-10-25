@@ -100,11 +100,9 @@ impl Sum for TestBudget {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::TestBudget;
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const LIB: &str = "
 #[cfg(test)] mod fixtures;
 #[cfg(test)]

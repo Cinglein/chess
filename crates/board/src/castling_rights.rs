@@ -121,11 +121,9 @@ impl proptest::arbitrary::Arbitrary for CastlingRights {
 
 #[cfg(test)]
 mod tests {
+    use super::CastlingRights;
     use fen::{DashOr, FenError};
     use proptest::prelude::*;
-
-    use super::CastlingRights;
-
     const REJECTED: [&str; 3] = ["KK", "x", ""];
 
     #[test]

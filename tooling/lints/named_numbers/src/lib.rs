@@ -118,7 +118,6 @@ impl<'ast> Visit<'ast> for Numbers {
 mod tests {
     use super::NamedNumbers;
     use task::SourceFile;
-
     const SOURCE: &str = "
 pub struct Clock;
 impl Clock { const HALF: u64 = 500; pub fn halved(ticks: u64) -> u64 { ticks / 2 + 1 } }

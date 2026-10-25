@@ -42,12 +42,10 @@ impl Magic {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-
     use super::Magic;
     use crate::bitboard::Bitboard;
     use crate::rank::Rank;
-
+    use proptest::prelude::*;
     #[test]
     fn the_index_depends_only_on_the_mask_and_stays_inside_the_table() {
         proptest!(|(mask: u64, multiplier: u64, occupied: u64, offset in 0..64usize)| {

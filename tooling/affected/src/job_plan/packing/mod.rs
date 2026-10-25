@@ -44,12 +44,10 @@ impl Packing {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::Packing;
     use crate::crate_load::CrateLoad;
+    use settings::EmbeddedDefaults;
     use task::{Interval, Policy};
-
     const LOADS: [(&str, usize, Interval); 4] = [
         ("a", 1, Interval::PerShard),
         ("b", 50, Interval::Total),

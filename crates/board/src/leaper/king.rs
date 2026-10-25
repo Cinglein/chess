@@ -18,14 +18,12 @@ impl Leaper for King {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
-
     use super::King;
     use crate::bitboard::Bitboard;
     use crate::direction::Direction;
     use crate::leaper::Leaper;
     use crate::square::Square;
-
+    use strum::IntoEnumIterator;
     #[test]
     fn every_king_entry_agrees_with_stepping_one_in_each_direction() {
         for square in Square::iter() {

@@ -138,13 +138,10 @@ impl<'policy> MemoryWatch<'policy> {
 
 #[cfg(test)]
 mod tests {
-    use std::process::Command;
-
-    use settings::EmbeddedDefaults;
-
     use super::{AvailableGib, Failure, MemoryWatch};
+    use settings::EmbeddedDefaults;
+    use std::process::Command;
     use task::Policy;
-
     #[test]
     fn a_tree_over_its_budget_is_killed_and_the_run_is_refused() {
         let policy = Policy::defaults();

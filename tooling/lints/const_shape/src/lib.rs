@@ -134,7 +134,6 @@ impl<'ast> Visit<'ast> for ConstContexts<'_> {
 mod tests {
     use super::ConstShape;
     use task::SourceFile;
-
     const SOURCE: &str = "
 const fn free(mut rest: &[u8]) -> u8 { let mut i = 0; while i < 2 { i += 1; } while let [_, tail @ ..] = rest { rest = tail; } loop { break i } }
 const CELLS: u8 = { let mut i = 0; while i < 2 { i += 1; } i };

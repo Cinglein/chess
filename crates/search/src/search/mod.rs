@@ -110,11 +110,9 @@ impl<E: Evaluator> From<Board> for Search<E> {
 
 #[cfg(test)]
 mod tests {
+    use super::{Search, TableEntry, TranspositionTable, Uninterrupted};
     use board::Board;
     use eval::{PieceSquareTables, Score};
-
-    use super::{Search, TableEntry, TranspositionTable, Uninterrupted};
-
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";

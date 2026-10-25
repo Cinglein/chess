@@ -28,10 +28,8 @@ impl Openings {
 
 #[cfg(test)]
 mod tests {
-    use board::Board;
-
     use super::{Openings, RoundCount};
-
+    use board::Board;
     #[test]
     fn every_opening_parses_and_offers_a_legal_move_and_a_round_repeats_them_all() {
         let boards: Vec<Board> = Openings::boards().collect();

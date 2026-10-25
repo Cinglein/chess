@@ -60,7 +60,6 @@ impl NoFreeFns {
 #[cfg(test)]
 mod tests {
     use super::NoFreeFns;
-
     const SOURCE: &str = "
 fn main() {} fn helper() {}
 struct S; impl S { fn method(&self) {} fn associated() {} }

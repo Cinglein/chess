@@ -52,11 +52,9 @@ impl MagicSearch {
 
 #[cfg(test)]
 mod tests {
-    use board::{Bishop, Magic, Slider, Square, SubsetIter};
-
     use super::MagicSearch;
     use crate::xor_shift::XorShift;
-
+    use board::{Bishop, Magic, Slider, Square, SubsetIter};
     #[test]
     fn a_found_magic_maps_every_occupancy_to_its_attacks() {
         let square = Square::D4;
