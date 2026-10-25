@@ -1,4 +1,8 @@
+mod use_aliases;
+
 use std::path::PathBuf;
+
+use use_aliases::UseAliases;
 
 use syn::visit::Visit;
 use syn::{
@@ -7,32 +11,38 @@ use syn::{
 };
 
 use task::BitBoundary;
+use task::Policy;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::WireType;
 
-pub struct NumberSites {
+pub struct NumberSites<'scan> {
     path: PathBuf,
+    policy: &'scan Policy,
+    aliases: UseAliases,
     context: String,
     newtypes: Vec<String>,
     numbers: Vec<Violation>,
     sizes: Vec<Violation>,
 }
 
-impl NumberSites {
-    const PRIMITIVES: [&str; 12] = [
+impl<'scan> NumberSites<'scan> {
+    const PRIMITIVES: [&'static str; 12] = [
         "u8", "u16", "u32", "u64", "u128", "i8", "i16", "i32", "i64", "i128", "f32", "f64",
     ];
-    const SIZES: [&str; 2] = ["usize", "isize"];
-    const SIZE_WORDS: [&str; 6] = ["length", "len", "capacity", "size", "bytes", "index"];
-    const SIZE_DOMAIN: &str = "crates/";
+    const SIZES: [&'static str; 2] = ["usize", "isize"];
+    const SIZE_WORDS: [&'static str; 6] = ["length", "len", "capacity", "size", "bytes", "index"];
+    const SIZE_DOMAIN: &'static str = "crates/";
 
-    pub fn violations(file: &SourceFile) -> Vec<Violation> {
+    pub fn violations(file: &SourceFile, policy: &'scan Policy) -> Vec<Violation> {
         if BitBoundary::covers(file.path()) {
             return Vec::new();
         }
         let mut sites = NumberSites {
             path: file.path().to_owned(),
+            policy,
+            aliases: UseAliases::in_file(file.syntax()),
             context: String::new(),
             newtypes: Vec::new(),
             numbers: Vec::new(),
@@ -56,12 +66,12 @@ impl NumberSites {
                 .is_some_and(|ident| names.contains(&ident.to_string().as_str()))
     }
 
-    fn wraps_primitive(item: &ItemStruct) -> bool {
+    fn wraps_primitive(&self, item: &ItemStruct) -> bool {
         match &item.fields {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => fields
                 .unnamed
                 .first()
-                .is_some_and(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES))),
+                .is_some_and(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES) || self.policy.lists::<WireType>(&self.aliases.resolve(&path.path)))),
             _ => false,
         }
     }
@@ -79,7 +89,7 @@ impl NumberSites {
     }
 }
 
-impl<'ast> Visit<'ast> for NumberSites {
+impl<'ast> Visit<'ast> for NumberSites<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
         if !SourceFile::is_test_module(module) {
             syn::visit::visit_item_mod(self, module);
@@ -93,7 +103,7 @@ impl<'ast> Visit<'ast> for NumberSites {
     }
 
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
-        if Self::wraps_primitive(item) {
+        if self.wraps_primitive(item) {
             self.newtypes.push(item.ident.to_string());
         }
         self.context = item.ident.to_string();
@@ -148,6 +158,18 @@ impl<'ast> Visit<'ast> for NumberSites {
                 format!(
                     "bare {} in {}; name what it counts with a newtype",
                     path.path.segments[0].ident, self.context
+                ),
+            ));
+        } else if self
+            .policy
+            .lists::<WireType>(&self.aliases.resolve(&path.path))
+        {
+            self.numbers.push(Violation::new(
+                self.site(path),
+                format!(
+                    "{} in {} is a wire form; parse it into a type at the door",
+                    self.aliases.resolve(&path.path),
+                    self.context
                 ),
             ));
         } else if Self::is_named(path, &Self::SIZES) && !self.names_a_size() {

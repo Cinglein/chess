@@ -129,7 +129,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   (`split_*`, `strip_*`, `trim`, `chars`) or produced (`format!`, `to_string`, `String::from`)
   only in a file that hand-writes a `FromStr`, `TryFrom`, or `Display` impl, or as the direct
   argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The
-  text clause covers `crates/`; xtask's values are text. `cargo xtask primitive-boundary`
+  text clause covers `crates/`; xtask's values are text. A wire type is a primitive for this
+  rule: `serde_json::Value`, `toml::Value`, `serde_yaml::Value`, `rust_decimal::Decimal`,
+  `bigdecimal::BigDecimal`, `num_bigint::BigInt` and `BigUint`, and `Any` (the list is
+  `wire_types` in `tooling/policy.toml`, matched by full path through the file's `use` tree)
+  appear only in the file of a newtype over them. `cargo xtask primitive-boundary`
   enforces both.
 - A binary is wiring. Every file reached from a `main.rs` under `crates/` is free of numeric
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are

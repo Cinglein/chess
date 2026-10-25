@@ -8,6 +8,9 @@ mod most;
 mod mutant_millis;
 mod percent;
 mod share;
+mod vague;
+mod vocabulary;
+mod wire_type;
 
 pub use floor::Floor;
 pub use interval::Interval;
@@ -16,6 +19,7 @@ pub use memory_share::MemoryShare;
 pub use millis::Millis;
 pub use mutant_millis::MutantMillis;
 pub use share::Share;
+pub use wire_type::WireType;
 
 use enum_map::EnumMap;
 use least::Least;
@@ -23,6 +27,8 @@ use most::Most;
 use percent::Percent;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
+use vague::Vague;
+use vocabulary::Vocabulary;
 
 use crate::available_gib::AvailableGib;
 
@@ -30,6 +36,7 @@ use crate::available_gib::AvailableGib;
 #[serde(deny_unknown_fields)]
 pub struct Policy {
     vague: Vec<String>,
+    wire_types: Vec<String>,
     limits: EnumMap<Limit, Most>,
     floors: EnumMap<Floor, Least>,
     shares: EnumMap<Share, Percent>,
@@ -75,8 +82,12 @@ impl Policy {
 
     #[must_use]
     pub fn is_vague(&self, name: &str) -> bool {
-        !self.floor(Floor::FnName).allows(name.len())
-            || self.vague.iter().any(|vague| vague == name)
+        !self.floor(Floor::FnName).allows(name.len()) || self.lists::<Vague>(name)
+    }
+
+    #[must_use]
+    pub fn lists<V: Vocabulary>(&self, word: &str) -> bool {
+        V::entries(self).iter().any(|entry| entry == word)
     }
 }
 

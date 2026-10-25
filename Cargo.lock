@@ -923,6 +923,7 @@ dependencies = [
 name = "primitive_boundary"
 version = "0.1.0"
 dependencies = [
+ "settings",
  "syn 2.0.119",
  "task",
 ]

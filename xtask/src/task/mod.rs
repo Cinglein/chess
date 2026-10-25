@@ -149,7 +149,7 @@ impl Task {
             }
             Task::NoParameterBags => NoParameterBags::report(&workspace.source_files()?).verdict(),
             Task::PrimitiveBoundary => {
-                PrimitiveBoundary::report(&workspace.source_files()?).verdict()
+                PrimitiveBoundary::report(&workspace.source_files()?, &policy).verdict()
             }
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?, &policy).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),

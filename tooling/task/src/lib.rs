@@ -23,7 +23,7 @@ pub use command_line::{
 };
 pub use crate_name::CrateName;
 pub use failure::Failure;
-pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Policy, Share};
+pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Policy, Share, WireType};
 pub use report::Report;
 pub use selection::{CargoTool, MutationTool, Selection};
 pub use shard::Shard;
