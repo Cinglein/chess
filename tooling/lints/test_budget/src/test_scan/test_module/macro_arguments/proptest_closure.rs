@@ -38,9 +38,7 @@ impl ProptestClosure {
             parameters.parse::<Type>()?;
             None
         };
-        if !parameters.is_empty() {
-            parameters.parse::<Token![,]>()?;
-        }
+        parameters.parse::<Option<Token![,]>>()?;
         Ok(strategy)
     }
 }

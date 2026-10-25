@@ -66,7 +66,7 @@ impl W {
     fn passes_field(&self, other: W) -> u8 { self.inner.weigh(other.raw) }
     fn passes_reference(&self, other: W) -> u8 { self.inner.weigh(&other) }
     fn constructs(bits: u64) -> W { W(bits) } fn fixes_a_call() -> W { W::assemble(0) }
-    fn negates(self) -> W { -self.merge(self) } fn fixes_an_argument(self) -> W { self.merge(W::EMPTY) }
+    fn negates(self) -> W { -self.merge(self) } fn fixes_an_argument(self) -> W { self.merge(W::EMPTY) } fn to_other_field(other: W) -> u8 { other.inner.value() }
 }
 struct P<H> { hand: H } impl P<Own> { fn to_generic(&self) -> u8 { self.hand.value() } }
 impl From<u64> for W { fn from(bits: u64) -> W { W::to_path(bits) } }

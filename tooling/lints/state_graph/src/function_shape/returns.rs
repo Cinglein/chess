@@ -11,13 +11,13 @@ pub enum Returns {
 
 impl Returns {
     pub fn classify(output: &ReturnType, vertex: impl Fn(&Type) -> Option<TypeName>) -> Returns {
-        let ReturnType::Type(_, ty) = output else {
-            return Returns::Other;
-        };
-        match &**ty {
-            Type::Reference(_) => Returns::Other,
-            Type::Tuple(tuple) => Self::of_tuple(tuple, vertex),
-            other => vertex(other).map_or(Returns::Other, Returns::Vertex),
+        match output {
+            ReturnType::Default => Returns::Other,
+            ReturnType::Type(_, ty) => match &**ty {
+                Type::Reference(_) => Returns::Other,
+                Type::Tuple(tuple) => Self::of_tuple(tuple, vertex),
+                other => vertex(other).map_or(Returns::Other, Returns::Vertex),
+            },
         }
     }
 

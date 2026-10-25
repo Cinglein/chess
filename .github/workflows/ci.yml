@@ -66,9 +66,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slice: [0, 1, 2]
+        slice: [0, 1, 2, 3]
     env:
-      MUTANTS_SLICE: ${{ matrix.slice }}/3
+      MUTANTS_SLICE: ${{ matrix.slice }}/4
     steps:
       - uses: actions/checkout@v4
         with:

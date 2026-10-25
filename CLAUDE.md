@@ -173,7 +173,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   two values that travel together are a struct. At most 4 parameters after the receiver. Control
   flow nests at most two deep, counting `if`, `match` arms, loops, and closure bodies, with
   `else if` chains flat. `cargo xtask fn-shape` enforces it.
-- Control flow is an expression. In `crates/`, outside tests and `const fn`s, a body has no
+- Control flow is an expression. Outside tests and `const fn`s, a body has no
   `return`, `break`, `continue`, `loop`, `for`, or `while`; every `if` has an `else`, and every
   `if` or `match` yields a value that is used. Early exit goes through `?` on a `Result` or an
   `Option`; a loop is an iterator driven by combinators or a `try_fold` over `ControlFlow`. No
@@ -181,8 +181,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   is only reassigned: a mutable local is borrowed as `&mut` or has methods called on it, and a
   patched copy is an updater method on its type (`Placement::toggled`). Writes through `self` or
   through a `&mut` slot (`*slot = entry`) are the method side of mutation and stay.
-  `cargo xtask expression-flow` enforces it; xtask's `syn` visitors are imperative by design and
-  exempt.
+  `cargo xtask expression-flow` enforces it across the whole repository, `syn` visitors
+  included: a visitor decides through a pure method that returns an `Option` or a mode such
+  as `Walk`, and the visit method is one expression that extends or matches on it.
 - Iterators are driven by combinators. No `let mut` bound to an iterator, and no `for` loop whose
   body only pushes, extends, or inserts into a collection, even behind an `if`: use `format`,
   `collect`, `fold`, or `extend`. `cargo xtask manual-iteration` enforces it.

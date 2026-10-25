@@ -38,18 +38,13 @@ impl SchemaScan {
             .trait_
             .as_ref()
             .and_then(|(_, path, _)| path.segments.last())?;
-        let Type::Path(self_type) = &*item.self_ty else {
-            return None;
-        };
-        (implemented.ident == Self::OWNED_SCHEMA)
-            .then(|| {
-                self_type
-                    .path
-                    .segments
-                    .last()
-                    .map(|segment| segment.ident.to_string())
-            })
-            .flatten()
+        match &*item.self_ty {
+            Type::Path(self_type) => (implemented.ident == Self::OWNED_SCHEMA)
+                .then_some(self_type)
+                .and_then(|self_type| self_type.path.segments.last())
+                .map(|segment| segment.ident.to_string()),
+            _ => None,
+        }
     }
 }
 

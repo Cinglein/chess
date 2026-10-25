@@ -11,9 +11,13 @@ impl MethodShape {
     const SELF: &str = "Self";
 
     pub fn classify(function: &ImplItemFn, self_name: &str) -> MethodShape {
-        let [Stmt::Expr(expr, None)] = function.block.stmts.as_slice() else {
-            return MethodShape::Logic;
-        };
+        match function.block.stmts.as_slice() {
+            [Stmt::Expr(expr, None)] => Self::of_expression(expr, self_name),
+            _ => MethodShape::Logic,
+        }
+    }
+
+    fn of_expression(expr: &Expr, self_name: &str) -> MethodShape {
         match expr {
             Expr::Field(field) if matches!(&*field.base, Expr::Path(base) if base.path.is_ident("self")) => {
                 MethodShape::Accessor

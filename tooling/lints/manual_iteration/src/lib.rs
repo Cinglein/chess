@@ -56,11 +56,8 @@ struct Iterations<'scan> {
 }
 
 impl Iterations<'_> {
-    fn report(&mut self, span: Span, message: &str) {
-        self.violations.push(Violation::new(
-            Site::Line(self.path.into(), span.start().line),
-            message,
-        ));
+    fn violation(&self, span: Span, message: &str) -> Violation {
+        Violation::new(Site::Line(self.path.into(), span.start().line), message)
     }
 }
 
@@ -73,28 +70,30 @@ impl<'ast> Visit<'ast> for Iterations<'_> {
     }
 
     fn visit_local(&mut self, local: &'ast Local) {
-        if matches!(&local.pat, Pat::Ident(binding) if binding.mutability.is_some())
+        let finding = (matches!(&local.pat, Pat::Ident(binding) if binding.mutability.is_some())
             && local.init.as_ref().is_some_and(|init| {
                 let mut calls = IteratorCalls::default();
                 calls.visit_expr(&init.expr);
                 calls.0 > 0
-            })
-        {
-            self.report(
+            }))
+        .then(|| {
+            self.violation(
                 local.span(),
                 "mutable iterator local; drive it with combinators such as format, collect, or fold",
-            );
-        }
+            )
+        });
+        self.violations.extend(finding);
         syn::visit::visit_local(self, local);
     }
 
     fn visit_expr_for_loop(&mut self, expr: &'ast ExprForLoop) {
-        if ManualIteration::accumulates(&expr.body) {
-            self.report(
+        let finding = ManualIteration::accumulates(&expr.body).then(|| {
+            self.violation(
                 expr.for_token.span,
                 "loop that only accumulates; extend or collect from an iterator instead",
-            );
-        }
+            )
+        });
+        self.violations.extend(finding);
         syn::visit::visit_expr_for_loop(self, expr);
     }
 }
@@ -104,9 +103,9 @@ struct IteratorCalls(usize);
 
 impl<'ast> Visit<'ast> for IteratorCalls {
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
-        if ManualIteration::ITERATOR_CONSTRUCTORS.contains(&call.method.to_string().as_str()) {
-            self.0 += 1;
-        }
+        self.0 += usize::from(
+            ManualIteration::ITERATOR_CONSTRUCTORS.contains(&call.method.to_string().as_str()),
+        );
         syn::visit::visit_expr_method_call(self, call);
     }
 }
