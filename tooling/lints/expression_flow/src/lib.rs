@@ -14,6 +14,7 @@ use syn::{
     Local, Pat, PatIdent, Stmt, TraitItemFn,
 };
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -235,8 +236,8 @@ impl<'ast> Visit<'ast> for Flows<'_> {
 
 #[derive(Default)]
 struct MutableLocals {
-    declared: BTreeMap<String, Span>,
-    touched: Vec<String>,
+    declared: BTreeMap<Name, Span>,
+    touched: Vec<Name>,
 }
 
 impl MutableLocals {
@@ -270,14 +271,13 @@ impl<'ast> Visit<'ast> for MutableLocals {
     fn visit_local(&mut self, local: &'ast Local) {
         self.declared.extend(
             Self::declared_mutable(local)
-                .map(|binding| (binding.ident.to_string(), local.let_token.span)),
+                .map(|binding| (Name::from(&binding.ident), local.let_token.span)),
         );
         syn::visit::visit_local(self, local);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
-        self.touched
-            .extend(Self::touched_by(expr).map(Ident::to_string));
+        self.touched.extend(Self::touched_by(expr).map(Name::from));
         syn::visit::visit_expr(self, expr);
     }
 }

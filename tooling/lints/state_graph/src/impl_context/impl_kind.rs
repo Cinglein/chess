@@ -1,15 +1,16 @@
 use super::super::type_name::TypeName;
+use task::Name;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ImplKind {
     InherentOnVertex,
     InherentOnValue,
-    TraitOnVertex(String),
-    TraitOnValue(String),
+    TraitOnVertex(Name),
+    TraitOnValue(Name),
 }
 
 impl ImplKind {
-    pub fn trait_name(&self) -> Option<&str> {
+    pub fn trait_name(&self) -> Option<&Name> {
         match self {
             ImplKind::TraitOnVertex(name) | ImplKind::TraitOnValue(name) => Some(name),
             ImplKind::InherentOnVertex | ImplKind::InherentOnValue => None,

@@ -9,6 +9,7 @@ use syn::visit::Visit;
 use syn::{Arm, Expr, ExprLet, ExprMatch, Local, Pat};
 
 use super::declarations::Declarations;
+use task::Name;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
@@ -33,13 +34,13 @@ impl<'scan> VariantMatches<'scan> {
         matches.violations
     }
 
-    fn foreign_variant(&self, pat: &Pat) -> Option<String> {
+    fn foreign_variant(&self, pat: &Pat) -> Option<Name> {
         VariantPaths::in_pat(pat)
             .into_iter()
             .find(|enum_name| self.declarations.is_foreign_sum_type(enum_name, self.path))
     }
 
-    fn violation(&self, pat: &Pat, enum_name: &str) -> Violation {
+    fn violation(&self, pat: &Pat, enum_name: &Name) -> Violation {
         Violation::new(
             Site::Line(self.path.into(), pat.span().start().line),
             format!("match on {enum_name} outside its file; dispatch through a trait"),

@@ -9,13 +9,14 @@ use method_shape::MethodShape;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, ItemMod, ItemStruct, Type};
 
+use task::Name;
 use task::SourceFile;
 use task::Walk;
 
 #[derive(Default)]
 pub struct BagCandidates {
-    structs: BTreeMap<String, usize>,
-    disqualified: BTreeSet<String>,
+    structs: BTreeMap<Name, usize>,
+    disqualified: BTreeSet<Name>,
 }
 
 impl BagCandidates {
@@ -32,18 +33,18 @@ impl BagCandidates {
             .map(|(name, line)| Candidate::new(name.clone(), *line))
     }
 
-    fn self_name(item: &ItemImpl) -> Option<String> {
+    fn self_name(item: &ItemImpl) -> Option<Name> {
         match &*item.self_ty {
             Type::Path(path) => path
                 .path
                 .segments
                 .last()
-                .map(|segment| segment.ident.to_string()),
+                .map(|segment| Name::from(&segment.ident)),
             _ => None,
         }
     }
 
-    fn carries_logic(item: &ItemImpl, self_name: &str) -> bool {
+    fn carries_logic(item: &ItemImpl, self_name: &Name) -> bool {
         item.trait_.is_some()
             || item.items.iter().any(|member| match member {
                 ImplItem::Fn(function) => !MethodShape::classify(function, self_name).is_trivial(),
@@ -62,7 +63,7 @@ impl<'ast> Visit<'ast> for BagCandidates {
 
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
         self.structs
-            .insert(item.ident.to_string(), item.ident.span().start().line);
+            .insert(Name::from(&item.ident), item.ident.span().start().line);
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {

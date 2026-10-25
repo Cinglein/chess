@@ -1,15 +1,17 @@
+use task::Name;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Candidate {
-    name: String,
+    name: Name,
     line: usize,
 }
 
 impl Candidate {
-    pub fn new(name: String, line: usize) -> Candidate {
+    pub fn new(name: Name, line: usize) -> Candidate {
         Candidate { name, line }
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Name {
         &self.name
     }
 

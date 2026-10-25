@@ -8,6 +8,7 @@ use deserialized_struct::DeserializedStruct;
 use keys::Keys;
 use schema_scan::SchemaScan;
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -39,8 +40,8 @@ impl SettingsShape {
         )
     }
 
-    fn owned(seeds: BTreeSet<String>, structs: &[&DeserializedStruct]) -> BTreeSet<String> {
-        let grown: BTreeSet<String> = structs
+    fn owned(seeds: BTreeSet<Name>, structs: &[&DeserializedStruct]) -> BTreeSet<Name> {
+        let grown: BTreeSet<Name> = structs
             .iter()
             .filter(|item| seeds.contains(item.name()))
             .flat_map(|item| item.field_types().iter().cloned())

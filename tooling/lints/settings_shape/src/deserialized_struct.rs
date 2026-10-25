@@ -6,13 +6,14 @@ use syn::visit::Visit;
 use syn::{Attribute, Fields, ItemStruct, Path, Token, TypePath};
 
 use super::keys::Keys;
+use task::Name;
 
 #[derive(Debug)]
 pub struct DeserializedStruct {
     path: PathBuf,
     line: usize,
-    name: String,
-    field_types: Vec<String>,
+    name: Name,
+    field_types: Vec<Name>,
     keys: Keys,
 }
 
@@ -27,7 +28,7 @@ impl DeserializedStruct {
                 DeserializedStruct {
                     path: path.to_owned(),
                     line: item.ident.span().start().line,
-                    name: item.ident.to_string(),
+                    name: Name::from(&item.ident),
                     field_types: types.0,
                     keys: if item.attrs.iter().any(Self::shapes_its_keys) {
                         Keys::Denied
@@ -47,11 +48,11 @@ impl DeserializedStruct {
         self.line
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Name {
         &self.name
     }
 
-    pub fn field_types(&self) -> &[String] {
+    pub fn field_types(&self) -> &[Name] {
         &self.field_types
     }
 
@@ -83,7 +84,7 @@ impl DeserializedStruct {
 }
 
 #[derive(Default)]
-struct FieldTypes(Vec<String>);
+struct FieldTypes(Vec<Name>);
 
 impl<'ast> Visit<'ast> for FieldTypes {
     fn visit_type_path(&mut self, path: &'ast TypePath) {
@@ -91,7 +92,7 @@ impl<'ast> Visit<'ast> for FieldTypes {
             path.path
                 .segments
                 .last()
-                .map(|segment| segment.ident.to_string()),
+                .map(|segment| Name::from(&segment.ident)),
         );
         syn::visit::visit_type_path(self, path);
     }

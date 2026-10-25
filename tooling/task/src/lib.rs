@@ -4,6 +4,7 @@ mod bit_boundary;
 mod command_line;
 mod crate_name;
 mod failure;
+mod name;
 mod policy;
 mod report;
 mod selection;
@@ -24,6 +25,7 @@ pub use command_line::{
 };
 pub use crate_name::CrateName;
 pub use failure::Failure;
+pub use name::{Casing, LoweredInfix, Name, Prefix, Whole};
 pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Policy, Share, WireType};
 pub use report::Report;
 pub use selection::{CargoTool, MutationTool, Selection};

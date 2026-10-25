@@ -4,6 +4,7 @@ mod name_uses;
 use bag_candidates::BagCandidates;
 use name_uses::NameUses;
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -41,7 +42,7 @@ impl NoParameterBags {
         )
     }
 
-    fn consumer_count(uses: &[NameUses], own: usize, name: &str) -> usize {
+    fn consumer_count(uses: &[NameUses], own: usize, name: &Name) -> usize {
         uses.iter()
             .enumerate()
             .filter(|(index, file_uses)| *index != own && file_uses.mentions(name))

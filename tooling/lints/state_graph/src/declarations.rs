@@ -5,13 +5,14 @@ use syn::visit::Visit;
 use syn::{Fields, ItemEnum, ItemImpl, ItemType};
 
 use super::type_name::TypeName;
+use task::Name;
 use task::SourceFile;
 
 #[derive(Default)]
 pub struct Declarations {
     vertices: BTreeSet<TypeName>,
     aliases: BTreeMap<TypeName, TypeName>,
-    sum_types: BTreeMap<String, PathBuf>,
+    sum_types: BTreeMap<Name, PathBuf>,
     path: PathBuf,
 }
 
@@ -47,7 +48,7 @@ impl Declarations {
         self.vertices.len()
     }
 
-    pub fn is_foreign_sum_type(&self, enum_name: &str, path: &Path) -> bool {
+    pub fn is_foreign_sum_type(&self, enum_name: &Name, path: &Path) -> bool {
         self.sum_types
             .get(enum_name)
             .is_some_and(|home| home != path)
@@ -61,11 +62,11 @@ impl Declarations {
             .map(|_| TypeName::from_type(&item.self_ty))
     }
 
-    fn sum_type(item: &ItemEnum) -> Option<String> {
+    fn sum_type(item: &ItemEnum) -> Option<Name> {
         item.variants
             .iter()
             .any(|variant| !matches!(variant.fields, Fields::Unit))
-            .then(|| item.ident.to_string())
+            .then(|| Name::from(&item.ident))
     }
 }
 

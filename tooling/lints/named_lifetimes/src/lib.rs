@@ -2,6 +2,7 @@ use syn::visit::Visit;
 
 use syn::{Ident, LifetimeParam};
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -53,7 +54,7 @@ impl<'ast> Visit<'ast> for ShortLifetimes<'_> {
             (!self
                 .policy
                 .floor(Floor::LifetimeName)
-                .allows(name.to_string().len()))
+                .allows(Name::from(name).length()))
             .then(|| name.clone()),
         );
     }

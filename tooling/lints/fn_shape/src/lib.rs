@@ -14,6 +14,7 @@ use task::SourceFile;
 use task::Violation;
 use task::Walk;
 use task::{Limit, Policy};
+use task::{Name, Prefix, Whole};
 
 pub struct FnShape;
 
@@ -21,6 +22,7 @@ impl FnShape {
     const BOOLEAN_METHODS: &[&str] = &[
         "contains", "all", "any", "starts_with", "ends_with", "eq", "ne",
     ];
+    const BOOLEAN_PREFIXES: [&str; 2] = ["is_", "has_"];
 
     #[must_use]
     pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
@@ -61,10 +63,9 @@ impl FnShape {
             Expr::Lit(literal) => matches!(literal.lit, Lit::Bool(_)),
             Expr::Paren(paren) => Self::is_boolean(&paren.expr),
             Expr::MethodCall(call) => {
-                let name = call.method.to_string();
-                name.starts_with("is_")
-                    || name.starts_with("has_")
-                    || Self::BOOLEAN_METHODS.contains(&name.as_str())
+                let name = Name::from(&call.method);
+                name.matches::<Prefix>(&Self::BOOLEAN_PREFIXES)
+                    || name.matches::<Whole>(Self::BOOLEAN_METHODS)
             }
             _ => false,
         }

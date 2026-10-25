@@ -4,6 +4,7 @@ use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::measurement::Measurement;
 use super::macro_arguments::MacroArguments;
+use task::{Casing, Name, Whole};
 use task::{Limit, Policy};
 
 #[derive(Default)]
@@ -53,23 +54,16 @@ impl TestCounts {
             .path
             .segments
             .last()
-            .is_some_and(|segment| Self::ASSERTIONS.contains(&segment.ident.to_string().as_str()))
+            .is_some_and(|segment| Name::from(&segment.ident).matches::<Whole>(Self::ASSERTIONS))
     }
 
     fn is_variant_path(path: &ExprPath) -> bool {
         matches!(
             path.path.segments.iter().rev().collect::<Vec<_>>().as_slice(),
             [variant, parent, ..]
-                if Self::is_camel_case(&variant.ident.to_string())
-                    && Self::is_camel_case(&parent.ident.to_string())
+                if Name::from(&variant.ident).casing() == Casing::Camel
+                    && Name::from(&parent.ident).casing() == Casing::Camel
         )
-    }
-
-    fn is_camel_case(name: &str) -> bool {
-        name.starts_with(|letter: char| letter.is_ascii_uppercase())
-            && name
-                .chars()
-                .any(|letter| letter.is_ascii_lowercase() || letter.is_ascii_digit())
     }
 }
 

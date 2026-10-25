@@ -1,12 +1,13 @@
 use syn::{Item, ItemUse, UseTree, Visibility};
 
 use task::CrateName;
+use task::Name;
 use task::SourceFile;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Export {
     crate_name: CrateName,
-    name: String,
+    name: Name,
     line: usize,
 }
 
@@ -33,7 +34,7 @@ impl Export {
         &self.crate_name
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Name {
         &self.name
     }
 
@@ -51,12 +52,12 @@ impl Export {
                 .collect(),
             UseTree::Name(name) => vec![Export {
                 crate_name: crate_name.clone(),
-                name: name.ident.to_string(),
+                name: Name::from(&name.ident),
                 line: name.ident.span().start().line,
             }],
             UseTree::Rename(rename) => vec![Export {
                 crate_name: crate_name.clone(),
-                name: rename.rename.to_string(),
+                name: Name::from(&rename.rename),
                 line: rename.rename.span().start().line,
             }],
             UseTree::Glob(_) => Vec::new(),
