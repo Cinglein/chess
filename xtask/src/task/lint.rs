@@ -47,7 +47,7 @@ impl Lint {
             NoFreeFns::report(&files),
             NoNumbersInBinaries::report(&files),
             NoParameterBags::report(&files),
-            PrimitiveBoundary::report(&files),
+            PrimitiveBoundary::report(&files, &policy),
             PrivateFns::report(&files, &policy),
             PublicSurface::report(&files),
             SettingsShape::report(&files),

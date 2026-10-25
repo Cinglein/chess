@@ -4,6 +4,7 @@ mod text_sites;
 use number_sites::NumberSites;
 use text_sites::TextSites;
 
+use task::Policy;
 use task::Report;
 use task::SourceFile;
 
@@ -11,13 +12,13 @@ pub struct PrimitiveBoundary;
 
 impl PrimitiveBoundary {
     #[must_use]
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         Report::new(
             "primitives appear only at a type's boundary",
             files
                 .iter()
                 .flat_map(|file| {
-                    NumberSites::violations(file)
+                    NumberSites::violations(file, policy)
                         .into_iter()
                         .chain(TextSites::violations(file))
                 })
@@ -28,8 +29,10 @@ impl PrimitiveBoundary {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::PrimitiveBoundary;
-    use task::SourceFile;
+    use task::{Policy, SourceFile};
 
     const BARE: &str = "
 pub struct Limits { nodes: u64, index: usize, rounds: usize } pub enum Kind { Depth(u8) }
@@ -40,17 +43,30 @@ mod inner { pub fn depth() -> u16 { 1 } }
 ";
     const NEWTYPE: &str =
         "pub struct Depth(u8); impl Depth { pub fn plies(self) -> u8 { self.0 } }";
-    const FILES: [(&str, &str); 3] = [
+    const WIRE: &str = "\nuse serde_json::Value; use std::any::Any as Erased;\npub struct Settings { raw: Value, erased: Box<Erased>, table: toml::Value, local: Local } pub struct Local;";
+    const RAW: &str = "use serde_json::Value; pub struct Raw(Value); impl Raw { fn inner(&self) -> &Value { &self.0 } }";
+    const FILES: [(&str, &str); 5] = [
         ("crates/a/src/depth.rs", NEWTYPE),
         ("crates/a/src/limits.rs", BARE),
         ("crates/a/src/pair.rs", "\npub struct Pair(u8, u8);"),
+        ("crates/a/src/raw.rs", RAW),
+        ("crates/a/src/wire.rs", WIRE),
     ];
-    const REPORTED: [&str; 11] = [
-        "limits.rs:2: bare u64 in nodes", "limits.rs:2: bare u8 in Kind",
-        "limits.rs:3: bare u32 in CAP", "limits.rs:3: bare u64 in read",
-        "limits.rs:4: bare u64 in LIMIT", "limits.rs:4: bare u8 in MOST",
-        "limits.rs:4: bare u32 in Count", "limits.rs:5: bare u16 in depth",
-        "limits.rs:2: usize in rounds", "pair.rs:2: bare u8 in Pair", "pair.rs:2: bare u8 in Pair",
+    const REPORTED: [&str; 14] = [
+        "limits.rs:2: bare u64 in nodes",
+        "limits.rs:2: bare u8 in Kind",
+        "limits.rs:3: bare u32 in CAP",
+        "limits.rs:3: bare u64 in read",
+        "limits.rs:4: bare u64 in LIMIT",
+        "limits.rs:4: bare u8 in MOST",
+        "limits.rs:4: bare u32 in Count",
+        "limits.rs:5: bare u16 in depth",
+        "limits.rs:2: usize in rounds",
+        "pair.rs:2: bare u8 in Pair",
+        "pair.rs:2: bare u8 in Pair",
+        "wire.rs:3: serde_json::Value in raw is a wire form",
+        "wire.rs:3: std::any::Any in erased",
+        "wire.rs:3: toml::Value in table",
     ];
     const DOOR: &str = "pub struct Word; impl core::str::FromStr for Word { type Err = (); fn from_str(text: &str) -> Result<Word, ()> { text.trim().parse() } } impl Word { fn shout(&self) -> String { format!(\"{self}\") } }";
     const ROOM: &str = "
@@ -75,8 +91,8 @@ mod inner { fn shout(text: &str) -> String { text.trim().to_owned() } }
         let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
         let texts =
             TEXT_FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
-        let report = PrimitiveBoundary::report(&files);
-        let text_report = PrimitiveBoundary::report(&texts);
+        let report = PrimitiveBoundary::report(&files, &Policy::defaults());
+        let text_report = PrimitiveBoundary::report(&texts, &Policy::defaults());
         assert!(report.lists_exactly(&REPORTED), "{report}");
         assert!(text_report.lists_exactly(&TEXT_REPORTED), "{text_report}");
     }

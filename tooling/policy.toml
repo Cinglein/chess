@@ -3,6 +3,17 @@ vague = [
     "process", "handle", "helper", "util", "data", "value", "item", "thing", "execute",
     "perform", "update", "compute", "manage",
 ]
+wire_types = [
+    "serde_json::Value",
+    "toml::Value",
+    "serde_yaml::Value",
+    "rust_decimal::Decimal",
+    "bigdecimal::BigDecimal",
+    "num_bigint::BigInt",
+    "num_bigint::BigUint",
+    "std::any::Any",
+    "core::any::Any",
+]
 
 [limits]
 parameters = 4
