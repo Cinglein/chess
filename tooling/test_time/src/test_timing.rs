@@ -9,14 +9,14 @@ pub(super) struct TestTiming {
 }
 
 impl TestTiming {
-    pub(super) fn new(binary: &Path, test: String, elapsed: Duration) -> TestTiming {
+    pub(super) fn new(binary: &Path, test: impl fmt::Display, elapsed: Duration) -> TestTiming {
         TestTiming {
             binary: binary
                 .file_name()
                 .map(|name| name.to_string_lossy())
                 .and_then(|name| name.rsplit_once('-').map(|(stem, _)| stem.to_owned()))
                 .unwrap_or_default(),
-            test,
+            test: test.to_string(),
             elapsed,
         }
     }

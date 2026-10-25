@@ -1,8 +1,12 @@
+mod built_binary;
+mod listed_test;
 mod test_argument;
 
 use std::path::PathBuf;
 use std::time::Instant;
 
+use built_binary::BuiltBinary;
+use listed_test::ListedTest;
 use test_argument::TestArgument;
 
 use super::test_timing::TestTiming;
@@ -16,9 +20,6 @@ pub(super) struct TestBinary {
 }
 
 impl TestBinary {
-    const EXECUTABLE: &str = "Executable";
-    const TEST_SUFFIX: &str = ": test";
-
     pub(super) fn discover(
         workspace: &Workspace,
         selection: &Selection,
@@ -34,11 +35,9 @@ impl TestBinary {
             .captured::<Stderr>()?;
         Ok(built
             .lines()
-            .filter_map(|line| line.split_once(Self::EXECUTABLE))
-            .map(|(_, rest)| rest)
-            .filter_map(|rest| rest.rsplit_once('('))
-            .map(|(_, path)| TestBinary {
-                path: workspace.root().join(path.trim_end_matches(')')),
+            .filter_map(|line| line.parse::<BuiltBinary>().ok())
+            .map(|binary| TestBinary {
+                path: workspace.root().join(binary.path()),
             })
             .collect())
     }
@@ -50,7 +49,7 @@ impl TestBinary {
             .collect()
     }
 
-    fn tests(&self) -> Result<Vec<String>, Failure> {
+    fn tests(&self) -> Result<Vec<ListedTest>, Failure> {
         let listed = self
             .line()
             .argument(TestArgument::List)
@@ -59,12 +58,11 @@ impl TestBinary {
             .captured::<Stdout>()?;
         Ok(listed
             .lines()
-            .filter_map(|line| line.strip_suffix(Self::TEST_SUFFIX))
-            .map(str::to_owned)
+            .filter_map(|line| line.parse::<ListedTest>().ok())
             .collect())
     }
 
-    fn timed(&self, test: String) -> Result<TestTiming, Failure> {
+    fn timed(&self, test: ListedTest) -> Result<TestTiming, Failure> {
         let started = Instant::now();
         self.line()
             .argument(TestArgument::Exact)
