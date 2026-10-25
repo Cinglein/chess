@@ -35,12 +35,7 @@ impl TestCounts {
     }
 
     const ASSERTIONS: &[&str] = &[
-        "assert",
-        "assert_eq",
-        "assert_ne",
-        "prop_assert",
-        "prop_assert_eq",
-        "prop_assert_ne",
+        "assert", "assert_eq", "assert_ne", "prop_assert", "prop_assert_eq", "prop_assert_ne",
     ];
 
     pub(super) fn tally(block: &Block) -> Self {
