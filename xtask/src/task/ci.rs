@@ -1,16 +1,16 @@
 use settings::EmbeddedDefaults;
 
-use crate::task::affected::Job;
 use crate::task::clippy::Clippy;
 use crate::task::coverage::Coverage;
 use crate::task::lint::Lint;
 use crate::task::test::Test;
-use crate::task::test_time::TestTime;
 use crate::task::wasm::Wasm;
+use affected::Job;
 use task::Failure;
 use task::Policy;
 use task::Workspace;
 use task::{CargoArgument, Program};
+use test_time::TestTime;
 
 pub struct Ci;
 

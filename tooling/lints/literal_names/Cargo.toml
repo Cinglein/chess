@@ -1,0 +1,16 @@
+[package]
+name = "literal_names"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+task = { path = "../../task" }
+syn = { version = "2", features = ["full", "parsing", "visit"] }
+settings = { path = "../../../crates/settings" }
+
+[lints]
+workspace = true

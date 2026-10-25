@@ -10,7 +10,7 @@ impl BitBoundary {
         "crates/board/src/slider/magics.rs",
         "crates/board/src/slider/attack_table.rs",
         "crates/board/src/zobrist_keys/split_mix.rs",
-        "xtask/src/task/magics/",
+        "tooling/magics/src/",
     ];
 
     #[must_use]

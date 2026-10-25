@@ -1,0 +1,16 @@
+[package]
+name = "magics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+task = { path = "../task" }
+enum-map = { version = "3", features = ["serde"] }
+board = { path = "../../crates/board" }
+
+[lints]
+workspace = true

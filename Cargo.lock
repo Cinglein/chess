@@ -3,6 +3,19 @@
 version = 4
 
 [[package]]
+name = "affected"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "serde_json",
+ "settings",
+ "strum",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,6 +277,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 
 [[package]]
+name = "const_shape"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -366,6 +388,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "distinct_signatures"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "either"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -464,6 +495,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "expression_flow"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -475,6 +515,16 @@ version = "0.1.0"
 dependencies = [
  "proptest",
  "thiserror",
+]
+
+[[package]]
+name = "fn_shape"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "settings",
+ "syn 2.0.119",
+ "task",
 ]
 
 [[package]]
@@ -610,16 +660,119 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
+name = "literal_names"
+version = "0.1.0"
+dependencies = [
+ "settings",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "magics"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "enum-map",
+ "task",
+]
+
+[[package]]
+name = "manual_iteration"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "module_nesting"
+version = "0.1.0"
+dependencies = [
+ "settings",
+ "task",
+]
+
+[[package]]
 name = "montyformat"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4caf9c718f831a8568f030576e6a6e6aa487ed5f8732ddb0ba79e9a3ea0421ca"
+
+[[package]]
+name = "mutation"
+version = "0.1.0"
+dependencies = [
+ "settings",
+ "sysinfo",
+ "task",
+]
+
+[[package]]
+name = "named_lifetimes"
+version = "0.1.0"
+dependencies = [
+ "settings",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "named_numbers"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "no_comments"
+version = "0.1.0"
+dependencies = [
+ "ra-ap-rustc_lexer",
+ "task",
+]
+
+[[package]]
+name = "no_forwarders"
+version = "0.1.0"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "no_free_fns"
+version = "0.1.0"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "no_numbers_in_binaries"
+version = "0.1.0"
+dependencies = [
+ "named_numbers",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "no_parameter_bags"
+version = "0.1.0"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
 
 [[package]]
 name = "ntapi"
@@ -757,6 +910,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "primitive_boundary"
+version = "0.1.0"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "private_fns"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -782,6 +952,14 @@ dependencies = [
  "rusty-fork",
  "tempfile",
  "unarray",
+]
+
+[[package]]
+name = "public_surface"
+version = "0.1.0"
+dependencies = [
+ "syn 2.0.119",
+ "task",
 ]
 
 [[package]]
@@ -1038,6 +1216,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings_shape"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "sfbinpack"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1055,6 +1242,24 @@ name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+
+[[package]]
+name = "stacked"
+version = "0.1.0"
+dependencies = [
+ "strum",
+ "task",
+]
+
+[[package]]
+name = "state_graph"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "settings",
+ "syn 2.0.119",
+ "task",
+]
 
 [[package]]
 name = "strsim"
@@ -1149,6 +1354,24 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys",
+]
+
+[[package]]
+name = "test_budget"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "settings",
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
+name = "test_time"
+version = "0.1.0"
+dependencies = [
+ "strum",
+ "task",
 ]
 
 [[package]]
@@ -1271,6 +1494,15 @@ dependencies = [
 [[package]]
 name = "tui"
 version = "0.1.0"
+
+[[package]]
+name = "type_shape"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.119",
+ "task",
+]
 
 [[package]]
 name = "uci"
@@ -1566,21 +1798,47 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
+ "affected",
  "board",
+ "const_shape",
  "derive_more",
+ "distinct_signatures",
  "enum-map",
+ "expression_flow",
+ "fn_shape",
+ "literal_names",
+ "magics",
+ "manual_iteration",
+ "module_nesting",
+ "mutation",
+ "named_lifetimes",
+ "named_numbers",
+ "no_comments",
+ "no_forwarders",
+ "no_free_fns",
+ "no_numbers_in_binaries",
+ "no_parameter_bags",
+ "primitive_boundary",
+ "private_fns",
  "proc-macro2",
+ "public_surface",
  "quote",
  "ra-ap-rustc_lexer",
  "serde",
  "serde_json",
  "settings",
+ "settings_shape",
+ "stacked",
+ "state_graph",
  "strum",
  "syn 2.0.119",
  "sysinfo",
  "task",
+ "test_budget",
+ "test_time",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
+ "type_shape",
 ]
 
 [[package]]
