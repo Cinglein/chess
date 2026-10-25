@@ -4,14 +4,13 @@ use std::ops::Add;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
+use crate::task::support_modules::SupportModules;
 use crate::task::violation::Violation;
 
 mod measurement;
-mod support_modules;
 mod test_scan;
 
 use measurement::Measurement;
-use support_modules::SupportModules;
 use test_scan::TestScan;
 
 #[derive(Default)]

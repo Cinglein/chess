@@ -3,6 +3,7 @@ use eval::Score;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ResignAdjudication {
     beyond_centipawns: Score,
     for_plies: PlyCount,

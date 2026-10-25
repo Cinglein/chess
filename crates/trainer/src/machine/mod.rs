@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use thread_count::ThreadCount;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Machine {
     #[serde(default)]
     threads: ThreadCount,

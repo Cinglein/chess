@@ -7,6 +7,7 @@ use crate::task::literal_names::LiteralNames;
 use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
 use crate::task::named_lifetimes::NamedLifetimes;
+use crate::task::named_numbers::NamedNumbers;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
@@ -16,6 +17,7 @@ use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
 use crate::task::report::Report;
+use crate::task::settings_shape::SettingsShape;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
 use crate::task::type_shape::TypeShape;
@@ -35,6 +37,7 @@ impl Lint {
             ManualIteration::report(&files),
             ModuleNesting::report(&files),
             NamedLifetimes::report(&files),
+            NamedNumbers::report(&files),
             NoComments::report(&files),
             NoForwarders::report(&files),
             NoFreeFns::report(&files),
@@ -43,6 +46,7 @@ impl Lint {
             PrimitiveBoundary::report(&files),
             PrivateFns::report(&files),
             PublicSurface::report(&files),
+            SettingsShape::report(&files),
             StateGraph::report(&files),
             TestBudget::report(&files),
             TypeShape::report(&files),

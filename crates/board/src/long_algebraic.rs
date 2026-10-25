@@ -15,6 +15,8 @@ pub struct LongAlgebraic {
 }
 
 impl LongAlgebraic {
+    const SQUARE_TEXT_LENGTH: usize = 2;
+
     #[must_use]
     pub const fn new(
         origin: Square,
@@ -62,10 +64,10 @@ impl FromStr for LongAlgebraic {
 
     fn from_str(text: &str) -> Result<LongAlgebraic, ParseError> {
         let (origin, rest) = text
-            .split_at_checked(2)
+            .split_at_checked(Self::SQUARE_TEXT_LENGTH)
             .ok_or(ParseError::VariantNotFound)?;
         let (destination, promotion) = rest
-            .split_at_checked(2)
+            .split_at_checked(Self::SQUARE_TEXT_LENGTH)
             .ok_or(ParseError::VariantNotFound)?;
         Ok(LongAlgebraic {
             origin: origin.parse()?,

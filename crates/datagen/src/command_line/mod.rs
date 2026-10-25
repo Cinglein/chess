@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::time::Instant;
 
+use ::settings::EmbeddedDefaults;
 use arena::RandomOpenings;
 use arguments::Arguments;
 use clap::Parser;

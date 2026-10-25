@@ -36,11 +36,11 @@ impl PairScore {
 
     pub(super) const fn fraction(self) -> ScoreFraction {
         match self {
-            PairScore::TwoLosses => ScoreFraction::new(0.0),
-            PairScore::LossAndDraw => ScoreFraction::new(0.25),
-            PairScore::Split => ScoreFraction::new(0.5),
-            PairScore::WinAndDraw => ScoreFraction::new(0.75),
-            PairScore::TwoWins => ScoreFraction::new(1.0),
+            PairScore::TwoLosses => ScoreFraction::NONE,
+            PairScore::LossAndDraw => ScoreFraction::QUARTER,
+            PairScore::Split => ScoreFraction::HALF,
+            PairScore::WinAndDraw => ScoreFraction::THREE_QUARTERS,
+            PairScore::TwoWins => ScoreFraction::ALL,
         }
     }
 }

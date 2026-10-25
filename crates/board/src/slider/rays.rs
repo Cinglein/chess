@@ -1,17 +1,21 @@
-use strum::VariantArray;
+use strum::{EnumCount, VariantArray};
 
 use crate::bitboard::Bitboard;
+use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
+use crate::orthogonal::Orthogonal;
 use crate::rank::Rank;
 use crate::square::Square;
 
+const _: () = assert!(Orthogonal::COUNT == Diagonal::COUNT);
+
 #[derive(Clone, Copy)]
-pub struct Rays([Direction; 4]);
+pub struct Rays([Direction; Orthogonal::COUNT]);
 
 impl Rays {
     #[must_use]
-    pub const fn new(directions: [Direction; 4]) -> Rays {
+    pub const fn new(directions: [Direction; Orthogonal::COUNT]) -> Rays {
         Rays(directions)
     }
 

@@ -37,14 +37,14 @@ impl TryFrom<char> for RankToken {
     type Error = FenError;
 
     fn try_from(letter: char) -> Result<RankToken, FenError> {
-        match letter
-            .to_digit(10)
-            .and_then(|digit| u8::try_from(digit).ok())
-            .map(EmptyRun::new)
+        match u8::try_from(letter)
+            .ok()
+            .filter(|_| letter.is_ascii_digit())
+            .map(|digit| EmptyRun::new(digit - b'0'))
         {
             Some(run) => Ok(RankToken::Empties(run)),
             None => letter
-                .encode_utf8(&mut [0; 4])
+                .encode_utf8(&mut [0; size_of::<char>()])
                 .parse()
                 .map(RankToken::Piece)
                 .map_err(|_| FenError::Piece(letter)),

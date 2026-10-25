@@ -93,7 +93,11 @@ impl FromStr for CastlingRights {
     fn from_str(text: &str) -> Result<CastlingRights, FenError> {
         let rights: EnumSet<CastlingRight> = text
             .chars()
-            .map(|letter| letter.encode_utf8(&mut [0; 4]).parse::<CastlingRight>())
+            .map(|letter| {
+                letter
+                    .encode_utf8(&mut [0; size_of::<char>()])
+                    .parse::<CastlingRight>()
+            })
             .collect::<Result<_, _>>()
             .map_err(|_| FenError::CastlingRights)?;
         (rights.len() == text.len() && !rights.is_empty())

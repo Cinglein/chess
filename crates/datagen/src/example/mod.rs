@@ -1,3 +1,5 @@
+mod white_result;
+
 use std::io::Write;
 
 use arena::Label;
@@ -6,6 +8,7 @@ use bulletformat::{BulletFormat, ChessBoard};
 
 use crate::datagen_error::DatagenError;
 use crate::position_count::PositionCount;
+use white_result::WhiteResult;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Example(ChessBoard);
@@ -43,16 +46,11 @@ impl TryFrom<Label> for Example {
             both(PieceKind::Queen).bits(),
             both(PieceKind::King).bits(),
         ];
-        let white_result = match label.verdict().winner() {
-            Some(Color::White) => 1.0,
-            Some(Color::Black) => 0.0,
-            None => 0.5,
-        };
         ChessBoard::from_raw(
             bitboards,
             usize::from(label.board().side_to_move() == Color::Black),
             i16::try_from(label.score_for(Color::White).centipawns())?,
-            white_result,
+            WhiteResult::from(label.verdict()).fraction(),
         )
         .map(Example)
         .map_err(|_| DatagenError::Piece)

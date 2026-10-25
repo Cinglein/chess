@@ -17,7 +17,9 @@ impl NetworkFormat {
     pub const OUTPUT_QUANTISATION: Quantisation = Quantisation::new(64);
     pub const OUTPUT_BIAS_QUANTISATION: Quantisation =
         Self::HIDDEN_QUANTISATION.times(Self::OUTPUT_QUANTISATION);
+    pub const BOTH_PERSPECTIVES_SIZE: usize = Color::COUNT * Self::HIDDEN_SIZE;
     pub const EVAL_SCALE: EvalScale = EvalScale::new(400);
 }
 
 const _: () = assert!(NetworkFormat::INPUT_SIZE == 768);
+const _: () = assert!(NetworkFormat::BOTH_PERSPECTIVES_SIZE == 2 * NetworkFormat::HIDDEN_SIZE);

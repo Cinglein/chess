@@ -71,6 +71,7 @@ dependencies = [
  "rand 0.10.3",
  "search",
  "serde",
+ "settings",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -326,6 +327,7 @@ dependencies = [
  "eval",
  "proptest",
  "serde",
+ "settings",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -1007,6 +1009,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
 name = "sfbinpack"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1213,6 +1224,7 @@ dependencies = [
  "eval",
  "rand 0.10.3",
  "serde",
+ "settings",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
