@@ -8,7 +8,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 use std::str::FromStr;
 
-use crate::command_line::{CargoArgument, MutantsArgument};
+use crate::command_line::{CargoArgument, CommandLine, MutantsArgument};
 use crate::crate_name::CrateName;
 use crate::failure::Failure;
 
@@ -42,16 +42,13 @@ impl Shard {
     }
 
     #[must_use]
-    pub fn arguments(&self) -> Vec<String> {
-        let packages = self
-            .crates()
-            .into_iter()
-            .flat_map(|name| [CargoArgument::Package.to_string(), name.to_string()]);
+    pub fn applied_to(&self, line: CommandLine) -> CommandLine {
+        let packaged = self.crates().into_iter().fold(line, |line, name| {
+            line.argument(CargoArgument::Package).argument(name)
+        });
         match self {
-            Shard::Whole(_) => packages.collect(),
-            Shard::Slice { slice, .. } => packages
-                .chain([MutantsArgument::Shard.to_string(), slice.to_string()])
-                .collect(),
+            Shard::Whole(_) => packaged,
+            Shard::Slice { slice, .. } => packaged.argument(MutantsArgument::Shard).argument(slice),
         }
     }
 }
@@ -99,22 +96,27 @@ impl FromStr for Shard {
 
 #[cfg(test)]
 mod tests {
-    use super::Shard;
+    use super::{CommandLine, Shard};
+    use crate::command_line::Program;
     const SLICE: &str = "board/0/4";
     const WHOLE: &str = "eval+uci";
-    const SLICE_ARGUMENTS: [&str; 4] = ["--package", "board", "--shard", "0/4"];
-    const WHOLE_ARGUMENTS: [&str; 4] = ["--package", "eval", "--package", "uci"];
+    const SLICE_LINE: &str = "gh --package board --shard 0/4";
+    const WHOLE_LINE: &str = "gh --package eval --package uci";
 
     #[test]
     fn a_shard_prints_back_to_its_spelling_and_names_its_packages_and_slice() {
         let slice: Shard = SLICE.parse().unwrap();
         let whole: Shard = WHOLE.parse().unwrap();
+        let line = || CommandLine::new(Program::GitHub);
         assert!(
             slice.to_string() == SLICE
                 && whole.to_string() == WHOLE
                 && "a/b".parse::<Shard>().is_err()
         );
-        assert!(slice.arguments() == SLICE_ARGUMENTS && whole.arguments() == WHOLE_ARGUMENTS);
+        assert!(
+            slice.applied_to(line()).to_string() == SLICE_LINE
+                && whole.applied_to(line()).to_string() == WHOLE_LINE
+        );
         assert_eq!((whole.runs().len(), slice.runs().len()), (2, 1));
     }
 }

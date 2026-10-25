@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use affected::TestedCrates;
+use task::CommandLine;
 use task::CrateName;
 use task::MutantsArgument;
 use task::PackageGraph;
@@ -13,11 +14,10 @@ impl TestPackages {
         TestPackages(tested.around(graph, &run.crates()))
     }
 
-    pub fn arguments(&self) -> Vec<String> {
-        self.0
-            .iter()
-            .flat_map(|name| [MutantsArgument::TestPackage.to_string(), name.to_string()])
-            .collect()
+    pub fn applied_to(&self, line: CommandLine) -> CommandLine {
+        self.0.iter().fold(line, |line, name| {
+            line.argument(MutantsArgument::TestPackage).argument(name)
+        })
     }
 }
 
@@ -25,7 +25,7 @@ impl TestPackages {
 mod tests {
     use super::TestPackages;
     use affected::TestedCrates;
-    use task::{PackageGraph, SourceFile};
+    use task::{CommandLine, PackageGraph, Program, SourceFile};
     const METADATA: &str = r#"{"workspace_root": "/w", "packages": [
         {"name": "board", "manifest_path": "/w/crates/board/Cargo.toml", "dependencies": []},
         {"name": "eval", "manifest_path": "/w/crates/eval/Cargo.toml", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
@@ -36,7 +36,7 @@ mod tests {
         ("eval", "crates/eval/src/lib.rs", EVAL),
         ("search", "crates/search/src/lib.rs", "pub struct S;"),
     ];
-    const ARGUMENTS: [&str; 4] = ["--test-package", "board", "--test-package", "eval"];
+    const LINE: &str = "gh --test-package board --test-package eval";
 
     #[test]
     fn a_run_is_tested_by_its_crate_and_by_the_dependents_that_have_tests() {
@@ -48,6 +48,7 @@ mod tests {
         let graph = PackageGraph::from_metadata(METADATA).unwrap();
         let tested = TestedCrates::collect(&files);
         let packages = TestPackages::around(&"board".parse().unwrap(), &graph, &tested);
-        assert_eq!(packages.arguments(), ARGUMENTS);
+        let line = packages.applied_to(CommandLine::new(Program::GitHub));
+        assert_eq!(line.to_string(), LINE);
     }
 }

@@ -32,8 +32,8 @@ impl Stacked {
         Ok(())
     }
 
-    fn required(name: &str) -> Result<String, Failure> {
-        env::var(name).map_err(|_| Failure::Usage(format!("{name} must be set")))
+    fn required(name: &'static str) -> Result<String, Failure> {
+        env::var(name).map_err(|_| Failure::Unset(name))
     }
 
     fn base_and_stack(repository: &Repository, number: &str) -> Result<String, Failure> {

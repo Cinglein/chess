@@ -119,13 +119,14 @@ impl Scope {
             .flat_map(Shard::runs)
             .map(|run| {
                 let directory = output.prepared_for(&run)?;
+                let prepared = line
+                    .clone()
+                    .argument(MutantsArgument::Output)
+                    .argument(directory.display())
+                    .argument(MutantsArgument::TestWorkspaceOff);
+                let tested_by = TestPackages::around(&run, graph, &tested);
                 Ok(MutantsRun::new(
-                    line.clone()
-                        .argument(MutantsArgument::Output)
-                        .argument(directory.display())
-                        .argument(MutantsArgument::TestWorkspaceOff)
-                        .arguments(run.arguments())
-                        .arguments(TestPackages::around(&run, graph, &tested).arguments()),
+                    tested_by.applied_to(run.applied_to(prepared)),
                     directory,
                 ))
             })
