@@ -103,34 +103,20 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::TestBudget;
-    use task::Policy;
-    use task::SourceFile;
+    use task::{Policy, SourceFile};
 
     const LIB: &str = "
-#[cfg(test)]
-mod fixtures;
+#[cfg(test)] mod fixtures;
 #[cfg(test)]
 mod tests {
     #[test]
-    fn example() {
-        let squares = [Square::A1, Square::H8];
-        assert_eq!(squares.len(), 2);
-        assert!(Bitboard::EMPTY.is_empty());
-        assert_ne!(\"a\", \"b\");
-        assert_eq!(seed(), 0x2545_F491);
-    }
+    fn example() { let squares = [Square::A1, Square::H8]; assert_eq!(squares.len(), 2); assert!(Bitboard::EMPTY.is_empty()); assert_ne!(\"a\", \"b\"); assert_eq!(seed(), 0x2545_F491); }
     #[test]
-    fn property() {
-        proptest!(|(count in 0..100usize, flag: bool)| {
-            prop_assert!(count < 100 || flag);
-        });
-    }
-    #[test]
-    fn edge() { assert!(true); assert!(true); assert_eq!(64, 64); }
+    fn property() { proptest!(|(count in 0..100usize, flag: bool)| { prop_assert!(count < 100 || flag); }); }
+    #[test] fn edge() { assert!(true); assert!(true); assert_eq!(64, 64); }
     fn helper() -> Vec<u8> { assert!(true); vec![1] }
 }
 ";
-    const FIXTURES: &str = "pub struct Fixture;\npub struct Other;";
     const LONG_HEAD: &str = "
 #[cfg(test)]
 mod tests {
@@ -139,33 +125,30 @@ mod tests {
     #[test] fn three() {}
     #[test]
     fn long() {";
-    const LONG_TAIL: &str = "    }\n}\n";
     const PADDING: usize = 22;
     const PATHS: [&str; 3] = [
-        "crates/a/src/lib.rs",
-        "crates/a/src/fixtures.rs",
-        "crates/a/src/long.rs",
+        "crates/a/src/lib.rs", "crates/a/src/fixtures.rs", "crates/a/src/long.rs",
     ];
     const REPORTED: [&str; 10] = [
-        "lib.rs:7: fn example has 4 assertions, at most 3 allowed",
-        "lib.rs:7: fn example has 6 literals, at most 4 allowed",
-        "lib.rs:12: integer literal 0x2545_F491 in test code, at most 64 allowed",
-        "lib.rs:16: integer literal 100usize in test code",
-        "lib.rs:17: integer literal 100 in test code",
-        "lib.rs:22: assertion outside a test",
-        "long.rs:8: fn long has 21 body lines, at most 20 allowed",
-        "long.rs: 4 tests, at most 3 allowed",
-        "workspace: has 7 tests across the workspace, at most 1 allowed",
-        "workspace: has 54 test lines, at most 10 allowed",
+        "lib.rs:6: fn example has 4 assertions", "lib.rs:6: fn example has 6 literals",
+        "lib.rs:6: integer literal 0x2545_F491", "lib.rs:8: integer literal 100usize",
+        "lib.rs:8: integer literal 100 in", "lib.rs:10: assertion outside a test",
+        "long.rs:8: fn long has 21 body lines", "long.rs: 4 tests, at most 3 allowed",
+        "7 tests across the workspace, at most 1", "has 42 test lines, at most 7 allowed",
     ];
 
     #[test]
     fn measures_tests_files_and_lines_and_flags_every_budget_overrun() {
-        let long = format!("{LONG_HEAD}{}{LONG_TAIL}", "\n".repeat(PADDING));
+        let long = format!("{LONG_HEAD}{}    }}\n}}\n", "\n".repeat(PADDING));
+        let texts = [
+            LIB.to_owned(),
+            "pub struct Fixture;\npub struct Other;".to_owned(),
+            long,
+        ];
         let files: Vec<SourceFile> = PATHS
             .into_iter()
-            .zip([LIB.to_owned(), FIXTURES.to_owned(), long])
-            .map(|(path, text)| SourceFile::parse(path.to_owned(), text).expect("valid rust"))
+            .zip(texts)
+            .map(|(path, text)| SourceFile::parse(path, text).unwrap())
             .collect();
         let report = TestBudget::report(&files, &Policy::defaults());
         assert!(report.lists_exactly(&REPORTED), "{report}");

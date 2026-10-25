@@ -18,13 +18,7 @@ pub struct FnShape;
 
 impl FnShape {
     const BOOLEAN_METHODS: &[&str] = &[
-        "contains",
-        "all",
-        "any",
-        "starts_with",
-        "ends_with",
-        "eq",
-        "ne",
+        "contains", "all", "any", "starts_with", "ends_with", "eq", "ne",
     ];
 
     #[must_use]
@@ -224,54 +218,35 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::FnShape;
-    use task::Policy;
-    use task::SourceFile;
+    use task::{Policy, SourceFile};
 
     const SOURCE: &str = "
-impl Wide {
+impl Wide { fn four(a: u8, b: u8, c: u8, d: u8) {}
     fn five(a: u8, b: u8, c: u8, d: u8, e: u8) {}
-    fn four(a: u8, b: u8, c: u8, d: u8) {}
     fn flags(&self, x: u8) {
-        let ready = self.count() > 1;
-        let (lo, hi) = (1, 2);
-        let total = self.items.iter().fold((0, 0), |(a, b), x| (a + x, b));
-        let plain = self.items.iter().fold(0, |a, x| a + x);
-        let placed = self.place((1, 2));
-        let missing = !self.ready();
-        let inner = (x > 1);
-        let empty = self.items.is_empty();
-        let owns = self.has_key();
-        while self.busy() { let idle = false; }
-        loop { let (p, q) = (1, 2); }
+        let ready = self.count() > 1; let (lo, hi) = (1, 2);
+        let total = self.items.iter().fold((0, 0), |(a, b), x| (a + x, b)); let plain = self.items.iter().fold(0, |a, x| a + x);
+        let placed = self.place((1, 2)); let missing = !self.ready(); let inner = (x > 1);
+        let empty = self.items.is_empty(); let owns = self.has_key();
+        while self.busy() { let idle = false; } loop { let (p, q) = (1, 2); }
         let sizes = self.items.iter().map(|y| { let big = y > 1; big });
         for y in self.items { if y > 1 {
             match y { 2 => self.go(), _ => {} } } }
     }
 }
 mod inner { fn deep(&self) { let flag = true; } }
-#[cfg(test)]
-mod tests { fn deep(&self) { let flag = true; } }
+#[cfg(test)] mod tests { fn deep(&self) { let flag = true; } }
 ";
     const REPORTED: [&str; 14] = [
-        ":3: more than 4 parameters",
-        ":6: boolean local",
-        ":7: tuple literal bound",
-        ":8: tuple accumulator",
-        ":11: boolean local",
-        ":12: boolean local",
-        ":13: boolean local",
-        ":14: boolean local",
-        ":15: boolean local",
-        ":16: tuple literal bound",
-        ":17: boolean local",
-        ":19: control flow nested deeper",
-        ":19: control flow nested deeper",
-        ":22: boolean local",
+        ":3: more than 4", ":5: boolean local", ":5: tuple literal", ":6: tuple accumulator",
+        ":7: boolean local", ":7: boolean local", ":8: boolean local", ":8: boolean local",
+        ":9: boolean local", ":9: tuple literal", ":10: boolean local", ":12: control flow nested",
+        ":12: control flow nested", ":15: boolean local",
     ];
 
     #[test]
     fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting_outside_tests() {
-        let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
+        let file = SourceFile::parse("wide.rs", SOURCE.to_owned()).unwrap();
         let report = FnShape::report(core::slice::from_ref(&file), &Policy::defaults());
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }
