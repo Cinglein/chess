@@ -58,21 +58,28 @@ mod tests {
     const RECORD: &str = "pub(crate) struct Record { a: u8 } impl Record { pub fn new(a: u8) -> Record { Record { a } } pub fn a(&self) -> u8 { self.a } }";
     const WORKER: &str = "pub struct Worker; impl Worker { pub fn run(&self) -> u8 { Bag::new(1).a() + Record::new(2).a() } }";
     const READER: &str = "pub struct Reader; impl Reader { pub fn read(&self, record: Record) -> u8 { record.a() } }";
-    const FILES: [(&str, &str); 4] = [
+    const WEIGHT: &str = "pub(crate) struct Weight { a: u8 } impl Weight { pub fn new(a: u8) -> Weight { Weight { a } } pub fn settings(&self) -> Settings { Settings { a: self.a } } }";
+    const SCALE: &str = "pub struct Scale; impl Scale { pub fn run(&self) -> Settings { Weight::new(1).settings() } }";
+    const FLAGGED: &str = "Bag only carries";
+    const KEPT: [&str; 2] = ["Record only", "Weight only"];
+    const FILES: [(&str, &str); 6] = [
         ("crates/w/src/bag.rs", BAG),
         ("crates/w/src/record.rs", RECORD),
         ("crates/w/src/worker.rs", WORKER),
         ("crates/w/src/reader.rs", READER),
+        ("crates/w/src/weight.rs", WEIGHT),
+        ("crates/w/src/scale.rs", SCALE),
     ];
 
     #[test]
-    fn flags_a_logic_free_struct_consumed_by_one_file_but_not_one_shared_by_two() {
+    fn flags_a_logic_free_struct_consumed_by_one_file_but_not_one_shared_or_one_that_builds_another_type()
+     {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
         let report = NoParameterBags::report(&files).to_string();
         assert!(
-            report.contains("Bag only carries") && !report.contains("Record only"),
+            report.contains(FLAGGED) && KEPT.iter().all(|kept| !report.contains(kept)),
             "{report}"
         );
     }
