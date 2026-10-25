@@ -282,36 +282,56 @@ mod tests {
 impl Flow {
     fn guards(&self, items: &[u8]) -> u8 {
         if items.is_empty() { return 0; }
-        for item in items { self.note(item); }
+        for item in items { continue; }
         match items.len() { 0 => self.note(0), _ => self.note(1) };
-        let mut total = 0;
-        total += items.len();
-        let mut sorted = items.to_vec();
-        sorted.sort();
+        let mut total = 0; total += items.len();
+        let mut sorted = items.to_vec(); sorted.sort();
+        let mut buffer = Vec::new(); self.fill(&mut buffer);
+        let mut pair = Pair::default(); pair.left = 1;
+        let mut slots = [0; 2]; slots[0] = 1;
+        let mut count = 0; (count) = 2;
+        while self.busy() { break; }
+        if items.is_empty() { self.note(4) } else { self.note(5) }
+        self.note(&total);
         if total > 1 { self.note(2) } else { self.note(3) }
     }
     const fn walk(mut rest: &[u8]) -> u8 { while let [head, tail @ ..] = rest { rest = tail; } 0 }
 }
+fn free() -> u8 { loop { break 1; } }
+trait Step { fn once(&self) -> u8 { return 1; } }
+mod inner { fn again() -> u8 { return 1; } }
+#[cfg(test)]
+mod tests { fn again() -> u8 { return 1; } }
 ";
-    const REPORTED: [&str; 6] = [
+    const REPORTED: [&str; 21] = [
+        ":12: mutable local that is only reassigned",
+        ":10: mutable local that is only reassigned",
+        ":11: mutable local that is only reassigned",
+        ":7: mutable local that is only reassigned",
+        ":4: if or match whose value is dropped",
+        ":6: if or match whose value is dropped",
+        ":14: if or match whose value is dropped",
         ":4: if without else",
         ":4: early return",
         ":5: for loop",
-        ":6: if or match whose value is dropped",
-        ":7: mutable local that is only reassigned",
-        ":8: compound assignment to a local",
+        ":5: continue",
+        ":7: compound assignment to a local",
+        ":10: assignment to a local",
+        ":11: assignment to a local",
+        ":12: assignment to a local",
+        ":13: while loop",
+        ":13: break",
+        ":20: loop",
+        ":20: break",
+        ":21: early return",
+        ":22: early return",
     ];
-    const CLEAN: [&str; 3] = [":9:", ":11:", ":13:"];
 
     #[test]
-    fn reports_returns_loops_dropped_branches_and_reassigned_locals_outside_const_fns() {
+    fn reports_returns_loops_dropped_branches_and_reassigned_locals_outside_const_fns_and_tests() {
         let file =
             SourceFile::parse("crates/flow.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ExpressionFlow::report(core::slice::from_ref(&file)).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line))
-                && CLEAN.iter().all(|line| !report.contains(line)),
-            "{report}"
-        );
+        let report = ExpressionFlow::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

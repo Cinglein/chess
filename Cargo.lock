@@ -922,6 +922,7 @@ name = "private_fns"
 version = "0.1.0"
 dependencies = [
  "quote",
+ "settings",
  "syn 2.0.119",
  "task",
 ]

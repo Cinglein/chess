@@ -52,37 +52,57 @@ impl NoForwarders {
 
 #[cfg(test)]
 mod tests {
-    use super::{NoForwarders, WorkspaceTypes};
+    use super::NoForwarders;
     use task::SourceFile;
 
     const SOURCE: &str = "
 struct Own;
+enum Mode { Fast }
+trait Rule { fn apply(x: u8) -> u8; }
 struct W { inner: Own, raw: u64 }
 impl W {
     fn to_own(&self) -> u8 { self.inner.value() }
     fn to_foreign(&self) -> u32 { self.raw.count_ones() }
     fn to_self(self, other: W) -> W { self.merge(other) }
     fn to_path(bits: u64) -> W { W::assemble(bits) }
+    fn to_self_path(bits: u64) -> W { Self::assemble(bits) }
+    fn to_std(bits: u64) -> u64 { u64::from(bits) }
     fn to_param(x: &Own) -> u8 { x.value() }
+    fn to_foreign_param(x: &u64) -> u32 { x.count_ones() }
+    fn to_enum(mode: Mode) -> u8 { mode.rank() }
+    fn to_trait(x: u8) -> u8 { Rule::apply(x) }
+    fn passes_field(&self, other: W) -> u8 { self.inner.weigh(other.raw) }
+    fn passes_reference(&self, other: W) -> u8 { self.inner.weigh(&other) }
     fn constructs(bits: u64) -> W { W(bits) }
+    fn fixes_a_call() -> W { W::assemble(0) }
     fn negates(self) -> W { -self.merge(self) }
     fn fixes_an_argument(self) -> W { self.merge(W::EMPTY) }
 }
 struct P<H> { hand: H }
 impl P<Own> { fn to_generic(&self) -> u8 { self.hand.value() } }
 impl From<u64> for W { fn from(bits: u64) -> W { W::to_path(bits) } }
+mod inner { impl W { fn to_inner(&self) -> u8 { self.inner.value() } } }
+#[cfg(test)]
+mod tests { impl W { fn to_inner(&self) -> u8 { self.inner.value() } } }
 ";
-    const FLAGGED: [&str; 5] = ["to_own", "to_self", "to_path", "to_param", "to_generic"];
+    const REPORTED: [&str; 11] = [
+        ":7: fn to_own only forwards to value",
+        ":9: fn to_self only forwards to merge",
+        ":10: fn to_path only forwards to W::assemble",
+        ":11: fn to_self_path only forwards to W::assemble",
+        ":13: fn to_param only forwards to value",
+        ":15: fn to_enum only forwards to rank",
+        ":16: fn to_trait only forwards to Rule::apply",
+        ":17: fn passes_field only forwards to weigh",
+        ":18: fn passes_reference only forwards to weigh",
+        ":25: fn to_generic only forwards to value",
+        ":27: fn to_inner only forwards to value",
+    ];
 
     #[test]
-    fn flags_single_call_bodies_that_hand_their_inputs_to_one_of_our_types() {
-        let file =
-            SourceFile::parse(String::from("w.rs"), String::from(SOURCE)).expect("valid rust");
-        let types = WorkspaceTypes::collect(std::slice::from_ref(&file));
-        let names: Vec<String> = NoForwarders::forwarders(&file, &types)
-            .iter()
-            .map(|forwarder| forwarder.name().to_string())
-            .collect();
-        assert_eq!(names, FLAGGED);
+    fn flags_single_call_bodies_that_hand_their_inputs_to_one_of_our_types_outside_tests() {
+        let file = SourceFile::parse("w.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
+        let report = NoForwarders::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

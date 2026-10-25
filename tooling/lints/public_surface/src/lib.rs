@@ -50,7 +50,8 @@ mod tests {
     use super::PublicSurface;
     use task::SourceFile;
 
-    const LIB: &str = "mod x; pub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
+    const LIB: &str =
+        "mod x; use x::Private;\npub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
     const MAIN: &str = "use a::Used; fn main() { a::Seen::go(); }";
     const OWN_BINARY: &str = "use a::Wired; fn main() {}";
     const LONELY: &str = "mod y; pub use y::Lonely;";
@@ -60,18 +61,14 @@ mod tests {
         ("crates/b/src/main.rs", MAIN),
         ("crates/c/src/lib.rs", LONELY),
     ];
-    const FLAGGED: &str = "Unused is exported";
-    const KEPT: [&str; 4] = ["Used is exported", "Seen", "Wired", "Lonely"];
+    const REPORTED: [&str; 1] = ["crates/a/src/lib.rs:2: Unused is exported"];
 
     #[test]
     fn flags_an_unnamed_reexport_but_counts_the_crates_own_binary_as_a_user() {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = PublicSurface::report(&files).to_string();
-        assert!(
-            report.contains(FLAGGED) && KEPT.iter().all(|kept| !report.contains(kept)),
-            "{report}"
-        );
+        let report = PublicSurface::report(&files);
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

@@ -135,21 +135,22 @@ impl Flags {
     fn unit(&self) -> () {}
 }
 impl Iterator for Flags { type Item = u8; fn size_hint(&self) -> (usize, Option<usize>) { (0, None) } }
+mod inner { struct Inner { ready: bool } }
+#[cfg(test)]
+mod tests { struct Inner { ready: bool } }
 ";
-    const REPORTED: [&str; 4] = [
+    const REPORTED: [&str; 5] = [
         ":2: bool field",
         ":2: tuple in a signature",
         ":4: tuple in a signature",
         ":5: Result with a String error",
+        ":9: bool field",
     ];
 
     #[test]
-    fn flags_bool_fields_tuples_and_string_errors_outside_trait_impls() {
+    fn flags_bool_fields_tuples_and_string_errors_outside_trait_impls_and_tests() {
         let file = SourceFile::parse("flags.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = TypeShape::report(core::slice::from_ref(&file)).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line)) && !report.contains(":8:"),
-            "{report}"
-        );
+        let report = TypeShape::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

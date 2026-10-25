@@ -49,7 +49,7 @@ impl StateGraph {
 mod tests {
     use settings::EmbeddedDefaults;
 
-    use super::StateGraph;
+    use super::{Declarations, EdgeScan, StateGraph};
     use task::Policy;
     use task::SourceFile;
 
@@ -58,40 +58,71 @@ pub struct Hub;
 impl State for Hub {}
 pub struct Spoke;
 impl State for Spoke {}
+pub struct Rim;
+pub type Edge = Rim;
+impl State for Edge {}
 pub enum Wire { Live(u8), Dead }
+pub enum Side { Left, Right }
 pub struct Leaky { pub inner: u8 }
 impl Hub {
     fn hidden(self) -> Spoke { Spoke }
+    fn hidden_rim(self) -> Rim { Rim }
     pub fn first(self) -> Spoke { Spoke }
     pub fn again(self) -> Option<Spoke> { None }
+    pub fn back(self) -> Hub { Hub }
     pub fn peek(&self) -> Spoke { Spoke }
+    pub fn fresh() -> Spoke { Spoke }
 }
+impl Spoke { pub fn home(self) -> Hub { Hub } }
+impl Wire { fn is_live(&self) -> bool { match self { Wire::Live(_) => true, Wire::Dead => false } } }
 ";
     const MATCHER: &str = "
-impl Other {
-    fn label(wire: Wire) -> u8 {
+pub trait Step { fn step(hub: Hub) -> Spoke; }
+pub struct Walker;
+impl Step for Walker { fn step(hub: Hub) -> Spoke { Spoke } }
+impl Walker {
+    fn relay(hub: Hub) -> Spoke { Spoke }
+    fn label(wire: Wire, side: Side) -> u8 {
+        match side { Side::Left => wire.weight(), Side::Right => 0 };
         match wire { Wire::Live(n) => n.max(1), Wire::Dead => 0 }
     }
 }
 ";
     const FILES: [(&str, &str); 2] = [("hub.rs", VERTICES), ("other.rs", MATCHER)];
-    const REPORTED: [&str; 5] = [
-        "hub.rs:9: is a hidden edge Hub -> Spoke",
-        "Hub -> Spoke has 2 edges",
-        "hub.rs:12: is a view returning vertex Spoke",
-        "field inner of Leaky is pub",
-        "match on Wire outside its file",
+    const REPORTED: [&str; 7] = [
+        "hub.rs:11: field inner of Leaky is pub",
+        "other.rs:9: match on Wire outside its file",
+        "hub.rs:13: is a hidden edge Hub -> Spoke",
+        "hub.rs:14: is a hidden edge Hub -> Rim",
+        "hub.rs:18: is a view returning vertex Spoke",
+        "other.rs:6: takes a vertex and returns Spoke",
+        "Hub -> Spoke has 3 edges, at most one allowed: Step at other.rs:4, again at hub.rs:16, first at hub.rs:15",
     ];
+    const VERTEX_COUNT: usize = 3;
+    const EDGE_COUNT: usize = 5;
 
     #[test]
     fn reports_hidden_duplicate_and_view_edges_public_fields_and_foreign_matches() {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = StateGraph::report(&files, &Policy::defaults()).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line)),
-            "{report}"
+        let report = StateGraph::report(&files, &Policy::defaults());
+        assert!(report.lists_exactly(&REPORTED), "{report}");
+    }
+
+    #[test]
+    fn counts_vertices_through_aliases_and_edges_by_name() {
+        let files = FILES.map(|(path, text)| {
+            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
+        });
+        let declarations = Declarations::collect(&files);
+        let mut edges = EdgeScan::new(&declarations);
+        for file in &files {
+            edges.scan(file);
+        }
+        assert_eq!(
+            (declarations.vertex_count(), edges.edge_count()),
+            (VERTEX_COUNT, EDGE_COUNT)
         );
     }
 }

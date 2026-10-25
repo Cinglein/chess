@@ -143,27 +143,31 @@ mod tests {
     use task::SourceFile;
 
     const SOURCE: &str = "
+const fn free(mut rest: &[u8]) -> u8 { let mut i = 0; while i < 2 { i += 1; } while let [_, tail @ ..] = rest { rest = tail; } loop { break i } }
+const CELLS: u8 = { let mut i = 0; while i < 2 { i += 1; } i };
 impl Table {
-    const fn build() -> [u8; 4] {
-        let mut out = [0; 4];
-        let mut index = 0;
-        while index < 4 { out[index] = index as u8; index += 1; }
-        let mut rest: &[u8] = &out;
-        while let [head, tail @ ..] = rest { rest = tail; }
-        out
-    }
-    fn lookup(&self, key: Kind) -> u8 { self.0[key as usize] }
+    const SIZE: u8 = { for n in 0..2 {} 0 };
+    const fn build(key: u8) -> u8 { key as u8 }
+    fn lookup(&self, key: Kind) -> u8 { let z = const { loop {} }; let mut i = 0; while i < 2 { i += 1; } self.0[key as usize] }
 }
+mod inner { fn widen(x: u8) -> u16 { x as u16 } }
+#[cfg(test)]
+mod tests { fn widen(x: u8) -> u16 { x as u16 } }
 ";
-    const REPORTED: [&str; 2] = [":6: counter loop in const context", ":11: as cast outside"];
+    const REPORTED: [&str; 7] = [
+        ":2: counter loop in const context",
+        ":2: open loop in const context",
+        ":3: counter loop in const context",
+        ":5: for loop in const context",
+        ":7: open loop in const context",
+        ":7: as cast outside",
+        ":9: as cast outside",
+    ];
 
     #[test]
-    fn flags_counter_loops_in_const_and_casts_outside_const_or_boundary_files() {
+    fn flags_counter_and_open_loops_in_const_context_and_casts_outside_const_or_boundary_files() {
         let file = SourceFile::parse("table.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ConstShape::report(core::slice::from_ref(&file)).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line)),
-            "{report}"
-        );
+        let report = ConstShape::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

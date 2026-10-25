@@ -23,6 +23,16 @@ impl Report {
         self.violations.is_empty()
     }
 
+    #[must_use]
+    pub fn lists_exactly(&self, expected: &[&str]) -> bool {
+        self.violations.len() == expected.len()
+            && self
+                .violations
+                .iter()
+                .zip(expected)
+                .all(|(violation, text)| violation.to_string().contains(text))
+    }
+
     pub fn verdict(self) -> Result<(), Failure> {
         if self.is_clean() {
             Ok(())

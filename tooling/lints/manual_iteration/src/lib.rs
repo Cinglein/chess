@@ -132,25 +132,29 @@ mod tests {
 impl W {
     fn walk(&self, out: &mut Vec<u8>) {
         let mut items = self.items.iter().rev();
+        let frozen = self.items.iter();
+        let mut total = 0;
         for item in self.items { out.push(item); }
         for item in self.items { if item > 1 { out.push(item); } }
+        for item in self.items { if item > 1 { out.push(item); } else { out.clear(); } }
         for item in self.items { self.visit(item); }
     }
 }
+mod inner { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }
+#[cfg(test)]
+mod tests { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }
 ";
-    const REPORTED: [&str; 3] = [
+    const REPORTED: [&str; 4] = [
         ":4: mutable iterator local",
-        ":5: loop that only accumulates",
-        ":6: loop that only accumulates",
+        ":7: loop that only accumulates",
+        ":8: loop that only accumulates",
+        ":13: loop that only accumulates",
     ];
 
     #[test]
-    fn flags_mutable_iterator_locals_and_accumulating_loops() {
+    fn flags_mutable_iterator_locals_and_accumulating_loops_outside_tests() {
         let file = SourceFile::parse("walk.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = ManualIteration::report(core::slice::from_ref(&file)).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line)) && !report.contains(":7:"),
-            "{report}"
-        );
+        let report = ManualIteration::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

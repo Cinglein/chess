@@ -99,11 +99,15 @@ impl W {
 }
 impl From<u8> for W { fn from(x: u8) -> W { W } }
 trait T { fn do_it(&self); fn go(&self); }
+fn process() {}
+mod inner { fn handle() {} }
+#[cfg(test)]
+mod tests { fn handle() {} }
 ";
-    const FLAGGED: [&str; 3] = ["of", "check", "go"];
+    const FLAGGED: [&str; 5] = ["of", "check", "go", "process", "handle"];
 
     #[test]
-    fn flags_prepositions_and_vague_verbs_but_not_new_or_trait_impls() {
+    fn flags_prepositions_and_vague_verbs_but_not_new_trait_impls_or_tests() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
         let names: Vec<String> = LiteralNames::vague_names(&parsed, &Policy::defaults())
             .iter()

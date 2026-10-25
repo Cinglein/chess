@@ -32,7 +32,7 @@ impl NamedNumbers {
                 .flat_map(|file| {
                     let mut numbers = Numbers::default();
                     numbers.visit_file(file.syntax());
-                    numbers.lines.into_iter().map(move |line| {
+                    numbers.0.into_iter().map(move |line| {
                         Violation::new(
                             Site::Line(file.path().into(), line),
                             "numeric literal outside a const item; name it as a const so it can be found and tuned",
@@ -61,10 +61,7 @@ impl NamedNumbers {
 }
 
 #[derive(Default)]
-struct Numbers {
-    named: usize,
-    lines: Vec<usize>,
-}
+struct Numbers(Vec<usize>);
 
 impl<'ast> Visit<'ast> for Numbers {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
@@ -79,29 +76,13 @@ impl<'ast> Visit<'ast> for Numbers {
         }
     }
 
-    fn visit_item_const(&mut self, item: &'ast ItemConst) {
-        self.named += 1;
-        syn::visit::visit_item_const(self, item);
-        self.named -= 1;
-    }
+    fn visit_item_const(&mut self, _: &'ast ItemConst) {}
 
-    fn visit_impl_item_const(&mut self, item: &'ast ImplItemConst) {
-        self.named += 1;
-        syn::visit::visit_impl_item_const(self, item);
-        self.named -= 1;
-    }
+    fn visit_impl_item_const(&mut self, _: &'ast ImplItemConst) {}
 
-    fn visit_trait_item_const(&mut self, item: &'ast TraitItemConst) {
-        self.named += 1;
-        syn::visit::visit_trait_item_const(self, item);
-        self.named -= 1;
-    }
+    fn visit_trait_item_const(&mut self, _: &'ast TraitItemConst) {}
 
-    fn visit_expr_const(&mut self, block: &'ast ExprConst) {
-        self.named += 1;
-        syn::visit::visit_expr_const(self, block);
-        self.named -= 1;
-    }
+    fn visit_expr_const(&mut self, _: &'ast ExprConst) {}
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
         if let Ok(arguments) =
@@ -114,14 +95,14 @@ impl<'ast> Visit<'ast> for Numbers {
     }
 
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
-        if self.named == 0 && !NamedNumbers::is_unit(literal.base10_digits()) {
-            self.lines.push(literal.span().start().line);
+        if !NamedNumbers::is_unit(literal.base10_digits()) {
+            self.0.push(literal.span().start().line);
         }
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {
-        if self.named == 0 && !NamedNumbers::is_unit(literal.base10_digits()) {
-            self.lines.push(literal.span().start().line);
+        if !NamedNumbers::is_unit(literal.base10_digits()) {
+            self.0.push(literal.span().start().line);
         }
     }
 }
@@ -132,28 +113,45 @@ mod tests {
     use task::SourceFile;
 
     const SOURCE: &str = "
-        pub struct Clock;
-        impl Clock {
-            const HALF: u64 = 500;
-            pub fn halved(ticks: u64) -> u64 { ticks / 2 + 1 }
-            pub fn scaled(ticks: f64) -> f64 { ticks * 0.5 }
-            pub fn named(ticks: u64) -> u64 { ticks / Self::HALF }
-        }
-        #[cfg(any(test, feature = \"proptest\"))]
-        impl Clock { pub fn range() -> u64 { 60 } }
-    ";
-    const REPORTED: [&str; 2] = [":5:", ":6:"];
-    const CLEAN: [&str; 3] = [":4:", ":7:", ":10:"];
+pub struct Clock;
+impl Clock {
+    const HALF: u64 = 500;
+    pub fn halved(ticks: u64) -> u64 { ticks / 2 + 1 }
+    pub fn scaled(ticks: f64) -> f64 { ticks * 0.5 }
+    pub fn named(ticks: u64) -> u64 { ticks / Self::HALF }
+    pub fn unit(ticks: u64) -> u64 { ticks - 1 }
+}
+#[cfg(any(test, feature = \"proptest\"))]
+impl Clock { pub fn range() -> u64 { 60 } }
+#[cfg(feature = \"metal\")]
+impl Clock { pub fn lanes() -> u64 { 8 } }
+pub trait Rate { const BASE: f64 = 2.5; fn beat(&self) -> u64 { 3 } }
+const LIMIT: u64 = 40;
+pub fn capped(ticks: u64) -> u64 { let edge = const { 7 }; assert!(ticks > 9); ticks.min(LIMIT) }
+mod inner { pub fn depth() -> u8 { 4 } }
+#[cfg(test)]
+mod tests { fn depth() -> u8 { 4 } }
+";
+    const BOUNDARY: &str = "pub fn step() -> i8 { 8 }";
+    const FILES: [(&str, &str); 2] = [
+        ("crates/a/src/clock.rs", SOURCE),
+        ("crates/board/src/direction.rs", BOUNDARY),
+    ];
+    const REPORTED: [&str; 6] = [
+        "clock.rs:5:",
+        "clock.rs:6:",
+        "clock.rs:13:",
+        "clock.rs:14:",
+        "clock.rs:16:",
+        "clock.rs:17:",
+    ];
 
     #[test]
-    fn flags_literals_outside_const_items_but_not_units_consts_or_test_only_impls() {
-        let file = SourceFile::parse("crates/a/src/clock.rs".to_owned(), SOURCE.to_owned())
-            .expect("valid rust");
-        let report = NamedNumbers::report(&[file]).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line))
-                && CLEAN.iter().all(|line| !report.contains(line)),
-            "{report}"
-        );
+    fn flags_literals_outside_consts_but_not_units_test_only_impls_or_bit_boundary_files() {
+        let files = FILES.map(|(path, text)| {
+            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
+        });
+        let report = NamedNumbers::report(&files);
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }
