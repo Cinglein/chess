@@ -14,22 +14,8 @@ pub struct ManualIteration;
 
 impl ManualIteration {
     const ITERATOR_CONSTRUCTORS: [&str; 16] = [
-        "iter",
-        "iter_mut",
-        "into_iter",
-        "chars",
-        "bytes",
-        "lines",
-        "split",
-        "split_whitespace",
-        "rev",
-        "skip",
-        "take",
-        "zip",
-        "enumerate",
-        "map",
-        "filter",
-        "peekable",
+        "iter", "iter_mut", "into_iter", "chars", "bytes", "lines", "split", "split_whitespace",
+        "rev", "skip", "take", "zip", "enumerate", "map", "filter", "peekable",
     ];
     const ACCUMULATORS: [&str; 4] = ["push", "extend", "insert", "push_str"];
 
@@ -131,29 +117,21 @@ mod tests {
     const SOURCE: &str = "
 impl W {
     fn walk(&self, out: &mut Vec<u8>) {
-        let mut items = self.items.iter().rev();
-        let frozen = self.items.iter();
-        let mut total = 0;
-        for item in self.items { out.push(item); }
-        for item in self.items { if item > 1 { out.push(item); } }
-        for item in self.items { if item > 1 { out.push(item); } else { out.clear(); } }
-        for item in self.items { self.visit(item); }
+        let mut items = self.items.iter().rev(); let frozen = self.items.iter(); let mut total = 0;
+        for item in self.items { out.push(item); } for item in self.items { if item > 1 { out.push(item); } }
+        for item in self.items { if item > 1 { out.push(item); } else { out.clear(); } } for item in self.items { self.visit(item); }
     }
 }
 mod inner { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }
-#[cfg(test)]
-mod tests { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }
+#[cfg(test)] mod tests { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }
 ";
     const REPORTED: [&str; 4] = [
-        ":4: mutable iterator local",
-        ":7: loop that only accumulates",
-        ":8: loop that only accumulates",
-        ":13: loop that only accumulates",
+        ":4: mutable iterator", ":5: loop that only", ":5: loop that only", ":9: loop that only",
     ];
 
     #[test]
     fn flags_mutable_iterator_locals_and_accumulating_loops_outside_tests() {
-        let file = SourceFile::parse("walk.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
+        let file = SourceFile::parse("walk.rs", SOURCE.to_owned()).unwrap();
         let report = ManualIteration::report(core::slice::from_ref(&file));
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }

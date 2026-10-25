@@ -91,24 +91,16 @@ mod tests {
 
     const SOURCE: &str = "
 struct W;
-impl W {
-    fn of(x: u8) -> W { W }
-    fn check(&self) {}
-    fn new() -> W { W }
-    fn least_significant_bit(&self) -> u8 { 0 }
-}
-impl From<u8> for W { fn from(x: u8) -> W { W } }
-trait T { fn do_it(&self); fn go(&self); }
-fn process() {}
-mod inner { fn handle() {} }
-#[cfg(test)]
-mod tests { fn make() {} }
+impl W { fn of(x: u8) -> W { W } fn check(&self) {} fn new() -> W { W } fn least_significant_bit(&self) -> u8 { 0 } }
+impl From<u8> for W { fn from(x: u8) -> W { W } } trait T { fn do_it(&self); fn go(&self); }
+fn process() {} mod inner { fn handle() {} }
+#[cfg(test)] mod tests { fn make() {} }
 ";
     const FLAGGED: [&str; 5] = ["of", "check", "go", "process", "handle"];
 
     #[test]
     fn flags_prepositions_and_vague_verbs_but_not_new_trait_impls_or_tests() {
-        let parsed = syn::parse_file(SOURCE).expect("valid rust");
+        let parsed = syn::parse_file(SOURCE).unwrap();
         let names: Vec<String> = LiteralNames::vague_names(&parsed, &Policy::defaults())
             .iter()
             .map(ToString::to_string)
