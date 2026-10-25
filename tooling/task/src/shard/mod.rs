@@ -113,13 +113,7 @@ mod tests {
                 && whole.to_string() == WHOLE
                 && "a/b".parse::<Shard>().is_err()
         );
-        assert_eq!(
-            (slice.arguments(), whole.arguments()),
-            (
-                SLICE_ARGUMENTS.map(String::from).to_vec(),
-                WHOLE_ARGUMENTS.map(String::from).to_vec()
-            )
-        );
+        assert!(slice.arguments() == SLICE_ARGUMENTS && whole.arguments() == WHOLE_ARGUMENTS);
         assert_eq!((whole.runs().len(), slice.runs().len()), (2, 1));
     }
 }

@@ -41,17 +41,23 @@ impl OutputDirectory {
 mod tests {
     use std::{env, fs, process};
 
-    use super::OutputDirectory;
+    use super::OutputDirectory as Output;
 
     const STALE: &str = "target/mutants/stale/missed.txt";
+    const RUN: &str = "eval+uci";
+
     #[test]
     fn clearing_drops_stale_output_and_a_run_gets_a_directory_named_after_its_crates() {
         let root = env::temp_dir().join(format!("chess-output-{}", process::id()));
         fs::create_dir_all(root.join(STALE).parent().unwrap()).unwrap();
         fs::write(root.join(STALE), STALE).unwrap();
-        let output = OutputDirectory::cleared(&root).unwrap();
-        let prepared = output.prepared_for(&"eval+uci".parse().unwrap()).unwrap();
-        assert!(!root.join(STALE).exists() && prepared.is_dir() && prepared.ends_with("eval+uci"));
+        let output = Output::cleared(&root).unwrap();
+        let prepared = output.prepared_for(&RUN.parse().unwrap()).unwrap();
+        fs::write(prepared.join(RUN), RUN).unwrap();
+        assert!(!root.join(STALE).exists() && prepared.is_dir() && prepared.ends_with(RUN));
+        assert!(
+            Output::cleared(&prepared).is_ok() && Output::cleared(&prepared.join(RUN)).is_err()
+        );
         fs::remove_dir_all(&root).unwrap();
     }
 }

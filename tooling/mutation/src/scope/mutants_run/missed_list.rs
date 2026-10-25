@@ -36,16 +36,18 @@ impl MissedList {
 #[cfg(test)]
 mod tests {
     use super::MissedList;
-    use std::fs;
+    const FILE: &str = "mutants.out/missed.txt";
 
     #[test]
     fn a_missing_list_is_empty_and_a_written_one_counts_its_lines() {
         let output = std::env::temp_dir().join(format!("chess-missed-{}", std::process::id()));
         let absent = MissedList::in_output(&output).unwrap();
-        fs::create_dir_all(output.join("mutants.out")).unwrap();
-        fs::write(output.join("mutants.out/missed.txt"), "a.rs:1:1: delete x").unwrap();
+        std::fs::create_dir_all(output.join(FILE)).unwrap();
+        let unreadable = MissedList::in_output(&output).is_err();
+        std::fs::remove_dir(output.join(FILE)).unwrap();
+        std::fs::write(output.join(FILE), "a.rs:1:1: delete x").unwrap();
         let present = MissedList::in_output(&output).unwrap();
-        fs::remove_dir_all(&output).unwrap();
-        assert!(absent.is_empty() && !present.is_empty());
+        std::fs::remove_dir_all(&output).unwrap();
+        assert!(absent.is_empty() && unreadable && !present.is_empty());
     }
 }
