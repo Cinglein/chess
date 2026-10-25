@@ -16,8 +16,4 @@ impl GameCount {
     pub const fn incremented(self) -> GameCount {
         GameCount(self.0 + 1)
     }
-
-    pub const fn count(self) -> usize {
-        self.0
-    }
 }

@@ -22,3 +22,4 @@ impl NetworkFormat {
 }
 
 const _: () = assert!(NetworkFormat::INPUT_SIZE == 768);
+const _: () = assert!(NetworkFormat::BOTH_PERSPECTIVES_SIZE == 2 * NetworkFormat::HIDDEN_SIZE);

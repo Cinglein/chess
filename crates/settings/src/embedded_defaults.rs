@@ -36,6 +36,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use super::EmbeddedDefaults;
+    use crate::settings_error::SettingsError;
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -56,5 +57,9 @@ mod tests {
         assert_eq!((written, read), (Knobs::defaults(), Knobs { rounds: 3 }));
         fs::write(&path, "rounds = 3\nrunds = 4").unwrap();
         assert!(Knobs::read_or_write_defaults(&path).is_err());
+        assert!(matches!(
+            Knobs::read_or_write_defaults(&std::env::temp_dir()),
+            Err(SettingsError::Read(_))
+        ));
     }
 }
