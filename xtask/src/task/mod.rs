@@ -5,6 +5,8 @@ mod lint;
 mod test;
 mod wasm;
 
+use std::path::Path;
+
 use settings::EmbeddedDefaults;
 use strum::{EnumString, VariantNames};
 
@@ -24,6 +26,7 @@ use literal_names::LiteralNames;
 use magics::Magics;
 use manual_iteration::ManualIteration;
 use module_nesting::ModuleNesting;
+use mutant_costs::MutantCosts;
 use mutation::{Mutants, Scope};
 use named_lifetimes::NamedLifetimes;
 use named_numbers::NamedNumbers;
@@ -60,6 +63,7 @@ pub enum Task {
     Magics,
     ManualIteration,
     ModuleNesting,
+    MutantCosts,
     Mutants,
     MutantsFull,
     NamedLifetimes,
@@ -86,15 +90,18 @@ impl Task {
     #[must_use]
     pub fn usage() -> Failure {
         Failure::Usage(format!(
-            "usage: cargo xtask <{}> [--affected]",
+            "usage: cargo xtask <{}> [--affected], or cargo xtask mutant-costs <directory>",
             Self::VARIANTS.join("|")
         ))
     }
 
-    pub fn run(self, flags: impl Iterator<Item = String>) -> Result<(), Failure> {
+    pub fn run(self, mut flags: impl Iterator<Item = String>) -> Result<(), Failure> {
         let workspace = Workspace::locate();
         let policy = Policy::defaults();
-        let coverage = Coverage::from_flags(flags, &workspace)?;
+        let coverage = match self {
+            Task::MutantCosts => Coverage::Everything,
+            _ => Coverage::from_flags(flags.by_ref(), &workspace)?,
+        };
         match self {
             Task::Affected => Affected::run(&workspace, &policy, coverage.plan(&workspace)?),
             Task::Ci => Ci::run(&workspace, &coverage),
@@ -113,6 +120,10 @@ impl Task {
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
             Task::ModuleNesting => {
                 ModuleNesting::report(&workspace.source_files()?, &policy).verdict()
+            }
+            Task::MutantCosts => {
+                MutantCosts::measure(Path::new(&flags.next().ok_or_else(Self::usage)?))
+                    .map(|costs| println!("{costs}"))
             }
             Task::Mutants => Mutants::run(
                 &workspace,

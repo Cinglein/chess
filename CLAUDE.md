@@ -53,7 +53,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `cargo xtask affected`, which prints the crates a change reaches as changed crates plus their
   reverse dependents, and `--affected` on `ci`, `clippy`, `wasm`, `test`, `test-time`, and
   `mutants-full`, which restricts them to that set, `cargo xtask mutants`,
-  `cargo xtask mutants-full`, `cargo xtask magics`). Lints return a `Report` of
+  `cargo xtask mutants-full`, `cargo xtask mutant-costs <directory>`, which prints the
+  `[mutant_millis]` table measured from the shard artifacts' `outcomes.json` under a directory,
+  `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
 ## Rules
@@ -218,8 +220,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `cargo-mutants` run so no mutant pays for another crate's tests; the shards run on every push
   to `main`, on the Monday schedule, and on demand, never on a pull request: a PR is gated by
   the in-diff run, the whole-workspace run costs about 4300 runner-seconds and cannot fit the
-  PR budget on 20 runners, and a miss it finds on `main` gets its own PR (remeasure the table
-  from the shard artifacts' `outcomes.json` when a shard runs long). A missed mutant anywhere
+  PR budget on 20 runners, and a miss it finds on `main` gets its own PR (when a shard runs long, download
+  that run's shard artifacts and refresh the table with `cargo xtask mutant-costs <directory>`). A missed mutant anywhere
   fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
