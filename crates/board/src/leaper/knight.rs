@@ -18,14 +18,12 @@ impl Leaper for Knight {
 
 #[cfg(test)]
 mod tests {
-    use strum::IntoEnumIterator;
-
     use super::Knight;
     use crate::bitboard::Bitboard;
     use crate::leaper::Leaper;
     use crate::orthogonal::Orthogonal;
     use crate::square::Square;
-
+    use strum::IntoEnumIterator;
     const JUMPS: [[Orthogonal; 3]; 8] = [
         [Orthogonal::North, Orthogonal::North, Orthogonal::East],
         [Orthogonal::North, Orthogonal::North, Orthogonal::West],

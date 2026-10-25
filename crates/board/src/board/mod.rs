@@ -251,9 +251,6 @@ impl proptest::arbitrary::Arbitrary for Board {
 
 #[cfg(test)]
 mod tests {
-    use fen::FenError;
-    use proptest::prelude::*;
-
     use super::Board;
     use crate::castling_right::CastlingRight;
     use crate::chess_move::{
@@ -261,7 +258,8 @@ mod tests {
     };
     use crate::promotion_piece::PromotionPiece;
     use crate::square::Square;
-
+    use fen::FenError;
+    use proptest::prelude::*;
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const ROUNDTRIPS: [&str; 2] = [
         "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2",

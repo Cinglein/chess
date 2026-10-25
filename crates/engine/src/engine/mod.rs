@@ -117,15 +117,12 @@ impl<'line, S: Sink> Receiver<'line> for Engine<S> {
 
 #[cfg(test)]
 mod tests {
+    use super::{Engine, Sink};
+    use search::Depth;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
     use std::time::{Duration, Instant};
-
-    use search::Depth;
     use uci::{Command, Response};
-
-    use super::{Engine, Sink};
-
     const PLACE: &str = "position fen 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const SEARCH: &str = "go depth 2";
     const EXPECTED: &str = "bestmove a1a8";

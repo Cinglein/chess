@@ -77,12 +77,10 @@ impl TableEntry {
 
 #[cfg(test)]
 mod tests {
-    use board::Board;
-    use eval::Score;
-
     use super::super::super::window::Bound;
     use super::{BoundKind, Conclusion, Depth, RootDistance, TableEntry, Window, Zobrist};
-
+    use board::Board;
+    use eval::Score;
     const DEEP: Depth = Depth::new(2);
     const ALPHA: Score = Score::new(-10);
     const BETA: Score = Score::new(10);

@@ -42,10 +42,8 @@ impl PositionCount {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use super::PositionCount;
-
+    use std::time::Duration;
     const TEN: PositionCount = PositionCount::new(10);
     const FIVE: PositionCount = PositionCount::new(5);
     const TWO_SECONDS: Duration = Duration::from_secs(2);

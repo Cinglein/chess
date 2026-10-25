@@ -56,7 +56,6 @@ mod tests {
     use super::Report;
     use crate::site::Site;
     use crate::violation::Violation;
-
     const HEADLINE: &str = "something slipped";
     const MESSAGE: &str = "a slip";
 

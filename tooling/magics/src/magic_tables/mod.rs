@@ -74,10 +74,8 @@ impl fmt::Display for MagicTables {
 
 #[cfg(test)]
 mod tests {
-    use enum_map::EnumMap;
-
     use super::MagicTables;
-
+    use enum_map::EnumMap;
     const EXPECTED: [&str; 3] = [
         "pub(super) const ROOK: EnumMap<Square, u64>",
         "pub(super) const BISHOP: EnumMap<Square, u64>", "    0xffff_ffff_ffff_ffff,\n]);",

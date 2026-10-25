@@ -63,13 +63,10 @@ impl SelfPlay {
 
 #[cfg(test)]
 mod tests {
-    use std::num::NonZeroU16;
-
+    use super::{PositionCount, SelfPlay};
     use arena::{Finished, RandomOpenings, Rules, Seed, Thinking, WorkerCount};
     use board::{FullmoveNumber, NodeCount, PlyCount};
-
-    use super::{PositionCount, SelfPlay};
-
+    use std::num::NonZeroU16;
     const SEED: Seed = Seed::new(3);
     const PLIES: PlyCount = PlyCount::new(6);
     const SHORT: Rules = Rules::DEFAULT

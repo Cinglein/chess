@@ -31,13 +31,10 @@ pub trait EmbeddedDefaults: Serialize + DeserializeOwned {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use serde::{Deserialize, Serialize};
-
     use super::EmbeddedDefaults;
     use crate::settings_error::SettingsError;
-
+    use serde::{Deserialize, Serialize};
+    use std::fs;
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Knobs {

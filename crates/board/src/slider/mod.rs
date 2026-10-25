@@ -32,13 +32,11 @@ pub trait Slider {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-    use strum::IntoEnumIterator;
-
     use super::{Bishop, Rook, Slider};
     use crate::bitboard::{Bitboard, SubsetIter};
     use crate::square::Square;
-
+    use proptest::prelude::*;
+    use strum::IntoEnumIterator;
     trait Checks: Slider {
         fn first_relevant_occupancy_where_the_lookup_differs() -> Option<(Square, Bitboard)> {
             Square::iter()

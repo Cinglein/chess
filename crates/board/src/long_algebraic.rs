@@ -100,7 +100,6 @@ mod tests {
     use super::LongAlgebraic;
     use crate::board::Board;
     use proptest::prelude::*;
-
     const POSITIONS: [&str; 4] = [
         "r3k3/1P6/8/8/8/8/8/4K3 w q - 0 1",
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",

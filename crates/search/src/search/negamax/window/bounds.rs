@@ -65,13 +65,10 @@ impl Bounds {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::ControlFlow;
-
-    use board::Board;
-    use eval::Score;
-
     use super::{Bound, BoundKind, Bounds, Window};
-
+    use board::Board;
+    use core::ops::ControlFlow;
+    use eval::Score;
     const ALPHA: Score = Score::new(-10);
     const BETA: Score = Score::new(10);
     const WORSE: Score = Score::new(-5);

@@ -23,7 +23,6 @@ impl Quantisation {
 #[cfg(test)]
 mod tests {
     use super::Quantisation;
-
     const THREE: Quantisation = Quantisation::new(3);
     const FOUR: Quantisation = Quantisation::new(4);
 

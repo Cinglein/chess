@@ -60,11 +60,9 @@ impl Neg for Bound<Upper> {
 
 #[cfg(test)]
 mod tests {
+    use super::{Bound, Lower};
     use eval::Score;
     use proptest::prelude::*;
-
-    use super::{Bound, Lower};
-
     #[test]
     fn a_raised_lower_bound_admits_up_to_the_higher_score_and_negates_into_the_matching_upper_bound()
      {

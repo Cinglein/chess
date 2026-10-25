@@ -30,10 +30,8 @@ impl Settings {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::Settings;
-
+    use settings::EmbeddedDefaults;
     #[test]
     fn default_settings_survive_a_trip_through_toml() {
         let written = toml::to_string_pretty(&Settings::defaults()).unwrap();

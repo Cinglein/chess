@@ -17,10 +17,8 @@ impl PieceKindValue {
 
 #[cfg(test)]
 mod tests {
-    use board::PieceKind;
-
     use super::PieceKindValue;
-
+    use board::PieceKind;
     #[test]
     fn heavier_pieces_are_worth_more_material() {
         assert!(

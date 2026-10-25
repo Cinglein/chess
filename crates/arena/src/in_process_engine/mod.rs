@@ -56,12 +56,10 @@ impl Opponent for InProcessEngine {
 
 #[cfg(test)]
 mod tests {
+    use super::{InProcessEngine, Opponent};
     use eval::Score;
     use search::Depth;
     use uci::{GoLimits, Position};
-
-    use super::{InProcessEngine, Opponent};
-
     const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
     const SHALLOW: GoLimits = GoLimits::Depth(Depth::new(1));
     const DEEP: GoLimits = GoLimits::Depth(Depth::new(4));
