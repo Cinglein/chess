@@ -4,6 +4,7 @@ use std::time::Instant;
 
 use super::test_timing::TestTiming;
 use crate::task::failure::Failure;
+use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
 
 pub(super) struct TestBinary {
@@ -14,15 +15,21 @@ impl TestBinary {
     const EXECUTABLE: &str = "Executable";
     const TEST_SUFFIX: &str = ": test";
 
-    pub(super) fn discover(workspace: &Workspace) -> Result<Vec<TestBinary>, Failure> {
-        let built = workspace.cargo_output(&[
-            "test",
-            "--workspace",
-            "--all-features",
-            "--no-run",
-            "--color",
-            "never",
-        ])?;
+    pub(super) fn discover(
+        workspace: &Workspace,
+        selection: &Selection,
+    ) -> Result<Vec<TestBinary>, Failure> {
+        let arguments: Vec<String> = [String::from("test")]
+            .into_iter()
+            .chain(selection.package_arguments())
+            .chain(
+                ["--all-features", "--no-run", "--color", "never"]
+                    .into_iter()
+                    .map(String::from),
+            )
+            .collect();
+        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
+        let built = workspace.cargo_output(&borrowed)?;
         Ok(built
             .lines()
             .filter_map(|line| line.split_once(Self::EXECUTABLE))

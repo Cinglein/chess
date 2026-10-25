@@ -15,13 +15,17 @@ impl Affected {
     const BASE: &str = "origin/main";
 
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
+        let crates: Vec<String> = Self::reached(workspace)?.into_iter().collect();
+        println!("{}", serde_json::to_string(&crates)?);
+        Ok(())
+    }
+
+    pub fn reached(workspace: &Workspace) -> Result<BTreeSet<String>, Failure> {
         let changed = workspace.git_output(&["diff", "--name-only", "--merge-base", Self::BASE])?;
         let metadata =
             workspace.cargo_stdout(&["metadata", "--format-version", "1", "--no-deps"])?;
         let graph = PackageGraph::from_metadata(&metadata)?;
-        let crates: Vec<String> = Self::crates(&graph, changed.lines()).into_iter().collect();
-        println!("{}", serde_json::to_string(&crates)?);
-        Ok(())
+        Ok(Self::crates(&graph, changed.lines()))
     }
 
     fn crates<'paths>(

@@ -9,6 +9,7 @@ use test_timing::TestTiming;
 
 use crate::task::failure::Failure;
 use crate::task::report::Report;
+use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::violation::Violation;
 use crate::task::workspace::Workspace;
@@ -22,8 +23,12 @@ impl TestTime {
     const MAX_TOTAL: Duration = Duration::from_secs(4);
     const SLOWEST_SHOWN: usize = 5;
 
-    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
-        let timings = TestBinary::discover(workspace)?
+    pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
+        if selection.is_empty() {
+            println!("test time: no crate affected");
+            return Ok(());
+        }
+        let timings = TestBinary::discover(workspace, selection)?
             .iter()
             .map(TestBinary::timings)
             .collect::<Result<Vec<Vec<TestTiming>>, Failure>>()?

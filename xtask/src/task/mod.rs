@@ -2,6 +2,7 @@ mod affected;
 mod binary_files;
 mod bit_boundary;
 mod ci;
+mod clippy;
 mod const_shape;
 mod distinct_signatures;
 mod expression_flow;
@@ -24,12 +25,14 @@ mod primitive_boundary;
 mod private_fns;
 mod public_surface;
 mod report;
+mod selection;
 mod settings_shape;
 mod site;
 mod source_file;
 mod stacked;
 mod state_graph;
 mod support_modules;
+mod test;
 mod test_budget;
 mod test_time;
 mod type_shape;
@@ -40,6 +43,7 @@ mod workspace;
 use strum::{EnumString, VariantNames};
 
 use crate::task::affected::Affected;
+use crate::task::clippy::Clippy;
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
 use crate::task::expression_flow::ExpressionFlow;
@@ -60,9 +64,11 @@ use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
+use crate::task::selection::Selection;
 use crate::task::settings_shape::SettingsShape;
 use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
+use crate::task::test::Test;
 use crate::task::test_budget::TestBudget;
 use crate::task::test_time::TestTime;
 use crate::task::type_shape::TypeShape;
@@ -76,6 +82,7 @@ use magics::Magics;
 pub enum Task {
     Affected,
     Ci,
+    Clippy,
     ConstShape,
     DistinctSignatures,
     ExpressionFlow,
@@ -100,6 +107,7 @@ pub enum Task {
     SettingsShape,
     Stacked,
     StateGraph,
+    Test,
     TestBudget,
     TestTime,
     TypeShape,
@@ -108,14 +116,19 @@ pub enum Task {
 
 impl Task {
     pub fn usage() -> Failure {
-        Failure::Usage(format!("usage: cargo xtask <{}>", Self::VARIANTS.join("|")))
+        Failure::Usage(format!(
+            "usage: cargo xtask <{}> [--affected]",
+            Self::VARIANTS.join("|")
+        ))
     }
 
-    pub fn run(self) -> Result<(), Failure> {
+    pub fn run(self, flags: impl Iterator<Item = String>) -> Result<(), Failure> {
         let workspace = Workspace::locate();
+        let selection = Selection::from_flags(flags, &workspace)?;
         match self {
             Task::Affected => Affected::run(&workspace),
-            Task::Ci => Ci::run(&workspace),
+            Task::Ci => Ci::run(&workspace, &selection),
+            Task::Clippy => Clippy::run(&workspace, &selection),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
             Task::DistinctSignatures => {
                 DistinctSignatures::report(&workspace.source_files()?).verdict()
@@ -127,8 +140,8 @@ impl Task {
             Task::Magics => Magics::run(&workspace),
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
             Task::ModuleNesting => ModuleNesting::report(&workspace.source_files()?).verdict(),
-            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines),
-            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace),
+            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines, &selection),
+            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace, &selection),
             Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
             Task::NamedNumbers => NamedNumbers::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
@@ -146,10 +159,11 @@ impl Task {
             Task::SettingsShape => SettingsShape::report(&workspace.source_files()?).verdict(),
             Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
+            Task::Test => Test::run(&workspace, &selection),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),
-            Task::TestTime => TestTime::run(&workspace),
+            Task::TestTime => TestTime::run(&workspace, &selection),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
-            Task::Wasm => Wasm::run(&workspace),
+            Task::Wasm => Wasm::run(&workspace, &selection),
         }
     }
 }

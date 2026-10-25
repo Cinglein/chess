@@ -45,8 +45,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `no-forwarders`, `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`,
   `primitive-boundary`, `private-fns`, `public-surface`, `settings-shape`, `state-graph`,
   `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask affected`, which prints the crates a
-  change reaches as changed crates plus their reverse dependents, `cargo xtask mutants`,
+  `cargo xtask clippy`, `cargo xtask test`, `cargo xtask test-time`, `cargo xtask stacked`,
+  `cargo xtask affected`, which prints the crates a change reaches as changed crates plus their
+  reverse dependents, and `--affected` on `ci`, `clippy`, `wasm`, `test`, `test-time`, and
+  `mutants-full`, which restricts them to that set, `cargo xtask mutants`,
   `cargo xtask mutants-full`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
