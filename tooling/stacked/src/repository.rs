@@ -40,10 +40,8 @@ mod tests {
     use super::Repository;
     #[test]
     fn a_repository_splits_into_the_owner_and_name_fields_gh_takes() {
-        let fields = "Cinglein/chess".parse::<Repository>().unwrap().fields();
+        let fields = "nov/chess".parse::<Repository>().unwrap().fields();
         let broken = "chess".parse::<Repository>().is_err();
-        assert!(
-            fields.map(|field| field.to_string()) == ["owner=Cinglein", "name=chess"] && broken
-        );
+        assert!(fields.map(|field| field.to_string()) == ["owner=nov", "name=chess"] && broken);
     }
 }
