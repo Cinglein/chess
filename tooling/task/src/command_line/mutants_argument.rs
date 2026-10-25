@@ -23,4 +23,6 @@ pub enum MutantsArgument {
     TestWorkspaceOn,
     #[strum(serialize = "--test-workspace=false")]
     TestWorkspaceOff,
+    #[strum(serialize = "--baseline=skip")]
+    BaselineSkip,
 }
