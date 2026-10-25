@@ -11,7 +11,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    const EXCLUDED_DIRECTORIES: [&str; 2] = ["target", ".git"];
+    const EXCLUDED_DIRECTORIES: [&str; 3] = ["target", ".git", ".claude"];
     const MANIFEST: &str = "Cargo.toml";
     const WORKSPACE_TABLE: &str = "[workspace]";
 
@@ -86,5 +86,39 @@ impl Workspace {
             .then_some(path)
             .into_iter()
             .collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    use super::Workspace;
+
+    const TREE: [&str; 4] = ["a.rs", "nested/b.rs", "target/skipped.rs", "notes.txt"];
+    const FOUND: [&str; 2] = ["a.rs", "nested/b.rs"];
+    const FIRST: &str = "a.rs";
+
+    #[test]
+    fn rust_files_are_found_below_the_root_outside_target_and_named_relative_to_it() {
+        let root = std::env::temp_dir().join(format!("chess-workspace-{}", std::process::id()));
+        TREE.iter().map(|file| root.join(file)).for_each(|path| {
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(&path, "pub struct Found;").unwrap();
+        });
+        let workspace = Workspace { root };
+        let files: Vec<PathBuf> = workspace
+            .source_files()
+            .unwrap()
+            .iter()
+            .map(|file| file.path().to_path_buf())
+            .collect();
+        assert_eq!(files, FOUND.map(PathBuf::from));
+        assert_eq!(
+            workspace.relative(&workspace.root().join(FIRST)),
+            Path::new(FIRST)
+        );
+        fs::remove_dir_all(workspace.root()).unwrap();
     }
 }

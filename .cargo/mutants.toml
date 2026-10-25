@@ -1,11 +1,5 @@
 exclude_globs = [
     "xtask/**",
-    "tooling/affected/**",
-    "tooling/magics/**",
-    "tooling/mutation/**",
-    "tooling/stacked/**",
-    "tooling/task/**",
-    "tooling/test_time/**",
     "crates/*/src/main.rs",
     "crates/chess/**",
     "crates/tui/**",
@@ -16,7 +10,20 @@ exclude_globs = [
     "crates/board/src/slider/magics.rs",
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
-exclude_re = ["arbitrary_with", "MutantCosts::measure", "<impl Drop for UciProcess>::drop", "Network::trainer"]
+exclude_re = [
+    "arbitrary_with",
+    "MutantCosts::measure",
+    "<impl Drop for UciProcess>::drop",
+    "Network::trainer",
+    "Stacked::",
+    "TestBinary::discover",
+    "TestBinary::timings",
+    "TestBinary::tests",
+    "TestTime::run",
+    "Affected::run",
+    "Affected::loads",
+    "Changes::reaches",
+]
 additional_cargo_args = ["--lib"]
 minimum_test_timeout = 10.0
 cap_lints = false

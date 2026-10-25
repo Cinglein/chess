@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 task = { path = "../task" }
+settings = { path = "../../crates/settings" }
 strum = { version = "0.28", features = ["derive"] }
 
 [lints]

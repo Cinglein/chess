@@ -46,3 +46,22 @@ impl<'ast> Visit<'ast> for SupportModules {
         syn::visit::visit_item_mod(self, module);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::SupportModules;
+    use crate::source_file::SourceFile;
+
+    const SOURCE: &str =
+        "#[cfg(test)] mod fixtures; mod inline {} #[cfg(test)] mod tests {} mod sibling;";
+    const PATHS: [&str; 2] = ["crates/a/src/fixtures.rs", "crates/a/src/fixtures/mod.rs"];
+
+    #[test]
+    fn only_a_declared_cfg_test_module_names_support_files_beside_its_parent() {
+        let file = SourceFile::parse("crates/a/src/lib.rs".to_owned(), SOURCE.to_owned())
+            .expect("valid rust");
+        assert_eq!(SupportModules::paths(&file), PATHS.map(PathBuf::from));
+    }
+}

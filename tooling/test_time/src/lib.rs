@@ -83,3 +83,38 @@ impl TestTime {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+    use std::time::Duration;
+
+    use settings::EmbeddedDefaults;
+
+    use super::{TestTime, TestTiming};
+    use task::{Interval, Policy};
+
+    const NAMES: [&str; 4] = ["target/debug/deps/bin-1a2b3c", "exact", "slow", "bulk"];
+    const TICK: Duration = Duration::from_millis(1);
+    const WHOLE_IN_UNITS: usize = 4;
+    const REPORTED: [&str; 3] = ["bin bulk took", "bin slow took", "the suite took"];
+
+    #[test]
+    fn a_test_over_its_allowance_and_a_suite_over_its_total_are_reported_but_the_limits_pass() {
+        let policy = Policy::defaults();
+        let limit = policy.interval(Interval::PerTest).duration();
+        let [binary, exact, slow, bulk] = NAMES;
+        let timing =
+            |name: &str, elapsed| TestTiming::new(Path::new(binary), name.to_owned(), elapsed);
+        let exact = (0..WHOLE_IN_UNITS).map(|_| timing(exact, limit)).collect();
+        let timings = vec![
+            timing(slow, limit + TICK),
+            timing(bulk, policy.interval(Interval::Total).duration()),
+        ];
+        let over = TestTime { timings }.report(&policy);
+        assert!(
+            TestTime { timings: exact }.report(&policy).is_clean() && over.lists_exactly(&REPORTED),
+            "{over}"
+        );
+    }
+}

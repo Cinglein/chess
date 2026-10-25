@@ -25,10 +25,7 @@ pub enum Job {
 
 impl Job {
     const SHARED_ENTRIES: &[&str] = &[
-        "xtask/src/main.rs",
-        "xtask/src/lib.rs",
-        "xtask/src/task/mod.rs",
-        "xtask/Cargo.toml",
+        "xtask/src/main.rs", "xtask/src/lib.rs", "xtask/src/task/mod.rs", "xtask/Cargo.toml",
     ];
 
     pub fn entries(self) -> impl Iterator<Item = &'static str> {
