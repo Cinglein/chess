@@ -52,18 +52,26 @@ impl Declarations {
             .get(enum_name)
             .is_some_and(|home| home != path)
     }
+
+    fn vertex(item: &ItemImpl) -> Option<TypeName> {
+        item.trait_
+            .as_ref()
+            .and_then(|(_, path, _)| path.segments.last())
+            .filter(|segment| segment.ident == "State")
+            .map(|_| TypeName::from_type(&item.self_ty))
+    }
+
+    fn sum_type(item: &ItemEnum) -> Option<String> {
+        item.variants
+            .iter()
+            .any(|variant| !matches!(variant.fields, Fields::Unit))
+            .then(|| item.ident.to_string())
+    }
 }
 
 impl<'ast> Visit<'ast> for Declarations {
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if item
-            .trait_
-            .as_ref()
-            .and_then(|(_, path, _)| path.segments.last())
-            .is_some_and(|segment| segment.ident == "State")
-        {
-            self.vertices.insert(TypeName::from_type(&item.self_ty));
-        }
+        self.vertices.extend(Self::vertex(item));
         syn::visit::visit_item_impl(self, item);
     }
 
@@ -73,13 +81,7 @@ impl<'ast> Visit<'ast> for Declarations {
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        if item
-            .variants
-            .iter()
-            .any(|variant| !matches!(variant.fields, Fields::Unit))
-        {
-            self.sum_types
-                .insert(item.ident.to_string(), self.path.clone());
-        }
+        self.sum_types
+            .extend(Self::sum_type(item).map(|name| (name, self.path.clone())));
     }
 }
