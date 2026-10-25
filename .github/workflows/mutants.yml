@@ -109,7 +109,8 @@ jobs:
       - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.failed == 'false' && steps.issue.outputs.number != ''
         env:
           ISSUE: ${{ steps.issue.outputs.number }}
-        run: gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
+        run: |
+          gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
       - if: steps.verdict.outputs.failed == 'true'
         run: exit 1
       - run: echo "every shard passed or none was needed"
