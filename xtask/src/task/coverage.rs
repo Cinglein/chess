@@ -1,4 +1,4 @@
-use crate::task::affected::{Affected, Job, Plan};
+use affected::{Affected, Job, Plan};
 use task::Failure;
 use task::Selection;
 use task::Workspace;

@@ -1,0 +1,15 @@
+[package]
+name = "stacked"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+task = { path = "../task" }
+strum = { version = "0.28", features = ["derive"] }
+
+[lints]
+workspace = true
