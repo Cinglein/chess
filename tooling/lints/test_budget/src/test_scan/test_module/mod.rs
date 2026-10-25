@@ -56,49 +56,55 @@ impl<'scan> TestModule<'scan> {
         span.end().line - span.start().line + 1
     }
 
-    fn is_test(function: &ItemFn) -> bool {
-        function
+    fn scope_of(function: &ItemFn) -> Scope {
+        if function
             .attrs
             .iter()
             .any(|attribute| attribute.path().is_ident("test"))
+        {
+            Scope::InsideTest
+        } else {
+            Scope::OutsideTest
+        }
     }
 }
 
 impl<'ast> Visit<'ast> for TestModule<'_> {
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        if Self::is_test(function) {
-            self.budget.tests += 1;
-            self.budget
-                .violations
-                .extend(self.test_violations(function));
-            self.scope = Scope::InsideTest;
-        }
+        self.scope = Self::scope_of(function);
+        let violations = match self.scope {
+            Scope::InsideTest => self.test_violations(function),
+            Scope::OutsideTest => Vec::new(),
+        };
+        self.budget.tests += usize::from(self.scope == Scope::InsideTest);
+        self.budget.violations.extend(violations);
         syn::visit::visit_item_fn(self, function);
         self.scope = Scope::OutsideTest;
     }
 
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
-        if integer
+        let largest = self.policy.limit(Limit::LargestInteger).count();
+        let finding = integer
             .base10_parse::<usize>()
-            .is_ok_and(|value| value > self.policy.limit(Limit::LargestInteger).count())
-        {
-            self.budget.violations.push(Violation::new(
-                Site::Line(self.path.into(), integer.span().start().line),
-                format!(
-                    "integer literal {integer} in test code, at most {} allowed",
-                    self.policy.limit(Limit::LargestInteger).count()
-                ),
-            ));
-        }
+            .is_ok_and(|value| value > largest)
+            .then(|| {
+                Violation::new(
+                    Site::Line(self.path.into(), integer.span().start().line),
+                    format!("integer literal {integer} in test code, at most {largest} allowed"),
+                )
+            });
+        self.budget.violations.extend(finding);
     }
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
-        if self.scope == Scope::OutsideTest && TestCounts::is_assertion(invocation) {
-            self.budget.violations.push(Violation::new(
-                Site::Line(self.path.into(), invocation.span().start().line),
-                "assertion outside a test; helpers return values and tests assert them",
-            ));
-        }
+        let finding = (self.scope == Scope::OutsideTest && TestCounts::is_assertion(invocation))
+            .then(|| {
+                Violation::new(
+                    Site::Line(self.path.into(), invocation.span().start().line),
+                    "assertion outside a test; helpers return values and tests assert them",
+                )
+            });
+        self.budget.violations.extend(finding);
         MacroArguments::parse(invocation).visit_with(self);
     }
 }

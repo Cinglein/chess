@@ -41,9 +41,10 @@ impl SupportModules {
 
 impl<'ast> Visit<'ast> for SupportModules {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if module.content.is_none() && SourceFile::walk(module) == Walk::Skipped {
-            self.names.push(module.ident.to_string());
-        }
+        self.names.extend(
+            (module.content.is_none() && SourceFile::walk(module) == Walk::Skipped)
+                .then(|| module.ident.to_string()),
+        );
         syn::visit::visit_item_mod(self, module);
     }
 }
