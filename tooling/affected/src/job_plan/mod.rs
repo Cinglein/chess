@@ -3,12 +3,13 @@ mod shard_count;
 
 use std::collections::BTreeSet;
 
-use packing::Packing;
+pub use packing::Packing;
 use serde::Serialize;
 use shard_count::ShardCount;
 
 use crate::crate_load::CrateLoad;
 use task::CrateName;
+use task::Interval;
 use task::Policy;
 use task::Selection;
 
@@ -29,7 +30,7 @@ impl JobPlan {
     }
 
     pub fn sharded(self, loads: &[CrateLoad], policy: &Policy) -> JobPlan {
-        let shards: Vec<String> = Packing::shards(loads, policy)
+        let shards: Vec<String> = Packing::shards(loads, policy.interval(Interval::PerShard))
             .iter()
             .map(ToString::to_string)
             .collect();
