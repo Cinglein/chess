@@ -7,7 +7,7 @@ pub use square_iter::SquareIter;
 pub use subset_iter::SubsetIter;
 
 use core::fmt;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
+use core::ops::{BitAnd, BitOr, BitXor, BitXorAssign, Not};
 
 use itertools::Itertools;
 use strum::{EnumCount, VariantArray};
@@ -90,7 +90,7 @@ impl Bitboard {
             SetOperation::Union => Bitboard(self.0 | other.0),
             SetOperation::DisjointUnion => {
                 debug_assert!(self.0 & other.0 == 0);
-                Bitboard(self.0 | other.0)
+                self.combined(other, SetOperation::Union)
             }
             SetOperation::Intersection => Bitboard(self.0 & other.0),
             SetOperation::Difference => Bitboard(self.0 & !other.0),
@@ -154,18 +154,6 @@ impl Not for Bitboard {
 
     fn not(self) -> Bitboard {
         Bitboard(!self.0)
-    }
-}
-
-impl BitAndAssign for Bitboard {
-    fn bitand_assign(&mut self, other: Bitboard) {
-        self.0 &= other.0;
-    }
-}
-
-impl BitOrAssign for Bitboard {
-    fn bitor_assign(&mut self, other: Bitboard) {
-        self.0 |= other.0;
     }
 }
 
