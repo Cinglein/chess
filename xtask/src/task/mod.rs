@@ -6,6 +6,7 @@ mod ci;
 mod clippy;
 mod command_line;
 mod const_shape;
+mod coverage;
 mod crate_name;
 mod distinct_signatures;
 mod expression_flow;
@@ -40,6 +41,7 @@ mod test;
 mod test_budget;
 mod test_time;
 mod type_shape;
+mod use_edges;
 mod violation;
 mod wasm;
 mod workspace;
@@ -48,8 +50,10 @@ use settings::EmbeddedDefaults;
 use strum::{EnumString, VariantNames};
 
 use crate::task::affected::Affected;
+use crate::task::affected::Job;
 use crate::task::clippy::Clippy;
 use crate::task::const_shape::ConstShape;
+use crate::task::coverage::Coverage;
 use crate::task::distinct_signatures::DistinctSignatures;
 use crate::task::expression_flow::ExpressionFlow;
 use crate::task::failure::Failure;
@@ -70,7 +74,6 @@ use crate::task::policy::Policy;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
-use crate::task::selection::Selection;
 use crate::task::settings_shape::SettingsShape;
 use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
@@ -131,12 +134,12 @@ impl Task {
 
     pub fn run(self, flags: impl Iterator<Item = String>) -> Result<(), Failure> {
         let workspace = Workspace::locate();
-        let selection = Selection::from_flags(flags, &workspace)?;
         let policy = Policy::defaults();
+        let coverage = Coverage::from_flags(flags, &workspace)?;
         match self {
             Task::Affected => Affected::run(&workspace, &policy),
-            Task::Ci => Ci::run(&workspace, &selection),
-            Task::Clippy => Clippy::run(&workspace, &selection),
+            Task::Ci => Ci::run(&workspace, &coverage),
+            Task::Clippy => Clippy::run(&workspace, &coverage.selection(Job::Clippy)),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
             Task::DistinctSignatures => {
                 DistinctSignatures::report(&workspace.source_files()?).verdict()
@@ -152,8 +155,18 @@ impl Task {
             Task::ModuleNesting => {
                 ModuleNesting::report(&workspace.source_files()?, &policy).verdict()
             }
-            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines, &selection, &policy),
-            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace, &selection, &policy),
+            Task::Mutants => Mutants::run(
+                &workspace,
+                Scope::ChangedLines,
+                &coverage.selection(Job::Mutants),
+                &policy,
+            ),
+            Task::MutantsFull => Mutants::run(
+                &workspace,
+                Scope::Workspace,
+                &coverage.selection(Job::Full),
+                &policy,
+            ),
             Task::NamedLifetimes => {
                 NamedLifetimes::report(&workspace.source_files()?, &policy).verdict()
             }
@@ -173,11 +186,11 @@ impl Task {
             Task::SettingsShape => SettingsShape::report(&workspace.source_files()?).verdict(),
             Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?, &policy).verdict(),
-            Task::Test => Test::run(&workspace, &selection),
+            Task::Test => Test::run(&workspace, &coverage.selection(Job::Test)),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?, &policy).verdict(),
-            Task::TestTime => TestTime::run(&workspace, &selection, &policy),
+            Task::TestTime => TestTime::run(&workspace, &coverage.selection(Job::Test), &policy),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
-            Task::Wasm => Wasm::run(&workspace, &selection),
+            Task::Wasm => Wasm::run(&workspace, &coverage.selection(Job::Clippy)),
         }
     }
 }

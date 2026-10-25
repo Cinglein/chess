@@ -9,11 +9,8 @@ pub use tool::Tool;
 use std::collections::BTreeSet;
 use std::fmt;
 
-use crate::task::affected::Affected;
 use crate::task::command_line::CargoArgument;
 use crate::task::crate_name::CrateName;
-use crate::task::failure::Failure;
-use crate::task::workspace::Workspace;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Selection {
@@ -22,24 +19,6 @@ pub enum Selection {
 }
 
 impl Selection {
-    const AFFECTED_FLAG: &str = "--affected";
-
-    pub fn from_flags(
-        mut flags: impl Iterator<Item = String>,
-        workspace: &Workspace,
-    ) -> Result<Selection, Failure> {
-        flags.try_fold(Selection::Workspace, |_, flag| {
-            if flag == Self::AFFECTED_FLAG {
-                Affected::reached(workspace).map(Selection::Crates)
-            } else {
-                Err(Failure::Usage(format!(
-                    "unknown flag {flag}; the only flag is {}",
-                    Self::AFFECTED_FLAG
-                )))
-            }
-        })
-    }
-
     pub fn arguments<T: Tool>(&self) -> Vec<String> {
         match self {
             Selection::Workspace => T::whole_workspace()
