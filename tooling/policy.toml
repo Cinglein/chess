@@ -37,6 +37,7 @@ discover_every = 100
 per_test = 1000
 total = 4000
 per_shard = 220000
+per_crate = 15000
 
 [mutant_millis]
 default = 2000
