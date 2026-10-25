@@ -15,6 +15,8 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
   SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: sccache
 
 jobs:
   fmt:
@@ -36,6 +38,7 @@ jobs:
         with:
           components: clippy
           targets: wasm32-unknown-unknown
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask clippy $SCOPE
       - run: cargo xtask wasm $SCOPE
@@ -47,6 +50,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask test $SCOPE
       - run: cargo xtask test-time $SCOPE
@@ -56,6 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask lint
 
@@ -74,6 +79,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
         with:
@@ -82,8 +88,6 @@ jobs:
         with:
           tool: cargo-mutants
       - run: cargo xtask mutants
-        env:
-          CARGO_INCREMENTAL: 1
 
   ci-gate:
     needs: [fmt, clippy, test, lint, mutants]
