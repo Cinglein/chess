@@ -63,7 +63,6 @@ impl ToolGraph {
 mod tests {
     use super::ToolGraph;
     use task::SourceFile;
-
     const LINT: &str = "use crate::task::fn_shape::FnShape; pub struct Lint;";
     const FN_SHAPE: &str = "use crate::task::report::Report; pub struct FnShape;";
     const REPORT: &str = "pub struct Report;";

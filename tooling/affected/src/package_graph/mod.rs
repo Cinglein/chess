@@ -63,10 +63,8 @@ impl PackageGraph {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
-
     use super::PackageGraph;
-
+    use std::collections::BTreeSet;
     const METADATA: &str = r#"{"packages": [
         {"name": "board", "dependencies": [{"name": "serde", "path": null}]},
         {"name": "search", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},

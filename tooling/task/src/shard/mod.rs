@@ -98,7 +98,6 @@ impl FromStr for Shard {
 #[cfg(test)]
 mod tests {
     use super::Shard;
-
     const SLICE: &str = "board/0/4";
     const WHOLE: &str = "eval+uci";
     const SLICE_ARGUMENTS: [&str; 4] = ["--package", "board", "--shard", "0/4"];

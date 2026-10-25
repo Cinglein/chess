@@ -124,10 +124,6 @@ impl ZobristKeys {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
-    use strum::{IntoEnumIterator, VariantArray};
-
     use super::ZobristKeys;
     use crate::castling_right::CastlingRight;
     use crate::color::Color;
@@ -136,7 +132,8 @@ mod tests {
     use crate::piece_kind::PieceKind;
     use crate::square::Square;
     use crate::zobrist::Zobrist;
-
+    use std::collections::HashSet;
+    use strum::{IntoEnumIterator, VariantArray};
     #[test]
     fn every_key_is_distinct_and_nonzero() {
         let keys = &ZobristKeys::KEYS;

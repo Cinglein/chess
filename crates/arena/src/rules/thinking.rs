@@ -29,12 +29,9 @@ impl Thinking {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
-    use board::NodeCount;
-
     use super::Thinking;
-
+    use board::NodeCount;
+    use std::time::Duration;
     const REMAINING: Duration = Duration::from_millis(5);
     const OVERRUN: Duration = Duration::from_nanos(1);
 

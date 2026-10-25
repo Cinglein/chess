@@ -37,10 +37,8 @@ impl Iterator for RandomOpenings {
 
 #[cfg(test)]
 mod tests {
-    use board::PlyCount;
-
     use super::{RandomOpenings, Seed};
-
+    use board::PlyCount;
     const SEED: Seed = Seed::new(7);
     const OTHER_SEED: Seed = Seed::new(8);
     const PLIES: PlyCount = PlyCount::new(8);

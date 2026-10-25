@@ -53,7 +53,6 @@ impl NoParameterBags {
 mod tests {
     use super::NoParameterBags;
     use task::SourceFile;
-
     const BAG: &str = "
 pub(crate) struct Bag { a: u8 } impl Bag { pub fn new(a: u8) -> Bag { Bag { a } } pub fn a(&self) -> u8 { self.a } pub fn again(self, a: u8) -> Bag { Bag { a, ..self } } }
 mod inner { pub(crate) struct Crate { a: u8 } impl Crate { pub fn new(a: u8) -> Crate { Crate { a } } } }

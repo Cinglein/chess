@@ -58,7 +58,6 @@ impl SettingsShape {
 mod tests {
     use super::SettingsShape;
     use task::SourceFile;
-
     const SOURCE: &str = "
 #[derive(Deserialize)] pub struct Settings { schedule: Schedule, rounds: Count, plain: Plain }
 impl EmbeddedDefaults for Settings { const DEFAULTS: &str = \"\"; }

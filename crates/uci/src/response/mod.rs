@@ -103,14 +103,11 @@ impl fmt::Display for Response<'_> {
 
 #[cfg(test)]
 mod tests {
-    use board::LongAlgebraic;
-    use proptest::prelude::*;
-
-    use eval::Score;
-
     use super::{Response, SearchInfo};
     use crate::uci_error::UciError;
-
+    use board::LongAlgebraic;
+    use eval::Score;
+    use proptest::prelude::*;
     const STOCKFISH_INFO: &str =
         "info depth 1 seldepth 0 multipv 1 score cp 0 nodes 0 nps 0 hashfull 0 tbhits 0 time 1 pv ";
     const STOCKFISH_INFO_KEPT: &str = "info depth 1 score cp 0 nodes 0 nps 0 time 1";

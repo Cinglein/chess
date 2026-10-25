@@ -29,11 +29,9 @@ impl PrimitiveBoundary {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::PrimitiveBoundary;
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const BARE: &str = "
 pub struct Limits { nodes: u64, index: usize, rounds: usize } pub enum Kind { Depth(u8) }
 impl Limits { const CAP: u32 = 1; fn read(&self) -> Option<u64> { let x: u8 = 1; self.nodes.into() } }

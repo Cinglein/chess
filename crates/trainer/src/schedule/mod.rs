@@ -49,7 +49,6 @@ impl Schedule {
 #[cfg(test)]
 mod tests {
     use super::Schedule;
-
     const WRITTEN: &str = "
         batch_size = 8
         batches_per_superbatch = 4

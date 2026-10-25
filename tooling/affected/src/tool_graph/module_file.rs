@@ -83,11 +83,9 @@ impl ModuleFile {
 
 #[cfg(test)]
 mod tests {
+    use super::ModuleFile;
     use std::collections::BTreeSet;
     use std::path::{Path, PathBuf};
-
-    use super::ModuleFile;
-
     const KNOWN: [&str; 4] = [
         "xtask/src/t/mod.rs", "xtask/src/t/l.rs", "xtask/src/t/m/mod.rs", "xtask/src/t/m/s.rs",
     ];

@@ -51,10 +51,8 @@ impl CaptureGain {
 
 #[cfg(test)]
 mod tests {
-    use board::{Board, ChessMove, PieceKind};
-
     use super::{CaptureGain, Killers, MovePriority};
-
+    use board::{Board, ChessMove, PieceKind};
     const BOARD: &str = "r3k3/1P6/8/3p4/4P3/2N5/8/4K3 w - - 0 1";
     const PRINCIPAL: &str = "e1d1";
     const KILLER: &str = "e4e5";

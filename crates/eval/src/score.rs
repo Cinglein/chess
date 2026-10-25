@@ -120,12 +120,9 @@ const _: () = assert!(
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-
-    use core::num::{NonZeroI8, NonZeroI32};
-
     use super::Score;
-
+    use core::num::{NonZeroI8, NonZeroI32};
+    use proptest::prelude::*;
     const PLIES: u8 = 3;
     const TWO_MOVES: NonZeroI32 = NonZeroI32::new(2).unwrap();
 

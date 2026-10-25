@@ -23,7 +23,6 @@ impl fmt::Display for HexLiteral {
 #[cfg(test)]
 mod tests {
     use super::HexLiteral;
-
     #[test]
     fn hex_literals_are_grouped_in_fours_for_readability() {
         assert_eq!(

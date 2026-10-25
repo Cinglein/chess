@@ -92,10 +92,8 @@ impl fmt::Display for MutantCosts {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, process};
-
     use super::{MutantCosts, Outcomes};
-
+    use std::{env, fs, process};
     const SNIPPET: &str = r#"{"outcomes": [{"scenario": "Baseline", "phase_results": [{"phase": "Build", "duration": 9.0}]}, {"scenario": {"Mutant": {"package": "board", "file": "x"}}, "phase_results": [{"phase": "Build", "duration": 2.56}, {"phase": "Test", "duration": 0.5}]}, {"scenario": {"Mutant": {"package": "eval"}}, "phase_results": [{"phase": "Build", "duration": 1.0}]}]}"#;
     const TABLE: &str =
         "[mutant_millis]\ndefault = 2000\n\n[mutant_millis.crates]\nboard = 3100\neval = 1000\n";
