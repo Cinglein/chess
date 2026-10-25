@@ -12,7 +12,7 @@ use task::Selection;
 use task::Site;
 use task::Workspace;
 use task::{CargoArgument, MutantsArgument, Program};
-use task::{MemoryShare, Policy};
+use task::{Interval, MemoryShare, Policy};
 
 pub struct Mutants;
 
@@ -41,7 +41,9 @@ impl Mutants {
                     budget
                         .minus(policy.memory(MemoryShare::ForTheTests))
                         .divided_by(policy.memory(MemoryShare::PerCompilerTask)),
-                );
+                )
+                .argument(MutantsArgument::Timeout)
+                .argument(policy.interval(Interval::TestTimeout).whole_seconds());
             let runs = scope.applied(line, workspace, selection)?;
             let failed: Vec<String> = runs
                 .iter()
