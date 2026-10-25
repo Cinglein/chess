@@ -1,3 +1,4 @@
+mod affected;
 mod binary_files;
 mod bit_boundary;
 mod ci;
@@ -38,6 +39,7 @@ mod workspace;
 
 use strum::{EnumString, VariantNames};
 
+use crate::task::affected::Affected;
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
 use crate::task::expression_flow::ExpressionFlow;
@@ -72,6 +74,7 @@ use magics::Magics;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, EnumString, VariantNames)]
 #[strum(serialize_all = "kebab-case")]
 pub enum Task {
+    Affected,
     Ci,
     ConstShape,
     DistinctSignatures,
@@ -111,6 +114,7 @@ impl Task {
     pub fn run(self) -> Result<(), Failure> {
         let workspace = Workspace::locate();
         match self {
+            Task::Affected => Affected::run(&workspace),
             Task::Ci => Ci::run(&workspace),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
             Task::DistinctSignatures => {

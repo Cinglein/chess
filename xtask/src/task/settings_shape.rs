@@ -11,11 +11,14 @@ use crate::task::violation::Violation;
 pub struct SettingsShape;
 
 impl SettingsShape {
+    const COVERED: &str = "crates/";
+
     pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "a settings struct refuses keys it does not know",
             files
                 .iter()
+                .filter(|file| file.path().starts_with(Self::COVERED))
                 .flat_map(|file| {
                     let mut structs = DeserializedStructs::default();
                     structs.visit_file(file.syntax());
