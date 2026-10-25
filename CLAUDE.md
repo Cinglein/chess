@@ -213,9 +213,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   set of whole crates, and a shard runs only the tests of its crates and of the dependents that
   have tests, so a lint mutant never relinks xtask. The Mutants workflow costs each crate's mutants
   by the measured `mutant_millis` for that crate (unlisted crates take the default), slices a
-  crate that costs more than `per_shard`, packs the rest by shared test sets, runs the shards on
-  every PR and on demand (remeasure the table from the shard artifacts' `outcomes.json` when a
-  shard runs long), and a missed mutant anywhere fails the shard. A mutant no test can
+  crate that costs more than `per_shard`, packs the rest by shared test sets, and runs the shards on every push
+  to `main`, on the Monday schedule, and on demand, never on a pull request: a PR is gated by
+  the in-diff run, the whole-workspace run costs about 4300 runner-seconds and cannot fit the
+  PR budget on 20 runners, and a miss it finds on `main` gets its own PR (remeasure the table
+  from the shard artifacts' `outcomes.json` when a shard runs long). A missed mutant anywhere
+  fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
@@ -238,8 +241,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   only when the changed file is in the `use` and `mod` closure of that job's entry files
   (`task/mutants/mod.rs`; `task/affected/mod.rs`, `main.rs`, `lib.rs`, `task/mod.rs`, and
   `Cargo.toml` reach every job); a tool rerun covers every crate. Pushes to `main` and the Monday
-  schedule run everything, and `ci-gate` and `mutants-gate` always run and fail if any job they
-  need failed, so they are the checks to require.
+  schedule run everything, including the Mutants workflow, and `ci-gate` (on a PR) and
+  `mutants-gate` (on `main`) always run and fail if any job they need failed, so `ci-gate` is
+  the check to require.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the
   lint stops firing. Prefer fixing the code, for example `usize::from` or `u8::try_from` over `as`.

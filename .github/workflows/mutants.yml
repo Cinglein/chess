@@ -1,7 +1,6 @@
 name: Mutants
 
 on:
-  pull_request:
   push:
     branches: [main]
   schedule:
@@ -15,7 +14,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
 jobs:
   affected:
@@ -32,7 +30,7 @@ jobs:
         with:
           tool: cargo-mutants
       - id: plan
-        run: echo "plan=$(cargo xtask affected $SCOPE)" >> "$GITHUB_OUTPUT"
+        run: echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
 
   full:
     needs: affected
@@ -58,7 +56,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants
-      - run: cargo xtask mutants-full $SCOPE
+      - run: cargo xtask mutants-full
         env:
           CARGO_INCREMENTAL: 1
       - uses: actions/upload-artifact@v4
