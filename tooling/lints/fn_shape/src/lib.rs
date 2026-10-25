@@ -89,24 +89,23 @@ struct Shapes<'scan> {
 }
 
 impl Shapes<'_> {
-    fn report(&mut self, span: Span, message: &str) {
-        self.violations.push(Violation::new(
-            Site::Line(self.path.into(), span.start().line),
-            message,
-        ));
+    fn found(path: &Path, span: Span, message: &str) -> Violation {
+        Violation::new(Site::Line(path.into(), span.start().line), message)
     }
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
         self.depth += 1;
-        if self.depth == self.policy.limit(Limit::Nesting).count() + 1 {
-            self.report(
+        let deepest = (self.depth == self.policy.limit(Limit::Nesting).count() + 1).then_some(span);
+        self.violations.extend(deepest.map(|span| {
+            Self::found(
+                self.path,
                 span,
                 &format!(
                     "control flow nested deeper than {} levels; lift the inner part into a method",
                     self.policy.limit(Limit::Nesting).count()
                 ),
-            );
-        }
+            )
+        }));
         visit(self);
         self.depth -= 1;
     }
@@ -121,56 +120,68 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
     }
 
     fn visit_signature(&mut self, signature: &'ast Signature) {
-        if signature
+        let wide = (signature
             .inputs
             .iter()
             .filter(|argument| matches!(argument, FnArg::Typed(_)))
             .count()
-            > self.policy.limit(Limit::Parameters).count()
-        {
-            self.report(
-                signature.ident.span(),
+            > self.policy.limit(Limit::Parameters).count())
+        .then_some(signature.ident.span());
+        self.violations.extend(wide.map(|span| {
+            Self::found(
+                self.path,
+                span,
                 &format!(
                     "more than {} parameters; group the ones that travel together into a struct",
                     self.policy.limit(Limit::Parameters).count()
                 ),
-            );
-        }
+            )
+        }));
         syn::visit::visit_signature(self, signature);
     }
 
     fn visit_local(&mut self, local: &'ast Local) {
-        if FnShape::binds_bool(local) {
-            self.report(
-                local.span(),
-                "boolean local; inline a one-use condition or make a mode a type",
-            );
-        }
-        if local
-            .init
-            .as_ref()
-            .is_some_and(|init| matches!(*init.expr, Expr::Tuple(_)))
-        {
-            self.report(
-                local.span(),
-                "tuple literal bound to a local; name it as a struct",
-            );
-        }
+        self.violations.extend(
+            FnShape::binds_bool(local)
+                .then_some(local.span())
+                .map(|span| {
+                    Self::found(
+                        self.path,
+                        span,
+                        "boolean local; inline a one-use condition or make a mode a type",
+                    )
+                }),
+        );
+        self.violations.extend(
+            local
+                .init
+                .as_ref()
+                .filter(|init| matches!(*init.expr, Expr::Tuple(_)))
+                .map(|_| {
+                    Self::found(
+                        self.path,
+                        local.span(),
+                        "tuple literal bound to a local; name it as a struct",
+                    )
+                }),
+        );
         syn::visit::visit_local(self, local);
     }
 
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
-        if (call.method == "fold" || call.method == "try_fold")
-            && call
-                .args
+        self.violations.extend(
+            call.args
                 .first()
-                .is_some_and(|seed| matches!(seed, Expr::Tuple(_)))
-        {
-            self.report(
-                call.method.span(),
-                "tuple accumulator in a fold; give the accumulator a type",
-            );
-        }
+                .filter(|seed| matches!(seed, Expr::Tuple(_)))
+                .filter(|_| call.method == "fold" || call.method == "try_fold")
+                .map(|_| {
+                    Self::found(
+                        self.path,
+                        call.method.span(),
+                        "tuple accumulator in a fold; give the accumulator a type",
+                    )
+                }),
+        );
         syn::visit::visit_expr_method_call(self, call);
     }
 
@@ -188,9 +199,10 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
 
     fn visit_arm(&mut self, arm: &'ast Arm) {
         self.visit_pat(&arm.pat);
-        if let Some((_, guard)) = &arm.guard {
-            self.visit_expr(guard);
-        }
+        arm.guard
+            .iter()
+            .map(|(_, guard)| guard)
+            .for_each(|guard| self.visit_expr(guard));
         self.nested(arm.body.span(), |this| this.visit_expr(&arm.body));
     }
 

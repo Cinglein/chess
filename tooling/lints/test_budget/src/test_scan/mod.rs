@@ -30,16 +30,17 @@ impl<'scan> TestScan<'scan> {
             budget: TestBudget::default(),
         };
         scan.visit_file(file);
-        if !policy.limit(Limit::TestsPerFile).allows(scan.budget.tests) {
-            scan.budget.violations.push(Violation::new(
+        let overrun = (!policy.limit(Limit::TestsPerFile).allows(scan.budget.tests)).then(|| {
+            Violation::new(
                 Site::File(path.into()),
                 format!(
                     "{} tests, at most {} allowed",
                     scan.budget.tests,
                     policy.limit(Limit::TestsPerFile).count()
                 ),
-            ));
-        }
+            )
+        });
+        scan.budget.violations.extend(overrun);
         scan.budget
     }
 }

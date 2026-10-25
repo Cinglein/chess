@@ -1,7 +1,9 @@
+mod sighting;
 mod use_aliases;
 
 use std::path::PathBuf;
 
+use sighting::Sighting;
 use use_aliases::UseAliases;
 
 use syn::visit::Visit;
@@ -38,25 +40,24 @@ impl<'scan> NumberSites<'scan> {
 
     pub fn violations(file: &SourceFile, policy: &'scan Policy) -> Vec<Violation> {
         if BitBoundary::covers(file.path()) {
-            return Vec::new();
+            Vec::new()
+        } else {
+            let mut sites = NumberSites {
+                path: file.path().to_owned(),
+                policy,
+                aliases: UseAliases::in_file(file.syntax()),
+                context: String::new(),
+                newtypes: Vec::new(),
+                numbers: Vec::new(),
+                sizes: Vec::new(),
+            };
+            sites.visit_file(file.syntax());
+            if sites.newtypes.is_empty() {
+                sites.numbers.into_iter().chain(sites.sizes).collect()
+            } else {
+                Vec::new()
+            }
         }
-        let mut sites = NumberSites {
-            path: file.path().to_owned(),
-            policy,
-            aliases: UseAliases::in_file(file.syntax()),
-            context: String::new(),
-            newtypes: Vec::new(),
-            numbers: Vec::new(),
-            sizes: Vec::new(),
-        };
-        sites.visit_file(file.syntax());
-        if !sites.newtypes.is_empty() {
-            return Vec::new();
-        }
-        if file.path().starts_with(Self::SIZE_DOMAIN) {
-            sites.numbers.extend(sites.sizes);
-        }
-        sites.numbers
     }
 
     fn is_named(path: &TypePath, names: &[&str]) -> bool {
@@ -67,13 +68,14 @@ impl<'scan> NumberSites<'scan> {
                 .is_some_and(|ident| names.contains(&ident.to_string().as_str()))
     }
 
-    fn wraps_primitive(&self, item: &ItemStruct) -> bool {
+    fn newtype(&self, item: &ItemStruct) -> Option<String> {
         match &item.fields {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => fields
                 .unnamed
                 .first()
-                .is_some_and(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES) || self.policy.lists::<WireType>(&self.aliases.resolve(&path.path)))),
-            _ => false,
+                .filter(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES) || self.policy.lists::<WireType>(&self.aliases.resolve(&path.path))))
+                .map(|_| item.ident.to_string()),
+            _ => None,
         }
     }
 
@@ -82,11 +84,42 @@ impl<'scan> NumberSites<'scan> {
         Self::SIZE_WORDS.iter().any(|word| lowered.contains(word))
     }
 
-    fn site(&self, path: &TypePath) -> Site {
-        Site::Line(
+    fn sighting(&self, path: &TypePath) -> Sighting {
+        let wire = self.aliases.resolve(&path.path);
+        let site = Site::Line(
             self.path.clone(),
             path.path.segments[0].ident.span().start().line,
-        )
+        );
+        if Self::is_named(path, &Self::PRIMITIVES) {
+            Sighting::Number(Violation::new(
+                site,
+                format!(
+                    "bare {} in {}; name what it counts with a newtype",
+                    path.path.segments[0].ident, self.context
+                ),
+            ))
+        } else if self.policy.lists::<WireType>(&wire) {
+            Sighting::Number(Violation::new(
+                site,
+                format!(
+                    "{wire} in {} is a wire form; parse it into a type at the door",
+                    self.context
+                ),
+            ))
+        } else if Self::is_named(path, &Self::SIZES)
+            && !self.names_a_size()
+            && self.path.starts_with(Self::SIZE_DOMAIN)
+        {
+            Sighting::Size(Violation::new(
+                site,
+                format!(
+                    "usize in {} is neither a length nor an index; a count gets a newtype, a size says so in its name",
+                    self.context
+                ),
+            ))
+        } else {
+            Sighting::Nothing
+        }
     }
 }
 
@@ -106,9 +139,7 @@ impl<'ast> Visit<'ast> for NumberSites<'_> {
     }
 
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
-        if self.wraps_primitive(item) {
-            self.newtypes.push(item.ident.to_string());
-        }
+        self.newtypes.extend(self.newtype(item));
         self.context = item.ident.to_string();
         syn::visit::visit_item_struct(self, item);
     }
@@ -123,9 +154,10 @@ impl<'ast> Visit<'ast> for NumberSites<'_> {
     fn visit_block(&mut self, _: &'ast Block) {}
 
     fn visit_field(&mut self, field: &'ast Field) {
-        if let Some(ident) = &field.ident {
-            self.context = ident.to_string();
-        }
+        self.context = field
+            .ident
+            .as_ref()
+            .map_or_else(|| self.context.clone(), ToString::to_string);
         syn::visit::visit_type(self, &field.ty);
     }
 
@@ -155,32 +187,8 @@ impl<'ast> Visit<'ast> for NumberSites<'_> {
     }
 
     fn visit_type_path(&mut self, path: &'ast TypePath) {
-        if Self::is_named(path, &Self::PRIMITIVES) {
-            self.numbers.push(Violation::new(
-                self.site(path),
-                format!(
-                    "bare {} in {}; name what it counts with a newtype",
-                    path.path.segments[0].ident, self.context
-                ),
-            ));
-        } else if self
-            .policy
-            .lists::<WireType>(&self.aliases.resolve(&path.path))
-        {
-            self.numbers.push(Violation::new(
-                self.site(path),
-                format!(
-                    "{} in {} is a wire form; parse it into a type at the door",
-                    self.aliases.resolve(&path.path),
-                    self.context
-                ),
-            ));
-        } else if Self::is_named(path, &Self::SIZES) && !self.names_a_size() {
-            self.sizes.push(Violation::new(
-                self.site(path),
-                format!("usize in {} is neither a length nor an index; a count gets a newtype, a size says so in its name", self.context),
-            ));
-        }
+        self.sighting(path)
+            .filed(&mut self.numbers, &mut self.sizes);
         syn::visit::visit_type_path(self, path);
     }
 }

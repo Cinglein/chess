@@ -21,10 +21,12 @@ impl StateGraph {
     #[must_use]
     pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         let declarations = Declarations::collect(files);
-        let mut edges = EdgeScan::new(&declarations);
-        for file in files {
-            edges.scan(file);
-        }
+        let edges = files
+            .iter()
+            .fold(EdgeScan::new(&declarations), |mut edges, file| {
+                edges.scan(file);
+                edges
+            });
         println!(
             "state graph: {} vertices, {} edges",
             declarations.vertex_count(),

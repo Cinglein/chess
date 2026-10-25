@@ -64,13 +64,14 @@ impl ForeignReferences {
     }
 
     fn record(&mut self, first: Option<&str>, name: &str) {
-        if let Some(crate_name) = first
+        first
             .filter(|crate_name| *crate_name != self.own_crate)
             .and_then(|crate_name| crate_name.parse::<CrateName>().ok())
-        {
-            self.names.insert(Self::key(&crate_name, name));
-            self.crates.insert(crate_name);
-        }
+            .into_iter()
+            .for_each(|crate_name| {
+                self.names.insert(Self::key(&crate_name, name));
+                self.crates.insert(crate_name);
+            });
     }
 }
 
@@ -80,9 +81,13 @@ impl<'ast> Visit<'ast> for ForeignReferences {
     }
 
     fn visit_path(&mut self, path: &'ast Path) {
-        if let [first, second, ..] = path.segments.iter().collect::<Vec<_>>().as_slice() {
-            self.record(Some(&first.ident.to_string()), &second.ident.to_string());
-        }
+        path.segments
+            .first()
+            .zip(path.segments.iter().nth(1))
+            .into_iter()
+            .for_each(|(first, second)| {
+                self.record(Some(&first.ident.to_string()), &second.ident.to_string());
+            });
         syn::visit::visit_path(self, path);
     }
 }

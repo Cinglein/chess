@@ -42,17 +42,27 @@ struct ConstContexts<'scan> {
 }
 
 impl ConstContexts<'_> {
-    fn report(&mut self, span: Span, message: &str) {
-        self.violations.push(Violation::new(
-            Site::Line(self.path.into(), span.start().line),
-            message,
-        ));
+    fn violation(&self, span: Span, message: &str) -> Violation {
+        Violation::new(Site::Line(self.path.into(), span.start().line), message)
     }
 
     fn within_const(&mut self, visit: impl FnOnce(&mut Self)) {
         self.const_depth += 1;
         visit(self);
         self.const_depth -= 1;
+    }
+
+    fn cast_finding(&self, cast: &ExprCast) -> Option<Violation> {
+        (self.const_depth == 0 && !BitBoundary::covers(self.path)).then(|| {
+            self.violation(
+                cast.as_token.span,
+                "as cast outside a const fn or a bit boundary file; use From, TryFrom, or an EnumMap",
+            )
+        })
+    }
+
+    fn loop_finding(&self, span: Span, message: &str) -> Option<Violation> {
+        (self.const_depth > 0).then(|| self.violation(span, message))
     }
 }
 
@@ -93,39 +103,34 @@ impl<'ast> Visit<'ast> for ConstContexts<'_> {
     }
 
     fn visit_expr_cast(&mut self, cast: &'ast ExprCast) {
-        if self.const_depth == 0 && !BitBoundary::covers(self.path) {
-            self.report(
-                cast.as_token.span,
-                "as cast outside a const fn or a bit boundary file; use From, TryFrom, or an EnumMap",
-            );
-        }
+        let finding = self.cast_finding(cast);
+        self.violations.extend(finding);
         syn::visit::visit_expr_cast(self, cast);
     }
 
     fn visit_expr_while(&mut self, expr: &'ast ExprWhile) {
-        if self.const_depth > 0 && !matches!(*expr.cond, Expr::Let(_)) {
-            self.report(
+        let finding = (!matches!(*expr.cond, Expr::Let(_))).then(|| {
+            self.loop_finding(
                 expr.while_token.span,
                 "counter loop in const context; walk a slice with while let [head, rest @ ..]",
-            );
-        }
+            )
+        });
+        self.violations.extend(finding.flatten());
         syn::visit::visit_expr_while(self, expr);
     }
 
     fn visit_expr_loop(&mut self, expr: &'ast ExprLoop) {
-        if self.const_depth > 0 {
-            self.report(
-                expr.loop_token.span,
-                "open loop in const context; walk a slice with while let or recurse",
-            );
-        }
+        let finding = self.loop_finding(
+            expr.loop_token.span,
+            "open loop in const context; walk a slice with while let or recurse",
+        );
+        self.violations.extend(finding);
         syn::visit::visit_expr_loop(self, expr);
     }
 
     fn visit_expr_for_loop(&mut self, expr: &'ast ExprForLoop) {
-        if self.const_depth > 0 {
-            self.report(expr.for_token.span, "for loop in const context");
-        }
+        let finding = self.loop_finding(expr.for_token.span, "for loop in const context");
+        self.violations.extend(finding);
         syn::visit::visit_expr_for_loop(self, expr);
     }
 }
