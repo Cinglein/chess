@@ -19,15 +19,13 @@ impl Slice {
     }
 
     #[must_use]
-    pub fn picked<T>(&self, items: Vec<T>) -> Option<Vec<T>> {
-        (items.len() >= usize::from(self.count)).then(|| {
-            items
-                .into_iter()
-                .enumerate()
-                .filter(|(position, _)| position % usize::from(self.count) == self.index)
-                .map(|(_, item)| item)
-                .collect()
-        })
+    pub fn picked<T>(&self, items: Vec<T>) -> Vec<T> {
+        items
+            .into_iter()
+            .enumerate()
+            .filter(|(position, _)| position % usize::from(self.count) == self.index)
+            .map(|(_, item)| item)
+            .collect()
     }
 }
 
@@ -56,11 +54,11 @@ mod tests {
     const SECOND_OF_THREE: Slice = Slice::at_index(1, SliceCount::new(3));
     const ITEMS: [char; 5] = ['a', 'b', 'c', 'd', 'e'];
     #[test]
-    fn a_slice_takes_every_third_item_from_its_index_and_nothing_from_fewer_items_than_slices() {
+    fn a_slice_takes_every_third_item_from_its_index_and_nothing_from_fewer_items_than_its_index() {
         let picked = SECOND_OF_THREE.picked(ITEMS.to_vec());
         assert_eq!(
-            (picked, SECOND_OF_THREE.picked(ITEMS[..2].to_vec())),
-            (Some(vec!['b', 'e']), None)
+            (picked, SECOND_OF_THREE.picked(ITEMS[..1].to_vec())),
+            (vec!['b', 'e'], Vec::new())
         );
     }
 }
