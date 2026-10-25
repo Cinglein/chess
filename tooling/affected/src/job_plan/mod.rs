@@ -1,15 +1,18 @@
-use std::collections::BTreeSet;
+mod packing;
 
+use std::collections::{BTreeMap, BTreeSet};
+
+use packing::Packing;
 use serde::Serialize;
 
 use task::CrateName;
+use task::Policy;
 use task::Selection;
-use task::{Limit, Policy};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct JobPlan {
     crates: Vec<String>,
-    shards: Vec<usize>,
+    shards: Vec<String>,
     shard_count: usize,
 }
 
@@ -22,13 +25,14 @@ impl JobPlan {
         }
     }
 
-    pub fn sharded(self, mutants: usize, policy: &Policy) -> JobPlan {
-        let shard_count = mutants
-            .div_ceil(policy.limit(Limit::MutantsPerShard).count())
-            .min(policy.limit(Limit::MostShards).count());
+    pub fn sharded(self, counts: &BTreeMap<CrateName, usize>, policy: &Policy) -> JobPlan {
+        let shards: Vec<String> = Packing::shards(counts, policy)
+            .iter()
+            .map(ToString::to_string)
+            .collect();
         JobPlan {
-            shards: (0..shard_count).collect(),
-            shard_count,
+            shard_count: shards.len(),
+            shards,
             ..self
         }
     }
@@ -45,7 +49,7 @@ impl JobPlan {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use settings::EmbeddedDefaults;
 
@@ -56,17 +60,16 @@ mod tests {
     const THREE: usize = 3;
 
     #[test]
-    fn shards_grow_with_the_mutants_up_to_the_most_and_an_empty_plan_has_none() {
+    fn shards_follow_the_mutant_counts_and_an_empty_plan_has_none() {
         let policy = Policy::defaults();
         let per_shard = policy.limit(Limit::MutantsPerShard).count();
-        let most = policy.limit(Limit::MostShards).count();
         let eval = BTreeSet::from(["eval".parse().unwrap()]);
-        let some = JobPlan::over(&eval).sharded(per_shard * SOME + SOME, &policy);
-        let many = JobPlan::over(&eval).sharded(per_shard * most * SOME, &policy);
-        let none = JobPlan::over(&BTreeSet::new()).sharded(usize::MIN, &policy);
+        let counts = BTreeMap::from([("eval".parse().unwrap(), per_shard * SOME + SOME)]);
+        let some = JobPlan::over(&eval).sharded(&counts, &policy);
+        let none = JobPlan::over(&BTreeSet::new()).sharded(&BTreeMap::new(), &policy);
         assert_eq!(
-            (some.shards.len(), many.shard_count, none.shards.len()),
-            (THREE, most, usize::MIN)
+            (some.shards.len(), some.shard_count, none.shards.len()),
+            (THREE, THREE, usize::MIN)
         );
         assert!(none.selection().is_empty() && !some.selection().is_empty());
     }

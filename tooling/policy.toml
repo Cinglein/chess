@@ -15,9 +15,8 @@ assertions_per_test = 3
 lines_per_test = 20
 literals_per_test = 4
 largest_integer = 64
-parallel_jobs = 2
 mutants_per_shard = 64
-most_shards = 16
+most_shards = 20
 slowest_shown = 5
 
 [floors]

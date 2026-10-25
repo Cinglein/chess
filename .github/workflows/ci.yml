@@ -13,33 +13,11 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 4
   SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
 jobs:
-  affected:
-    runs-on: ubuntu-latest
-    outputs:
-      plan: ${{ steps.plan.outputs.plan }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-mutants
-      - id: plan
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
-          else
-            echo 'plan={"jobs":{"fmt":{},"clippy":{},"test":{},"lint":{},"mutants":{},"full":{"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}}}' >> "$GITHUB_OUTPUT"
-          fi
-
   fmt:
-    needs: affected
-    if: fromJSON(needs.affected.outputs.plan).jobs.fmt != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,8 +27,6 @@ jobs:
       - run: cargo fmt --all --check
 
   clippy:
-    needs: affected
-    if: fromJSON(needs.affected.outputs.plan).jobs.clippy != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,8 +41,6 @@ jobs:
       - run: cargo xtask wasm $SCOPE
 
   test:
-    needs: affected
-    if: fromJSON(needs.affected.outputs.plan).jobs.test != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,8 +52,6 @@ jobs:
       - run: cargo xtask test-time $SCOPE
 
   lint:
-    needs: affected
-    if: fromJSON(needs.affected.outputs.plan).jobs.lint != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,10 +60,9 @@ jobs:
       - run: cargo xtask lint
 
   mutants:
-    needs: affected
-    if: github.event_name == 'pull_request' && fromJSON(needs.affected.outputs.plan).jobs.mutants != null
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
         with:
@@ -109,7 +80,7 @@ jobs:
           CARGO_INCREMENTAL: 1
 
   ci-gate:
-    needs: [affected, fmt, clippy, test, lint, mutants]
+    needs: [fmt, clippy, test, lint, mutants]
     if: always()
     runs-on: ubuntu-latest
     steps:

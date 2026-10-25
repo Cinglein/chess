@@ -61,7 +61,7 @@ impl State for Spoke {}
 pub struct Rim;
 pub type Edge = Rim;
 impl State for Edge {}
-pub enum Wire { Live(u8), Dead }
+pub enum Wire { Live(u8), Dead, Faulty { code: u8 } }
 pub enum Side { Left, Right }
 pub struct Leaky { pub inner: u8 }
 impl Hub {
@@ -72,6 +72,10 @@ impl Hub {
     pub fn back(self) -> Hub { Hub }
     pub fn peek(&self) -> Spoke { Spoke }
     pub fn fresh() -> Spoke { Spoke }
+    pub fn held(&self) -> Spoke { self.spoke }
+    pub fn borrowed(&self, other: &Hub) -> Spoke { other.spoke }
+    pub fn pair(self) -> (Spoke, u8) { (Spoke, 0) }
+    pub fn poke(&mut self) {}
 }
 impl Spoke { pub fn home(self) -> Hub { Hub } }
 impl Wire { fn is_live(&self) -> bool { match self { Wire::Live(_) => true, Wire::Dead => false } } }
@@ -89,17 +93,25 @@ impl Walker {
     fn table(wire: Wire) -> i8 { match wire { Wire::Live(_) => -(1), Wire::Dead => [(0, 1)] } }
     fn peel(wire: Wire) -> u8 { if let Wire::Live(n) = wire { n } else { 0 } }
     fn force(wire: Wire) -> u8 { let Wire::Live(n) = wire else { return 0 }; n }
+    fn dead(wire: Wire) -> u8 { match wire { Wire::Dead => wire.weight(), _ => 0 } }
+    fn faulty(wire: Wire) -> u8 { match wire { Wire::Faulty { code } => code.max(1), _ => 0 } }
+    fn bump(&mut self) {}
 }
 ";
     const FILES: [(&str, &str); 2] = [("hub.rs", VERTICES), ("other.rs", MATCHER)];
-    const REPORTED: [&str; 9] = [
+    const REPORTED: [&str; 14] = [
         "hub.rs:11: field inner of Leaky is pub",
         "other.rs:9: match on Wire outside its file",
         "other.rs:12: match on Wire outside its file",
         "other.rs:13: match on Wire outside its file",
+        "other.rs:14: match on Wire outside its file",
+        "other.rs:15: match on Wire outside its file",
         "hub.rs:13: is a hidden edge Hub -> Spoke",
         "hub.rs:14: is a hidden edge Hub -> Rim",
         "hub.rs:18: is a view returning vertex Spoke",
+        "hub.rs:21: is a view returning vertex Spoke",
+        "hub.rs:22: returns a tuple holding a vertex",
+        "hub.rs:23: takes &mut self on vertex Hub",
         "other.rs:6: takes a vertex and returns Spoke",
         "Hub -> Spoke has 3 edges, at most one allowed: Step at other.rs:4, again at hub.rs:16, first at hub.rs:15",
     ];

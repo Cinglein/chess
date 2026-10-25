@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 task = { path = "../task" }
+affected = { path = "../affected" }
 settings = { path = "../../crates/settings" }
 sysinfo = "0.39"
 

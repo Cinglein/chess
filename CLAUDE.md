@@ -209,28 +209,33 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
   the diff must be caught, unviable, or a timeout (a mutant that hangs a test is a mutant the
   tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
-  whole workspace, optionally one `MUTANTS_SHARD=k/n`; the Mutants workflow runs it on every PR and
-  on demand in 16 shards, and a missed mutant anywhere fails the shard. A mutant no test can
+  whole workspace, or one `MUTANTS_SHARD`: `board/0/5` is one slice of a crate, `eval+fen` is a
+  set of whole crates, and a shard runs only the tests of its crates and of the dependents that
+  have tests, so a lint mutant never relinks xtask. The Mutants workflow packs the affected
+  crates' mutants into at most 20 such shards by count, slicing crates bigger than a shard, runs
+  them on every PR and on demand, and a missed mutant anywhere fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
-  `cargo-mutants` process already exists or the granted budget is not free, and caps the run
-  at 2 jobs and the compiler tasks the budget allows (3). The session hook denies a raw `cargo mutants`.
+  `cargo-mutants` process already exists or the granted budget is not free, and runs in place,
+  one mutant at a time, with the compiler tasks the budget allows (3). The session hook denies a raw `cargo mutants`.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
   group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job covering
   comments, free functions, the test budget, and the state graph. Run `cargo xtask ci` locally
-  before opening a PR. CI runs only what a change reaches: an `affected` job in each workflow
-  publishes the plan from `cargo xtask affected`, one entry per job (`fmt`, `clippy`, `test`,
-  `lint`, `mutants`, `full`) with that job's crates and, for `full`, mutant shards sized by the
-  policy. A crate change reaches every job over the crate and its dependents. An xtask change
+  before opening a PR. A PR's checks finish inside 5 minutes, ideally 1: `cargo xtask test`
+  runs `--lib` because every test lives in a library, the in-diff mutants job is cut at 6 minutes
+  and a shard at 8, and anything slower is a bug to fix, not a timeout to raise. CI runs only
+  what a change reaches: every CI job runs its task with `--affected` on a pull request and does
+  nothing when no crate it covers changed; the Mutants workflow's `affected` job publishes the
+  plan from `cargo xtask affected`, one entry per job (`fmt`, `clippy`, `test`, `lint`,
+  `mutants`, `full`) with that job's crates and, for `full`, the packed shards. A crate change reaches every job over the crate and its dependents. An xtask change
   reaches `fmt`, `lint`, and xtask's own `clippy` and `test` always, and `mutants` or `full`
   only when the changed file is in the `use` and `mod` closure of that job's entry files
   (`task/mutants/mod.rs`; `task/affected/mod.rs`, `main.rs`, `lib.rs`, `task/mod.rs`, and
-  `Cargo.toml` reach every job); a tool rerun covers every crate. Every job is gated on its
-  entry and runs its task with `--affected` on a pull request, pushes to `main` and the Monday
+  `Cargo.toml` reach every job); a tool rerun covers every crate. Pushes to `main` and the Monday
   schedule run everything, and `ci-gate` and `mutants-gate` always run and fail if any job they
   need failed, so they are the checks to require.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the

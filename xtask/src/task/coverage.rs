@@ -1,4 +1,4 @@
-use affected::{Affected, Job, Plan};
+use affected::{Affected, Changes, Job, Plan};
 use task::Failure;
 use task::Selection;
 use task::Workspace;
@@ -17,7 +17,7 @@ impl Coverage {
     ) -> Result<Coverage, Failure> {
         flags.try_fold(Coverage::Everything, |_, flag| {
             if flag == Self::AFFECTED_FLAG {
-                Affected::plan(workspace).map(Coverage::Planned)
+                Affected::plan(workspace, Changes::SinceMain).map(Coverage::Planned)
             } else {
                 Err(Failure::Usage(format!(
                     "unknown flag {flag}; the only flag is {}",
@@ -31,6 +31,13 @@ impl Coverage {
         match self {
             Coverage::Everything => Selection::Workspace,
             Coverage::Planned(plan) => plan.selection(job),
+        }
+    }
+
+    pub fn plan(self, workspace: &Workspace) -> Result<Plan, Failure> {
+        match self {
+            Coverage::Everything => Affected::plan(workspace, Changes::Everything),
+            Coverage::Planned(plan) => Ok(plan),
         }
     }
 }

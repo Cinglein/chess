@@ -14,6 +14,7 @@ impl Test {
         workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Test)
+            .argument(CargoArgument::Lib)
             .arguments(selection.arguments::<CargoTool>())
             .argument(CargoArgument::AllFeatures)
             .run()

@@ -3,8 +3,6 @@ use strum::Display;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[repr(u8)]
 pub enum MutantsArgument {
-    #[strum(serialize = "--jobs")]
-    Jobs,
     #[strum(serialize = "--in-diff")]
     InDiff,
     #[strum(serialize = "--in-place")]
@@ -15,6 +13,14 @@ pub enum MutantsArgument {
     Shard,
     #[strum(serialize = "--list")]
     List,
+    #[strum(serialize = "--json")]
+    Json,
     #[strum(serialize = "--jobserver-tasks")]
     JobserverTasks,
+    #[strum(serialize = "--test-package")]
+    TestPackage,
+    #[strum(serialize = "--test-workspace=true")]
+    TestWorkspaceOn,
+    #[strum(serialize = "--test-workspace=false")]
+    TestWorkspaceOff,
 }
