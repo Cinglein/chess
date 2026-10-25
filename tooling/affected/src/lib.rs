@@ -3,32 +3,28 @@ mod crate_load;
 mod job;
 mod job_plan;
 mod listed_mutant;
-mod package_graph;
 mod plan;
 mod reach;
 mod tested_crates;
-mod tool_graph;
 
 pub use changes::Changes;
 pub use job::Job;
 pub use job_plan::Packing;
-pub use package_graph::PackageGraph;
 pub use plan::Plan;
 pub use reach::Reach;
 pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
 
 use crate_load::CrateLoad;
-use job::{ToolScope, ToolTrigger};
+use job::ToolScope;
 use job_plan::JobPlan;
 use listed_mutant::ListedMutant;
 use strum::IntoEnumIterator;
-use tool_graph::ToolGraph;
 
 use task::CrateName;
 use task::Failure;
+use task::PackageGraph;
 use task::Policy;
 use task::Workspace;
 use task::{CargoArgument, CommandLine, MutantsArgument, Program, Stdout};
@@ -37,8 +33,6 @@ use task::{MutationTool, Selection};
 pub struct Affected;
 
 impl Affected {
-    const TOOL: &str = "xtask";
-
     pub fn run(workspace: &Workspace, policy: &Policy, plan: Plan) -> Result<(), Failure> {
         let loads = plan
             .job(Job::Full)
@@ -62,70 +56,36 @@ impl Affected {
 
     pub fn plan(workspace: &Workspace, changes: Changes) -> Result<Plan, Failure> {
         let reaches = changes.reaches(workspace)?;
-        let graph = Self::package_graph(workspace)?;
-        let tool_graph = ToolGraph::from_files(&workspace.source_files()?);
-        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches)))
+        Ok(Plan::new(Self::jobs(
+            workspace.packages(),
+            workspace.tool(),
+            &reaches,
+        )))
     }
 
-    pub fn package_graph(workspace: &Workspace) -> Result<PackageGraph, Failure> {
-        let metadata = workspace
-            .line(Program::Cargo)
-            .argument(CargoArgument::Metadata)
-            .argument(CargoArgument::FormatVersionOne)
-            .argument(CargoArgument::NoDeps)
-            .captured::<Stdout>()?;
-        PackageGraph::from_metadata(&metadata)
-    }
-
-    fn jobs(
-        graph: &PackageGraph,
-        tool_graph: &ToolGraph,
-        reaches: &[Reach],
-    ) -> BTreeMap<Job, JobPlan> {
-        let everything = || reaches.contains(&Reach::Everything);
-        let product = if everything() {
+    fn jobs(graph: &PackageGraph, tool: &CrateName, reaches: &[Reach]) -> BTreeMap<Job, JobPlan> {
+        let changed: BTreeSet<CrateName> = reaches.iter().filter_map(Reach::package).collect();
+        let product = if reaches.contains(&Reach::Everything) {
             graph.names()
         } else {
-            graph.dependents_closure(reaches.iter().filter_map(Reach::package).collect())
+            graph.dependents_closure(changed.clone())
         };
-        let tool_files: BTreeSet<PathBuf> = reaches
-            .iter()
-            .filter_map(Reach::tool_file)
-            .map(Path::to_path_buf)
-            .collect();
-        let touched = |job: Job| {
-            everything()
-                || (job.tool_trigger() == ToolTrigger::AnyToolChange && !tool_files.is_empty())
-                || tool_graph
-                    .closure(job.entries())
-                    .iter()
-                    .any(|reached| tool_files.contains(reached))
+        let whole = |job: Job| {
+            reaches.contains(&Reach::Everything)
+                || reaches.contains(&Reach::Driven(job.driver()))
+                || (job.tool_scope() == ToolScope::Everything && changed.contains(tool))
         };
         Job::iter()
-            .filter(|job| touched(*job) || !product.is_empty())
+            .filter(|job| whole(*job) || !product.is_empty())
             .map(|job| {
-                (
-                    job,
-                    JobPlan::over(&Self::crates_for(job, touched(job), &product, graph)),
-                )
+                let crates = if whole(job) {
+                    graph.names()
+                } else {
+                    product.clone()
+                };
+                (job, JobPlan::over(&crates))
             })
             .collect()
-    }
-
-    fn crates_for(
-        job: Job,
-        touched: bool,
-        product: &BTreeSet<CrateName>,
-        graph: &PackageGraph,
-    ) -> BTreeSet<CrateName> {
-        let extra: BTreeSet<CrateName> = match job.tool_scope() {
-            ToolScope::PlusTheTool if touched => Self::TOOL.parse().into_iter().collect(),
-            ToolScope::Everything if touched => graph.names(),
-            ToolScope::ProductOnly | ToolScope::PlusTheTool | ToolScope::Everything => {
-                BTreeSet::new()
-            }
-        };
-        product.iter().cloned().chain(extra).collect()
     }
 
     pub fn loads(
@@ -156,42 +116,35 @@ impl Affected {
 
 #[cfg(test)]
 mod tests {
-    use super::{Affected, Job, JobPlan, PackageGraph, Reach, ToolGraph};
+    use super::{Affected, Job, JobPlan, Reach};
     use std::collections::BTreeMap;
-    use task::SourceFile;
-    const METADATA: &str = r#"{"packages": [
-        {"name": "board", "dependencies": []},
-        {"name": "eval", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
-        {"name": "xtask", "dependencies": []}
+    use task::PackageGraph;
+    const METADATA: &str = r#"{"workspace_root": "/w", "packages": [
+        {"name": "board", "manifest_path": "/w/crates/board/Cargo.toml", "dependencies": []},
+        {"name": "eval", "manifest_path": "/w/crates/eval/Cargo.toml", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
+        {"name": "lint", "manifest_path": "/w/tooling/lint/Cargo.toml", "dependencies": []},
+        {"name": "xtask", "manifest_path": "/w/xtask/Cargo.toml", "dependencies": [{"name": "lint", "path": "/w/tooling/lint"}]}
     ]}"#;
-    const LINT: &str = "use crate::task::fn_shape::FnShape; pub struct Lint;";
-    const FILES: [(&str, &str); 2] = [
-        ("xtask/src/task/lint.rs", LINT),
-        ("xtask/src/task/fn_shape.rs", "pub struct FnShape;"),
-    ];
-    const LINT_CHANGE: &str = "xtask/src/task/fn_shape.rs";
     const TOOL: &str = "xtask";
-    const RUNS: [Job; 2] = [Job::Lint, Job::Clippy];
-    const SKIPS: [Job; 2] = [Job::Full, Job::Mutants];
-    const TOOL_ROOT: &str = "xtask/src/main.rs";
-    const BOARD_FILE: &str = "crates/board/src/lib.rs";
+    const LINT: &str = "lint";
+    const BOARD: &str = "board";
     const EVAL: &str = "eval";
+    const RUNS: usize = 2;
 
     #[test]
-    fn changes_reach_the_jobs_and_crates_their_tool_scope_says_and_no_others() {
+    fn a_change_reaches_its_dependents_the_tool_widens_full_and_mutation_config_its_runs() {
         let graph = PackageGraph::from_metadata(METADATA).unwrap();
-        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
-        let tool_graph = ToolGraph::from_files(&files);
-        let plan = |reach: &str| Affected::jobs(&graph, &tool_graph, &[Reach::reached_by(reach)]);
-        let (lint, tool, board) = (plan(LINT_CHANGE), plan(TOOL_ROOT), plan(BOARD_FILE));
+        let tool = TOOL.parse().unwrap();
+        let plan = |reach: Reach| Affected::jobs(&graph, &tool, &[reach]);
+        let package = |name: &str| plan(Reach::Package(name.parse().unwrap()));
         let has = |jobs: &BTreeMap<Job, JobPlan>, job: Job, name: &str| {
             jobs[&job].selection().includes(&name.parse().unwrap())
         };
         let (full, clippy) = (Job::Full, Job::Clippy);
-        let lint_jobs = RUNS.iter().all(|job| lint.contains_key(job))
-            && SKIPS.iter().all(|job| !lint.contains_key(job));
-        assert!(lint_jobs && has(&lint, clippy, TOOL));
-        assert!(has(&tool, full, EVAL) && has(&tool, clippy, TOOL));
-        assert!(!has(&board, clippy, TOOL) && has(&board, full, EVAL) && !has(&board, full, TOOL));
+        let (lint, tooled, board) = (package(LINT), package(TOOL), package(BOARD));
+        let config = plan(Reach::Driven(full.driver()));
+        assert!(has(&lint, clippy, TOOL) && !has(&lint, full, EVAL) && !has(&board, clippy, TOOL));
+        assert!(has(&tooled, full, EVAL) && has(&board, full, EVAL) && !has(&board, full, LINT));
+        assert!(config.len() == RUNS && has(&config, full, EVAL) && !config.contains_key(&clippy));
     }
 }

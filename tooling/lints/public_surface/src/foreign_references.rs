@@ -11,7 +11,7 @@ use task::SourceFile;
 
 #[derive(Default)]
 pub struct ForeignReferences {
-    own_crate: String,
+    own_crate: Option<CrateName>,
     names: BTreeMap<CrateName, BTreeSet<Name>>,
     crates: BTreeSet<CrateName>,
 }
@@ -21,8 +21,7 @@ impl ForeignReferences {
         let own_crate = file
             .crate_name()
             .filter(|_| !binaries.contains(file.path()))
-            .unwrap_or_default()
-            .to_owned();
+            .cloned();
         let mut references = ForeignReferences {
             own_crate,
             names: BTreeMap::new(),
@@ -62,8 +61,8 @@ impl ForeignReferences {
 
     fn record(&mut self, first: Option<&Ident>, name: &Ident) {
         first
-            .filter(|crate_name| **crate_name != self.own_crate)
             .map(CrateName::from)
+            .filter(|crate_name| Some(crate_name) != self.own_crate.as_ref())
             .into_iter()
             .for_each(|crate_name| {
                 self.names

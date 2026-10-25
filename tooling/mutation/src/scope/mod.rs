@@ -112,7 +112,7 @@ impl Scope {
         output: &OutputDirectory,
         shards: &[Shard],
     ) -> Result<Vec<MutantsRun>, Failure> {
-        let graph = Affected::package_graph(workspace)?;
+        let graph = workspace.packages();
         let tested = TestedCrates::collect(&workspace.source_files()?);
         shards
             .iter()
@@ -125,7 +125,7 @@ impl Scope {
                         .argument(directory.display())
                         .argument(MutantsArgument::TestWorkspaceOff)
                         .arguments(run.arguments())
-                        .arguments(TestPackages::around(&run, &graph, &tested).arguments()),
+                        .arguments(TestPackages::around(&run, graph, &tested).arguments()),
                     directory,
                 ))
             })

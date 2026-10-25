@@ -41,6 +41,7 @@ use public_surface::PublicSurface;
 use settings_shape::SettingsShape;
 use stacked::Stacked;
 use state_graph::StateGraph;
+use task::CrateName;
 use task::Failure;
 use task::Policy;
 use task::Workspace;
@@ -96,7 +97,8 @@ impl Task {
     }
 
     pub fn run(self, mut flags: impl Iterator<Item = String>) -> Result<(), Failure> {
-        let workspace = Workspace::locate();
+        let Ok(tool) = env!("CARGO_PKG_NAME").parse::<CrateName>();
+        let workspace = Workspace::locate(tool)?;
         let policy = Policy::defaults();
         let coverage = match self {
             Task::MutantCosts => Coverage::Everything,
