@@ -2,15 +2,15 @@ use settings::EmbeddedDefaults;
 
 use crate::task::affected::Job;
 use crate::task::clippy::Clippy;
-use crate::task::command_line::{CargoArgument, Program};
 use crate::task::coverage::Coverage;
-use crate::task::failure::Failure;
 use crate::task::lint::Lint;
-use crate::task::policy::Policy;
 use crate::task::test::Test;
 use crate::task::test_time::TestTime;
 use crate::task::wasm::Wasm;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Policy;
+use task::Workspace;
+use task::{CargoArgument, Program};
 
 pub struct Ci;
 

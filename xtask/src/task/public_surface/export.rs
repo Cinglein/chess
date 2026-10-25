@@ -1,7 +1,7 @@
 use syn::{Item, UseTree, Visibility};
 
-use crate::task::crate_name::CrateName;
-use crate::task::source_file::SourceFile;
+use task::CrateName;
+use task::SourceFile;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Export {

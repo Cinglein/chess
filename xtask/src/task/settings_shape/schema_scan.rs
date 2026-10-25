@@ -4,7 +4,7 @@ use syn::visit::Visit;
 use syn::{ItemImpl, ItemStruct, Type};
 
 use super::deserialized_struct::DeserializedStruct;
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 pub struct SchemaScan {
     path: PathBuf,

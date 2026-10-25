@@ -13,6 +13,7 @@ impl BitBoundary {
         "xtask/src/task/magics/",
     ];
 
+    #[must_use]
     pub fn covers(path: &Path) -> bool {
         Self::FILES
             .iter()

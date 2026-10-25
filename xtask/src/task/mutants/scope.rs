@@ -1,13 +1,11 @@
 use std::fs;
 
-use crate::task::command_line::{
-    CargoArgument, CommandLine, GitArgument, MutantsArgument, Program, Stdout,
-};
-use crate::task::failure::Failure;
-use crate::task::policy::{Limit, Policy};
-use crate::task::selection::{CargoTool, MutationTool, Selection};
-use crate::task::site::Site;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Site;
+use task::Workspace;
+use task::{CargoArgument, CommandLine, GitArgument, MutantsArgument, Program, Stdout};
+use task::{CargoTool, MutationTool, Selection};
+use task::{Limit, Policy};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {

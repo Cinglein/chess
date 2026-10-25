@@ -10,7 +10,7 @@ use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, Stmt, Type
 
 use super::forwarder::Forwarder;
 use super::workspace_types::WorkspaceTypes;
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 pub struct Forwarders<'types> {
     types: &'types WorkspaceTypes,

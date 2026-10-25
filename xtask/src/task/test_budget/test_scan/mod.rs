@@ -10,10 +10,10 @@ use syn::ItemMod;
 use syn::visit::Visit;
 
 use super::TestBudget;
-use crate::task::policy::{Limit, Policy};
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
+use task::{Limit, Policy};
 
 pub(super) struct TestScan<'scan> {
     path: &'scan Path,

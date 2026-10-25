@@ -10,24 +10,29 @@ pub struct AvailableGib(u64);
 impl AvailableGib {
     const GIB_SHIFT: u32 = 30;
 
+    #[must_use]
     pub const fn from_bytes(bytes: u64) -> AvailableGib {
         AvailableGib(bytes >> Self::GIB_SHIFT)
     }
 
+    #[must_use]
     pub fn measured() -> AvailableGib {
         let mut system = System::new();
         system.refresh_memory();
         Self::from_bytes(system.available_memory())
     }
 
+    #[must_use]
     pub const fn bytes(self) -> u64 {
         self.0 << Self::GIB_SHIFT
     }
 
+    #[must_use]
     pub const fn minus(self, other: AvailableGib) -> AvailableGib {
         AvailableGib(self.0.saturating_sub(other.0))
     }
 
+    #[must_use]
     pub fn divided_by(self, other: AvailableGib) -> usize {
         usize::try_from(self.0 / other.0).unwrap_or(usize::MAX)
     }

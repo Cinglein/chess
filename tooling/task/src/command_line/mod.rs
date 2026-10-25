@@ -18,7 +18,7 @@ use std::fmt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Output};
 
-use crate::task::failure::Failure;
+use crate::failure::Failure;
 
 #[derive(Clone, Debug)]
 pub struct CommandLine {
@@ -28,6 +28,7 @@ pub struct CommandLine {
 }
 
 impl CommandLine {
+    #[must_use]
     pub fn new(program: Program) -> CommandLine {
         CommandLine {
             program,
@@ -36,6 +37,7 @@ impl CommandLine {
         }
     }
 
+    #[must_use]
     pub fn in_directory(self, directory: PathBuf) -> CommandLine {
         CommandLine {
             directory: Some(directory),
@@ -43,11 +45,13 @@ impl CommandLine {
         }
     }
 
+    #[must_use]
     pub fn argument(mut self, argument: impl fmt::Display) -> CommandLine {
         self.arguments.push(argument.to_string());
         self
     }
 
+    #[must_use]
     pub fn arguments(self, arguments: impl IntoIterator<Item = impl fmt::Display>) -> CommandLine {
         arguments.into_iter().fold(self, CommandLine::argument)
     }

@@ -9,7 +9,7 @@ use method_shape::MethodShape;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, ItemMod, ItemStruct, Type};
 
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 #[derive(Default)]
 pub struct BagCandidates {

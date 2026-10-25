@@ -3,9 +3,9 @@ use std::path::{Component, Path, PathBuf};
 
 use syn::ItemMod;
 
-use crate::task::failure::Failure;
-use crate::task::site::Site;
-use crate::task::workspace::Workspace;
+use crate::failure::Failure;
+use crate::site::Site;
+use crate::workspace::Workspace;
 
 pub struct SourceFile {
     path: PathBuf,
@@ -32,29 +32,35 @@ impl SourceFile {
         Ok(Self { path, text, syntax })
     }
 
+    #[must_use]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[must_use]
     pub fn crate_name(&self) -> Option<&str> {
         let mut components = self.path.components();
         match components.next() {
-            Some(Component::Normal(root)) if root == "crates" => components
-                .next()
-                .and_then(|component| component.as_os_str().to_str()),
+            Some(Component::Normal(root)) if root == "crates" || root == "tooling" => components
+                .map(Component::as_os_str)
+                .find(|name| *name != "lints")
+                .and_then(|name| name.to_str()),
             Some(Component::Normal(root)) if root == "xtask" => Some("xtask"),
             _ => None,
         }
     }
 
+    #[must_use]
     pub fn text(&self) -> &str {
         &self.text
     }
 
+    #[must_use]
     pub fn syntax(&self) -> &syn::File {
         &self.syntax
     }
 
+    #[must_use]
     pub fn is_test_module(module: &ItemMod) -> bool {
         module.attrs.iter().any(|attribute| {
             attribute.path().is_ident("cfg")

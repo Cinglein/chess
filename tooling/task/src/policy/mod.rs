@@ -22,7 +22,7 @@ use percent::Percent;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
 
-use crate::task::available_gib::AvailableGib;
+use crate::available_gib::AvailableGib;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -40,26 +40,32 @@ impl EmbeddedDefaults for Policy {
 }
 
 impl Policy {
+    #[must_use]
     pub fn limit(&self, limit: Limit) -> Most {
         self.limits[limit]
     }
 
+    #[must_use]
     pub fn floor(&self, floor: Floor) -> Least {
         self.floors[floor]
     }
 
+    #[must_use]
     pub fn share(&self, share: Share) -> Percent {
         self.shares[share]
     }
 
+    #[must_use]
     pub fn memory(&self, share: MemoryShare) -> AvailableGib {
         self.memory_gib[share]
     }
 
+    #[must_use]
     pub fn interval(&self, interval: Interval) -> Millis {
         self.millis[interval]
     }
 
+    #[must_use]
     pub fn is_vague(&self, name: &str) -> bool {
         !self.floor(Floor::FnName).allows(name.len())
             || self.vague.iter().any(|vague| vague == name)

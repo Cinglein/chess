@@ -1121,6 +1121,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "task"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "enum-map",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "settings",
+ "strum",
+ "syn 2.0.119",
+ "sysinfo",
+ "thiserror",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1560,6 +1578,7 @@ dependencies = [
  "strum",
  "syn 2.0.119",
  "sysinfo",
+ "task",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]

@@ -4,8 +4,8 @@ mod text_sites;
 use number_sites::NumberSites;
 use text_sites::TextSites;
 
-use crate::task::report::Report;
-use crate::task::source_file::SourceFile;
+use task::Report;
+use task::SourceFile;
 
 pub struct PrimitiveBoundary;
 
@@ -28,7 +28,7 @@ impl PrimitiveBoundary {
 #[cfg(test)]
 mod tests {
     use super::PrimitiveBoundary;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const NEWTYPE: &str =
         "pub struct Depth(u8); impl Depth { pub fn plies(self) -> u8 { self.0 } }";

@@ -1,12 +1,12 @@
 use syn::visit::Visit;
 use syn::{ItemMod, LitFloat, LitInt};
 
-use crate::task::binary_files::BinaryFiles;
 use crate::task::named_numbers::NamedNumbers;
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::BinaryFiles;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct NoNumbersInBinaries;
 
@@ -57,7 +57,7 @@ impl<'ast> Visit<'ast> for Numbers {
 #[cfg(test)]
 mod tests {
     use super::NoNumbersInBinaries;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const MAIN: &str = "mod worker; fn main() {}";
     const WORKER: &str = "pub struct W; impl W { pub fn size() -> usize { 42 } }";

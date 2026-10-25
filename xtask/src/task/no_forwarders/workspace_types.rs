@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use syn::visit::Visit;
 use syn::{ItemEnum, ItemStruct, ItemTrait};
 
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 #[derive(Default)]
 pub struct WorkspaceTypes(BTreeSet<String>);

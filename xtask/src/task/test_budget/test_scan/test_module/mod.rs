@@ -15,9 +15,9 @@ use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
 use super::super::measurement::Measurement;
-use crate::task::policy::{Limit, Policy};
-use crate::task::site::Site;
-use crate::task::violation::Violation;
+use task::Site;
+use task::Violation;
+use task::{Limit, Policy};
 
 pub(super) struct TestModule<'scan> {
     path: &'scan Path,

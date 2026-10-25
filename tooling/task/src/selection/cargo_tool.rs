@@ -1,5 +1,5 @@
 use super::tool::Tool;
-use crate::task::command_line::CargoArgument;
+use crate::command_line::CargoArgument;
 
 pub struct CargoTool;
 

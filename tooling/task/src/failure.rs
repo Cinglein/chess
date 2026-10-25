@@ -2,8 +2,8 @@ use std::io;
 
 use thiserror::Error;
 
-use crate::task::report::Report;
-use crate::task::site::Site;
+use crate::report::Report;
+use crate::site::Site;
 
 #[derive(Debug, Error)]
 pub enum Failure {

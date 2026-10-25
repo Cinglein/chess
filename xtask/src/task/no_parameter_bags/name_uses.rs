@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use syn::Ident;
 use syn::visit::Visit;
 
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 #[derive(Default)]
 pub struct NameUses(BTreeSet<String>);

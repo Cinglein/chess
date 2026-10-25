@@ -12,9 +12,9 @@ use super::declarations::Declarations;
 use super::function_shape::FunctionShape;
 use super::impl_context::ImplContext;
 use super::type_name::TypeName;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct EdgeScan<'scan> {
     declarations: &'scan Declarations,

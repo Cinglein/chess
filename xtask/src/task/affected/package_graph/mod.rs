@@ -4,8 +4,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use metadata::Metadata;
 
-use crate::task::crate_name::CrateName;
-use crate::task::failure::Failure;
+use task::CrateName;
+use task::Failure;
 
 pub struct PackageGraph {
     dependents: BTreeMap<CrateName, BTreeSet<CrateName>>,

@@ -1,7 +1,7 @@
-use crate::task::command_line::{CargoArgument, Program};
-use crate::task::failure::Failure;
-use crate::task::selection::{CargoTool, Selection};
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Workspace;
+use task::{CargoArgument, Program};
+use task::{CargoTool, Selection};
 
 pub struct Test;
 

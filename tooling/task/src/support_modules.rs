@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use syn::ItemMod;
 use syn::visit::Visit;
 
-use crate::task::source_file::SourceFile;
+use crate::source_file::SourceFile;
 
 #[derive(Default)]
 pub struct SupportModules {
@@ -11,6 +11,7 @@ pub struct SupportModules {
 }
 
 impl SupportModules {
+    #[must_use]
     pub fn paths(file: &SourceFile) -> Vec<PathBuf> {
         let mut modules = SupportModules::default();
         modules.visit_file(file.syntax());

@@ -5,12 +5,14 @@ use syn::{Item, ItemUse, UseTree, Visibility};
 pub struct UseEdges(Vec<Vec<String>>);
 
 impl UseEdges {
+    #[must_use]
     pub fn in_file(file: &syn::File) -> Vec<Vec<String>> {
         let mut edges = UseEdges::default();
         edges.visit_file(file);
         edges.0
     }
 
+    #[must_use]
     pub fn count_reexports(file: &syn::File) -> usize {
         file.items
             .iter()

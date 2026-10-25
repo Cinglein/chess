@@ -24,6 +24,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
+- `tooling/task`: the library behind xtask: `SourceFile`, `Report`, `Violation`, `Site`, `Failure`,
+  `Policy` from `tooling/policy.toml`, `Workspace`, `CommandLine`, and the shared scanners. Tooling
+  crates live under `tooling/` (lints under `tooling/lints/`), one crate per lint or task, so the
+  affected graph, the public surface, and the mutation run judge each on its own.
 - `crates/settings`: `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
   file or writes the embedded defaults when it is missing, and `SettingsError` names what went wrong.
 - `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
@@ -133,7 +137,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `#[serde(deny_unknown_fields)]`, so a misspelt key is an error; `cargo xtask settings-shape`
   enforces that for every struct reachable through the fields of an `EmbeddedDefaults`
   implementor, which is how it tells a file we write from an external schema such as `cargo
-  metadata`. xtask is such a binary: its lint budgets are settings in `xtask/policy.toml`, read
+  metadata`. xtask is such a binary: its lint budgets are settings in `tooling/policy.toml`, read
   through `Policy`, and the xtask package is a library of tasks plus a `main.rs` that only parses
   the command line, so every lint applies to it.
 - A number has a name. In `crates/`, outside tests, test support files, and the bit boundary
@@ -142,7 +146,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   Literals inside macro arguments count. `cargo xtask named-numbers` enforces it.
 - Memory budget: anything this session runs on the owner's laptop stays under 8 GiB, because
   the laptop carries other work. `.cargo/config.toml` caps every cargo build at 3 compiler jobs,
-  the mutation task derives its caps from the same 8 GiB (`granted_gib` in `xtask/policy.toml`),
+  the mutation task derives its caps from the same 8 GiB (`granted_gib` in `tooling/policy.toml`),
   and long runs go one at a time. More needs the owner's explicit permission, given per run.
 - Small PRs: one concept each. Split anything that needs more than one idea to review.
 - Zero comments in Rust code. This includes `//`, `/* */`, and doc comments. `cargo xtask no-comments` enforces it in CI. Use clear names and small functions instead.

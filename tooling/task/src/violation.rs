@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::task::site::Site;
+use crate::site::Site;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Violation {

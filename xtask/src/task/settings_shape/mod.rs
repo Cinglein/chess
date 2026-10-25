@@ -8,10 +8,10 @@ use deserialized_struct::DeserializedStruct;
 use keys::Keys;
 use schema_scan::SchemaScan;
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct SettingsShape;
 
@@ -57,7 +57,7 @@ impl SettingsShape {
 #[cfg(test)]
 mod tests {
     use super::SettingsShape;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
         #[derive(Deserialize)]

@@ -9,8 +9,8 @@ pub use tool::Tool;
 use std::collections::BTreeSet;
 use std::fmt;
 
-use crate::task::command_line::CargoArgument;
-use crate::task::crate_name::CrateName;
+use crate::command_line::CargoArgument;
+use crate::crate_name::CrateName;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Selection {
@@ -19,6 +19,7 @@ pub enum Selection {
 }
 
 impl Selection {
+    #[must_use]
     pub fn arguments<T: Tool>(&self) -> Vec<String> {
         match self {
             Selection::Workspace => T::whole_workspace()
@@ -32,6 +33,7 @@ impl Selection {
         }
     }
 
+    #[must_use]
     pub fn includes(&self, crate_name: &CrateName) -> bool {
         match self {
             Selection::Workspace => true,
@@ -39,6 +41,7 @@ impl Selection {
         }
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         match self {
             Selection::Workspace => false,

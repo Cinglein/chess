@@ -4,10 +4,10 @@ mod name_uses;
 use bag_candidates::BagCandidates;
 use name_uses::NameUses;
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct NoParameterBags;
 
@@ -52,7 +52,7 @@ impl NoParameterBags {
 #[cfg(test)]
 mod tests {
     use super::NoParameterBags;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const BAG: &str = "pub(crate) struct Bag { a: u8 } impl Bag { pub fn new(a: u8) -> Bag { Bag { a } } pub fn a(&self) -> u8 { self.a } }";
     const RECORD: &str = "pub(crate) struct Record { a: u8 } impl Record { pub fn new(a: u8) -> Record { Record { a } } pub fn a(&self) -> u8 { self.a } }";

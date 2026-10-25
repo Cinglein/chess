@@ -7,10 +7,10 @@ use forwarders::Forwarders;
 use syn::visit::Visit;
 use workspace_types::WorkspaceTypes;
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct NoForwarders;
 
@@ -52,7 +52,7 @@ impl NoForwarders {
 #[cfg(test)]
 mod tests {
     use super::{NoForwarders, WorkspaceTypes};
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 struct Own;

@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 settings = { path = "../crates/settings" }
+task = { path = "../tooling/task" }
 toml = "0.9"
 derive_more = { version = "2", features = ["display"] }
 sysinfo = "0.39"

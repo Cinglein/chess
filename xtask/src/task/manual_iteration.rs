@@ -5,10 +5,10 @@ use syn::visit::Visit;
 
 use syn::{Block, Expr, ExprForLoop, ExprMethodCall, ItemMod, Local, Pat, Stmt};
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct ManualIteration;
 
@@ -126,7 +126,7 @@ impl<'ast> Visit<'ast> for IteratorCalls {
 #[cfg(test)]
 mod tests {
     use super::ManualIteration;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 impl W {
