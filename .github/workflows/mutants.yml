@@ -69,7 +69,47 @@ jobs:
     needs: [affected, full]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ISSUE_TITLE: Surviving mutants on main
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - run: |
-          echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"' && exit 1
-          echo "every shard passed or none was needed"
+      - id: verdict
+        run: |
+          if echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"'; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        with:
+          pattern: mutants-*
+          path: shards
+      - id: issue
+        if: github.ref == 'refs/heads/main'
+        run: |
+          open=$(gh issue list --state open --json number,title --jq "first(.[] | select(.title == \"$ISSUE_TITLE\") | .number)")
+          echo "number=$open" >> "$GITHUB_OUTPUT"
+      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.failed == 'true'
+        env:
+          ISSUE: ${{ steps.issue.outputs.number }}
+        run: |
+          { echo "Run: $RUN_URL"; echo; echo '```'; find shards -name missed.txt -exec cat {} + 2>/dev/null | sort -u; echo '```'; } > body.md
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --body-file body.md
+            gh issue comment "$ISSUE" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --title "$ISSUE_TITLE" --body-file body.md
+          fi
+      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.failed == 'false' && steps.issue.outputs.number != ''
+        env:
+          ISSUE: ${{ steps.issue.outputs.number }}
+        run: gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
+      - if: steps.verdict.outputs.failed == 'true'
+        run: exit 1
+      - run: echo "every shard passed or none was needed"
