@@ -15,14 +15,13 @@ use task::Failure;
 use task::Selection;
 use task::Site;
 use task::Workspace;
-use task::{CargoArgument, MutantsArgument, Program};
+use task::{CargoArgument, CommandLine, MutantsArgument, Program};
 use task::{MemoryShare, Policy};
 
 pub struct Mutants;
 
 impl Mutants {
     const LOCK_FILE: &str = "target/mutants.lock";
-    const OUTPUT_DIRECTORY: &str = "target/mutants";
     const PROCESS_NAME: &str = "cargo-mutants";
 
     pub fn run(
@@ -46,15 +45,31 @@ impl Mutants {
                 budget
                     .minus(policy.memory(MemoryShare::ForTheTests))
                     .divided_by(policy.memory(MemoryShare::PerCompilerTask)),
-            )
-            .argument(MutantsArgument::Output)
-            .argument(Self::OUTPUT_DIRECTORY);
-        let line = scope.applied(line, workspace, selection)?;
+            );
+        let lines = scope.applied(line, workspace, selection)?;
+        let failed: Vec<String> = lines
+            .iter()
+            .map(|line| Self::accepted(line, budget, policy))
+            .collect::<Result<Vec<bool>, Failure>>()?
+            .into_iter()
+            .zip(&lines)
+            .filter(|(accepted, _)| !accepted)
+            .map(|(_, line)| line.to_string())
+            .collect();
+        failed
+            .is_empty()
+            .then_some(())
+            .ok_or_else(|| Failure::Command(failed.join("\n")))
+    }
+
+    fn accepted(
+        line: &CommandLine,
+        budget: AvailableGib,
+        policy: &Policy,
+    ) -> Result<bool, Failure> {
         let mut child = line.spawn()?;
         let status = MemoryWatch::over(&child, budget, policy).guard(&mut child)?;
-        MutantsExit::accepts(status)
-            .then_some(())
-            .ok_or_else(|| Failure::Command(line.to_string()))
+        Ok(MutantsExit::accepts(status))
     }
 
     fn exclusive_lock(workspace: &Workspace) -> Result<File, Failure> {

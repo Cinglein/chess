@@ -59,17 +59,14 @@ mod tests {
     use task::{Interval, Policy};
 
     const SOME: usize = 2;
+    const ONE: usize = 1;
 
     #[test]
     fn shards_follow_the_mutant_counts_and_an_empty_plan_has_none() {
         let policy = Policy::defaults();
         let eval = BTreeSet::from(["eval".parse().unwrap()]);
-        let load = CrateLoad::new(
-            "eval".parse().unwrap(),
-            SOME,
-            SOME,
-            policy.interval(Interval::PerShard),
-        );
+        let each = policy.interval(Interval::PerShard);
+        let load = CrateLoad::new("eval".parse().unwrap(), ONE, each, &policy);
         let some = JobPlan::over(&eval).sharded(core::slice::from_ref(&load), &policy);
         let none = JobPlan::over(&BTreeSet::new()).sharded(&[], &policy);
         assert_eq!(
