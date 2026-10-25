@@ -99,14 +99,13 @@ mod tests {
     const TREE: [&str; 4] = ["a.rs", "nested/b.rs", "target/skipped.rs", "notes.txt"];
     const FOUND: [&str; 2] = ["a.rs", "nested/b.rs"];
     const FIRST: &str = "a.rs";
-    const SOURCE: &str = "pub struct Found;";
 
     #[test]
     fn rust_files_are_found_below_the_root_outside_target_and_named_relative_to_it() {
         let root = std::env::temp_dir().join(format!("chess-workspace-{}", std::process::id()));
         TREE.iter().map(|file| root.join(file)).for_each(|path| {
             fs::create_dir_all(path.parent().unwrap()).unwrap();
-            fs::write(&path, SOURCE).unwrap();
+            fs::write(&path, "pub struct Found;").unwrap();
         });
         let workspace = Workspace { root };
         let files: Vec<PathBuf> = workspace

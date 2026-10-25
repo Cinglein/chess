@@ -71,37 +71,10 @@ impl TestBinary {
             .argument(&test)
             .argument(TestArgument::Quiet)
             .captured::<Stdout>()?;
-        Ok(TestTiming::new(self.name(), test, started.elapsed()))
+        Ok(TestTiming::new(&self.path, test, started.elapsed()))
     }
 
     fn line(&self) -> CommandLine {
         CommandLine::new(Program::Executable(self.path.clone()))
-    }
-
-    fn name(&self) -> String {
-        self.path
-            .file_name()
-            .map(|name| name.to_string_lossy())
-            .and_then(|name| name.rsplit_once('-').map(|(stem, _)| stem.to_owned()))
-            .unwrap_or_default()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::TestBinary;
-
-    const BINARY: &str = "target/debug/deps/board-1a2b3c";
-    const NAME: &str = "board";
-
-    #[test]
-    fn a_test_binary_is_named_by_its_file_stem_before_the_hash() {
-        assert_eq!(
-            TestBinary {
-                path: BINARY.into()
-            }
-            .name(),
-            NAME
-        );
     }
 }

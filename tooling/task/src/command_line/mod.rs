@@ -113,11 +113,8 @@ mod tests {
     use super::{CargoArgument, CommandLine, Program, Stderr, Stdout};
 
     const SHOWN: &str = "git fmt --all";
-    const PRINT_DIRECTORY: &str = "pwd";
-    const SHELL: &str = "sh";
+    const PROGRAMS: [&str; 4] = ["pwd", "sh", "true", "false"];
     const TO_STDERR: [&str; 2] = ["-c", "echo err >&2"];
-    const SUCCEEDS: &str = "true";
-    const FAILS: &str = "false";
     const COMPLAINT: &str = "err";
 
     #[test]
@@ -130,9 +127,10 @@ mod tests {
 
     #[test]
     fn a_command_runs_in_its_directory_and_each_stream_is_captured_on_its_own() {
+        let [pwd, sh, succeeds, fails] = PROGRAMS;
         let executable = |name: &str| CommandLine::new(Program::Executable(name.into()));
         let directory = std::env::temp_dir();
-        let shown = executable(PRINT_DIRECTORY)
+        let shown = executable(pwd)
             .in_directory(directory.clone())
             .captured::<Stdout>()
             .unwrap();
@@ -140,11 +138,11 @@ mod tests {
             PathBuf::from(shown.trim()).canonicalize().ok(),
             directory.canonicalize().ok()
         );
-        let complaint = executable(SHELL)
+        let complaint = executable(sh)
             .arguments(TO_STDERR)
             .captured::<Stderr>()
             .unwrap();
         assert_eq!(complaint.trim(), COMPLAINT);
-        assert!(executable(SUCCEEDS).run().is_ok() && executable(FAILS).run().is_err());
+        assert!(executable(succeeds).run().is_ok() && executable(fails).run().is_err());
     }
 }
