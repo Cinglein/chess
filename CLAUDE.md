@@ -126,7 +126,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   container size or index: in `crates/` it may be declared only under a name that says so
   (`length`, `capacity`, `size`, `bytes`, `index`); a `usize` named after what it counts is a
   count and gets a newtype (`GameCount`, `RoundCount`, `PlyCount`). Text is inspected
-  (`split_*`, `strip_*`, `trim`, `chars`) or produced (`format!`, `to_string`, `String::from`)
+  (`split_*`, `trim*`, `chars`, `char_indices`) or produced (`format!`, `to_string`, `String::from`)
   only in a file that hand-writes a `FromStr`, `TryFrom`, or `Display` impl, or as the direct
   argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The
   text clause covers `crates/`; xtask's values are text. A wire type is a primitive for this
