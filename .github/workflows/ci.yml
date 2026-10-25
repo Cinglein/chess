@@ -63,6 +63,12 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 6
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [0, 1, 2]
+    env:
+      MUTANTS_SLICE: ${{ matrix.slice }}/3
     steps:
       - uses: actions/checkout@v4
         with:

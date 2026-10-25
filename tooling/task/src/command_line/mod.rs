@@ -93,9 +93,9 @@ impl CommandLine {
     fn command(&self) -> Command {
         let mut command = Command::new(self.program.to_string());
         command.args(&self.arguments);
-        if let Some(directory) = &self.directory {
+        self.directory.iter().for_each(|directory| {
             command.current_dir(directory);
-        }
+        });
         command
     }
 }

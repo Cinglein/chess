@@ -27,7 +27,7 @@ pub use failure::Failure;
 pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Policy, Share, WireType};
 pub use report::Report;
 pub use selection::{CargoTool, MutationTool, Selection};
-pub use shard::Shard;
+pub use shard::{Shard, Slice};
 pub use site::Site;
 pub use source_file::SourceFile;
 pub use support_modules::SupportModules;

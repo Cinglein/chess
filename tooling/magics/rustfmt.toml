@@ -1,0 +1,2 @@
+short_array_element_width_threshold = 60
+struct_lit_width = 40

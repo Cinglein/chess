@@ -1,3 +1,5 @@
+use std::iter;
+
 use board::{Bitboard, Magic, Slider, Square, SubsetIter};
 
 use crate::xor_shift::XorShift;
@@ -15,27 +17,20 @@ impl MagicSearch {
             .map(|subset| S::attacks_by_ray(square, subset))
             .collect();
         let table = vec![Bitboard::EMPTY; Magic::new(mask, 0, 0).table_size()];
-        MagicSearch {
-            mask,
-            attacks,
-            table,
-        }
+        MagicSearch { mask, attacks, table }
     }
 
     pub fn find_multiplier(&mut self, rng: &mut XorShift) -> u64 {
-        loop {
-            let candidate = rng.sparse();
-            if self.accepts(candidate) {
-                return candidate;
-            }
-        }
+        iter::repeat_with(|| rng.sparse())
+            .find(|candidate| self.accepts(*candidate))
+            .expect("an endless stream of candidates holds a magic")
     }
 
     fn accepts(&mut self, candidate: u64) -> bool {
-        if !self.spreads_well(candidate) {
-            return false;
-        }
-        let magic = Magic::new(self.mask, candidate, 0);
+        self.spreads_well(candidate) && self.fills_all(Magic::new(self.mask, candidate, 0))
+    }
+
+    fn fills_all(&mut self, magic: Magic) -> bool {
         self.table.fill(Bitboard::EMPTY);
         let table = &mut self.table;
         SubsetIter::new(self.mask)
@@ -44,13 +39,10 @@ impl MagicSearch {
     }
 
     fn fills(table: &mut [Bitboard], index: usize, attacks: Bitboard) -> bool {
-        let Some(slot) = table.get_mut(index) else {
-            return false;
-        };
-        if slot.is_empty() {
-            *slot = attacks;
-        }
-        *slot == attacks
+        table.get_mut(index).is_some_and(|slot| {
+            *slot = if slot.is_empty() { attacks } else { *slot };
+            *slot == attacks
+        })
     }
 
     fn spreads_well(&self, candidate: u64) -> bool {

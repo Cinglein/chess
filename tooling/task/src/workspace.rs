@@ -70,22 +70,21 @@ impl Workspace {
 
     fn rust_files_in(entry: &DirEntry) -> Result<Vec<PathBuf>, Failure> {
         let path = entry.path();
-        if path.is_dir() {
-            return if Self::EXCLUDED_DIRECTORIES
-                .iter()
-                .any(|excluded| entry.file_name() == *excluded)
-            {
-                Ok(Vec::new())
-            } else {
-                Self::rust_files_under(&path)
-            };
+        if !path.is_dir() {
+            Ok(path
+                .extension()
+                .is_some_and(|extension| extension == "rs")
+                .then_some(path)
+                .into_iter()
+                .collect())
+        } else if Self::EXCLUDED_DIRECTORIES
+            .iter()
+            .any(|excluded| entry.file_name() == *excluded)
+        {
+            Ok(Vec::new())
+        } else {
+            Self::rust_files_under(&path)
         }
-        Ok(path
-            .extension()
-            .is_some_and(|extension| extension == "rs")
-            .then_some(path)
-            .into_iter()
-            .collect())
     }
 }
 
