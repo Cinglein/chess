@@ -23,6 +23,17 @@ exclude_re = [
     "Affected::run",
     "Affected::loads",
     "Changes::reaches",
+    "Scope::(applied|one_shard|write_diff|tested_by_changes)",
+    "Magics::run",
+    "MagicTables::write",
+    "MagicTables::find_all",
+    "<impl Iterator for XorShift>::next",
+    "XorShift::sparse",
+    "Mutants::run",
+    "Mutants::refuse_if_another_run_exists",
+    "Mutants::refuse_if_memory_is_short",
+    "MutantsRun::accepted",
+    "MemoryWatch<'policy>::(sample|enforce|grown|children_outside)",
 ]
 additional_cargo_args = ["--lib"]
 minimum_test_timeout = 10.0

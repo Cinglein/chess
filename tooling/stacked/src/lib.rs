@@ -30,15 +30,15 @@ impl Stacked {
             .ok_or_else(|| Failure::GitHub(answer.clone()))?;
         if base == Self::DEFAULT_BRANCH {
             println!("stacked: pull request #{number} targets {base}");
-            return Ok(());
-        }
-        if stack == Self::NONE {
-            return Err(Failure::Refused(format!(
+            Ok(())
+        } else if stack == Self::NONE {
+            Err(Failure::Refused(format!(
                 "pull request #{number} targets {base} but belongs to no GitHub stack; link it with gh stack link <bottom> ... <top>"
-            )));
+            )))
+        } else {
+            println!("stacked: pull request #{number} targets {base} inside stack #{stack}");
+            Ok(())
         }
-        println!("stacked: pull request #{number} targets {base} inside stack #{stack}");
-        Ok(())
     }
 
     fn required(name: &str) -> Result<String, Failure> {

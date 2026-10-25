@@ -105,7 +105,13 @@ mod tests {
         let written = toml::to_string_pretty(&Policy::defaults()).unwrap();
         let read: Policy = toml::from_str(&written).unwrap();
         assert_eq!(read, Policy::defaults());
-        assert!(read.is_vague(CHECK) && !read.is_vague(LONG_ENOUGH));
+        let costs = read.mutant_millis();
+        assert!(
+            read.is_vague(CHECK)
+                && !read.is_vague(LONG_ENOUGH)
+                && costs.for_crate(&"board".parse().unwrap())
+                    != costs.for_crate(&"unlisted".parse().unwrap())
+        );
         assert!(
             read.limit(Limit::Parameters)
                 .allows(read.limit(Limit::Parameters).count())

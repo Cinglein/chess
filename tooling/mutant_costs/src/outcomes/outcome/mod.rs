@@ -22,10 +22,13 @@ impl Outcome {
         &self,
         mut tallies: BTreeMap<CrateName, Tally>,
     ) -> BTreeMap<CrateName, Tally> {
-        if let Some(package) = self.scenario.package() {
-            let tally = tallies.entry(package.clone()).or_default();
-            *tally = tally.plus(Tally::one(PhaseResult::total(&self.phase_results)));
+        match self.scenario.package() {
+            Some(package) => {
+                let tally = tallies.entry(package.clone()).or_default();
+                *tally = tally.plus(Tally::one(PhaseResult::total(&self.phase_results)));
+                tallies
+            }
+            None => tallies,
         }
-        tallies
     }
 }

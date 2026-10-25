@@ -31,12 +31,8 @@ impl ModuleFile {
     }
 
     pub fn resolve(&self, segments: &[String], known: &BTreeSet<&Path>) -> Option<PathBuf> {
-        let (start, rest) = match segments.split_first()? {
-            (first, rest) if first == "crate" => (PathBuf::from(Self::SOURCE), rest),
-            (first, rest) if first == "super" => (self.parent.clone(), rest),
-            (first, rest) if first == "self" => (self.directory.clone(), rest),
-            _ => return None,
-        };
+        let (first, rest) = segments.split_first()?;
+        let start = self.anchor(first)?;
         let supers = rest
             .iter()
             .take_while(|segment| *segment == "super")
@@ -62,6 +58,15 @@ impl ModuleFile {
             .map(|module| module.ident.to_string())
             .filter_map(|name| Self::deepest_known(&self.directory, &[name], known))
             .collect()
+    }
+
+    fn anchor(&self, first: &str) -> Option<PathBuf> {
+        match first {
+            "crate" => Some(PathBuf::from(Self::SOURCE)),
+            "super" => Some(self.parent.clone()),
+            "self" => Some(self.directory.clone()),
+            _ => None,
+        }
     }
 
     fn deepest_known(start: &Path, rest: &[String], known: &BTreeSet<&Path>) -> Option<PathBuf> {

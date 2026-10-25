@@ -13,6 +13,7 @@ pub use changes::Changes;
 pub use job::Job;
 pub use package_graph::PackageGraph;
 pub use plan::Plan;
+pub use reach::Reach;
 pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -22,7 +23,6 @@ use crate_load::CrateLoad;
 use job::{ToolScope, ToolTrigger};
 use job_plan::JobPlan;
 use listed_mutant::ListedMutant;
-use reach::Reach;
 use strum::IntoEnumIterator;
 use tool_graph::ToolGraph;
 
@@ -125,24 +125,25 @@ impl Affected {
         policy: &Policy,
     ) -> Result<Vec<CrateLoad>, Failure> {
         if selection.is_empty() {
-            return Ok(Vec::new());
+            Ok(Vec::new())
+        } else {
+            let counts = ListedMutant::tally(
+                &workspace
+                    .line(Program::Cargo)
+                    .argument(CargoArgument::Mutants)
+                    .argument(MutantsArgument::List)
+                    .argument(MutantsArgument::Json)
+                    .arguments(selection.arguments::<MutationTool>())
+                    .captured::<Stdout>()?,
+            )?;
+            Ok(counts
+                .into_iter()
+                .map(|(name, mutants)| {
+                    let each = policy.mutant_millis().for_crate(&name);
+                    CrateLoad::new(name, mutants, each, policy)
+                })
+                .collect())
         }
-        let counts = ListedMutant::tally(
-            &workspace
-                .line(Program::Cargo)
-                .argument(CargoArgument::Mutants)
-                .argument(MutantsArgument::List)
-                .argument(MutantsArgument::Json)
-                .arguments(selection.arguments::<MutationTool>())
-                .captured::<Stdout>()?,
-        )?;
-        Ok(counts
-            .into_iter()
-            .map(|(name, mutants)| {
-                let each = policy.mutant_millis().for_crate(&name);
-                CrateLoad::new(name, mutants, each, policy)
-            })
-            .collect())
     }
 }
 

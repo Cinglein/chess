@@ -96,9 +96,9 @@ mod tests {
 
     use super::{MutantCosts, Outcomes};
 
-    const SNIPPET: &str = r#"{"outcomes": [{"scenario": "Baseline", "phase_results": [{"phase": "Build", "duration": 9.0}]}, {"scenario": {"Mutant": {"package": "board", "file": "x"}}, "phase_results": [{"phase": "Build", "duration": 2.5}, {"phase": "Test", "duration": 0.5}]}, {"scenario": {"Mutant": {"package": "eval"}}, "phase_results": [{"phase": "Build", "duration": 1.0}]}]}"#;
+    const SNIPPET: &str = r#"{"outcomes": [{"scenario": "Baseline", "phase_results": [{"phase": "Build", "duration": 9.0}]}, {"scenario": {"Mutant": {"package": "board", "file": "x"}}, "phase_results": [{"phase": "Build", "duration": 2.56}, {"phase": "Test", "duration": 0.5}]}, {"scenario": {"Mutant": {"package": "eval"}}, "phase_results": [{"phase": "Build", "duration": 1.0}]}]}"#;
     const TABLE: &str =
-        "[mutant_millis]\ndefault = 2000\n\n[mutant_millis.crates]\nboard = 3000\neval = 1000\n";
+        "[mutant_millis]\ndefault = 2000\n\n[mutant_millis.crates]\nboard = 3100\neval = 1000\n";
     const SCRATCH: &str = "chess-costs";
     const NESTED: [&str; 3] = ["a", "b", "outcomes.json"];
     const DECOY: &str = "other.json";

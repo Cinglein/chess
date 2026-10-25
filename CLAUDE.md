@@ -212,7 +212,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   one exhaustive or oracle test over examples; randomness comes from `proptest`; deep checks
   are `#[ignore]` and run outside the PR gate.
 - Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
-  lines a PR changes against `origin/main`, with the workspace's tests, and every mutant in
+  lines a PR changes against `origin/main`, tested by the changed crates and the dependents
+  that have tests, in three parallel slices (`MUTANTS_SLICE=k/n`), and every mutant in
   the diff must be caught, unviable, or a timeout (a mutant that hangs a test is a mutant the
   tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
   whole workspace, or one `MUTANTS_SHARD`: `board/0/5` is one slice of a crate, `eval+fen` is a

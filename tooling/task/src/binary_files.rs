@@ -14,12 +14,14 @@ impl BinaryFiles {
     pub fn collect(files: &[SourceFile]) -> BinaryFiles {
         let by_path: BTreeMap<&Path, &SourceFile> =
             files.iter().map(|file| (file.path(), file)).collect();
-        let mut members = BTreeSet::new();
-        files
-            .iter()
-            .filter(|file| file.path().ends_with(Self::BINARY_ROOT))
-            .for_each(|root| Self::gather(root, &by_path, &mut members));
-        BinaryFiles(members)
+        BinaryFiles(
+            files
+                .iter()
+                .filter(|file| file.path().ends_with(Self::BINARY_ROOT))
+                .fold(BTreeSet::new(), |members, root| {
+                    Self::gather(root, &by_path, members)
+                }),
+        )
     }
 
     #[must_use]
@@ -30,11 +32,23 @@ impl BinaryFiles {
     fn gather(
         file: &SourceFile,
         by_path: &BTreeMap<&Path, &SourceFile>,
-        members: &mut BTreeSet<PathBuf>,
-    ) {
-        if !members.insert(file.path().to_owned()) {
-            return;
+        mut members: BTreeSet<PathBuf>,
+    ) -> BTreeSet<PathBuf> {
+        if members.insert(file.path().to_owned()) {
+            Self::children(file, by_path)
+                .into_iter()
+                .fold(members, |members, child| {
+                    Self::gather(child, by_path, members)
+                })
+        } else {
+            members
         }
+    }
+
+    fn children<'files>(
+        file: &SourceFile,
+        by_path: &BTreeMap<&Path, &'files SourceFile>,
+    ) -> Vec<&'files SourceFile> {
         file.syntax()
             .items
             .iter()
@@ -44,7 +58,7 @@ impl BinaryFiles {
             })
             .flat_map(|module| Self::declared_files(file.path(), module))
             .filter_map(|candidate| by_path.get(candidate.as_path()).copied())
-            .for_each(|child| Self::gather(child, by_path, members));
+            .collect()
     }
 
     fn declared_files(parent: &Path, module: &ItemMod) -> Vec<PathBuf> {

@@ -5,27 +5,30 @@ use std::cmp::Reverse;
 use bin::Bin;
 
 use crate::crate_load::CrateLoad;
-use task::Shard;
 use task::{Interval, Policy};
+use task::{Shard, Slice};
 
 pub struct Packing;
 
 impl Packing {
     pub fn shards(loads: &[CrateLoad], policy: &Policy) -> Vec<Shard> {
         let target = policy.interval(Interval::PerShard);
+        let slice_count = |load: &CrateLoad| load.cost().div_ceil(target);
         let slices = loads
             .iter()
-            .filter(|load| load.cost() > target)
-            .flat_map(|load| Self::slices(load, load.cost().div_ceil(target)));
+            .filter(|load| slice_count(load) > 1)
+            .flat_map(|load| Self::slices(load, slice_count(load)));
         let mut whole: Vec<&CrateLoad> =
-            loads.iter().filter(|load| load.cost() <= target).collect();
+            loads.iter().filter(|load| slice_count(load) <= 1).collect();
         whole.sort_by_key(|load| Reverse(load.cost()));
         let bins = whole.into_iter().fold(Vec::<Bin>::new(), |mut bins, load| {
-            match bins.last_mut().filter(|bin| bin.fits(load.cost(), target)) {
-                Some(bin) => bin.take(load.name().clone(), load.cost()),
-                None => bins.push(Bin::holding(load.name().clone(), load.cost())),
+            if let Some(bin) = bins.last_mut().filter(|bin| bin.fits(load.cost(), target)) {
+                bin.take(load.name().clone(), load.cost());
+                bins
+            } else {
+                bins.push(Bin::holding(load.name().clone(), load.cost()));
+                bins
             }
-            bins
         });
         slices.chain(bins.into_iter().map(Bin::shard)).collect()
     }
@@ -34,8 +37,7 @@ impl Packing {
         let name = load.name().clone();
         (0..count).map(move |index| Shard::Slice {
             crate_name: name.clone(),
-            index,
-            count,
+            slice: Slice::new(index, count),
         })
     }
 }
