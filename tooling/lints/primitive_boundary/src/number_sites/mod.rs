@@ -15,6 +15,7 @@ use task::Policy;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 use task::WireType;
 
 pub struct NumberSites<'scan> {
@@ -91,14 +92,16 @@ impl<'scan> NumberSites<'scan> {
 
 impl<'ast> Visit<'ast> for NumberSites<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !SourceFile::is_test_module(module) {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
+            Walk::Skipped => {}
         }
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if item.trait_.is_none() {
-            syn::visit::visit_item_impl(self, item);
+        match Walk::inherent_impls(item) {
+            Walk::Entered => syn::visit::visit_item_impl(self, item),
+            Walk::Skipped => {}
         }
     }
 

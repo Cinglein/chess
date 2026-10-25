@@ -4,6 +4,7 @@ use syn::ItemMod;
 use syn::visit::Visit;
 
 use crate::source_file::SourceFile;
+use crate::walk::Walk;
 
 #[derive(Default)]
 pub struct SupportModules {
@@ -40,7 +41,7 @@ impl SupportModules {
 
 impl<'ast> Visit<'ast> for SupportModules {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if module.content.is_none() && SourceFile::is_test_module(module) {
+        if module.content.is_none() && SourceFile::walk(module) == Walk::Skipped {
             self.names.push(module.ident.to_string());
         }
         syn::visit::visit_item_mod(self, module);

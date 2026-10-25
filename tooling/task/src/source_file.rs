@@ -5,6 +5,7 @@ use syn::ItemMod;
 
 use crate::failure::Failure;
 use crate::site::Site;
+use crate::walk::Walk;
 use crate::workspace::Workspace;
 
 pub struct SourceFile {
@@ -61,19 +62,23 @@ impl SourceFile {
     }
 
     #[must_use]
-    pub fn is_test_module(module: &ItemMod) -> bool {
-        module.attrs.iter().any(|attribute| {
+    pub fn walk(module: &ItemMod) -> Walk {
+        if module.attrs.iter().any(|attribute| {
             attribute.path().is_ident("cfg")
                 && attribute
                     .parse_args::<syn::Ident>()
                     .is_ok_and(|ident| ident == "test")
-        })
+        }) {
+            Walk::Skipped
+        } else {
+            Walk::Entered
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::SourceFile;
+    use super::{SourceFile, Walk};
 
     const NAMED: [(&str, Option<&str>); 5] = [
         ("crates/board/src/square.rs", Some("board")),
@@ -99,7 +104,7 @@ mod tests {
             .items
             .iter()
             .filter(
-                |item| matches!(item, syn::Item::Mod(module) if SourceFile::is_test_module(module)),
+                |item| matches!(item, syn::Item::Mod(module) if SourceFile::walk(module) == Walk::Skipped),
             )
             .count();
         assert_eq!(test_modules, TEST_MODULES);

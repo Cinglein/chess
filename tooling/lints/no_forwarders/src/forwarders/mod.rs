@@ -11,6 +11,7 @@ use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, Stmt, Type
 use super::forwarder::Forwarder;
 use super::workspace_types::WorkspaceTypes;
 use task::SourceFile;
+use task::Walk;
 
 pub struct Forwarders<'types> {
     types: &'types WorkspaceTypes,
@@ -119,8 +120,9 @@ impl Forwarders<'_> {
 
 impl<'ast> Visit<'ast> for Forwarders<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !SourceFile::is_test_module(module) {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
+            Walk::Skipped => {}
         }
     }
 

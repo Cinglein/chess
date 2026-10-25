@@ -13,6 +13,7 @@ use super::TestBudget;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 use task::{Limit, Policy};
 
 pub(super) struct TestScan<'scan> {
@@ -45,11 +46,12 @@ impl<'scan> TestScan<'scan> {
 
 impl<'ast> Visit<'ast> for TestScan<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if SourceFile::is_test_module(module) {
-            self.budget =
-                mem::take(&mut self.budget) + TestModule::budget(self.path, module, self.policy);
-        } else {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Skipped => {
+                self.budget = mem::take(&mut self.budget)
+                    + TestModule::budget(self.path, module, self.policy);
+            }
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
         }
     }
 }

@@ -4,6 +4,7 @@ use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Ident, ItemImpl, ItemMod};
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 
 #[derive(Default)]
 pub struct TextSites {
@@ -55,8 +56,9 @@ impl TextSites {
 
 impl<'ast> Visit<'ast> for TextSites {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !SourceFile::is_test_module(module) {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
+            Walk::Skipped => {}
         }
     }
 
