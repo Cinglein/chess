@@ -6,8 +6,8 @@ use syn::{ImplItemFn, ItemImpl, Visibility};
 
 use super::declarations::Declarations;
 use super::function_shape::FunctionShape;
-use super::type_name::TypeName;
 use task::Name;
+use task::TypeName;
 
 pub struct ImplContext {
     self_type: TypeName,

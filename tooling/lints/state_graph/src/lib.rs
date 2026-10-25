@@ -4,7 +4,6 @@ mod field_visibility;
 mod finding;
 mod function_shape;
 mod impl_context;
-mod type_name;
 mod variant_matches;
 
 use declarations::Declarations;
