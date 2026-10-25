@@ -63,6 +63,10 @@ impl NamedNumbers {
             Walk::Entered
         }
     }
+
+    fn unnamed(digits: &str, line: usize) -> Option<usize> {
+        (!Self::is_unit(digits)).then_some(line)
+    }
 }
 
 #[derive(Default)]
@@ -92,25 +96,25 @@ impl<'ast> Visit<'ast> for Numbers {
     fn visit_expr_const(&mut self, _: &'ast ExprConst) {}
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
-        if let Ok(arguments) =
-            invocation.parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated)
-        {
-            arguments
-                .iter()
-                .for_each(|argument| self.visit_expr(argument));
-        }
+        invocation
+            .parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated)
+            .into_iter()
+            .flatten()
+            .for_each(|argument| self.visit_expr(&argument));
     }
 
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
-        if !NamedNumbers::is_unit(literal.base10_digits()) {
-            self.0.push(literal.span().start().line);
-        }
+        self.0.extend(NamedNumbers::unnamed(
+            literal.base10_digits(),
+            literal.span().start().line,
+        ));
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {
-        if !NamedNumbers::is_unit(literal.base10_digits()) {
-            self.0.push(literal.span().start().line);
-        }
+        self.0.extend(NamedNumbers::unnamed(
+            literal.base10_digits(),
+            literal.span().start().line,
+        ));
     }
 }
 

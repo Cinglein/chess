@@ -48,9 +48,11 @@ struct VagueNames<'scan> {
 
 impl VagueNames<'_> {
     fn note(&mut self, name: &Ident) {
-        if self.policy.is_vague(&name.to_string()) {
-            self.found.push(name.clone());
-        }
+        self.found.extend(
+            self.policy
+                .is_vague(&name.to_string())
+                .then(|| name.clone()),
+        );
     }
 }
 

@@ -48,13 +48,14 @@ struct ShortLifetimes<'scan> {
 
 impl<'ast> Visit<'ast> for ShortLifetimes<'_> {
     fn visit_lifetime_param(&mut self, parameter: &'ast LifetimeParam) {
-        if !self
-            .policy
-            .floor(Floor::LifetimeName)
-            .allows(parameter.lifetime.ident.to_string().len())
-        {
-            self.found.push(parameter.lifetime.ident.clone());
-        }
+        let name = &parameter.lifetime.ident;
+        self.found.extend(
+            (!self
+                .policy
+                .floor(Floor::LifetimeName)
+                .allows(name.to_string().len()))
+            .then(|| name.clone()),
+        );
     }
 }
 

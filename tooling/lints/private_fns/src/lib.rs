@@ -8,6 +8,7 @@ use task::Report;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 use task::{Limit, Policy};
 
 pub struct PrivateFns;
@@ -51,19 +52,27 @@ impl PrivateFns {
 #[derive(Default)]
 struct PrivateFnCounter(BTreeMap<String, Vec<String>>);
 
-impl<'ast> Visit<'ast> for PrivateFnCounter {
-    fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if item.trait_.is_some() {
-            return;
-        }
-        let type_name = item.self_ty.to_token_stream().to_string().replace(' ', "");
-        let names = item.items.iter().filter_map(|item| match item {
+impl PrivateFnCounter {
+    fn private_names(item: &ItemImpl) -> impl Iterator<Item = String> {
+        item.items.iter().filter_map(|member| match member {
             ImplItem::Fn(function) if matches!(function.vis, Visibility::Inherited) => {
                 Some(function.sig.ident.to_string())
             }
             _ => None,
-        });
-        self.0.entry(type_name).or_default().extend(names);
+        })
+    }
+}
+
+impl<'ast> Visit<'ast> for PrivateFnCounter {
+    fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
+        match Walk::inherent_impls(item) {
+            Walk::Entered => self
+                .0
+                .entry(item.self_ty.to_token_stream().to_string().replace(' ', ""))
+                .or_default()
+                .extend(Self::private_names(item)),
+            Walk::Skipped => {}
+        }
     }
 }
 

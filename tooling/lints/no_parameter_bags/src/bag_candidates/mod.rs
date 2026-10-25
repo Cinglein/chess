@@ -33,13 +33,14 @@ impl BagCandidates {
     }
 
     fn self_name(item: &ItemImpl) -> Option<String> {
-        let Type::Path(path) = &*item.self_ty else {
-            return None;
-        };
-        path.path
-            .segments
-            .last()
-            .map(|segment| segment.ident.to_string())
+        match &*item.self_ty {
+            Type::Path(path) => path
+                .path
+                .segments
+                .last()
+                .map(|segment| segment.ident.to_string()),
+            _ => None,
+        }
     }
 
     fn carries_logic(item: &ItemImpl, self_name: &str) -> bool {
@@ -65,8 +66,7 @@ impl<'ast> Visit<'ast> for BagCandidates {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if let Some(name) = Self::self_name(item).filter(|name| Self::carries_logic(item, name)) {
-            self.disqualified.insert(name);
-        }
+        self.disqualified
+            .extend(Self::self_name(item).filter(|name| Self::carries_logic(item, name)));
     }
 }
