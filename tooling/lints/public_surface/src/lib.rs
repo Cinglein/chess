@@ -52,22 +52,19 @@ mod tests {
 
     const LIB: &str =
         "mod x; use x::Private;\npub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
-    const MAIN: &str = "use a::Used; fn main() { a::Seen::go(); }";
-    const OWN_BINARY: &str = "use a::Wired; fn main() {}";
-    const LONELY: &str = "mod y; pub use y::Lonely;";
     const FILES: [(&str, &str); 4] = [
         ("crates/a/src/lib.rs", LIB),
-        ("crates/a/src/main.rs", OWN_BINARY),
-        ("crates/b/src/main.rs", MAIN),
-        ("crates/c/src/lib.rs", LONELY),
+        ("crates/a/src/main.rs", "use a::Wired; fn main() {}"),
+        (
+            "crates/b/src/main.rs", "use a::Used; fn main() { a::Seen::go(); }",
+        ),
+        ("crates/c/src/lib.rs", "mod y; pub use y::Lonely;"),
     ];
     const REPORTED: [&str; 1] = ["crates/a/src/lib.rs:2: Unused is exported"];
 
     #[test]
     fn flags_an_unnamed_reexport_but_counts_the_crates_own_binary_as_a_user() {
-        let files = FILES.map(|(path, text)| {
-            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
-        });
+        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
         let report = PublicSurface::report(&files);
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }

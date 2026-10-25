@@ -15,18 +15,8 @@ impl TextSites {
     const TEXT_DOMAIN: &str = "crates/";
     const DOOR_TRAITS: [&str; 3] = ["FromStr", "TryFrom", "Display"];
     const INSPECTING: [&str; 13] = [
-        "split_whitespace",
-        "split_once",
-        "strip_prefix",
-        "strip_suffix",
-        "starts_with",
-        "ends_with",
-        "trim",
-        "trim_start",
-        "trim_end",
-        "chars",
-        "bytes",
-        "char_indices",
+        "split_whitespace", "split_once", "strip_prefix", "strip_suffix", "starts_with",
+        "ends_with", "trim", "trim_start", "trim_end", "chars", "bytes", "char_indices",
         "split_at_checked",
     ];
     const PRODUCING: [&str; 2] = ["to_string", "push_str"];
