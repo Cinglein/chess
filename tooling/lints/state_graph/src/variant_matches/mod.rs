@@ -9,6 +9,7 @@ use syn::visit::Visit;
 use syn::{Arm, Expr, ExprLet, ExprMatch, Local, Pat};
 
 use super::declarations::Declarations;
+use task::LineNumber;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
@@ -41,7 +42,7 @@ impl<'scan> VariantMatches<'scan> {
 
     fn violation(&self, pat: &Pat, enum_name: &str) -> Violation {
         Violation::new(
-            Site::Line(self.path.into(), pat.span().start().line),
+            Site::Line(self.path.into(), LineNumber::from(pat.span())),
             format!("match on {enum_name} outside its file; dispatch through a trait"),
         )
     }

@@ -1,9 +1,11 @@
 mod packing;
+mod shard_count;
 
 use std::collections::BTreeSet;
 
 pub use packing::Packing;
 use serde::Serialize;
+use shard_count::ShardCount;
 
 use crate::crate_load::CrateLoad;
 use task::CrateName;
@@ -15,7 +17,7 @@ use task::Selection;
 pub struct JobPlan {
     crates: Vec<String>,
     shards: Vec<String>,
-    shard_count: usize,
+    shard_count: ShardCount,
 }
 
 impl JobPlan {
@@ -23,7 +25,7 @@ impl JobPlan {
         JobPlan {
             crates: crates.iter().map(ToString::to_string).collect(),
             shards: Vec::new(),
-            shard_count: 0,
+            shard_count: ShardCount::new(0),
         }
     }
 
@@ -33,7 +35,7 @@ impl JobPlan {
             .map(ToString::to_string)
             .collect();
         JobPlan {
-            shard_count: shards.len(),
+            shard_count: ShardCount::new(shards.len()),
             shards,
             ..self
         }
@@ -51,11 +53,11 @@ impl JobPlan {
 
 #[cfg(test)]
 mod tests {
-    use super::JobPlan;
+    use super::{JobPlan, ShardCount};
     use crate::crate_load::CrateLoad;
     use settings::EmbeddedDefaults;
     use std::collections::BTreeSet;
-    use task::{Interval, Policy};
+    use task::{Interval, MutantCount, Policy};
     const SOME: usize = 2;
     const ONE: usize = 1;
 
@@ -64,12 +66,17 @@ mod tests {
         let policy = Policy::defaults();
         let eval = BTreeSet::from(["eval".parse().unwrap()]);
         let each = policy.interval(Interval::PerShard);
-        let load = CrateLoad::new("eval".parse().unwrap(), ONE, each, &policy);
+        let load = CrateLoad::new(
+            "eval".parse().unwrap(),
+            MutantCount::from(ONE),
+            each,
+            &policy,
+        );
         let some = JobPlan::over(&eval).sharded(core::slice::from_ref(&load), &policy);
         let none = JobPlan::over(&BTreeSet::new()).sharded(&[], &policy);
         assert_eq!(
             (some.shards.len(), some.shard_count, none.shards.len()),
-            (SOME, SOME, usize::MIN)
+            (SOME, ShardCount::new(SOME), usize::MIN)
         );
         assert!(none.selection().is_empty() && !some.selection().is_empty());
     }

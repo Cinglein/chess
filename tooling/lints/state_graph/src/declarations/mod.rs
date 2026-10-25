@@ -1,3 +1,7 @@
+mod vertex_count;
+
+pub use vertex_count::VertexCount;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -43,8 +47,8 @@ impl Declarations {
         self.vertices.contains(name)
     }
 
-    pub fn vertex_count(&self) -> usize {
-        self.vertices.len()
+    pub fn vertex_count(&self) -> VertexCount {
+        VertexCount::new(self.vertices.len())
     }
 
     pub fn is_foreign_sum_type(&self, enum_name: &str, path: &Path) -> bool {

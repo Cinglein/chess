@@ -6,7 +6,7 @@ use bin::Bin;
 
 use crate::crate_load::CrateLoad;
 use task::Millis;
-use task::{Shard, Slice};
+use task::{Shard, Slice, SliceCount};
 
 pub struct Packing;
 
@@ -16,7 +16,7 @@ impl Packing {
         let slices = loads
             .iter()
             .filter(|load| slice_count(load) > 1)
-            .flat_map(|load| Self::slices(load, slice_count(load)));
+            .flat_map(|load| Self::slices(load, SliceCount::new(slice_count(load))));
         let mut whole: Vec<&CrateLoad> =
             loads.iter().filter(|load| slice_count(load) <= 1).collect();
         whole.sort_by_key(|load| Reverse(load.cost()));
@@ -32,11 +32,11 @@ impl Packing {
         slices.chain(bins.into_iter().map(Bin::shard)).collect()
     }
 
-    fn slices(load: &CrateLoad, count: usize) -> impl Iterator<Item = Shard> {
+    fn slices(load: &CrateLoad, count: SliceCount) -> impl Iterator<Item = Shard> {
         let name = load.name().clone();
-        (0..count).map(move |index| Shard::Slice {
+        count.indices().map(move |index| Shard::Slice {
             crate_name: name.clone(),
-            slice: Slice::new(index, count),
+            slice: Slice::at_index(index, count),
         })
     }
 }
@@ -46,7 +46,7 @@ mod tests {
     use super::Packing;
     use crate::crate_load::CrateLoad;
     use settings::EmbeddedDefaults;
-    use task::{Interval, Policy};
+    use task::{Interval, MutantCount, Policy};
     const LOADS: [(&str, usize, Interval); 4] = [
         ("a", 1, Interval::PerShard),
         ("b", 50, Interval::Total),
@@ -61,7 +61,7 @@ mod tests {
         let loads = LOADS.map(|(name, mutants, each)| {
             CrateLoad::new(
                 name.parse().unwrap(),
-                mutants,
+                MutantCount::from(mutants),
                 policy.interval(each),
                 &policy,
             )

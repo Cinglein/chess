@@ -6,11 +6,12 @@ use syn::visit::Visit;
 use syn::{Attribute, Fields, ItemStruct, Path, Token, TypePath};
 
 use super::keys::Keys;
+use task::LineNumber;
 
 #[derive(Debug)]
 pub struct DeserializedStruct {
     path: PathBuf,
-    line: usize,
+    line: LineNumber,
     name: String,
     field_types: Vec<String>,
     keys: Keys,
@@ -26,7 +27,7 @@ impl DeserializedStruct {
                 types.visit_fields(&item.fields);
                 DeserializedStruct {
                     path: path.to_owned(),
-                    line: item.ident.span().start().line,
+                    line: LineNumber::from(item.ident.span()),
                     name: item.ident.to_string(),
                     field_types: types.0,
                     keys: if item.attrs.iter().any(Self::shapes_its_keys) {
@@ -43,7 +44,7 @@ impl DeserializedStruct {
         &self.path
     }
 
-    pub fn line(&self) -> usize {
+    pub fn line(&self) -> LineNumber {
         self.line
     }
 

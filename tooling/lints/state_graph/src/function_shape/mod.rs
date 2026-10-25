@@ -11,6 +11,7 @@ use syn::{FnArg, ImplItemFn, Type};
 use super::declarations::Declarations;
 use super::impl_context::ImplContext;
 use super::type_name::TypeName;
+use task::LineNumber;
 use task::Site;
 
 pub struct FunctionShape {
@@ -32,7 +33,7 @@ impl FunctionShape {
             declarations.is_vertex(&name).then_some(name)
         };
         FunctionShape {
-            site: Site::Line(path.into(), function.sig.ident.span().start().line),
+            site: Site::Line(path.into(), LineNumber::from(function.sig.ident.span())),
             returns: Returns::classify(&function.sig.output, vertex),
             vertex_parameters: function
                 .sig

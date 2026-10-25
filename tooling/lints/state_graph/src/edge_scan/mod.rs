@@ -1,6 +1,9 @@
 mod edge;
+mod edge_count;
 
 use edge::Edge;
+
+pub use edge_count::EdgeCount;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
@@ -15,6 +18,7 @@ use super::type_name::TypeName;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::{Limit, Policy};
 
 pub struct EdgeScan<'scan> {
     declarations: &'scan Declarations,
@@ -38,11 +42,12 @@ impl<'scan> EdgeScan<'scan> {
         self.visit_file(file.syntax());
     }
 
-    pub fn edge_count(&self) -> usize {
-        self.edges.values().map(BTreeMap::len).sum()
+    pub fn edge_count(&self) -> EdgeCount {
+        EdgeCount::new(self.edges.values().map(BTreeMap::len).sum())
     }
 
-    pub fn violations(mut self, max_edges_per_vertex: usize) -> Vec<Violation> {
+    pub fn violations(mut self, policy: &Policy) -> Vec<Violation> {
+        let most = policy.limit(Limit::EdgesPerVertex);
         let duplicates =
             self.edges
                 .iter()
@@ -73,13 +78,14 @@ impl<'scan> EdgeScan<'scan> {
         );
         let crowded = fan_out
             .into_iter()
-            .filter(|(_, names)| names.len() > max_edges_per_vertex)
+            .filter(|(_, names)| !most.allows(names.len()))
             .map(|(source, names)| {
                 Violation::new(
                     Site::Workspace,
                     format!(
-                        "{source} has {} edges leaving it, at most {max_edges_per_vertex} allowed",
-                        names.len()
+                        "{source} has {} edges leaving it, at most {} allowed",
+                        names.len(),
+                        most.count()
                     ),
                 )
             });

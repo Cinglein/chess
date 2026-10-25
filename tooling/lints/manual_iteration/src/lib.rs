@@ -5,6 +5,7 @@ use syn::visit::Visit;
 
 use syn::{Block, Expr, ExprForLoop, ExprMethodCall, ItemMod, Local, Pat, Stmt};
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -57,7 +58,10 @@ struct Iterations<'scan> {
 
 impl Iterations<'_> {
     fn violation(&self, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(self.path.into(), span.start().line), message)
+        Violation::new(
+            Site::Line(self.path.into(), LineNumber::from(span)),
+            message,
+        )
     }
 }
 

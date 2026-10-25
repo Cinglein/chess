@@ -14,7 +14,9 @@ use syn::visit::Visit;
 use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
-use super::super::measurement::Measurement;
+use super::super::line_count::LineCount;
+use super::super::test_count::TestCount;
+use task::LineNumber;
 use task::Site;
 use task::Violation;
 use task::{Limit, Policy};
@@ -43,17 +45,16 @@ impl<'scan> TestModule<'scan> {
 
     fn test_violations(&self, function: &ItemFn) -> Vec<Violation> {
         let name = &function.sig.ident;
-        let site = Site::Line(self.path.into(), name.span().start().line);
+        let site = Site::Line(self.path.into(), LineNumber::from(name.span()));
         TestCounts::tally(&function.block)
-            .measurements(self.policy)
+            .overruns(self.policy)
             .into_iter()
-            .filter(Measurement::exceeded)
-            .map(|measurement| Violation::new(site.clone(), format!("fn {name} {measurement}")))
+            .map(|overrun| Violation::new(site.clone(), format!("fn {name} {overrun}")))
             .collect()
     }
 
-    fn line_count(span: Span) -> usize {
-        span.end().line - span.start().line + 1
+    fn line_count(span: Span) -> LineCount {
+        LineCount::from(span.end().line - span.start().line + 1)
     }
 
     fn scope_of(function: &ItemFn) -> Scope {
@@ -76,7 +77,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
             Scope::InsideTest => self.test_violations(function),
             Scope::OutsideTest => Vec::new(),
         };
-        self.budget.tests += usize::from(self.scope == Scope::InsideTest);
+        self.budget.tests += TestCount::from(usize::from(self.scope == Scope::InsideTest));
         self.budget.violations.extend(violations);
         syn::visit::visit_item_fn(self, function);
         self.scope = Scope::OutsideTest;
@@ -89,7 +90,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
             .is_ok_and(|value| value > largest)
             .then(|| {
                 Violation::new(
-                    Site::Line(self.path.into(), integer.span().start().line),
+                    Site::Line(self.path.into(), LineNumber::from(integer.span())),
                     format!("integer literal {integer} in test code, at most {largest} allowed"),
                 )
             });
@@ -100,7 +101,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
         let finding = (self.scope == Scope::OutsideTest && TestCounts::is_assertion(invocation))
             .then(|| {
                 Violation::new(
-                    Site::Line(self.path.into(), invocation.span().start().line),
+                    Site::Line(self.path.into(), LineNumber::from(invocation.span())),
                     "assertion outside a test; helpers return values and tests assert them",
                 )
             });

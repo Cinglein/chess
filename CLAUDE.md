@@ -124,9 +124,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `slider/magics.rs`, `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `tooling/magics/src/`;
   const-shape, primitive-boundary and named-numbers share it). Locals and
   turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. A `usize` is a
-  container size or index: in `crates/` it may be declared only under a name that says so
+  container size or index: anywhere in the repo it may be declared only under a name that says so
   (`length`, `capacity`, `size`, `bytes`, `index`); a `usize` named after what it counts is a
-  count and gets a newtype (`GameCount`, `RoundCount`, `PlyCount`). Text is inspected
+  count and gets a newtype (`GameCount`, `RoundCount`, `PlyCount`, `LineNumber`). Text is inspected
   (`split_*`, `trim*`, `chars`, `char_indices`) or produced (`format!`, `to_string`, `String::from`)
   only in a file that hand-writes a `FromStr`, `TryFrom`, or `Display` impl, or as the direct
   argument of an I/O write; calling `.parse()` anywhere is using a door, not building one. The

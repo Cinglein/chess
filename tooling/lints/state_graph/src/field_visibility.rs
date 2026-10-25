@@ -5,6 +5,7 @@ use syn::visit::Visit;
 
 use syn::{ItemStruct, Visibility};
 
+use task::LineNumber;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
@@ -34,7 +35,7 @@ impl<'ast> Visit<'ast> for FieldVisibility<'_> {
             .filter(|(_, field)| !matches!(field.vis, Visibility::Inherited))
             .map(|(index, field)| {
                 Violation::new(
-                    Site::Line(self.path.into(), field.span().start().line),
+                    Site::Line(self.path.into(), LineNumber::from(field.span())),
                     format!(
                         "field {} of {} is {}; struct fields are private",
                         field

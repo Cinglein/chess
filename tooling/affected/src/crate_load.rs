@@ -1,5 +1,6 @@
 use task::CrateName;
 use task::Millis;
+use task::MutantCount;
 use task::{Interval, Policy};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -10,10 +11,15 @@ pub struct CrateLoad {
 
 impl CrateLoad {
     #[must_use]
-    pub fn new(name: CrateName, mutants: usize, millis_each: Millis, policy: &Policy) -> CrateLoad {
+    pub fn new(
+        name: CrateName,
+        mutants: MutantCount,
+        millis_each: Millis,
+        policy: &Policy,
+    ) -> CrateLoad {
         let cost = policy
             .interval(Interval::PerCrate)
-            .plus(millis_each.times(mutants));
+            .plus(millis_each.times(mutants.into()));
         CrateLoad { name, cost }
     }
 

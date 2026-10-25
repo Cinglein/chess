@@ -8,6 +8,8 @@ use syn::{
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
 };
 
+use task::LineNumber;
+use task::NestingDepth;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -37,7 +39,7 @@ impl FnShape {
         let mut shapes = Shapes {
             path: file.path(),
             policy,
-            depth: 0,
+            depth: NestingDepth::default(),
             violations: Vec::new(),
         };
         shapes.visit_file(file.syntax());
@@ -84,18 +86,20 @@ impl FnShape {
 struct Shapes<'scan> {
     path: &'scan Path,
     policy: &'scan Policy,
-    depth: usize,
+    depth: NestingDepth,
     violations: Vec<Violation>,
 }
 
 impl Shapes<'_> {
     fn found(path: &Path, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(path.into(), span.start().line), message)
+        Violation::new(Site::Line(path.into(), LineNumber::from(span)), message)
     }
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
-        self.depth += 1;
-        let deepest = (self.depth == self.policy.limit(Limit::Nesting).count() + 1).then_some(span);
+        self.depth += NestingDepth::LEVEL;
+        let first_past =
+            self.policy.limit(Limit::Nesting).counted::<NestingDepth>() + NestingDepth::LEVEL;
+        let deepest = (self.depth == first_past).then_some(span);
         self.violations.extend(deepest.map(|span| {
             Self::found(
                 self.path,
@@ -107,7 +111,7 @@ impl Shapes<'_> {
             )
         }));
         visit(self);
-        self.depth -= 1;
+        self.depth -= NestingDepth::LEVEL;
     }
 }
 
