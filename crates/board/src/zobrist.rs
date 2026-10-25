@@ -1,4 +1,4 @@
-use core::ops::{BitXor, BitXorAssign};
+use core::ops::BitXor;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Zobrist(u64);
@@ -25,11 +25,5 @@ impl BitXor for Zobrist {
 
     fn bitxor(self, other: Zobrist) -> Zobrist {
         self.xor(other)
-    }
-}
-
-impl BitXorAssign for Zobrist {
-    fn bitxor_assign(&mut self, other: Zobrist) {
-        self.0 ^= other.0;
     }
 }
