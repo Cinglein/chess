@@ -1,8 +1,16 @@
 mod gh_argument;
+mod gh_field;
+mod gh_key;
+mod repository;
+mod stack_answer;
 
 use std::env;
 
 use gh_argument::GhArgument;
+use gh_field::GhField;
+use gh_key::GhKey;
+use repository::Repository;
+use stack_answer::StackAnswer;
 
 use task::Failure;
 use task::{CommandLine, Program, Stdout};
@@ -12,54 +20,37 @@ pub struct Stacked;
 impl Stacked {
     const NUMBER: &str = "PULL_REQUEST";
     const REPOSITORY: &str = "GITHUB_REPOSITORY";
-    const DEFAULT_BRANCH: &str = "main";
     const QUERY: &str = "query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { baseRefName stack { number } } } }";
     const BASE_AND_STACK: &str =
         r#".data.repository.pullRequest | "\(.baseRefName) \(.stack.number // "none")""#;
-    const NONE: &str = "none";
 
     pub fn run() -> Result<(), Failure> {
         let number = Self::required(Self::NUMBER)?;
-        let repository = Self::required(Self::REPOSITORY)?;
-        let (owner, name) = repository
-            .split_once('/')
-            .ok_or_else(|| Failure::Usage(format!("{} must be owner/name", Self::REPOSITORY)))?;
-        let answer = Self::base_and_stack(owner, name, &number)?;
-        let (base, stack) = answer
-            .split_once(' ')
-            .ok_or_else(|| Failure::GitHub(answer.clone()))?;
-        if base == Self::DEFAULT_BRANCH {
-            println!("stacked: pull request #{number} targets {base}");
-            Ok(())
-        } else if stack == Self::NONE {
-            Err(Failure::Refused(format!(
-                "pull request #{number} targets {base} but belongs to no GitHub stack; link it with gh stack link <bottom> ... <top>"
-            )))
-        } else {
-            println!("stacked: pull request #{number} targets {base} inside stack #{stack}");
-            Ok(())
-        }
+        let repository: Repository = Self::required(Self::REPOSITORY)?.parse()?;
+        let answer: StackAnswer = Self::base_and_stack(&repository, &number)?.parse()?;
+        println!("{}", answer.verdict(&number)?);
+        Ok(())
     }
 
     fn required(name: &str) -> Result<String, Failure> {
         env::var(name).map_err(|_| Failure::Usage(format!("{name} must be set")))
     }
 
-    fn base_and_stack(owner: &str, name: &str, number: &str) -> Result<String, Failure> {
+    fn base_and_stack(repository: &Repository, number: &str) -> Result<String, Failure> {
+        let [owner, name] = repository.fields();
         CommandLine::new(Program::GitHub)
             .argument(GhArgument::Api)
             .argument(GhArgument::Graphql)
             .argument(GhArgument::Field)
-            .argument(format!("query={}", Self::QUERY))
+            .argument(GhField::new(GhKey::Query, Self::QUERY))
             .argument(GhArgument::TypedField)
-            .argument(format!("owner={owner}"))
+            .argument(owner)
             .argument(GhArgument::TypedField)
-            .argument(format!("name={name}"))
+            .argument(name)
             .argument(GhArgument::TypedField)
-            .argument(format!("number={number}"))
+            .argument(GhField::new(GhKey::Number, number))
             .argument(GhArgument::Jq)
             .argument(Self::BASE_AND_STACK)
             .captured::<Stdout>()
-            .map(|answer| answer.trim().to_owned())
     }
 }
