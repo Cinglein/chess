@@ -35,12 +35,9 @@ impl Playout {
 #[cfg(test)]
 mod tests {
     use super::{Board, Playout, SplitMix64};
-
-    const SEED: u64 = 7;
-
     #[test]
     fn a_playout_leaves_the_start_position_by_following_its_generator() {
-        let played = Playout::new(SplitMix64::new(SEED)).advanced().advanced();
+        let played = Playout::new(SplitMix64::new(7)).advanced().advanced();
         assert!(played.board() != Board::START && played.board().legal_moves().len() > 1);
     }
 }
