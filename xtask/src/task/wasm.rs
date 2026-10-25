@@ -10,7 +10,11 @@ impl Wasm {
     pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
         Self::CRATES
             .iter()
-            .filter(|crate_name| selection.includes(crate_name))
+            .filter(|crate_name| {
+                crate_name
+                    .parse()
+                    .is_ok_and(|name| selection.includes(&name))
+            })
             .try_for_each(|crate_name| {
                 workspace.cargo(&[
                     "clippy",

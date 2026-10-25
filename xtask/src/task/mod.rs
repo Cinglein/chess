@@ -4,6 +4,7 @@ mod bit_boundary;
 mod ci;
 mod clippy;
 mod const_shape;
+mod crate_name;
 mod distinct_signatures;
 mod expression_flow;
 mod failure;

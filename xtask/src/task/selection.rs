@@ -2,13 +2,14 @@ use std::collections::BTreeSet;
 use std::fmt;
 
 use crate::task::affected::Affected;
+use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::workspace::Workspace;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Selection {
     Workspace,
-    Crates(BTreeSet<String>),
+    Crates(BTreeSet<CrateName>),
 }
 
 impl Selection {
@@ -42,12 +43,12 @@ impl Selection {
             Selection::Workspace => Vec::new(),
             Selection::Crates(crates) => crates
                 .iter()
-                .flat_map(|name| [String::from("--package"), name.clone()])
+                .flat_map(|name| [String::from("--package"), name.to_string()])
                 .collect(),
         }
     }
 
-    pub fn includes(&self, crate_name: &str) -> bool {
+    pub fn includes(&self, crate_name: &CrateName) -> bool {
         match self {
             Selection::Workspace => true,
             Selection::Crates(crates) => crates.contains(crate_name),
@@ -71,7 +72,11 @@ impl fmt::Display for Selection {
                 write!(
                     formatter,
                     "{}",
-                    crates.iter().cloned().collect::<Vec<String>>().join(", ")
+                    crates
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<String>>()
+                        .join(", ")
                 )
             }
         }
@@ -92,13 +97,16 @@ mod tests {
 
     #[test]
     fn a_crate_selection_names_each_package_and_the_workspace_names_itself() {
-        let crates = Selection::Crates(BTreeSet::from([SEARCH.to_owned(), EVAL.to_owned()]));
+        let crates = Selection::Crates(BTreeSet::from([
+            SEARCH.parse().unwrap(),
+            EVAL.parse().unwrap(),
+        ]));
         assert_eq!(crates.package_arguments(), PACKAGES);
         assert_eq!(
             (
                 Selection::Workspace.package_arguments(),
-                crates.includes(EVAL),
-                crates.includes(BOARD)
+                crates.includes(&EVAL.parse().unwrap()),
+                crates.includes(&BOARD.parse().unwrap())
             ),
             (WORKSPACE.map(String::from).to_vec(), true, false)
         );

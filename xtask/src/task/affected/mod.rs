@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 use package_graph::PackageGraph;
 use reach::Reach;
 
+use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::workspace::Workspace;
 
@@ -15,12 +16,15 @@ impl Affected {
     const BASE: &str = "origin/main";
 
     pub fn run(workspace: &Workspace) -> Result<(), Failure> {
-        let crates: Vec<String> = Self::reached(workspace)?.into_iter().collect();
+        let crates: Vec<String> = Self::reached(workspace)?
+            .iter()
+            .map(ToString::to_string)
+            .collect();
         println!("{}", serde_json::to_string(&crates)?);
         Ok(())
     }
 
-    pub fn reached(workspace: &Workspace) -> Result<BTreeSet<String>, Failure> {
+    pub fn reached(workspace: &Workspace) -> Result<BTreeSet<CrateName>, Failure> {
         let changed = workspace.git_output(&["diff", "--name-only", "--merge-base", Self::BASE])?;
         let metadata =
             workspace.cargo_stdout(&["metadata", "--format-version", "1", "--no-deps"])?;
@@ -31,7 +35,7 @@ impl Affected {
     fn crates<'paths>(
         graph: &PackageGraph,
         changed: impl Iterator<Item = &'paths str>,
-    ) -> BTreeSet<String> {
+    ) -> BTreeSet<CrateName> {
         let reaches: Vec<Reach> = changed.map(Reach::reached_by).collect();
         if reaches.contains(&Reach::Everything) {
             graph.names()
@@ -60,7 +64,13 @@ mod tests {
         let from_eval = Affected::crates(&graph, EVAL_CHANGE.into_iter());
         let from_root = Affected::crates(&graph, ROOT_CHANGE.into_iter());
         assert_eq!(
-            (from_eval.into_iter().collect::<Vec<_>>(), from_root.len()),
+            (
+                from_eval
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>(),
+                from_root.len()
+            ),
             (vec!["arena".to_owned(), "eval".to_owned()], 4)
         );
     }
