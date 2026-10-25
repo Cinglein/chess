@@ -7,6 +7,7 @@ use syn::{
     ItemConst, ItemFn, ItemMod,
 };
 
+use task::BitBoundary;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -16,11 +17,6 @@ use task::Walk;
 pub struct ConstShape;
 
 impl ConstShape {
-    const BOUNDARY_FILES: [&str; 3] = [
-        "crates/board/src/square/", "crates/board/src/bitboard/",
-        "crates/board/src/slider/magic.rs",
-    ];
-
     pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "casts live in const fns or boundary files, and const loops walk slices",
@@ -97,11 +93,7 @@ impl<'ast> Visit<'ast> for ConstContexts<'_> {
     }
 
     fn visit_expr_cast(&mut self, cast: &'ast ExprCast) {
-        if self.const_depth == 0
-            && !ConstShape::BOUNDARY_FILES
-                .iter()
-                .any(|boundary| self.path.starts_with(boundary))
-        {
+        if self.const_depth == 0 && !BitBoundary::covers(self.path) {
             self.report(
                 cast.as_token.span,
                 "as cast outside a const fn or a bit boundary file; use From, TryFrom, or an EnumMap",
@@ -151,6 +143,8 @@ impl Table { fn lookup(&self, key: Kind) -> u8 { let z = const { loop {} }; let 
 mod inner { fn widen(x: u8) -> u16 { x as u16 } }
 #[cfg(test)] mod tests { fn widen(x: u8) -> u16 { x as u16 } }
 ";
+    const BOUNDARY: &str = "crates/board/src/bitboard/mod.rs";
+    const BITS: &str = "fn widen(x: u8) -> u16 { x as u16 }";
     const REPORTED: [&str; 7] = [
         ":2: counter loop", ":2: open loop", ":3: counter loop", ":4: for loop", ":5: open loop",
         ":5: as cast", ":6: as cast",
@@ -159,7 +153,8 @@ mod inner { fn widen(x: u8) -> u16 { x as u16 } }
     #[test]
     fn flags_counter_and_open_loops_in_const_context_and_casts_outside_const_or_boundary_files() {
         let file = SourceFile::parse("table.rs", SOURCE.to_owned()).unwrap();
-        let report = ConstShape::report(core::slice::from_ref(&file));
+        let bits = SourceFile::parse(BOUNDARY, BITS.to_owned()).unwrap();
+        let report = ConstShape::report(&[bits, file]);
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }
