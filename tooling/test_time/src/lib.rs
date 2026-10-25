@@ -104,7 +104,8 @@ mod tests {
         let policy = Policy::defaults();
         let limit = policy.interval(Interval::PerTest).duration();
         let [binary, exact, slow, bulk] = NAMES;
-        let timing = |name: &str, elapsed| TestTiming::new(Path::new(binary), name.to_owned(), elapsed);
+        let timing =
+            |name: &str, elapsed| TestTiming::new(Path::new(binary), name.to_owned(), elapsed);
         let exact = (0..WHOLE_IN_UNITS).map(|_| timing(exact, limit)).collect();
         let timings = vec![
             timing(slow, limit + TICK),
