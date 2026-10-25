@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -11,9 +13,33 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
 jobs:
+  affected:
+    runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - id: plan
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
+          else
+            echo 'plan={"crates":["all"],"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}' >> "$GITHUB_OUTPUT"
+          fi
+
   fmt:
+    needs: affected
+    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,27 +49,37 @@ jobs:
       - run: cargo fmt --all --check
 
   clippy:
+    needs: affected
+    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: clippy
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - run: cargo xtask wasm
+      - run: cargo xtask clippy $SCOPE
+      - run: cargo xtask wasm $SCOPE
 
   test:
+    needs: affected
+    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: Swatinem/rust-cache@v2
-      - run: cargo test --workspace --all-features
-      - run: cargo xtask test-time
+      - run: cargo xtask test $SCOPE
+      - run: cargo xtask test-time $SCOPE
 
   lint:
+    needs: affected
+    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +88,8 @@ jobs:
       - run: cargo xtask lint
 
   mutants:
-    if: github.event_name == 'pull_request'
+    needs: affected
+    if: github.event_name == 'pull_request' && join(fromJSON(needs.affected.outputs.plan).crates) != ''
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,3 +107,12 @@ jobs:
       - run: cargo xtask mutants
         env:
           CARGO_INCREMENTAL: 1
+
+  ci-gate:
+    needs: [affected, fmt, clippy, test, lint, mutants]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"' && exit 1
+          echo "every job passed or was not needed"

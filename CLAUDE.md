@@ -207,7 +207,12 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
   group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job covering
   comments, free functions, the test budget, and the state graph. Run `cargo xtask ci` locally
-  before opening a PR.
+  before opening a PR. CI runs only what a change reaches: an `affected` job in each workflow
+  publishes the plan from `cargo xtask affected` (the crates and mutant shards sized at
+  64 mutants each up to 16), every job is gated on it and runs its task with `--affected` on a
+  pull request, pushes to `main` and the Monday schedule run everything, and `ci-gate` and
+  `mutants-gate` always run and fail if any job they need failed, so they are the checks to
+  require.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the
   lint stops firing. Prefer fixing the code, for example `usize::from` or `u8::try_from` over `as`.
