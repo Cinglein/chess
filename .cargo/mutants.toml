@@ -1,12 +1,9 @@
 exclude_globs = [
     "xtask/**",
     "crates/*/src/main.rs",
+    "crates/*/src/command_line/**",
     "crates/chess/**",
     "crates/tui/**",
-    "crates/arena/src/command_line/**",
-    "crates/datagen/src/command_line/**",
-    "crates/trainer/src/command_line/**",
-    "crates/board/src/board/playout.rs",
     "crates/board/src/slider/magics.rs",
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
@@ -23,7 +20,7 @@ exclude_re = [
     "Affected::run",
     "Affected::loads",
     "Changes::reaches",
-    "Scope::(applied|one_shard|write_diff)",
+    "Scope::(applied|changed_lines|one_shard|write_diff)",
     "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",
