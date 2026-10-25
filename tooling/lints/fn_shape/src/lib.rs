@@ -12,6 +12,7 @@ use task::Report;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 use task::{Limit, Policy};
 
 pub struct FnShape;
@@ -113,8 +114,9 @@ impl Shapes<'_> {
 
 impl<'ast> Visit<'ast> for Shapes<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !SourceFile::is_test_module(module) {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
+            Walk::Skipped => {}
         }
     }
 

@@ -15,6 +15,7 @@ use task::Report;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
+use task::Walk;
 
 pub struct ExpressionFlow;
 
@@ -103,8 +104,9 @@ impl Flows<'_> {
 
 impl<'ast> Visit<'ast> for Flows<'_> {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
-        if !SourceFile::is_test_module(module) {
-            syn::visit::visit_item_mod(self, module);
+        match SourceFile::walk(module) {
+            Walk::Entered => syn::visit::visit_item_mod(self, module),
+            Walk::Skipped => {}
         }
     }
 

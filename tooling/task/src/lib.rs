@@ -13,6 +13,7 @@ mod source_file;
 mod support_modules;
 mod use_edges;
 mod violation;
+mod walk;
 mod workspace;
 
 pub use available_gib::AvailableGib;
@@ -32,4 +33,5 @@ pub use source_file::SourceFile;
 pub use support_modules::SupportModules;
 pub use use_edges::UseEdges;
 pub use violation::Violation;
+pub use walk::Walk;
 pub use workspace::Workspace;
