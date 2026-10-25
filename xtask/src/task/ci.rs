@@ -19,7 +19,7 @@ impl Ci {
         Clippy::run(workspace, selection)?;
         Wasm::run(workspace, selection)?;
         Test::run(workspace, selection)?;
-        TestTime::run(workspace, selection, Policy::defaults().test_time())?;
+        TestTime::run(workspace, selection, &Policy::defaults())?;
         Lint::run(workspace)
     }
 }

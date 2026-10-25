@@ -13,23 +13,19 @@ use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
 use super::super::measurement::Measurement;
-use crate::task::policy::TestPolicy;
+use crate::task::policy::{Limit, Policy};
 use crate::task::site::Site;
 use crate::task::violation::Violation;
 
 pub(super) struct TestModule<'scan> {
     path: &'scan str,
-    policy: &'scan TestPolicy,
+    policy: &'scan Policy,
     scope: Scope,
     budget: TestBudget,
 }
 
 impl<'scan> TestModule<'scan> {
-    pub(super) fn budget(
-        path: &'scan str,
-        module: &ItemMod,
-        policy: &'scan TestPolicy,
-    ) -> TestBudget {
+    pub(super) fn budget(path: &'scan str, module: &ItemMod, policy: &'scan Policy) -> TestBudget {
         let mut scan = TestModule {
             path,
             policy,
@@ -82,13 +78,13 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
         if integer
             .base10_parse::<usize>()
-            .is_ok_and(|value| value > self.policy.largest_integer().count())
+            .is_ok_and(|value| value > self.policy.limit(Limit::LargestInteger).count())
         {
             self.budget.violations.push(Violation::new(
                 Site::Line(self.path.to_owned(), integer.span().start().line),
                 format!(
                     "integer literal {integer} in test code, at most {} allowed",
-                    self.policy.largest_integer().count()
+                    self.policy.limit(Limit::LargestInteger).count()
                 ),
             ));
         }

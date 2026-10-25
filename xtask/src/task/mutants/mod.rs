@@ -13,7 +13,7 @@ use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::available_gib::AvailableGib;
 use crate::task::failure::Failure;
-use crate::task::policy::MutationPolicy;
+use crate::task::policy::{MemoryShare, Policy};
 use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
@@ -30,7 +30,7 @@ impl Mutants {
         workspace: &Workspace,
         scope: Scope,
         selection: &Selection,
-        policy: &MutationPolicy,
+        policy: &Policy,
     ) -> Result<(), Failure> {
         if scope == Scope::Workspace && selection.is_empty() {
             println!("mutants: no crate affected");
@@ -44,8 +44,8 @@ impl Mutants {
             String::from("mutants"),
             String::from("--jobserver-tasks"),
             budget
-                .minus(policy.for_the_tests())
-                .divided_by(policy.per_compiler_task())
+                .minus(policy.memory(MemoryShare::ForTheTests))
+                .divided_by(policy.memory(MemoryShare::PerCompilerTask))
                 .to_string(),
             String::from("--output"),
             String::from(Self::OUTPUT_DIRECTORY),
@@ -102,14 +102,14 @@ impl Mutants {
         Ok(())
     }
 
-    fn refuse_if_memory_is_short(policy: &MutationPolicy) -> Result<AvailableGib, Failure> {
+    fn refuse_if_memory_is_short(policy: &Policy) -> Result<AvailableGib, Failure> {
         let available = AvailableGib::measured();
-        if available < policy.granted() {
+        if available < policy.memory(MemoryShare::Granted) {
             return Err(Failure::Refused(format!(
                 "{available} available, the granted budget of {} must be free before mutating",
-                policy.granted()
+                policy.memory(MemoryShare::Granted)
             )));
         }
-        Ok(policy.granted())
+        Ok(policy.memory(MemoryShare::Granted))
     }
 }

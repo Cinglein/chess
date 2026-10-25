@@ -8,7 +8,7 @@ use test_binary::TestBinary;
 use test_timing::TestTiming;
 
 use crate::task::failure::Failure;
-use crate::task::policy::TimePolicy;
+use crate::task::policy::{Interval, Limit, Policy};
 use crate::task::report::Report;
 use crate::task::selection::Selection;
 use crate::task::site::Site;
@@ -23,7 +23,7 @@ impl TestTime {
     pub fn run(
         workspace: &Workspace,
         selection: &Selection,
-        policy: &TimePolicy,
+        policy: &Policy,
     ) -> Result<(), Failure> {
         if selection.is_empty() {
             println!("test time: no crate affected");
@@ -39,37 +39,37 @@ impl TestTime {
         TestTime { timings }.report(policy).verdict()
     }
 
-    fn report(mut self, policy: &TimePolicy) -> Report {
+    fn report(mut self, policy: &Policy) -> Report {
         self.timings.sort_by_key(|timing| Reverse(timing.elapsed()));
         let total: Duration = self.timings.iter().map(TestTiming::elapsed).sum();
         println!(
             "test time: {} tests in {total:.2?}, slowest {}:",
             self.timings.len(),
-            policy.slowest_shown().count()
+            policy.limit(Limit::SlowestShown).count()
         );
         self.timings
             .iter()
-            .take(policy.slowest_shown().count())
+            .take(policy.limit(Limit::SlowestShown).count())
             .for_each(|timing| println!("  {timing}"));
         let slow = self
             .timings
             .iter()
-            .filter(|timing| timing.elapsed() > policy.per_test().duration())
+            .filter(|timing| timing.elapsed() > policy.interval(Interval::PerTest).duration())
             .map(|timing| {
                 Violation::new(
                     Site::Workspace,
                     format!(
                         "{timing}, at most {:?} allowed per test",
-                        policy.per_test().duration()
+                        policy.interval(Interval::PerTest).duration()
                     ),
                 )
             });
-        let whole = (total > policy.total().duration()).then(|| {
+        let whole = (total > policy.interval(Interval::Total).duration()).then(|| {
             Violation::new(
                 Site::Workspace,
                 format!(
                     "the suite took {total:.2?}, at most {:?} allowed",
-                    policy.total().duration()
+                    policy.interval(Interval::Total).duration()
                 ),
             )
         });

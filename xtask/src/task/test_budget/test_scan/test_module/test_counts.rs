@@ -4,7 +4,7 @@ use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::measurement::Measurement;
 use super::macro_arguments::MacroArguments;
-use crate::task::policy::TestPolicy;
+use crate::task::policy::{Limit, Policy};
 
 #[derive(Default)]
 pub(super) struct TestCounts {
@@ -14,22 +14,22 @@ pub(super) struct TestCounts {
 }
 
 impl TestCounts {
-    pub(super) fn measurements(&self, policy: &TestPolicy) -> Vec<Measurement> {
+    pub(super) fn measurements(&self, policy: &Policy) -> Vec<Measurement> {
         vec![
             Measurement::new(
                 "assertions",
                 self.assertions,
-                policy.assertions_per_test().count(),
+                policy.limit(Limit::AssertionsPerTest).count(),
             ),
             Measurement::new(
                 "body lines",
                 self.body_lines,
-                policy.lines_per_test().count(),
+                policy.limit(Limit::LinesPerTest).count(),
             ),
             Measurement::new(
                 "literals",
                 self.literals,
-                policy.literals_per_test().count(),
+                policy.limit(Limit::LiteralsPerTest).count(),
             ),
         ]
     }

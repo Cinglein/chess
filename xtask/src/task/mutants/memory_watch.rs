@@ -6,13 +6,13 @@ use sysinfo::{Pid, Process, ProcessRefreshKind, ProcessesToUpdate, System};
 
 use crate::task::available_gib::AvailableGib;
 use crate::task::failure::Failure;
-use crate::task::policy::MutationPolicy;
+use crate::task::policy::{Interval, MemoryShare, Policy};
 use crate::task::site::Site;
 
 pub struct MemoryWatch<'policy> {
     root: Pid,
     budget: AvailableGib,
-    policy: &'policy MutationPolicy,
+    policy: &'policy Policy,
     system: System,
     members: Vec<Pid>,
     last_discovery: Instant,
@@ -23,7 +23,7 @@ impl<'policy> MemoryWatch<'policy> {
     pub fn over(
         child: &Child,
         budget: AvailableGib,
-        policy: &'policy MutationPolicy,
+        policy: &'policy Policy,
     ) -> MemoryWatch<'policy> {
         MemoryWatch {
             root: Pid::from_u32(child.id()),
@@ -46,7 +46,7 @@ impl<'policy> MemoryWatch<'policy> {
                 break status;
             }
             self.sample();
-            thread::sleep(self.policy.sample_every().duration());
+            thread::sleep(self.policy.interval(Interval::SampleEvery).duration());
         };
         if self.killed.is_empty() {
             return Ok(status);
@@ -60,7 +60,8 @@ impl<'policy> MemoryWatch<'policy> {
 
     fn sample(&mut self) {
         self.system.refresh_memory();
-        if self.last_discovery.elapsed() >= self.policy.discover_every().duration() {
+        if self.last_discovery.elapsed() >= self.policy.interval(Interval::DiscoverEvery).duration()
+        {
             self.system.refresh_processes_specifics(
                 ProcessesToUpdate::All,
                 true,
@@ -87,8 +88,12 @@ impl<'policy> MemoryWatch<'policy> {
             .filter_map(|pid| self.system.process(*pid))
             .collect();
         let used: u64 = tree.iter().map(|process| process.memory()).sum();
-        if used <= self.budget.minus(self.policy.reserve()).bytes()
-            && self.system.available_memory() >= self.policy.reserve().bytes()
+        if used
+            <= self
+                .budget
+                .minus(self.policy.memory(MemoryShare::Reserve))
+                .bytes()
+            && self.system.available_memory() >= self.policy.memory(MemoryShare::Reserve).bytes()
         {
             return None;
         }
@@ -144,8 +149,8 @@ mod tests {
     fn a_tree_over_its_budget_is_killed_and_the_run_is_refused() {
         let policy = Policy::defaults();
         let mut child = Command::new("sleep").arg("30").spawn().unwrap();
-        let outcome = MemoryWatch::over(&child, AvailableGib::from_bytes(0), policy.mutants())
-            .guard(&mut child);
+        let outcome =
+            MemoryWatch::over(&child, AvailableGib::from_bytes(0), &policy).guard(&mut child);
         assert!(matches!(outcome, Err(Failure::Refused(_))));
     }
 }

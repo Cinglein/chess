@@ -133,7 +133,7 @@ impl Task {
         let selection = Selection::from_flags(flags, &workspace)?;
         let policy = Policy::defaults();
         match self {
-            Task::Affected => Affected::run(&workspace, policy.mutants()),
+            Task::Affected => Affected::run(&workspace, &policy),
             Task::Ci => Ci::run(&workspace, &selection),
             Task::Clippy => Clippy::run(&workspace, &selection),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),
@@ -141,29 +141,20 @@ impl Task {
                 DistinctSignatures::report(&workspace.source_files()?).verdict()
             }
             Task::ExpressionFlow => ExpressionFlow::report(&workspace.source_files()?).verdict(),
-            Task::FnShape => {
-                FnShape::report(&workspace.source_files()?, policy.fn_shape()).verdict()
-            }
+            Task::FnShape => FnShape::report(&workspace.source_files()?, &policy).verdict(),
             Task::Lint => Lint::run(&workspace),
             Task::LiteralNames => {
-                LiteralNames::report(&workspace.source_files()?, policy.names()).verdict()
+                LiteralNames::report(&workspace.source_files()?, &policy).verdict()
             }
             Task::Magics => Magics::run(&workspace),
             Task::ManualIteration => ManualIteration::report(&workspace.source_files()?).verdict(),
             Task::ModuleNesting => {
-                ModuleNesting::report(&workspace.source_files()?, policy.module_nesting()).verdict()
+                ModuleNesting::report(&workspace.source_files()?, &policy).verdict()
             }
-            Task::Mutants => Mutants::run(
-                &workspace,
-                Scope::ChangedLines,
-                &selection,
-                policy.mutants(),
-            ),
-            Task::MutantsFull => {
-                Mutants::run(&workspace, Scope::Workspace, &selection, policy.mutants())
-            }
+            Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines, &selection, &policy),
+            Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace, &selection, &policy),
             Task::NamedLifetimes => {
-                NamedLifetimes::report(&workspace.source_files()?, policy.names()).verdict()
+                NamedLifetimes::report(&workspace.source_files()?, &policy).verdict()
             }
             Task::NamedNumbers => NamedNumbers::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
@@ -176,20 +167,14 @@ impl Task {
             Task::PrimitiveBoundary => {
                 PrimitiveBoundary::report(&workspace.source_files()?).verdict()
             }
-            Task::PrivateFns => {
-                PrivateFns::report(&workspace.source_files()?, policy.private_fns()).verdict()
-            }
+            Task::PrivateFns => PrivateFns::report(&workspace.source_files()?, &policy).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
             Task::SettingsShape => SettingsShape::report(&workspace.source_files()?).verdict(),
             Task::Stacked => Stacked::run(),
-            Task::StateGraph => {
-                StateGraph::report(&workspace.source_files()?, policy.state_graph()).verdict()
-            }
+            Task::StateGraph => StateGraph::report(&workspace.source_files()?, &policy).verdict(),
             Task::Test => Test::run(&workspace, &selection),
-            Task::TestBudget => {
-                TestBudget::report(&workspace.source_files()?, policy.test_budget()).verdict()
-            }
-            Task::TestTime => TestTime::run(&workspace, &selection, policy.test_time()),
+            Task::TestBudget => TestBudget::report(&workspace.source_files()?, &policy).verdict(),
+            Task::TestTime => TestTime::run(&workspace, &selection, &policy),
             Task::TypeShape => TypeShape::report(&workspace.source_files()?).verdict(),
             Task::Wasm => Wasm::run(&workspace, &selection),
         }

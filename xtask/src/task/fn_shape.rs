@@ -6,7 +6,7 @@ use syn::{
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
 };
 
-use crate::task::policy::FnShapePolicy;
+use crate::task::policy::{Limit, Policy};
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -25,7 +25,7 @@ impl FnShape {
         "ne",
     ];
 
-    pub fn report(files: &[SourceFile], policy: &FnShapePolicy) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         Report::new(
             "hairy control flow; booleans and tuples become types, nesting becomes methods",
             files
@@ -35,7 +35,7 @@ impl FnShape {
         )
     }
 
-    fn violations(file: &SourceFile, policy: &FnShapePolicy) -> Vec<Violation> {
+    fn violations(file: &SourceFile, policy: &Policy) -> Vec<Violation> {
         let mut shapes = Shapes {
             path: file.path(),
             policy,
@@ -85,7 +85,7 @@ impl FnShape {
 
 struct Shapes<'scan> {
     path: &'scan str,
-    policy: &'scan FnShapePolicy,
+    policy: &'scan Policy,
     depth: usize,
     violations: Vec<Violation>,
 }
@@ -100,12 +100,12 @@ impl Shapes<'_> {
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
         self.depth += 1;
-        if self.depth == self.policy.nesting().count() + 1 {
+        if self.depth == self.policy.limit(Limit::Nesting).count() + 1 {
             self.report(
                 span,
                 &format!(
                     "control flow nested deeper than {} levels; lift the inner part into a method",
-                    self.policy.nesting().count()
+                    self.policy.limit(Limit::Nesting).count()
                 ),
             );
         }
@@ -127,13 +127,13 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
             .iter()
             .filter(|argument| matches!(argument, FnArg::Typed(_)))
             .count()
-            > self.policy.parameters().count()
+            > self.policy.limit(Limit::Parameters).count()
         {
             self.report(
                 signature.ident.span(),
                 &format!(
                     "more than {} parameters; group the ones that travel together into a struct",
-                    self.policy.parameters().count()
+                    self.policy.limit(Limit::Parameters).count()
                 ),
             );
         }
@@ -246,8 +246,7 @@ impl Wide {
     #[test]
     fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting() {
         let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = FnShape::report(core::slice::from_ref(&file), Policy::defaults().fn_shape())
-            .to_string();
+        let report = FnShape::report(core::slice::from_ref(&file), &Policy::defaults()).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

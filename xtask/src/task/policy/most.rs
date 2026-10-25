@@ -8,4 +8,8 @@ impl Most {
     pub const fn count(self) -> usize {
         self.0
     }
+
+    pub const fn allows(self, count: usize) -> bool {
+        count <= self.0
+    }
 }

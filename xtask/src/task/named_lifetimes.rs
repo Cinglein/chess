@@ -1,7 +1,7 @@
 use syn::visit::Visit;
 use syn::{Ident, LifetimeParam};
 
-use crate::task::policy::NamePolicy;
+use crate::task::policy::{Floor, Policy};
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -10,7 +10,7 @@ use crate::task::violation::Violation;
 pub struct NamedLifetimes;
 
 impl NamedLifetimes {
-    pub fn report(files: &[SourceFile], policy: &NamePolicy) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         Report::new(
             "lifetimes are named with a word, never a letter",
             files
@@ -29,7 +29,7 @@ impl NamedLifetimes {
         )
     }
 
-    fn short_lifetimes(file: &syn::File, policy: &NamePolicy) -> Vec<Ident> {
+    fn short_lifetimes(file: &syn::File, policy: &Policy) -> Vec<Ident> {
         let mut visitor = ShortLifetimes {
             policy,
             found: Vec::new(),
@@ -40,7 +40,7 @@ impl NamedLifetimes {
 }
 
 struct ShortLifetimes<'scan> {
-    policy: &'scan NamePolicy,
+    policy: &'scan Policy,
     found: Vec<Ident>,
 }
 
@@ -48,7 +48,7 @@ impl<'ast> Visit<'ast> for ShortLifetimes<'_> {
     fn visit_lifetime_param(&mut self, parameter: &'ast LifetimeParam) {
         if !self
             .policy
-            .shortest_lifetime()
+            .floor(Floor::LifetimeName)
             .allows(parameter.lifetime.ident.to_string().len())
         {
             self.found.push(parameter.lifetime.ident.clone());
@@ -72,11 +72,10 @@ impl<'b> Scan<'b, '_> { fn view<'c>(&'c self) -> &'c str { self.text } }
     #[test]
     fn flags_single_letter_lifetimes_where_they_are_declared() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let names: Vec<String> =
-            NamedLifetimes::short_lifetimes(&parsed, Policy::defaults().names())
-                .iter()
-                .map(ToString::to_string)
-                .collect();
+        let names: Vec<String> = NamedLifetimes::short_lifetimes(&parsed, &Policy::defaults())
+            .iter()
+            .map(ToString::to_string)
+            .collect();
         assert_eq!(names, FLAGGED);
     }
 }

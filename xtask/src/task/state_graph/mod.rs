@@ -11,14 +11,14 @@ use edge_scan::EdgeScan;
 use field_visibility::FieldVisibility;
 use variant_matches::VariantMatches;
 
-use crate::task::policy::EdgePolicy;
+use crate::task::policy::{Limit, Policy};
 use crate::task::report::Report;
 use crate::task::source_file::SourceFile;
 
 pub struct StateGraph;
 
 impl StateGraph {
-    pub fn report(files: &[SourceFile], policy: &EdgePolicy) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         let declarations = Declarations::collect(files);
         let mut edges = EdgeScan::new(&declarations);
         for file in files {
@@ -38,7 +38,7 @@ impl StateGraph {
                         .into_iter()
                         .chain(VariantMatches::violations(file, &declarations))
                 })
-                .chain(edges.violations(policy.edges_per_vertex().count()))
+                .chain(edges.violations(policy.limit(Limit::EdgesPerVertex).count()))
                 .collect(),
         )
     }
@@ -87,7 +87,7 @@ impl Other {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = StateGraph::report(&files, Policy::defaults().state_graph()).to_string();
+        let report = StateGraph::report(&files, &Policy::defaults()).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)),
             "{report}"

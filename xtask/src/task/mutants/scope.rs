@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::task::failure::Failure;
-use crate::task::policy::MutationPolicy;
+use crate::task::policy::{Limit, Policy};
 use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
@@ -39,7 +39,7 @@ impl Scope {
         self,
         workspace: &Workspace,
         selection: &Selection,
-        policy: &MutationPolicy,
+        policy: &Policy,
     ) -> Result<Vec<String>, Failure> {
         match self {
             Scope::ChangedLines => {
@@ -52,7 +52,7 @@ impl Scope {
                 })?;
                 Ok(vec![
                     String::from("--jobs"),
-                    policy.parallel_jobs().count().to_string(),
+                    policy.limit(Limit::ParallelJobs).count().to_string(),
                     String::from("--in-diff"),
                     String::from(Self::DIFF_FILE),
                 ])

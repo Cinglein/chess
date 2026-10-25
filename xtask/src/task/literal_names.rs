@@ -1,7 +1,7 @@
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
-use crate::task::policy::NamePolicy;
+use crate::task::policy::Policy;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -10,7 +10,7 @@ use crate::task::violation::Violation;
 pub struct LiteralNames;
 
 impl LiteralNames {
-    pub fn report(files: &[SourceFile], policy: &NamePolicy) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         Report::new(
             "function names say what the function does",
             files
@@ -29,7 +29,7 @@ impl LiteralNames {
         )
     }
 
-    fn vague_names(file: &syn::File, policy: &NamePolicy) -> Vec<Ident> {
+    fn vague_names(file: &syn::File, policy: &Policy) -> Vec<Ident> {
         let mut names = VagueNames {
             policy,
             found: Vec::new(),
@@ -40,7 +40,7 @@ impl LiteralNames {
 }
 
 struct VagueNames<'scan> {
-    policy: &'scan NamePolicy,
+    policy: &'scan Policy,
     found: Vec<Ident>,
 }
 
@@ -104,7 +104,7 @@ trait T { fn do_it(&self); fn go(&self); }
     #[test]
     fn flags_prepositions_and_vague_verbs_but_not_new_or_trait_impls() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let names: Vec<String> = LiteralNames::vague_names(&parsed, Policy::defaults().names())
+        let names: Vec<String> = LiteralNames::vague_names(&parsed, &Policy::defaults())
             .iter()
             .map(ToString::to_string)
             .collect();

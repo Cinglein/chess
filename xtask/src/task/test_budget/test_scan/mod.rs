@@ -8,36 +8,32 @@ use syn::ItemMod;
 use syn::visit::Visit;
 
 use super::TestBudget;
-use crate::task::policy::TestPolicy;
+use crate::task::policy::{Limit, Policy};
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
 
 pub(super) struct TestScan<'scan> {
     path: &'scan str,
-    policy: &'scan TestPolicy,
+    policy: &'scan Policy,
     budget: TestBudget,
 }
 
 impl<'scan> TestScan<'scan> {
-    pub(super) fn budget(
-        path: &'scan str,
-        file: &syn::File,
-        policy: &'scan TestPolicy,
-    ) -> TestBudget {
+    pub(super) fn budget(path: &'scan str, file: &syn::File, policy: &'scan Policy) -> TestBudget {
         let mut scan = TestScan {
             path,
             policy,
             budget: TestBudget::default(),
         };
         scan.visit_file(file);
-        if scan.budget.tests > policy.tests_per_file().count() {
+        if !policy.limit(Limit::TestsPerFile).allows(scan.budget.tests) {
             scan.budget.violations.push(Violation::new(
                 Site::File(path.to_owned()),
                 format!(
                     "{} tests, at most {} allowed",
                     scan.budget.tests,
-                    policy.tests_per_file().count()
+                    policy.limit(Limit::TestsPerFile).count()
                 ),
             ));
         }

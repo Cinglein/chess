@@ -1,7 +1,7 @@
 use std::iter::Sum;
 use std::ops::Add;
 
-use crate::task::policy::TestPolicy;
+use crate::task::policy::{Policy, Share};
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -24,7 +24,7 @@ pub struct TestBudget {
 }
 
 impl TestBudget {
-    pub fn report(files: &[SourceFile], policy: &TestPolicy) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
         files
             .iter()
@@ -33,7 +33,7 @@ impl TestBudget {
             .summarise(policy)
     }
 
-    fn measure(file: &SourceFile, support: &[String], policy: &TestPolicy) -> Self {
+    fn measure(file: &SourceFile, support: &[String], policy: &Policy) -> Self {
         let lines = file.text().lines().count();
         let scanned = TestScan::budget(file.path(), file.syntax(), policy);
         Self {
@@ -48,7 +48,7 @@ impl TestBudget {
         }
     }
 
-    fn summarise(self, policy: &TestPolicy) -> Report {
+    fn summarise(self, policy: &Policy) -> Report {
         println!(
             "test budget: {} tests in {} files, {} of {} lines",
             self.tests, self.files, self.test_lines, self.lines
@@ -57,12 +57,14 @@ impl TestBudget {
             Measurement::new(
                 "tests across the workspace",
                 self.tests,
-                policy.tests_per_hundred_files().applied_to(self.files),
+                policy
+                    .share(Share::TestsPerHundredFiles)
+                    .applied_to(self.files),
             ),
             Measurement::new(
                 "test lines",
                 self.test_lines,
-                policy.test_line_percent().applied_to(self.lines),
+                policy.share(Share::TestLinePercent).applied_to(self.lines),
             ),
         ]
         .into_iter()
@@ -137,12 +139,11 @@ mod tests {
     #[test]
     fn counts_assertions_literals_and_variants_inside_macros() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let joined: Vec<String> =
-            TestScan::budget("example.rs", &parsed, Policy::defaults().test_budget())
-                .violations
-                .iter()
-                .map(ToString::to_string)
-                .collect();
+        let joined: Vec<String> = TestScan::budget("example.rs", &parsed, &Policy::defaults())
+            .violations
+            .iter()
+            .map(ToString::to_string)
+            .collect();
         let joined = joined.join("\n");
         assert!(
             REPORTED.iter().all(|report| joined.contains(report)),
