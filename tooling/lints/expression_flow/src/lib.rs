@@ -291,7 +291,7 @@ mod tests {
 impl Flow {
     fn guards(&self, items: &[u8]) -> u8 {
         if items.is_empty() { return 0; } for item in items { continue; }
-        match items.len() { 0 => self.note(0), _ => self.note(1) }; let mut total = 0; total += items.len();
+        match items.len() { 0 => self.note(0), _ => self.note(1) }; let mut total = 0; total += items.len(); let plain = 0;
         let mut sorted = items.to_vec(); sorted.sort(); let mut buffer = Vec::new(); self.fill(&mut buffer);
         let mut pair = Pair::default(); pair.left = 1; let mut slots = [0; 2]; slots[0] = 1;
         let mut count = 0; (count) = 2; while self.busy() { break; }
