@@ -9,7 +9,6 @@ publish = false
 
 [dependencies]
 task = { path = "../../task" }
-settings = { path = "../../../crates/settings" }
 
 [lints]
 workspace = true

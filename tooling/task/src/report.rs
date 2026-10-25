@@ -24,6 +24,11 @@ impl Report {
     }
 
     #[must_use]
+    pub fn violations(&self) -> &[Violation] {
+        &self.violations
+    }
+
+    #[must_use]
     pub fn lists_exactly(&self, expected: &[&str]) -> bool {
         self.violations.len() == expected.len()
             && self

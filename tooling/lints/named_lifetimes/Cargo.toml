@@ -10,7 +10,6 @@ publish = false
 [dependencies]
 task = { path = "../../task" }
 syn = { version = "2", features = ["full", "parsing", "visit"] }
-settings = { path = "../../../crates/settings" }
 
 [lints]
 workspace = true

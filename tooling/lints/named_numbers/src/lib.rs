@@ -102,34 +102,3 @@ impl<'ast> Visit<'ast> for Numbers {
         ));
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::NamedNumbers;
-    use task::SourceFile;
-    const SOURCE: &str = "
-pub struct Clock;
-impl Clock { const HALF: u64 = 500; pub fn halved(ticks: u64) -> u64 { ticks / 2 + 1 } }
-impl Clock { pub fn scaled(ticks: f64) -> f64 { ticks * 0.5 } pub fn named(ticks: u64) -> u64 { ticks / Self::HALF } pub fn unit(ticks: u64) -> u64 { ticks - 1 } }
-#[cfg(any(test, feature = \"proptest\"))] impl Clock { pub fn range() -> u64 { 60 } }
-#[cfg(feature = \"metal\")] impl Clock { pub fn lanes() -> u64 { 8 } }
-pub trait Rate { const BASE: f64 = 2.5; fn beat(&self) -> u64 { 3 } } const LIMIT: u64 = 40;
-pub fn capped(ticks: u64) -> u64 { let edge = const { 7 }; assert!(ticks > 9); ticks.min(LIMIT) }
-mod inner { pub fn depth() -> u8 { 4 } }
-#[cfg(test)] mod tests { fn depth() -> u8 { 4 } }
-";
-    const FILES: [(&str, &str); 2] = [
-        ("crates/a/src/clock.rs", SOURCE),
-        ("crates/board/src/direction.rs", "pub fn step() -> i8 { 8 }"),
-    ];
-    const REPORTED: [&str; 6] = [
-        "clock.rs:3:", "clock.rs:4:", "clock.rs:6:", "clock.rs:7:", "clock.rs:8:", "clock.rs:9:",
-    ];
-
-    #[test]
-    fn flags_literals_outside_consts_but_not_units_test_only_impls_or_bit_boundary_files() {
-        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
-        let report = NamedNumbers::report(&files);
-        assert!(report.lists_exactly(&REPORTED), "{report}");
-    }
-}

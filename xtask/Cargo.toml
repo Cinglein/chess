@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 affected = { path = "../tooling/affected" }
+corpus_check = { path = "../tooling/corpus_check" }
 magics = { path = "../tooling/magics" }
 stacked = { path = "../tooling/stacked" }
 test_time = { path = "../tooling/test_time" }

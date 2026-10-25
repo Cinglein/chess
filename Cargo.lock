@@ -295,6 +295,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "corpus_check"
+version = "0.1.0"
+dependencies = [
+ "const_shape",
+ "distinct_signatures",
+ "expression_flow",
+ "fn_shape",
+ "literal_names",
+ "manual_iteration",
+ "module_nesting",
+ "named_lifetimes",
+ "named_numbers",
+ "no_comments",
+ "no_forwarders",
+ "no_free_fns",
+ "no_numbers_in_binaries",
+ "no_parameter_bags",
+ "primitive_boundary",
+ "private_fns",
+ "public_surface",
+ "settings",
+ "settings_shape",
+ "state_graph",
+ "strum",
+ "task",
+ "test_budget",
+ "thiserror",
+ "type_shape",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -522,7 +553,6 @@ name = "fn_shape"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -663,7 +693,6 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 name = "literal_names"
 version = "0.1.0"
 dependencies = [
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -696,7 +725,6 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 name = "module_nesting"
 version = "0.1.0"
 dependencies = [
- "settings",
  "task",
 ]
 
@@ -729,7 +757,6 @@ dependencies = [
 name = "named_lifetimes"
 version = "0.1.0"
 dependencies = [
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -923,7 +950,6 @@ dependencies = [
 name = "primitive_boundary"
 version = "0.1.0"
 dependencies = [
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -933,7 +959,6 @@ name = "private_fns"
 version = "0.1.0"
 dependencies = [
  "quote",
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -1270,7 +1295,6 @@ version = "0.1.0"
 dependencies = [
  "derive_more",
  "quote",
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -1376,7 +1400,6 @@ version = "0.1.0"
 dependencies = [
  "derive_more",
  "proc-macro2",
- "settings",
  "syn 2.0.119",
  "task",
 ]
@@ -1817,6 +1840,7 @@ dependencies = [
  "affected",
  "board",
  "const_shape",
+ "corpus_check",
  "derive_more",
  "distinct_signatures",
  "enum-map",
