@@ -230,7 +230,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   that run's shard artifacts and refresh the table with `cargo xtask mutant-costs <directory>`). A missed mutant anywhere
   fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
-  piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
+  piece-square `placement_table.rs`), `xtask`, and every binary's `main.rs` tree (`main.rs` and the
+  `command_line` module it declares) are excluded in `.cargo/mutants.toml`: the run builds with
+  `--lib`, so a mutant in a binary is never compiled and would pass vacuously; a binary's logic
+  that deserves a mutant belongs in its library. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
   `cargo-mutants` process already exists or the granted budget is not free, and runs in place,
