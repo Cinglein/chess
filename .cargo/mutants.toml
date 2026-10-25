@@ -1,6 +1,7 @@
 exclude_globs = [
     "xtask/**",
     "crates/*/src/main.rs",
+    "crates/*/src/command_line/**",
     "crates/chess/**",
     "crates/tui/**",
     "crates/board/src/slider/magics.rs",
