@@ -143,37 +143,33 @@ impl From<Board> for Game {
 
 #[cfg(test)]
 mod tests {
+    use super::Game;
     use super::script::Script;
-    use super::{Finished, Game};
+    use crate::fixtures::{InProcess, MATE_IN_ONE, QUICK};
     use crate::in_process_engine::InProcessEngine;
-    use crate::rules::{DrawAdjudication, ResignAdjudication, Rules, Thinking};
-    use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
+    use crate::rules::{DrawAdjudication, ResignAdjudication, Rules};
+    use board::{Board, Color, FullmoveNumber, PlyCount};
     use eval::Score;
     use std::num::NonZeroU16;
     use std::ops::ControlFlow;
     use std::time::Duration;
     use uci::{Clock, Increment, Remaining};
-    const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
     const ROOK_EACH: &str = "4k3/r7/8/8/8/8/7R/4K3 w - - 0 1";
-    const TWO_QUEENS_UP: &str = "k7/8/8/8/8/8/8/4KQQ1 w - - 0 1";
+    const TWO_QUEENS: &str = "k7/8/8/8/8/8/8/4KQQ1 w - - 0 1";
     const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
     const HUNDRED_HALFMOVES: &str = "4k3/8/8/8/8/8/8/4K2R w - - 100 60";
     const KNIGHTS_OUT_AND_BACK_TWICE: &str = "g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8";
-    const QUICK: Rules = Rules::DEFAULT.thinking_by(Thinking::FixedNodes(NodeCount::new(64)));
-    const NO_TIME: Clock = Clock::new(
-        Duration::from_nanos(1),
-        Duration::from_nanos(1),
-        Duration::ZERO,
-        Duration::ZERO,
-    );
-    const GENEROUS: Clock = Clock::new(
-        Duration::from_secs(60),
-        Duration::from_secs(60),
-        Duration::from_secs(1),
-        Duration::ZERO,
-    );
+    const THREEFOLD: &str = "position startpos moves g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8\n1/2-1/2 {threefold repetition}";
+    const STALEMATED: &str = "position fen 7k/5Q2/6K1/8/8/8/8/8 b - - 0 1\n1/2-1/2 {stalemate}";
+    const FIFTY_MOVES: &str =
+        "position fen 4k3/8/8/8/8/8/8/4K2R w - - 100 60\n1/2-1/2 {fifty moves without progress}";
+    const NO_MOVE: &str = "position startpos\n0-1 {engine failure: the engine had no move}";
+    const A_NANOSECOND: Duration = Duration::from_nanos(1);
+    const A_MINUTE: Duration = Duration::from_secs(60);
+    const NO_TIME: Clock = Clock::new(A_NANOSECOND, A_NANOSECOND, Duration::ZERO, Duration::ZERO);
+    const GENEROUS: Clock = Clock::new(A_MINUTE, A_MINUTE, Duration::from_secs(1), Duration::ZERO);
     const MOVER: Color = Color::White;
     const WAITER: Color = Color::Black;
     const ONE_MOVE: FullmoveNumber = FullmoveNumber::new(NonZeroU16::MIN);
@@ -185,82 +181,34 @@ mod tests {
         ResignAdjudication::new(Score::new(64), PlyCount::new(1));
     const LEVEL_FOR_ONE_PLY: DrawAdjudication =
         DrawAdjudication::new(ONE_MOVE, Score::new(10), PlyCount::new(1));
+    const DRAW_CLAIMABLE: Rules = QUICK.adjudicated_by(LEVEL_FOR_ONE_PLY, Rules::DEFAULT.resign());
+    const DRAWN_WHEN_LEVEL: Rules = QUICK
+        .lasting_at_most(EIGHT_MOVES)
+        .adjudicated_by(LEVEL_FOR_FOUR_PLIES, Rules::DEFAULT.resign());
+    const RESIGNABLE: Rules = QUICK.adjudicated_by(Rules::DEFAULT.draw(), LOST_FOR_ONE_PLY);
+    const OUT_OF_TIME: Rules = Rules::DEFAULT.timed(NO_TIME).lasting_at_most(ONE_MOVE);
+    const CUT_AT_TWO_MOVES: Rules = RESIGNABLE.lasting_at_most(TWO_MOVES);
     const FIXTURES: [(&str, Rules, &str, usize); 7] = [
         (MATE_IN_ONE, QUICK, "1-0 {checkmate}", 1),
-        (
-            MATE_IN_ONE,
-            QUICK.adjudicated_by(LEVEL_FOR_ONE_PLY, Rules::DEFAULT.resign()),
-            "1-0 {checkmate}",
-            1,
-        ),
+        (MATE_IN_ONE, DRAW_CLAIMABLE, "1-0 {checkmate}", 1),
         (BARE_KINGS, QUICK, "1/2-1/2 {insufficient material}", 0),
-        (
-            ROOK_EACH,
-            QUICK
-                .lasting_at_most(EIGHT_MOVES)
-                .adjudicated_by(LEVEL_FOR_FOUR_PLIES, Rules::DEFAULT.resign()),
-            "1/2-1/2 {draw adjudicated}",
-            4,
-        ),
-        (
-            TWO_QUEENS_UP,
-            QUICK.adjudicated_by(Rules::DEFAULT.draw(), LOST_FOR_ONE_PLY),
-            "1-0 {resignation adjudicated}",
-            3,
-        ),
-        (
-            START,
-            Rules::DEFAULT.timed(NO_TIME).lasting_at_most(ONE_MOVE),
-            "0-1 {time forfeit}",
-            0,
-        ),
-        (
-            START,
-            QUICK
-                .lasting_at_most(TWO_MOVES)
-                .adjudicated_by(Rules::DEFAULT.draw(), LOST_FOR_ONE_PLY),
-            "1/2-1/2 {move limit}",
-            4,
-        ),
+        (ROOK_EACH, DRAWN_WHEN_LEVEL, "1/2-1/2 {draw adjudicated}", 4),
+        (TWO_QUEENS, RESIGNABLE, "1-0 {resignation adjudicated}", 3),
+        (START, OUT_OF_TIME, "0-1 {time forfeit}", 0),
+        (START, CUT_AT_TWO_MOVES, "1/2-1/2 {move limit}", 4),
     ];
     const SCRIPTED: [(&str, &str, &str); 5] = [
-        (
-            START,
-            KNIGHTS_OUT_AND_BACK_TWICE,
-            "position startpos moves g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8\n1/2-1/2 {threefold repetition}",
-        ),
-        (
-            STALEMATE,
-            "",
-            "position fen 7k/5Q2/6K1/8/8/8/8/8 b - - 0 1\n1/2-1/2 {stalemate}",
-        ),
-        (
-            HUNDRED_HALFMOVES,
-            "",
-            "position fen 4k3/8/8/8/8/8/8/4K2R w - - 100 60\n1/2-1/2 {fifty moves without progress}",
-        ),
+        (START, KNIGHTS_OUT_AND_BACK_TWICE, THREEFOLD),
+        (STALEMATE, "", STALEMATED),
+        (HUNDRED_HALFMOVES, "", FIFTY_MOVES),
         (START, "e2e5", "position startpos\n0-1 {illegal move}"),
-        (
-            START,
-            "",
-            "position startpos\n0-1 {engine failure: the engine had no move}",
-        ),
+        (START, "", NO_MOVE),
     ];
-
-    impl Game {
-        fn played_between_two_engines(fen: &str, rules: Rules) -> Finished {
-            let board: Board = fen.parse().unwrap();
-            Game::from(board).ruled_by(rules).play(
-                &mut InProcessEngine::default(),
-                &mut InProcessEngine::default(),
-            )
-        }
-    }
 
     #[test]
     fn games_end_the_way_their_position_and_rules_dictate_and_every_label_carries_the_verdict() {
         for (fen, rules, outcome, plies) in FIXTURES {
-            let finished = Game::played_between_two_engines(fen, rules);
+            let finished = InProcess::played_between_two_engines(fen, rules);
             assert_eq!(
                 (finished.outcome().to_string(), finished.labels().count()),
                 (outcome.to_owned(), plies),
