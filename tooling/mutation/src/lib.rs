@@ -44,7 +44,7 @@ impl Mutants {
                 )
                 .argument(MutantsArgument::Timeout)
                 .argument(policy.interval(Interval::TestTimeout).whole_seconds());
-            let runs = scope.applied(line, workspace, selection)?;
+            let runs = scope.applied(line, workspace, selection, policy)?;
             let failed: Vec<String> = runs
                 .iter()
                 .map(|run| run.accepted(budget, policy))
