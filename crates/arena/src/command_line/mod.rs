@@ -6,7 +6,7 @@ mod settings;
 pub use command_line_error::CommandLineError;
 
 use ::settings::EmbeddedDefaults;
-use arena::{Openings, Series};
+use arena::{Openings, Rules, Series};
 use arguments::{Arguments, Challenger, Reference};
 use clap::Parser;
 use limited_contestant::LimitedContestant;
@@ -22,7 +22,13 @@ impl CommandLine {
             LimitedContestant::new(arguments.contestant::<Challenger>(), settings.limit_elo());
         let reference =
             LimitedContestant::new(arguments.contestant::<Reference>(), settings.limit_elo());
-        let tally = Series::new(&challenger, &reference, settings.rules()).play(
+        let rules = Rules::new(
+            settings.time_control(),
+            settings.longest_game(),
+            settings.draw_adjudication(),
+            settings.resign_adjudication(),
+        );
+        let tally = Series::new(&challenger, &reference, rules).play(
             Openings::repeated(settings.rounds()),
             settings.concurrency(),
             &|finished| println!("{finished}"),

@@ -1,11 +1,8 @@
-mod time_control;
-
-use arena::{DrawAdjudication, ResignAdjudication, RoundCount, Rules, WorkerCount};
+use arena::{DrawAdjudication, ResignAdjudication, RoundCount, TimeControl, WorkerCount};
 use board::FullmoveNumber;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
-use time_control::TimeControl;
-use uci::{Clock, Elo};
+use uci::Elo;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -37,11 +34,20 @@ impl Settings {
         self.limit_elo
     }
 
-    pub fn rules(&self) -> Rules {
-        Rules::DEFAULT
-            .timed(Clock::from(self.time_control))
-            .lasting_at_most(self.longest_game)
-            .adjudicated_by(self.draw_adjudication, self.resign_adjudication)
+    pub const fn longest_game(&self) -> FullmoveNumber {
+        self.longest_game
+    }
+
+    pub const fn time_control(&self) -> TimeControl {
+        self.time_control
+    }
+
+    pub const fn draw_adjudication(&self) -> DrawAdjudication {
+        self.draw_adjudication
+    }
+
+    pub const fn resign_adjudication(&self) -> ResignAdjudication {
+        self.resign_adjudication
     }
 }
 
@@ -55,6 +61,14 @@ mod tests {
         let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
         let read: Settings = toml::from_str(&written).unwrap();
         assert_eq!(read, Settings::defaults());
-        assert_eq!(read.rules(), Rules::DEFAULT);
+        assert_eq!(
+            Rules::new(
+                read.time_control(),
+                read.longest_game(),
+                read.draw_adjudication(),
+                read.resign_adjudication()
+            ),
+            Rules::DEFAULT
+        );
     }
 }
