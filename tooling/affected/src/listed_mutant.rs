@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 use task::CrateName;
 use task::Failure;
+use task::MutantCount;
 
 #[derive(Debug, Deserialize)]
 pub struct ListedMutant {
@@ -11,12 +12,12 @@ pub struct ListedMutant {
 }
 
 impl ListedMutant {
-    pub fn tally(json: &str) -> Result<BTreeMap<CrateName, usize>, Failure> {
+    pub fn tally(json: &str) -> Result<BTreeMap<CrateName, MutantCount>, Failure> {
         let listed: Vec<ListedMutant> = serde_json::from_str(json).map_err(Failure::MutantList)?;
         Ok(listed
             .into_iter()
             .fold(BTreeMap::new(), |mut counts, mutant| {
-                *counts.entry(mutant.package).or_default() += 1;
+                *counts.entry(mutant.package).or_default() += MutantCount::from(1);
                 counts
             }))
     }
@@ -24,7 +25,7 @@ impl ListedMutant {
 
 #[cfg(test)]
 mod tests {
-    use super::ListedMutant;
+    use super::{ListedMutant, MutantCount};
     const LISTED: &str = r#"[{"package": "board", "file": "crates/board/src/lib.rs"},
         {"package": "eval"}, {"package": "board"}]"#;
     const BOARD: usize = 2;
@@ -34,7 +35,7 @@ mod tests {
         let counts = ListedMutant::tally(LISTED).unwrap();
         assert_eq!(
             (counts[&"board".parse().unwrap()], counts.len()),
-            (BOARD, BOARD)
+            (MutantCount::from(BOARD), BOARD)
         );
         assert!(ListedMutant::tally("{").is_err());
     }

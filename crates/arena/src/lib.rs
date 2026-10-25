@@ -23,7 +23,7 @@ pub use openings::Openings;
 pub use opponent::Opponent;
 pub use random_openings::RandomOpenings;
 pub use round_count::RoundCount;
-pub use rules::{DrawAdjudication, ResignAdjudication, Rules, Thinking};
+pub use rules::{DrawAdjudication, ResignAdjudication, Rules, TimeControl};
 pub use seed::Seed;
 pub use series::Series;
 pub use uci_process::UciProcess;

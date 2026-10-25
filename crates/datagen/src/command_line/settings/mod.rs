@@ -1,4 +1,4 @@
-use arena::{Rules, Thinking, WorkerCount};
+use arena::WorkerCount;
 use board::{NodeCount, PlyCount};
 use datagen::PositionCount;
 use serde::{Deserialize, Serialize};
@@ -23,6 +23,10 @@ impl Settings {
         self.concurrency
     }
 
+    pub const fn nodes_per_move(&self) -> NodeCount {
+        self.nodes_per_move
+    }
+
     pub const fn opening_plies(&self) -> PlyCount {
         self.opening_plies
     }
@@ -30,22 +34,16 @@ impl Settings {
     pub const fn positions(&self) -> PositionCount {
         self.positions
     }
-
-    pub const fn rules(&self) -> Rules {
-        Rules::DEFAULT.thinking_by(Thinking::FixedNodes(self.nodes_per_move))
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Settings;
-    use arena::Thinking;
     use settings::EmbeddedDefaults;
     #[test]
-    fn default_settings_survive_a_trip_through_toml_and_limit_every_move_by_nodes() {
+    fn default_settings_survive_a_trip_through_toml() {
         let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
         let read: Settings = toml::from_str(&written).unwrap();
         assert_eq!(read, Settings::defaults());
-        assert!(matches!(read.rules().thinking(), Thinking::FixedNodes(_)));
     }
 }

@@ -4,16 +4,18 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use module_path::{Ancestor, InsideSibling, ModulePath};
 
+use task::ReexportCount;
 use task::Site;
 use task::SourceFile;
 use task::UseEdges;
 use task::Violation;
+use task::{Limit, Policy};
 
 pub struct ModuleTree {
     modules: Vec<ModulePath>,
     users: BTreeMap<ModulePath, BTreeSet<ModulePath>>,
     deep_uses: Vec<Violation>,
-    reexports: BTreeMap<ModulePath, usize>,
+    reexports: BTreeMap<ModulePath, ReexportCount>,
 }
 
 impl ModuleTree {
@@ -45,15 +47,22 @@ impl ModuleTree {
             .chain(deep_uses)
     }
 
-    pub fn crowded(&self, max: usize) -> impl Iterator<Item = Violation> + '_ {
+    pub fn crowded<'tree>(
+        &'tree self,
+        policy: &'tree Policy,
+    ) -> impl Iterator<Item = Violation> + 'tree {
+        let most = policy.limit(Limit::Reexports);
         self.reexports
             .iter()
             .filter(|(module, _)| !module.segments().is_empty())
-            .filter(move |(_, count)| **count > max)
+            .filter(move |(_, count)| !most.allows(**count))
             .map(move |(module, count)| {
                 Violation::new(
                     Site::File(module.file().into()),
-                    format!("re-exports {count} items, at most {max} allowed; split the module"),
+                    format!(
+                        "re-exports {count} items, at most {} allowed; split the module",
+                        most.count()
+                    ),
                 )
             })
     }
@@ -114,7 +123,7 @@ impl ModuleTree {
             .then(|| {
                 let homes: BTreeSet<ModulePath> = outsiders
                     .iter()
-                    .map(|user| user.truncated(module.segments().len()))
+                    .map(|user| user.truncated_to_length(module.segments().len()))
                     .collect();
                 (homes.len() == 1)
                     .then(|| homes.into_iter().next())

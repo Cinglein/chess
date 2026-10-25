@@ -8,7 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-derive_more = { version = "2", features = ["display"] }
+derive_more = { version = "2", features = ["add", "add_assign", "display", "from", "from_str", "into", "sum"] }
 enum-map = { version = "3", features = ["serde"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 quote = "1"

@@ -29,7 +29,7 @@ impl StructFields {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, field)| {
-                    let key = Self::field_key(index, field);
+                    let key = Self::key_at_index(index, field);
                     Self::type_name(&field.ty).map(|name| (key, name))
                 })
                 .collect(),
@@ -74,7 +74,7 @@ impl StructFields {
         }
     }
 
-    fn field_key(index: usize, field: &Field) -> Member {
+    fn key_at_index(index: usize, field: &Field) -> Member {
         field
             .ident
             .clone()

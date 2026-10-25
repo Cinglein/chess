@@ -1,6 +1,8 @@
 use syn::visit::Visit;
 use syn::{Item, ItemUse, UseTree, Visibility};
 
+use crate::reexport_count::ReexportCount;
+
 #[derive(Default)]
 pub struct UseEdges(Vec<Vec<String>>);
 
@@ -13,7 +15,7 @@ impl UseEdges {
     }
 
     #[must_use]
-    pub fn count_reexports(file: &syn::File) -> usize {
+    pub fn count_reexports(file: &syn::File) -> ReexportCount {
         file.items
             .iter()
             .filter_map(|item| match item {
@@ -25,11 +27,11 @@ impl UseEdges {
             .sum()
     }
 
-    fn count_leaves(tree: &UseTree) -> usize {
+    fn count_leaves(tree: &UseTree) -> ReexportCount {
         match tree {
             UseTree::Path(path) => Self::count_leaves(&path.tree),
             UseTree::Group(group) => group.items.iter().map(Self::count_leaves).sum(),
-            UseTree::Name(_) | UseTree::Rename(_) | UseTree::Glob(_) => 1,
+            UseTree::Name(_) | UseTree::Rename(_) | UseTree::Glob(_) => ReexportCount::from(1),
         }
     }
 

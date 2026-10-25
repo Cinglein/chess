@@ -2,6 +2,7 @@ use syn::visit::Visit;
 
 use syn::{Ident, LifetimeParam};
 
+use task::LineNumber;
 use task::Name;
 use task::Report;
 use task::Site;
@@ -23,7 +24,7 @@ impl NamedLifetimes {
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
-                                Site::Line(file.path().into(), name.span().start().line),
+                                Site::Line(file.path().into(), LineNumber::from(name.span())),
                                 format!("'{name}"),
                             )
                         })

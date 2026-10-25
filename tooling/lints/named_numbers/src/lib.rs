@@ -9,6 +9,7 @@ use syn::{
 };
 
 use task::BitBoundary;
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -64,13 +65,13 @@ impl NamedNumbers {
         }
     }
 
-    fn unnamed(digits: &str, line: usize) -> Option<usize> {
+    fn unnamed(digits: &str, line: LineNumber) -> Option<LineNumber> {
         (!Self::is_unit(digits)).then_some(line)
     }
 }
 
 #[derive(Default)]
-struct Numbers(Vec<usize>);
+struct Numbers(Vec<LineNumber>);
 
 impl<'ast> Visit<'ast> for Numbers {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
@@ -106,14 +107,14 @@ impl<'ast> Visit<'ast> for Numbers {
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
         self.0.extend(NamedNumbers::unnamed(
             literal.base10_digits(),
-            literal.span().start().line,
+            LineNumber::from(literal.span()),
         ));
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {
         self.0.extend(NamedNumbers::unnamed(
             literal.base10_digits(),
-            literal.span().start().line,
+            LineNumber::from(literal.span()),
         ));
     }
 }

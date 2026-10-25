@@ -1,5 +1,6 @@
 use syn::{Ident, Item, ItemFn, ItemMod};
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -19,7 +20,7 @@ impl NoFreeFns {
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
-                                Site::Line(file.path().into(), name.span().start().line),
+                                Site::Line(file.path().into(), LineNumber::from(name.span())),
                                 format!("fn {name}"),
                             )
                         })

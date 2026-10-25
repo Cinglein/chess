@@ -8,6 +8,8 @@ use syn::{
 };
 
 use task::BitBoundary;
+use task::LineNumber;
+use task::NestingDepth;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -27,7 +29,7 @@ impl ConstShape {
     fn violations(file: &SourceFile) -> Vec<Violation> {
         let mut contexts = ConstContexts {
             path: file.path(),
-            const_depth: 0,
+            const_depth: NestingDepth::default(),
             violations: Vec::new(),
         };
         contexts.visit_file(file.syntax());
@@ -37,23 +39,26 @@ impl ConstShape {
 
 struct ConstContexts<'scan> {
     path: &'scan Path,
-    const_depth: usize,
+    const_depth: NestingDepth,
     violations: Vec<Violation>,
 }
 
 impl ConstContexts<'_> {
     fn violation(&self, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(self.path.into(), span.start().line), message)
+        Violation::new(
+            Site::Line(self.path.into(), LineNumber::from(span)),
+            message,
+        )
     }
 
     fn within_const(&mut self, visit: impl FnOnce(&mut Self)) {
-        self.const_depth += 1;
+        self.const_depth += NestingDepth::LEVEL;
         visit(self);
-        self.const_depth -= 1;
+        self.const_depth -= NestingDepth::LEVEL;
     }
 
     fn cast_finding(&self, cast: &ExprCast) -> Option<Violation> {
-        (self.const_depth == 0 && !BitBoundary::covers(self.path)).then(|| {
+        (self.const_depth.is_surface() && !BitBoundary::covers(self.path)).then(|| {
             self.violation(
                 cast.as_token.span,
                 "as cast outside a const fn or a bit boundary file; use From, TryFrom, or an EnumMap",
@@ -62,7 +67,7 @@ impl ConstContexts<'_> {
     }
 
     fn loop_finding(&self, span: Span, message: &str) -> Option<Violation> {
-        (self.const_depth > 0).then(|| self.violation(span, message))
+        (!self.const_depth.is_surface()).then(|| self.violation(span, message))
     }
 }
 

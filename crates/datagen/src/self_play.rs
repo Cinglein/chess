@@ -64,13 +64,12 @@ impl SelfPlay {
 #[cfg(test)]
 mod tests {
     use super::{PositionCount, SelfPlay};
-    use arena::{Finished, RandomOpenings, Rules, Seed, Thinking, WorkerCount};
+    use arena::{Finished, RandomOpenings, Rules, Seed, WorkerCount};
     use board::{FullmoveNumber, NodeCount, PlyCount};
     use std::num::NonZeroU16;
     const SEED: Seed = Seed::new(3);
     const PLIES: PlyCount = PlyCount::new(6);
-    const SHORT: Rules = Rules::DEFAULT
-        .thinking_by(Thinking::FixedNodes(NodeCount::new(64)))
+    const SHORT: Rules = Rules::at_fixed_nodes(NodeCount::new(64))
         .lasting_at_most(FullmoveNumber::new(NonZeroU16::new(6).unwrap()));
     const ONE: PositionCount = PositionCount::new(1);
 

@@ -52,7 +52,7 @@ mod tests {
     use crate::crate_load::CrateLoad;
     use settings::EmbeddedDefaults;
     use std::collections::{BTreeMap, BTreeSet};
-    use task::{Interval, Policy};
+    use task::{Interval, MutantCount, Policy};
     const ONE: usize = 1;
     const EVAL: &str = "eval";
     const SHARDED: &str = r#""shards":["eval/0/2","eval/1/2"],"shard_count":2"#;
@@ -65,7 +65,7 @@ mod tests {
         let eval = BTreeSet::from([EVAL.parse().unwrap()]);
         let jobs = BTreeMap::from([(full, JobPlan::over(&eval)), (test, JobPlan::over(&eval))]);
         let each = policy.interval(Interval::PerShard);
-        let load = CrateLoad::new(EVAL.parse().unwrap(), ONE, each, &policy);
+        let load = CrateLoad::new(EVAL.parse().unwrap(), MutantCount::from(ONE), each, &policy);
         let sharded = Plan::new(jobs).with_full_sharded(core::slice::from_ref(&load), &policy);
         let json = serde_json::to_string(&sharded).unwrap();
         assert!(sharded.job(lint).is_none() && sharded.job(test).is_some());

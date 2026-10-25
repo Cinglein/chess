@@ -9,13 +9,14 @@ use method_shape::MethodShape;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, ItemMod, ItemStruct, Type};
 
+use task::LineNumber;
 use task::Name;
 use task::SourceFile;
 use task::Walk;
 
 #[derive(Default)]
 pub struct BagCandidates {
-    structs: BTreeMap<Name, usize>,
+    structs: BTreeMap<Name, LineNumber>,
     disqualified: BTreeSet<Name>,
 }
 
@@ -63,7 +64,7 @@ impl<'ast> Visit<'ast> for BagCandidates {
 
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
         self.structs
-            .insert(Name::from(&item.ident), item.ident.span().start().line);
+            .insert(Name::from(&item.ident), LineNumber::from(item.ident.span()));
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {

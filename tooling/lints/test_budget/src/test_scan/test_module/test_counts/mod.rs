@@ -1,38 +1,40 @@
+mod assertion_count;
+mod literal_count;
+
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 use syn::{Block, ExprLit, ExprPath, Macro};
 
-use super::super::super::measurement::Measurement;
 use super::macro_arguments::MacroArguments;
+use crate::line_count::LineCount;
+use crate::measurement::Measurement;
+use assertion_count::AssertionCount;
+use literal_count::LiteralCount;
 use task::{Casing, Name, Whole};
 use task::{Limit, Policy};
 
 #[derive(Default)]
 pub(super) struct TestCounts {
-    assertions: usize,
-    literals: usize,
-    body_lines: usize,
+    assertions: AssertionCount,
+    literals: LiteralCount,
+    body_lines: LineCount,
 }
 
 impl TestCounts {
-    pub(super) fn measurements(&self, policy: &Policy) -> Vec<Measurement> {
-        vec![
-            Measurement::new(
-                "assertions",
-                self.assertions,
-                policy.limit(Limit::AssertionsPerTest).count(),
-            ),
+    pub(super) fn overruns(&self, policy: &Policy) -> Vec<String> {
+        [
+            self.assertions.measured(policy).overrun(),
             Measurement::new(
                 "body lines",
                 self.body_lines,
-                policy.limit(Limit::LinesPerTest).count(),
-            ),
-            Measurement::new(
-                "literals",
-                self.literals,
-                policy.limit(Limit::LiteralsPerTest).count(),
-            ),
+                policy.limit(Limit::LinesPerTest).counted(),
+            )
+            .overrun(),
+            self.literals.measured(policy).overrun(),
         ]
+        .into_iter()
+        .flatten()
+        .collect()
     }
 
     const ASSERTIONS: &[&str] = &[
@@ -42,7 +44,7 @@ impl TestCounts {
     pub(super) fn tally(block: &Block) -> Self {
         let span = block.span();
         let mut counts = TestCounts {
-            body_lines: (span.end().line - span.start().line).saturating_sub(1),
+            body_lines: LineCount::from((span.end().line - span.start().line).saturating_sub(1)),
             ..Self::default()
         };
         counts.visit_block(block);
@@ -69,17 +71,17 @@ impl TestCounts {
 
 impl<'ast> Visit<'ast> for TestCounts {
     fn visit_expr_lit(&mut self, literal: &'ast ExprLit) {
-        self.literals += 1;
+        self.literals += LiteralCount::from(1);
         syn::visit::visit_expr_lit(self, literal);
     }
 
     fn visit_expr_path(&mut self, path: &'ast ExprPath) {
-        self.literals += usize::from(Self::is_variant_path(path));
+        self.literals += LiteralCount::from(usize::from(Self::is_variant_path(path)));
         syn::visit::visit_expr_path(self, path);
     }
 
     fn visit_macro(&mut self, invocation: &'ast Macro) {
-        self.assertions += usize::from(Self::is_assertion(invocation));
+        self.assertions += AssertionCount::from(usize::from(Self::is_assertion(invocation)));
         MacroArguments::parse(invocation).visit_with(self);
     }
 }

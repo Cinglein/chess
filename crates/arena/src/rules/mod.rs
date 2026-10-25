@@ -1,15 +1,17 @@
 mod draw_adjudication;
 mod resign_adjudication;
 mod thinking;
+mod time_control;
 
 pub use draw_adjudication::DrawAdjudication;
 pub use resign_adjudication::ResignAdjudication;
 pub use thinking::Thinking;
+pub use time_control::TimeControl;
 
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use board::{FullmoveNumber, PlyCount};
+use board::{FullmoveNumber, NodeCount, PlyCount};
 use eval::Score;
 use uci::Clock;
 
@@ -39,6 +41,27 @@ impl Rules {
         ),
         resign: ResignAdjudication::new(Score::new(800), PlyCount::new(6)),
     };
+
+    #[must_use]
+    pub fn new(
+        time_control: TimeControl,
+        longest_game: FullmoveNumber,
+        draw: DrawAdjudication,
+        resign: ResignAdjudication,
+    ) -> Rules {
+        Rules {
+            clock: Clock::from(time_control),
+            thinking: Thinking::Timed,
+            longest_game,
+            draw,
+            resign,
+        }
+    }
+
+    #[must_use]
+    pub const fn at_fixed_nodes(nodes_per_move: NodeCount) -> Rules {
+        Rules::DEFAULT.thinking_by(Thinking::FixedNodes(nodes_per_move))
+    }
 
     #[must_use]
     pub const fn timed(self, clock: Clock) -> Rules {
