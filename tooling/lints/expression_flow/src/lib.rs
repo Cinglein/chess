@@ -8,7 +8,7 @@ use syn::visit::Visit;
 use syn::{
     BinOp, Block, Expr, ExprAssign, ExprBinary, ExprBreak, ExprContinue, ExprForLoop, ExprIf,
     ExprLoop, ExprReturn, ExprWhile, Ident, ImplItemConst, ImplItemFn, ItemConst, ItemFn, ItemMod,
-    Local, Pat, Stmt, TraitItemFn,
+    Local, Pat, PatIdent, Signature, Stmt, TraitItemFn,
 };
 
 use task::Report;
@@ -40,6 +40,10 @@ impl ExpressionFlow {
         };
         flows.visit_file(file.syntax());
         flows.violations
+    }
+
+    fn lonely_if(expr: &ExprIf) -> Option<Span> {
+        expr.else_branch.is_none().then_some(expr.if_token.span)
     }
 
     fn is_dropped(statement: &Stmt, last: bool) -> bool {
@@ -82,22 +86,30 @@ struct Flows<'scan> {
 }
 
 impl Flows<'_> {
+    fn found(path: &Path, span: Span, message: &str) -> Violation {
+        Violation::new(Site::Line(path.into(), span.start().line), message)
+    }
+
     fn report(&mut self, span: Span, message: &str) {
-        self.violations.push(Violation::new(
-            Site::Line(self.path.into(), span.start().line),
-            message,
-        ));
+        self.violations.push(Self::found(self.path, span, message));
+    }
+
+    fn walk_body(signature: &Signature) -> Walk {
+        match signature.constness {
+            None => Walk::Entered,
+            Some(_) => Walk::Skipped,
+        }
     }
 
     fn visit_body(&mut self, body: &Block) {
         let mut locals = MutableLocals::default();
         locals.visit_block(body);
-        for span in locals.only_reassigned() {
+        locals.only_reassigned().into_iter().for_each(|span| {
             self.report(
                 span,
                 "mutable local that is only reassigned; a mutable binding is borrowed as &mut or has methods called on it",
             );
-        }
+        });
         self.visit_block(body);
     }
 }
@@ -115,52 +127,54 @@ impl<'ast> Visit<'ast> for Flows<'_> {
     fn visit_impl_item_const(&mut self, _: &'ast ImplItemConst) {}
 
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        if function.sig.constness.is_none() {
-            self.visit_body(&function.block);
+        match Self::walk_body(&function.sig) {
+            Walk::Entered => self.visit_body(&function.block),
+            Walk::Skipped => {}
         }
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {
-        if function.sig.constness.is_none() {
-            self.visit_body(&function.block);
+        match Self::walk_body(&function.sig) {
+            Walk::Entered => self.visit_body(&function.block),
+            Walk::Skipped => {}
         }
     }
 
     fn visit_trait_item_fn(&mut self, function: &'ast TraitItemFn) {
-        if let Some(body) = function
-            .default
-            .as_ref()
-            .filter(|_| function.sig.constness.is_none())
-        {
-            self.visit_body(body);
+        match Self::walk_body(&function.sig) {
+            Walk::Entered => function
+                .default
+                .iter()
+                .for_each(|body| self.visit_body(body)),
+            Walk::Skipped => {}
         }
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
         let last = block.stmts.len().saturating_sub(1);
-        let dropped: Vec<Span> = block
+        block
             .stmts
             .iter()
             .enumerate()
             .filter(|(index, statement)| ExpressionFlow::is_dropped(statement, *index == last))
             .map(|(_, statement)| statement.span())
-            .collect();
-        for span in dropped {
-            self.report(
-                span,
-                "if or match whose value is dropped; let it produce the value the function returns",
-            );
-        }
+            .for_each(|span| {
+                self.report(
+                    span,
+                    "if or match whose value is dropped; let it produce the value the function returns",
+                );
+            });
         syn::visit::visit_block(self, block);
     }
 
     fn visit_expr_if(&mut self, expr: &'ast ExprIf) {
-        if expr.else_branch.is_none() {
-            self.report(
-                expr.if_token.span,
+        self.violations.extend(ExpressionFlow::lonely_if(expr).map(|span| {
+            Self::found(
+                self.path,
+                span,
                 "if without else yields nothing; use then_some, filter, or an else branch that produces the value",
-            );
-        }
+            )
+        }));
         syn::visit::visit_expr_if(self, expr);
     }
 
@@ -211,24 +225,28 @@ impl<'ast> Visit<'ast> for Flows<'_> {
     }
 
     fn visit_expr_assign(&mut self, expr: &'ast ExprAssign) {
-        if ExpressionFlow::assigned_local(&expr.left).is_some() {
-            self.report(
+        self.violations.extend(ExpressionFlow::assigned_local(&expr.left).map(|_| {
+            Self::found(
+                self.path,
                 expr.eq_token.span,
                 "assignment to a local; build the value in one expression or give its type an updater method",
-            );
-        }
+            )
+        }));
         syn::visit::visit_expr_assign(self, expr);
     }
 
     fn visit_expr_binary(&mut self, expr: &'ast ExprBinary) {
-        if ExpressionFlow::is_compound(expr.op)
-            && ExpressionFlow::assigned_local(&expr.left).is_some()
-        {
-            self.report(
-                expr.op.span(),
-                "compound assignment to a local; build the value in one expression or give its type an updater method",
-            );
-        }
+        self.violations.extend(
+            ExpressionFlow::assigned_local(&expr.left)
+                .filter(|_| ExpressionFlow::is_compound(expr.op))
+                .map(|_| {
+                    Self::found(
+                        self.path,
+                        expr.op.span(),
+                        "compound assignment to a local; build the value in one expression or give its type an updater method",
+                    )
+                }),
+        );
         syn::visit::visit_expr_binary(self, expr);
     }
 }
@@ -240,6 +258,23 @@ struct MutableLocals {
 }
 
 impl MutableLocals {
+    fn declared_mutable(local: &Local) -> Option<&PatIdent> {
+        match &local.pat {
+            Pat::Ident(binding) if binding.mutability.is_some() => Some(binding),
+            _ => None,
+        }
+    }
+
+    fn touched_by(expr: &Expr) -> Option<&Ident> {
+        match expr {
+            Expr::MethodCall(call) => ExpressionFlow::assigned_local(&call.receiver),
+            Expr::Reference(reference) if reference.mutability.is_some() => {
+                ExpressionFlow::assigned_local(&reference.expr)
+            }
+            _ => None,
+        }
+    }
+
     fn only_reassigned(&self) -> Vec<Span> {
         self.declared
             .iter()
@@ -251,25 +286,16 @@ impl MutableLocals {
 
 impl<'ast> Visit<'ast> for MutableLocals {
     fn visit_local(&mut self, local: &'ast Local) {
-        if let Pat::Ident(binding) = &local.pat
-            && binding.mutability.is_some()
-        {
-            self.declared
-                .insert(binding.ident.to_string(), local.let_token.span);
-        }
+        self.declared.extend(
+            Self::declared_mutable(local)
+                .map(|binding| (binding.ident.to_string(), local.let_token.span)),
+        );
         syn::visit::visit_local(self, local);
     }
 
     fn visit_expr(&mut self, expr: &'ast Expr) {
-        match expr {
-            Expr::MethodCall(call) => self
-                .touched
-                .extend(ExpressionFlow::assigned_local(&call.receiver).map(Ident::to_string)),
-            Expr::Reference(reference) if reference.mutability.is_some() => self
-                .touched
-                .extend(ExpressionFlow::assigned_local(&reference.expr).map(Ident::to_string)),
-            _ => {}
-        }
+        self.touched
+            .extend(Self::touched_by(expr).map(Ident::to_string));
         syn::visit::visit_expr(self, expr);
     }
 }
