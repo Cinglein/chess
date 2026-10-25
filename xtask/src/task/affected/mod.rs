@@ -8,7 +8,7 @@ use package_graph::PackageGraph;
 use plan::Plan;
 use reach::Reach;
 
-use crate::task::command_line::{CargoWord, GitWord, MutantsWord, Program};
+use crate::task::command_line::{CargoArgument, GitArgument, MutantsArgument, Program};
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::policy::Policy;
@@ -33,9 +33,9 @@ impl Affected {
         }
         Ok(workspace
             .line(Program::Cargo)
-            .word(CargoWord::Mutants)
-            .word(MutantsWord::List)
-            .words(Selection::Crates(crates.clone()).explicit_packages())
+            .argument(CargoArgument::Mutants)
+            .argument(MutantsArgument::List)
+            .arguments(Selection::Crates(crates.clone()).explicit_packages())
             .stdout()?
             .lines()
             .count())
@@ -44,16 +44,16 @@ impl Affected {
     pub fn reached(workspace: &Workspace) -> Result<BTreeSet<CrateName>, Failure> {
         let changed = workspace
             .line(Program::Git)
-            .word(GitWord::Diff)
-            .word(GitWord::NameOnly)
-            .word(GitWord::MergeBase)
-            .word(Self::BASE)
+            .argument(GitArgument::Diff)
+            .argument(GitArgument::NameOnly)
+            .argument(GitArgument::MergeBase)
+            .argument(Self::BASE)
             .stdout()?;
         let metadata = workspace
             .line(Program::Cargo)
-            .word(CargoWord::Metadata)
-            .word(CargoWord::FormatVersionOne)
-            .word(CargoWord::NoDeps)
+            .argument(CargoArgument::Metadata)
+            .argument(CargoArgument::FormatVersionOne)
+            .argument(CargoArgument::NoDeps)
             .stdout()?;
         let graph = PackageGraph::from_metadata(&metadata)?;
         Ok(Self::crates(&graph, changed.lines()))

@@ -1,4 +1,4 @@
-use crate::task::command_line::{CargoWord, Program};
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -13,13 +13,13 @@ impl Clippy {
         }
         workspace
             .line(Program::Cargo)
-            .word(CargoWord::Clippy)
-            .words(selection.package_words())
-            .word(CargoWord::AllTargets)
-            .word(CargoWord::AllFeatures)
-            .word(CargoWord::ToolArguments)
-            .word(CargoWord::Deny)
-            .word(CargoWord::Warnings)
+            .argument(CargoArgument::Clippy)
+            .arguments(selection.package_arguments())
+            .argument(CargoArgument::AllTargets)
+            .argument(CargoArgument::AllFeatures)
+            .argument(CargoArgument::ToolArguments)
+            .argument(CargoArgument::Deny)
+            .argument(CargoArgument::Warnings)
             .run()
     }
 }

@@ -2,7 +2,7 @@ use strum::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[repr(u8)]
-pub enum GhWord {
+pub enum GhArgument {
     #[strum(serialize = "api")]
     Api,
     #[strum(serialize = "graphql")]

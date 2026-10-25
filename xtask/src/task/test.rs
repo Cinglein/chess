@@ -1,4 +1,4 @@
-use crate::task::command_line::{CargoWord, Program};
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -13,9 +13,9 @@ impl Test {
         }
         workspace
             .line(Program::Cargo)
-            .word(CargoWord::Test)
-            .words(selection.package_words())
-            .word(CargoWord::AllFeatures)
+            .argument(CargoArgument::Test)
+            .arguments(selection.package_arguments())
+            .argument(CargoArgument::AllFeatures)
             .run()
     }
 }

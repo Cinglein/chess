@@ -1,11 +1,11 @@
-mod cargo_word;
-mod git_word;
-mod mutants_word;
+mod cargo_argument;
+mod git_argument;
+mod mutants_argument;
 mod program;
 
-pub use cargo_word::CargoWord;
-pub use git_word::GitWord;
-pub use mutants_word::MutantsWord;
+pub use cargo_argument::CargoArgument;
+pub use git_argument::GitArgument;
+pub use mutants_argument::MutantsArgument;
 pub use program::Program;
 
 use std::fmt;
@@ -17,7 +17,7 @@ use crate::task::failure::Failure;
 #[derive(Clone, Debug)]
 pub struct CommandLine {
     program: Program,
-    words: Vec<String>,
+    arguments: Vec<String>,
     directory: Option<PathBuf>,
 }
 
@@ -25,7 +25,7 @@ impl CommandLine {
     pub fn new(program: Program) -> CommandLine {
         CommandLine {
             program,
-            words: Vec::new(),
+            arguments: Vec::new(),
             directory: None,
         }
     }
@@ -37,13 +37,13 @@ impl CommandLine {
         }
     }
 
-    pub fn word(mut self, word: impl fmt::Display) -> CommandLine {
-        self.words.push(word.to_string());
+    pub fn argument(mut self, argument: impl fmt::Display) -> CommandLine {
+        self.arguments.push(argument.to_string());
         self
     }
 
-    pub fn words(self, words: impl IntoIterator<Item = impl fmt::Display>) -> CommandLine {
-        words.into_iter().fold(self, CommandLine::word)
+    pub fn arguments(self, arguments: impl IntoIterator<Item = impl fmt::Display>) -> CommandLine {
+        arguments.into_iter().fold(self, CommandLine::argument)
     }
 
     pub fn run(&self) -> Result<(), Failure> {
@@ -88,7 +88,7 @@ impl CommandLine {
 
     fn command(&self) -> Command {
         let mut command = Command::new(self.program.to_string());
-        command.args(&self.words);
+        command.args(&self.arguments);
         if let Some(directory) = &self.directory {
             command.current_dir(directory);
         }
@@ -98,21 +98,21 @@ impl CommandLine {
 
 impl fmt::Display for CommandLine {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{} {}", self.program, self.words.join(" "))
+        write!(formatter, "{} {}", self.program, self.arguments.join(" "))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CargoWord, CommandLine, Program};
+    use super::{CargoArgument, CommandLine, Program};
 
     const SHOWN: &str = "git fmt --all";
 
     #[test]
-    fn a_command_line_prints_its_program_and_words_in_order() {
+    fn a_command_line_prints_its_program_and_arguments_in_order() {
         let line = CommandLine::new(Program::Git)
-            .word(CargoWord::Fmt)
-            .words([CargoWord::All]);
+            .argument(CargoArgument::Fmt)
+            .arguments([CargoArgument::All]);
         assert_eq!(line.to_string(), SHOWN);
     }
 }

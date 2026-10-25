@@ -1,8 +1,8 @@
-mod gh_word;
+mod gh_argument;
 
 use std::env;
 
-use gh_word::GhWord;
+use gh_argument::GhArgument;
 
 use crate::task::command_line::{CommandLine, Program};
 use crate::task::failure::Failure;
@@ -47,18 +47,18 @@ impl Stacked {
 
     fn base_and_stack(owner: &str, name: &str, number: &str) -> Result<String, Failure> {
         CommandLine::new(Program::GitHub)
-            .word(GhWord::Api)
-            .word(GhWord::Graphql)
-            .word(GhWord::Field)
-            .word(format!("query={}", Self::QUERY))
-            .word(GhWord::TypedField)
-            .word(format!("owner={owner}"))
-            .word(GhWord::TypedField)
-            .word(format!("name={name}"))
-            .word(GhWord::TypedField)
-            .word(format!("number={number}"))
-            .word(GhWord::Jq)
-            .word(Self::BASE_AND_STACK)
+            .argument(GhArgument::Api)
+            .argument(GhArgument::Graphql)
+            .argument(GhArgument::Field)
+            .argument(format!("query={}", Self::QUERY))
+            .argument(GhArgument::TypedField)
+            .argument(format!("owner={owner}"))
+            .argument(GhArgument::TypedField)
+            .argument(format!("name={name}"))
+            .argument(GhArgument::TypedField)
+            .argument(format!("number={number}"))
+            .argument(GhArgument::Jq)
+            .argument(Self::BASE_AND_STACK)
             .stdout()
             .map(|answer| answer.trim().to_owned())
     }

@@ -12,7 +12,7 @@ use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::available_gib::AvailableGib;
-use crate::task::command_line::{CargoWord, CommandLine, MutantsWord, Program};
+use crate::task::command_line::{CargoArgument, CommandLine, MutantsArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::policy::{MemoryShare, Policy};
 use crate::task::selection::Selection;
@@ -43,15 +43,15 @@ impl Mutants {
         scope.warm_build_directory(workspace, selection)?;
         let line = workspace
             .line(Program::Cargo)
-            .word(CargoWord::Mutants)
-            .word(MutantsWord::JobserverTasks)
-            .word(
+            .argument(CargoArgument::Mutants)
+            .argument(MutantsArgument::JobserverTasks)
+            .argument(
                 budget
                     .minus(policy.memory(MemoryShare::ForTheTests))
                     .divided_by(policy.memory(MemoryShare::PerCompilerTask)),
             )
-            .word(MutantsWord::Output)
-            .word(Self::OUTPUT_DIRECTORY);
+            .argument(MutantsArgument::Output)
+            .argument(Self::OUTPUT_DIRECTORY);
         let line = Self::sharded(scope.applied(line, workspace, selection, policy)?);
         let mut child = line.spawn()?;
         let status = MemoryWatch::over(&child, budget, policy).guard(&mut child)?;
@@ -62,7 +62,7 @@ impl Mutants {
 
     fn sharded(line: CommandLine) -> CommandLine {
         match env::var(Self::SHARD_VARIABLE) {
-            Ok(shard) => line.word(MutantsWord::Shard).word(shard),
+            Ok(shard) => line.argument(MutantsArgument::Shard).argument(shard),
             Err(_) => line,
         }
     }

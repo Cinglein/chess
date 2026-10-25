@@ -1,7 +1,7 @@
 use settings::EmbeddedDefaults;
 
 use crate::task::clippy::Clippy;
-use crate::task::command_line::{CargoWord, Program};
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::lint::Lint;
 use crate::task::policy::Policy;
@@ -18,9 +18,9 @@ impl Ci {
         println!("ci: checking {selection}");
         workspace
             .line(Program::Cargo)
-            .word(CargoWord::Fmt)
-            .word(CargoWord::All)
-            .word(CargoWord::Check)
+            .argument(CargoArgument::Fmt)
+            .argument(CargoArgument::All)
+            .argument(CargoArgument::Check)
             .run()?;
         Clippy::run(workspace, selection)?;
         Wasm::run(workspace, selection)?;

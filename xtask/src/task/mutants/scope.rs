@@ -1,6 +1,8 @@
 use std::fs;
 
-use crate::task::command_line::{CargoWord, CommandLine, GitWord, MutantsWord, Program};
+use crate::task::command_line::{
+    CargoArgument, CommandLine, GitArgument, MutantsArgument, Program,
+};
 use crate::task::failure::Failure;
 use crate::task::policy::{Limit, Policy};
 use crate::task::selection::Selection;
@@ -26,10 +28,10 @@ impl Scope {
             Scope::ChangedLines => Ok(()),
             Scope::Workspace => workspace
                 .line(Program::Cargo)
-                .word(CargoWord::Test)
-                .words(selection.package_words())
-                .word(CargoWord::Lib)
-                .word(CargoWord::NoRun)
+                .argument(CargoArgument::Test)
+                .arguments(selection.package_arguments())
+                .argument(CargoArgument::Lib)
+                .argument(CargoArgument::NoRun)
                 .run(),
         }
     }
@@ -45,9 +47,9 @@ impl Scope {
             Scope::ChangedLines => {
                 let diff = workspace
                     .line(Program::Git)
-                    .word(GitWord::Diff)
-                    .word(GitWord::MergeBase)
-                    .word(Self::BASE)
+                    .argument(GitArgument::Diff)
+                    .argument(GitArgument::MergeBase)
+                    .argument(Self::BASE)
                     .stdout()?;
                 fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| {
                     Failure::Io {
@@ -56,14 +58,14 @@ impl Scope {
                     }
                 })?;
                 Ok(line
-                    .word(MutantsWord::Jobs)
-                    .word(policy.limit(Limit::ParallelJobs).count())
-                    .word(MutantsWord::InDiff)
-                    .word(Self::DIFF_FILE))
+                    .argument(MutantsArgument::Jobs)
+                    .argument(policy.limit(Limit::ParallelJobs).count())
+                    .argument(MutantsArgument::InDiff)
+                    .argument(Self::DIFF_FILE))
             }
             Scope::Workspace => Ok(line
-                .word(MutantsWord::InPlace)
-                .words(selection.explicit_packages())),
+                .argument(MutantsArgument::InPlace)
+                .arguments(selection.explicit_packages())),
         }
     }
 }

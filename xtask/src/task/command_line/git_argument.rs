@@ -2,7 +2,7 @@ use strum::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[repr(u8)]
-pub enum GitWord {
+pub enum GitArgument {
     #[strum(serialize = "diff")]
     Diff,
     #[strum(serialize = "--name-only")]

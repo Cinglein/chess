@@ -1,4 +1,4 @@
-use crate::task::command_line::{CargoWord, Program};
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
@@ -17,14 +17,14 @@ impl Wasm {
             .try_for_each(|crate_name| {
                 workspace
                     .line(Program::Cargo)
-                    .word(CargoWord::Clippy)
-                    .word(CargoWord::Package)
-                    .word(crate_name)
-                    .word(CargoWord::Target)
-                    .word(CargoWord::Wasm32)
-                    .word(CargoWord::ToolArguments)
-                    .word(CargoWord::Deny)
-                    .word(CargoWord::Warnings)
+                    .argument(CargoArgument::Clippy)
+                    .argument(CargoArgument::Package)
+                    .argument(crate_name)
+                    .argument(CargoArgument::Target)
+                    .argument(CargoArgument::Wasm32)
+                    .argument(CargoArgument::ToolArguments)
+                    .argument(CargoArgument::Deny)
+                    .argument(CargoArgument::Warnings)
                     .run()
             })
     }

@@ -1,12 +1,12 @@
-mod test_word;
+mod test_argument;
 
 use std::path::PathBuf;
 use std::time::Instant;
 
-use test_word::TestWord;
+use test_argument::TestArgument;
 
 use super::test_timing::TestTiming;
-use crate::task::command_line::{CargoWord, CommandLine, Program};
+use crate::task::command_line::{CargoArgument, CommandLine, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -25,12 +25,12 @@ impl TestBinary {
     ) -> Result<Vec<TestBinary>, Failure> {
         let built = workspace
             .line(Program::Cargo)
-            .word(CargoWord::Test)
-            .words(selection.package_words())
-            .word(CargoWord::AllFeatures)
-            .word(CargoWord::NoRun)
-            .word(CargoWord::Color)
-            .word(CargoWord::Never)
+            .argument(CargoArgument::Test)
+            .arguments(selection.package_arguments())
+            .argument(CargoArgument::AllFeatures)
+            .argument(CargoArgument::NoRun)
+            .argument(CargoArgument::Color)
+            .argument(CargoArgument::Never)
             .stderr()?;
         Ok(built
             .lines()
@@ -53,9 +53,9 @@ impl TestBinary {
     fn tests(&self) -> Result<Vec<String>, Failure> {
         let listed = self
             .line()
-            .word(TestWord::List)
-            .word(TestWord::Format)
-            .word(TestWord::Terse)
+            .argument(TestArgument::List)
+            .argument(TestArgument::Format)
+            .argument(TestArgument::Terse)
             .stdout()?;
         Ok(listed
             .lines()
@@ -67,9 +67,9 @@ impl TestBinary {
     fn timed(&self, test: String) -> Result<TestTiming, Failure> {
         let started = Instant::now();
         self.line()
-            .word(TestWord::Exact)
-            .word(&test)
-            .word(TestWord::Quiet)
+            .argument(TestArgument::Exact)
+            .argument(&test)
+            .argument(TestArgument::Quiet)
             .stdout()?;
         Ok(TestTiming::new(self.name(), test, started.elapsed()))
     }

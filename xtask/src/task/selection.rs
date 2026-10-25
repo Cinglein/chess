@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 
 use crate::task::affected::Affected;
-use crate::task::command_line::CargoWord;
+use crate::task::command_line::CargoArgument;
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::workspace::Workspace;
@@ -32,9 +32,9 @@ impl Selection {
         })
     }
 
-    pub fn package_words(&self) -> Vec<String> {
+    pub fn package_arguments(&self) -> Vec<String> {
         match self {
-            Selection::Workspace => vec![CargoWord::Workspace.to_string()],
+            Selection::Workspace => vec![CargoArgument::Workspace.to_string()],
             Selection::Crates(_) => self.explicit_packages(),
         }
     }
@@ -44,7 +44,7 @@ impl Selection {
             Selection::Workspace => Vec::new(),
             Selection::Crates(crates) => crates
                 .iter()
-                .flat_map(|name| [CargoWord::Package.to_string(), name.to_string()])
+                .flat_map(|name| [CargoArgument::Package.to_string(), name.to_string()])
                 .collect(),
         }
     }
@@ -102,10 +102,10 @@ mod tests {
             SEARCH.parse().unwrap(),
             EVAL.parse().unwrap(),
         ]));
-        assert_eq!(crates.package_words(), PACKAGES);
+        assert_eq!(crates.package_arguments(), PACKAGES);
         assert_eq!(
             (
-                Selection::Workspace.package_words(),
+                Selection::Workspace.package_arguments(),
                 crates.includes(&EVAL.parse().unwrap()),
                 crates.includes(&BOARD.parse().unwrap())
             ),

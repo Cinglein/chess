@@ -2,7 +2,7 @@ use strum::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[repr(u8)]
-pub enum CargoWord {
+pub enum CargoArgument {
     #[strum(serialize = "fmt")]
     Fmt,
     #[strum(serialize = "clippy")]

@@ -3,7 +3,7 @@ mod xor_shift;
 
 use magic_tables::MagicTables;
 
-use crate::task::command_line::{CargoWord, Program};
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::magics::xor_shift::XorShift;
 use crate::task::workspace::Workspace;
@@ -17,9 +17,9 @@ impl Magics {
         MagicTables::find(&mut XorShift::new(MagicTables::SEED)).write(workspace.root())?;
         workspace
             .line(Program::Cargo)
-            .word(CargoWord::Fmt)
-            .word(CargoWord::Package)
-            .word(Self::BOARD)
+            .argument(CargoArgument::Fmt)
+            .argument(CargoArgument::Package)
+            .argument(Self::BOARD)
             .run()
     }
 }

@@ -2,7 +2,7 @@ use strum::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[repr(u8)]
-pub enum MutantsWord {
+pub enum MutantsArgument {
     #[strum(serialize = "--jobs")]
     Jobs,
     #[strum(serialize = "--in-diff")]
