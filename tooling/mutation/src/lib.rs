@@ -4,7 +4,6 @@ mod scope;
 
 pub use scope::Scope;
 
-use std::env;
 use std::fs::{self, File};
 
 use memory_watch::MemoryWatch;
@@ -16,7 +15,7 @@ use task::Failure;
 use task::Selection;
 use task::Site;
 use task::Workspace;
-use task::{CargoArgument, CommandLine, MutantsArgument, Program};
+use task::{CargoArgument, MutantsArgument, Program};
 use task::{MemoryShare, Policy};
 
 pub struct Mutants;
@@ -25,7 +24,6 @@ impl Mutants {
     const LOCK_FILE: &str = "target/mutants.lock";
     const OUTPUT_DIRECTORY: &str = "target/mutants";
     const PROCESS_NAME: &str = "cargo-mutants";
-    const SHARD_VARIABLE: &str = "MUTANTS_SHARD";
 
     pub fn run(
         workspace: &Workspace,
@@ -40,7 +38,6 @@ impl Mutants {
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
         let budget = Self::refuse_if_memory_is_short(policy)?;
-        scope.warm_build_directory(workspace, selection)?;
         let line = workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Mutants)
@@ -52,19 +49,12 @@ impl Mutants {
             )
             .argument(MutantsArgument::Output)
             .argument(Self::OUTPUT_DIRECTORY);
-        let line = Self::sharded(scope.applied(line, workspace, selection, policy)?);
+        let line = scope.applied(line, workspace, selection)?;
         let mut child = line.spawn()?;
         let status = MemoryWatch::over(&child, budget, policy).guard(&mut child)?;
         MutantsExit::accepts(status)
             .then_some(())
             .ok_or_else(|| Failure::Command(line.to_string()))
-    }
-
-    fn sharded(line: CommandLine) -> CommandLine {
-        match env::var(Self::SHARD_VARIABLE) {
-            Ok(shard) => line.argument(MutantsArgument::Shard).argument(shard),
-            Err(_) => line,
-        }
     }
 
     fn exclusive_lock(workspace: &Workspace) -> Result<File, Failure> {

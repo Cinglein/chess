@@ -69,23 +69,27 @@ impl<'ast> Visit<'ast> for PrivateFnCounter {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::PrivateFns;
+    use task::Policy;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 struct Wide;
 impl Wide { fn a() {} fn b() {} pub fn c() {} }
-impl Wide { fn d() {} fn e() {} pub(crate) fn f() {} }
+impl Wide { fn d() {} fn e() {} fn g() {} pub(crate) fn f() {} }
 impl Iterator for Wide { type Item = u8; fn next(&mut self) -> Option<u8> { None } }
+struct Narrow;
+impl Narrow { fn a() {} fn b() {} fn c() {} fn d() {} }
 ";
-    const HIDDEN: [&str; 4] = ["a", "b", "d", "e"];
+    const REPORTED: [&str; 1] =
+        ["wide.rs: Wide has 5 private fns, at most 4 allowed: a, b, d, e, g"];
 
     #[test]
     fn counts_private_inherent_fns_across_impl_blocks_but_not_trait_impls() {
-        let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let counted = PrivateFns::private_fns(&parsed);
-        assert_eq!(
-            counted.get("Wide").map(Vec::as_slice),
-            Some(HIDDEN.map(String::from).as_slice())
-        );
+        let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
+        let report = PrivateFns::report(core::slice::from_ref(&file), &Policy::defaults());
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

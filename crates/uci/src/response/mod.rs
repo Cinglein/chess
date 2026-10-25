@@ -106,6 +106,8 @@ mod tests {
     use board::LongAlgebraic;
     use proptest::prelude::*;
 
+    use eval::Score;
+
     use super::{Response, SearchInfo};
     use crate::uci_error::UciError;
 
@@ -113,6 +115,7 @@ mod tests {
         "info depth 1 seldepth 0 multipv 1 score cp 0 nodes 0 nps 0 hashfull 0 tbhits 0 time 1 pv ";
     const STOCKFISH_INFO_KEPT: &str = "info depth 1 score cp 0 nodes 0 nps 0 time 1";
     const REPORT: &str = "info depth 5 score mate 1 nodes 66 nps 33000 time 2 pv a1a8";
+    const MATED: &str = "info depth 1 score mate 0 nodes 0 nps 0 time 0";
     const KEPT: [(&str, &str); 7] = [
         ("id name chess", "id name chess"),
         ("id author Cinglein", "id author Cinglein"),
@@ -156,5 +159,12 @@ mod tests {
         for (line, error) in REJECTED {
             assert_eq!(Response::try_from(line), Err(error), "{line}");
         }
+        assert_eq!(
+            Response::try_from(MATED)
+                .unwrap()
+                .info()
+                .map(|info| info.score()),
+            Some(-Score::mate_in(0))
+        );
     }
 }

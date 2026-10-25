@@ -41,10 +41,12 @@ impl PackageGraph {
         })
     }
 
+    #[must_use]
     pub fn names(&self) -> BTreeSet<CrateName> {
         self.dependents.keys().cloned().collect()
     }
 
+    #[must_use]
     pub fn dependents_closure(&self, seeds: BTreeSet<CrateName>) -> BTreeSet<CrateName> {
         let grown: BTreeSet<CrateName> = seeds
             .iter()

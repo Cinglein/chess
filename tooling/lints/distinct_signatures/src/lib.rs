@@ -121,6 +121,7 @@ impl<'ast> Visit<'ast> for SignatureIndex {
 #[cfg(test)]
 mod tests {
     use super::DistinctSignatures;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 struct W;
@@ -131,17 +132,19 @@ impl W {
     fn delta(&self) -> u8 { 0 }
     pub(crate) fn epsilon(self, other: u8) -> u8 { other }
 }
+mod inner { struct V; impl V { fn one(&self) {} fn two(&self) {} } }
+#[cfg(test)]
+mod tests { struct T; impl T { fn one(&self) {} fn two(&self) {} } }
 ";
-    const SHARED: [&str; 3] = ["alpha", "beta", "gamma"];
+    const REPORTED: [&str; 2] = [
+        "w.rs: one, two share the signature V::(&self); distinguish",
+        "w.rs: alpha, beta, gamma share the signature W::(self) -> u8; distinguish",
+    ];
 
     #[test]
     fn groups_every_fn_of_one_type_by_receiver_parameters_and_return_public_or_not() {
-        let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let shared = DistinctSignatures::shared(&parsed);
-        assert_eq!(shared.len(), 1);
-        assert_eq!(
-            shared.into_values().next(),
-            Some(SHARED.map(String::from).to_vec())
-        );
+        let file = SourceFile::parse("w.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
+        let report = DistinctSignatures::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

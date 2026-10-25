@@ -4,7 +4,6 @@ use syn::{Expr, ExprStruct, ImplItemFn, Stmt};
 pub enum MethodShape {
     Constructor,
     Accessor,
-    Updater,
     Logic,
 }
 
@@ -18,9 +17,6 @@ impl MethodShape {
         match expr {
             Expr::Field(field) if matches!(&*field.base, Expr::Path(base) if base.path.is_ident("self")) => {
                 MethodShape::Accessor
-            }
-            Expr::Struct(literal) if Self::builds(literal, self_name) && literal.rest.is_some() => {
-                MethodShape::Updater
             }
             Expr::Struct(literal) if Self::builds(literal, self_name) => MethodShape::Constructor,
             _ => MethodShape::Logic,

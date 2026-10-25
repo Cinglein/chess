@@ -96,7 +96,7 @@ impl Task {
         let policy = Policy::defaults();
         let coverage = Coverage::from_flags(flags, &workspace)?;
         match self {
-            Task::Affected => Affected::run(&workspace, &policy),
+            Task::Affected => Affected::run(&workspace, &policy, coverage.plan(&workspace)?),
             Task::Ci => Ci::run(&workspace, &coverage),
             Task::Clippy => Clippy::run(&workspace, &coverage.selection(Job::Clippy)),
             Task::ConstShape => ConstShape::report(&workspace.source_files()?).verdict(),

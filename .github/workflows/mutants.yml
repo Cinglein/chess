@@ -1,7 +1,6 @@
 name: Mutants
 
 on:
-  pull_request:
   push:
     branches: [main]
   schedule:
@@ -14,7 +13,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+  CARGO_BUILD_JOBS: 4
 
 jobs:
   affected:
@@ -31,24 +30,19 @@ jobs:
         with:
           tool: cargo-mutants
       - id: plan
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
-          else
-            echo 'plan={"jobs":{"full":{"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}}}' >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
 
   full:
     needs: affected
     if: fromJSON(needs.affected.outputs.plan).jobs.full != null && fromJSON(needs.affected.outputs.plan).jobs.full.shard_count > 0
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
         shard: ${{ fromJSON(needs.affected.outputs.plan).jobs.full.shards }}
     env:
-      MUTANTS_SHARD: ${{ matrix.shard }}/${{ fromJSON(needs.affected.outputs.plan).jobs.full.shard_count }}
+      MUTANTS_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,13 +56,13 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants
-      - run: cargo xtask mutants-full $SCOPE
+      - run: cargo xtask mutants-full
         env:
           CARGO_INCREMENTAL: 1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mutants-shard-${{ matrix.shard }}
+          name: mutants-${{ strategy.job-index }}
           path: target/mutants/mutants.out
 
   mutants-gate:

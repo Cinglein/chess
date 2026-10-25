@@ -60,30 +60,30 @@ mod tests {
     use task::SourceFile;
 
     const SOURCE: &str = "
-        #[derive(Deserialize)]
-        pub struct Settings { schedule: Schedule, rounds: usize }
-        impl EmbeddedDefaults for Settings { const DEFAULTS: &str = \"\"; }
-        #[derive(Deserialize)]
-        pub struct Schedule { batches: usize }
-        #[derive(Deserialize)]
-        pub struct Metadata { packages: Vec<Package> }
-        #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
-        pub struct Strict { rounds: usize }
-        impl EmbeddedDefaults for Strict { const DEFAULTS: &str = \"\"; }
-    ";
-    const PATH: &str = "crates/a/src/x.rs";
-    const REPORTED: [&str; 2] = [":3:", ":6:"];
-    const CLEAN: [&str; 2] = [":8:", ":11:"];
+#[derive(Deserialize)]
+pub struct Settings { schedule: Schedule, rounds: Count, plain: Plain }
+impl EmbeddedDefaults for Settings { const DEFAULTS: &str = \"\"; }
+#[derive(Deserialize)]
+#[serde(default)]
+pub struct Schedule { batches: usize }
+#[derive(Deserialize)]
+pub struct Count(usize);
+#[derive(Debug)]
+pub struct Plain { x: usize }
+#[derive(Deserialize)]
+pub struct Metadata { packages: Vec<Package> }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Strict { rounds: usize }
+impl EmbeddedDefaults for Strict { const DEFAULTS: &str = \"\"; }
+";
+    const REPORTED: [&str; 2] = ["x.rs:3: struct is read", "x.rs:7: struct is read"];
 
     #[test]
-    fn flags_structs_reachable_from_embedded_defaults_that_do_not_deny_unknown_keys() {
-        let file = SourceFile::parse(PATH.to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = SettingsShape::report(&[file]).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line))
-                && CLEAN.iter().all(|line| !report.contains(line)),
-            "{report}"
-        );
+    fn flags_named_structs_reachable_from_embedded_defaults_that_do_not_deny_unknown_keys() {
+        let file = SourceFile::parse("crates/a/src/x.rs".to_owned(), SOURCE.to_owned())
+            .expect("valid rust");
+        let report = SettingsShape::report(&[file]);
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

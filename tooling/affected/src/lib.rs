@@ -1,19 +1,27 @@
+mod changes;
+mod crate_load;
 mod job;
 mod job_plan;
+mod listed_mutant;
 mod package_graph;
 mod plan;
 mod reach;
+mod tested_crates;
 mod tool_graph;
 
+pub use changes::Changes;
 pub use job::Job;
+pub use package_graph::PackageGraph;
 pub use plan::Plan;
+pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
+use crate_load::CrateLoad;
 use job::{ToolScope, ToolTrigger};
 use job_plan::JobPlan;
-use package_graph::PackageGraph;
+use listed_mutant::ListedMutant;
 use reach::Reach;
 use strum::IntoEnumIterator;
 use tool_graph::ToolGraph;
@@ -22,47 +30,42 @@ use task::CrateName;
 use task::Failure;
 use task::Policy;
 use task::Workspace;
-use task::{CargoArgument, GitArgument, MutantsArgument, Program, Stdout};
+use task::{CargoArgument, MutantsArgument, Program, Stdout};
 use task::{MutationTool, Selection};
 
 pub struct Affected;
 
 impl Affected {
-    const BASE: &str = "origin/main";
     const TOOL: &str = "xtask";
 
-    pub fn run(workspace: &Workspace, policy: &Policy) -> Result<(), Failure> {
-        let plan = Self::plan(workspace)?;
-        let full = plan
+    pub fn run(workspace: &Workspace, policy: &Policy, plan: Plan) -> Result<(), Failure> {
+        let loads = plan
             .job(Job::Full)
-            .map(|full| Self::mutant_count(workspace, &full.selection()))
+            .map(|full| Self::loads(workspace, &full.selection(), policy))
             .transpose()?;
-        let sharded = match full {
-            Some(mutants) => plan.with_full_sharded(mutants, policy),
+        let sharded = match loads {
+            Some(loads) => plan.with_full_sharded(&loads, policy),
             None => plan,
         };
         println!("{}", serde_json::to_string(&sharded)?);
         Ok(())
     }
 
-    pub fn plan(workspace: &Workspace) -> Result<Plan, Failure> {
-        let changed = workspace
-            .line(Program::Git)
-            .argument(GitArgument::Diff)
-            .argument(GitArgument::NameOnly)
-            .argument(GitArgument::MergeBase)
-            .argument(Self::BASE)
-            .captured::<Stdout>()?;
+    pub fn plan(workspace: &Workspace, changes: Changes) -> Result<Plan, Failure> {
+        let reaches = changes.reaches(workspace)?;
+        let graph = Self::package_graph(workspace)?;
+        let tool_graph = ToolGraph::from_files(&workspace.source_files()?);
+        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches)))
+    }
+
+    pub fn package_graph(workspace: &Workspace) -> Result<PackageGraph, Failure> {
         let metadata = workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Metadata)
             .argument(CargoArgument::FormatVersionOne)
             .argument(CargoArgument::NoDeps)
             .captured::<Stdout>()?;
-        let reaches: Vec<Reach> = changed.lines().map(Reach::reached_by).collect();
-        let graph = PackageGraph::from_metadata(&metadata)?;
-        let tool_graph = ToolGraph::from_files(&workspace.source_files()?);
-        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches)))
+        PackageGraph::from_metadata(&metadata)
     }
 
     fn jobs(
@@ -116,18 +119,33 @@ impl Affected {
         product.iter().cloned().chain(extra).collect()
     }
 
-    fn mutant_count(workspace: &Workspace, selection: &Selection) -> Result<usize, Failure> {
+    fn loads(
+        workspace: &Workspace,
+        selection: &Selection,
+        policy: &Policy,
+    ) -> Result<Vec<CrateLoad>, Failure> {
         if selection.is_empty() {
-            return Ok(0);
+            return Ok(Vec::new());
         }
-        Ok(workspace
-            .line(Program::Cargo)
-            .argument(CargoArgument::Mutants)
-            .argument(MutantsArgument::List)
-            .arguments(selection.arguments::<MutationTool>())
-            .captured::<Stdout>()?
-            .lines()
-            .count())
+        let graph = Self::package_graph(workspace)?;
+        let tested = TestedCrates::collect(&workspace.source_files()?);
+        let counts = ListedMutant::tally(
+            &workspace
+                .line(Program::Cargo)
+                .argument(CargoArgument::Mutants)
+                .argument(MutantsArgument::List)
+                .argument(MutantsArgument::Json)
+                .arguments(selection.arguments::<MutationTool>())
+                .captured::<Stdout>()?,
+        )?;
+        Ok(counts
+            .into_iter()
+            .map(|(name, mutants)| {
+                let tested_packages = tested.around(&graph, &BTreeSet::from([name.clone()])).len();
+                let each = policy.mutant_millis().for_crate(&name);
+                CrateLoad::new(name, mutants, tested_packages, each)
+            })
+            .collect())
     }
 }
 

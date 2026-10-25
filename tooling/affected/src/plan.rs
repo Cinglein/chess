@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
 
+use super::crate_load::CrateLoad;
 use super::job::Job;
 use super::job_plan::JobPlan;
 use task::Policy;
@@ -24,13 +25,13 @@ impl Plan {
     }
 
     #[must_use]
-    pub fn with_full_sharded(self, mutants: usize, policy: &Policy) -> Plan {
+    pub fn with_full_sharded(self, loads: &[CrateLoad], policy: &Policy) -> Plan {
         Plan {
             jobs: self
                 .jobs
                 .into_iter()
                 .map(|(job, plan)| match job {
-                    Job::Full => (job, plan.sharded(mutants, policy)),
+                    Job::Full => (job, plan.sharded(loads, policy)),
                     _ => (job, plan),
                 })
                 .collect(),

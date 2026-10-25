@@ -69,7 +69,6 @@ impl<'types> Forwarders<'types> {
                 .type_name()
                 .map(str::to_owned),
             Expr::Field(field) => self.field_type(field),
-            Expr::Reference(reference) => self.receiver_type(&reference.expr, params),
             _ => None,
         }
     }

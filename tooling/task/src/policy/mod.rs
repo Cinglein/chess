@@ -5,6 +5,7 @@ mod limit;
 mod memory_share;
 mod millis;
 mod most;
+mod mutant_millis;
 mod percent;
 mod share;
 
@@ -12,11 +13,12 @@ pub use floor::Floor;
 pub use interval::Interval;
 pub use limit::Limit;
 pub use memory_share::MemoryShare;
+pub use millis::Millis;
+pub use mutant_millis::MutantMillis;
 pub use share::Share;
 
 use enum_map::EnumMap;
 use least::Least;
-use millis::Millis;
 use most::Most;
 use percent::Percent;
 use serde::{Deserialize, Serialize};
@@ -33,6 +35,7 @@ pub struct Policy {
     shares: EnumMap<Share, Percent>,
     memory_gib: EnumMap<MemoryShare, AvailableGib>,
     millis: EnumMap<Interval, Millis>,
+    mutant_millis: MutantMillis,
 }
 
 impl EmbeddedDefaults for Policy {
@@ -63,6 +66,11 @@ impl Policy {
     #[must_use]
     pub fn interval(&self, interval: Interval) -> Millis {
         self.millis[interval]
+    }
+
+    #[must_use]
+    pub fn mutant_millis(&self) -> &MutantMillis {
+        &self.mutant_millis
     }
 
     #[must_use]

@@ -9,4 +9,5 @@ pub enum Interval {
     DiscoverEvery,
     PerTest,
     Total,
+    PerShard,
 }

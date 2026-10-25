@@ -230,29 +230,49 @@ mod tests {
     const SOURCE: &str = "
 impl Wide {
     fn five(a: u8, b: u8, c: u8, d: u8, e: u8) {}
-    fn flags(&self) {
+    fn four(a: u8, b: u8, c: u8, d: u8) {}
+    fn flags(&self, x: u8) {
         let ready = self.count() > 1;
         let (lo, hi) = (1, 2);
         let total = self.items.iter().fold((0, 0), |(a, b), x| (a + x, b));
-        for x in self.items { if x > 1 { match x { 2 => self.go(), _ => {} } } }
+        let plain = self.items.iter().fold(0, |a, x| a + x);
+        let placed = self.place((1, 2));
+        let missing = !self.ready();
+        let inner = (x > 1);
+        let empty = self.items.is_empty();
+        let owns = self.has_key();
+        while self.busy() { let idle = false; }
+        loop { let (p, q) = (1, 2); }
+        let sizes = self.items.iter().map(|y| { let big = y > 1; big });
+        for y in self.items { if y > 1 {
+            match y { 2 => self.go(), _ => {} } } }
     }
 }
+mod inner { fn deep(&self) { let flag = true; } }
+#[cfg(test)]
+mod tests { fn deep(&self) { let flag = true; } }
 ";
-    const REPORTED: [&str; 5] = [
+    const REPORTED: [&str; 14] = [
         ":3: more than 4 parameters",
-        ":5: boolean local",
-        ":6: tuple literal bound",
-        ":7: tuple accumulator",
-        ":8: control flow nested deeper",
+        ":6: boolean local",
+        ":7: tuple literal bound",
+        ":8: tuple accumulator",
+        ":11: boolean local",
+        ":12: boolean local",
+        ":13: boolean local",
+        ":14: boolean local",
+        ":15: boolean local",
+        ":16: tuple literal bound",
+        ":17: boolean local",
+        ":19: control flow nested deeper",
+        ":19: control flow nested deeper",
+        ":22: boolean local",
     ];
 
     #[test]
-    fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting() {
+    fn reports_wide_signatures_boolean_and_tuple_locals_and_deep_nesting_outside_tests() {
         let file = SourceFile::parse("wide.rs".to_owned(), SOURCE.to_owned()).expect("valid rust");
-        let report = FnShape::report(core::slice::from_ref(&file), &Policy::defaults()).to_string();
-        assert!(
-            REPORTED.iter().all(|line| report.contains(line)),
-            "{report}"
-        );
+        let report = FnShape::report(core::slice::from_ref(&file), &Policy::defaults());
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }
