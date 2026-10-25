@@ -108,10 +108,8 @@ impl fmt::Display for CommandLine {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use super::{CargoArgument, CommandLine, Program, Stderr, Stdout};
-
+    use std::path::PathBuf;
     const SHOWN: &str = "git fmt --all";
     const PROGRAMS: [&str; 4] = ["pwd", "sh", "true", "false"];
     const TO_STDERR: [&str; 2] = ["-c", "echo err >&2"];

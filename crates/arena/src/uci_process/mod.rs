@@ -143,6 +143,9 @@ impl Drop for UciProcess {
 
 #[cfg(test)]
 mod tests {
+    use super::{Opponent, UciProcess};
+    use board::Board;
+    use engine::{Engine, Sink};
     use std::env;
     use std::io::{self, BufRead};
     use std::ops::ControlFlow;
@@ -151,13 +154,7 @@ mod tests {
     use std::sync::atomic::AtomicBool;
     use std::thread;
     use std::time::{Duration, Instant};
-
-    use board::Board;
-    use engine::{Engine, Sink};
     use uci::{Command, EngineOption, GoLimits, Position, Response, Switch};
-
-    use super::{Opponent, UciProcess};
-
     const PROGRAM: &str = "stockfish";
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const MATING_MOVE: &str = "a1a8";

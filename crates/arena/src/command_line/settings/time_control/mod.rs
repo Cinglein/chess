@@ -83,7 +83,6 @@ impl fmt::Display for TimeControl {
 #[cfg(test)]
 mod tests {
     use super::TimeControl;
-
     const WRITTEN: &str = "10+0.1";
 
     #[test]

@@ -79,7 +79,6 @@ impl SourceFile {
 #[cfg(test)]
 mod tests {
     use super::{SourceFile, Walk};
-
     const NAMED: [(&str, Option<&str>); 5] = [
         ("crates/board/src/square.rs", Some("board")),
         ("tooling/lints/fn_shape/src/lib.rs", Some("fn_shape")),

@@ -45,10 +45,8 @@ impl proptest::arbitrary::Arbitrary for Depth {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-
     use super::Depth;
-
+    use proptest::prelude::*;
     #[test]
     fn a_depth_reads_back_its_plies_and_a_step_down_then_up_returns_to_itself() {
         proptest!(|(plies: u8)| {

@@ -46,7 +46,6 @@ impl NoComments {
 #[cfg(test)]
 mod tests {
     use super::NoComments;
-
     #[test]
     fn flags_line_block_and_doc_comments() {
         let source = "fn a() {}\n// one\nfn b() {}\n/* two */\n/// three\nfn c() {}\n";

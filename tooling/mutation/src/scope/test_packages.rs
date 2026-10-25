@@ -25,7 +25,6 @@ mod tests {
     use super::TestPackages;
     use affected::{PackageGraph, TestedCrates};
     use task::SourceFile;
-
     const METADATA: &str = r#"{"packages": [{"name": "board", "dependencies": []}, {"name": "eval", "dependencies": [{"name": "board", "path": "/w/crates/board"}]}, {"name": "search", "dependencies": [{"name": "eval", "path": "/w/crates/eval"}]}]}"#;
     const EVAL: &str = "#[cfg(test)] mod tests { #[test] fn t() {} }";
     const FILES: [(&str, &str); 2] = [

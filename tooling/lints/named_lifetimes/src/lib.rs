@@ -60,11 +60,9 @@ impl<'ast> Visit<'ast> for ShortLifetimes<'_> {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::NamedLifetimes;
+    use settings::EmbeddedDefaults;
     use task::Policy;
-
     const SOURCE: &str = "
 struct Scan<'a, 'scan> { text: &'a str, path: &'scan Path, owned: &'static str }
 impl<'b> Scan<'b, '_> { fn view<'c>(&'c self) -> &'c str { self.text } }

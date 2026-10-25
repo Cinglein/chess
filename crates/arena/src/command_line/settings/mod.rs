@@ -47,11 +47,9 @@ impl Settings {
 
 #[cfg(test)]
 mod tests {
+    use super::Settings;
     use arena::Rules;
     use settings::EmbeddedDefaults;
-
-    use super::Settings;
-
     #[test]
     fn default_settings_survive_a_trip_through_toml_and_agree_with_the_library_rules() {
         let written = toml::to_string_pretty(&Settings::defaults()).unwrap();

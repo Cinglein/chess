@@ -60,10 +60,8 @@ impl proptest::arbitrary::Arbitrary for NodeCount {
 
 #[cfg(test)]
 mod tests {
-    use core::time::Duration;
-
     use super::NodeCount;
-
+    use core::time::Duration;
     const TWO: NodeCount = NodeCount::new(2);
     const FORTY: NodeCount = NodeCount::new(40);
     const FIFTY_MILLIS: Duration = Duration::from_millis(50);

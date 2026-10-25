@@ -15,7 +15,6 @@ impl Percent {
 #[cfg(test)]
 mod tests {
     use super::Percent;
-
     const EIGHTEEN: Percent = Percent(18);
     const FIFTY: usize = 50;
     const NINE: usize = 9;

@@ -25,7 +25,6 @@ impl ListedMutant {
 #[cfg(test)]
 mod tests {
     use super::ListedMutant;
-
     const LISTED: &str = r#"[{"package": "board", "file": "crates/board/src/lib.rs"},
         {"package": "eval"}, {"package": "board"}]"#;
     const BOARD: usize = 2;

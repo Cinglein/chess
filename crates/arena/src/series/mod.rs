@@ -95,15 +95,12 @@ impl<'entrants> Series<'entrants> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-
-    use board::{Board, NodeCount};
-
     use super::{ArenaError, Entrant, Rules, Series, WorkerCount};
     use crate::in_process_engine::InProcessEngine;
     use crate::opponent::Opponent;
     use crate::rules::Thinking;
-
+    use board::{Board, NodeCount};
+    use std::sync::atomic::{AtomicUsize, Ordering};
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const TALLIED: &str = "+2 =0 -2 2/4 Elo +0 (+0 to +0) inconclusive";
     const PAIRS: usize = 2;

@@ -24,10 +24,8 @@ impl EvalScale {
 
 #[cfg(test)]
 mod tests {
-    use super::Score;
-
     use super::EvalScale;
-
+    use super::Score;
     const SCALE: EvalScale = EvalScale::new(40);
 
     #[test]

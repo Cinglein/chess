@@ -96,13 +96,10 @@ impl proptest::arbitrary::Arbitrary for Clock {
 
 #[cfg(test)]
 mod tests {
-    use core::time::Duration;
-
-    use board::Color;
-    use proptest::prelude::*;
-
     use super::{Clock, Increment, Remaining};
-
+    use board::Color;
+    use core::time::Duration;
+    use proptest::prelude::*;
     #[test]
     fn the_mover_loses_what_it_spent_and_gains_its_increment_while_the_other_clock_stands() {
         proptest!(|(clock: Clock, side: Color, spent_millis: u32)| {

@@ -49,7 +49,6 @@ impl PublicSurface {
 mod tests {
     use super::PublicSurface;
     use task::SourceFile;
-
     const LIB: &str =
         "mod x; use x::Private;\npub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
     const FILES: [(&str, &str); 4] = [

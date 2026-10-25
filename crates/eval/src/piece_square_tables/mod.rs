@@ -42,11 +42,9 @@ impl Evaluator for PieceSquareTables {
 
 #[cfg(test)]
 mod tests {
-    use board::{Board, Color, PieceKind, Square};
-
     use super::{Evaluator, PieceSquareTables};
     use crate::score::Score;
-
+    use board::{Board, Color, PieceKind, Square};
     const CAPTURED_KNIGHT: &str = "rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const KNIGHT: PieceKind = PieceKind::Knight;
     const HOME: Square = Square::G8;
