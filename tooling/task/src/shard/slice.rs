@@ -16,6 +16,18 @@ impl Slice {
     pub const fn new(index: usize, count: usize) -> Slice {
         Slice { index, count }
     }
+
+    #[must_use]
+    pub fn picked<T>(&self, items: Vec<T>) -> Option<Vec<T>> {
+        (items.len() >= self.count).then(|| {
+            items
+                .into_iter()
+                .enumerate()
+                .filter(|(position, _)| position % self.count == self.index)
+                .map(|(_, item)| item)
+                .collect()
+        })
+    }
 }
 
 impl fmt::Display for Slice {
@@ -34,5 +46,20 @@ impl FromStr for Slice {
             index: index.parse().map_err(|_| malformed())?,
             count: count.parse().map_err(|_| malformed())?,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Slice;
+    const SECOND_OF_THREE: Slice = Slice::new(1, 3);
+    const ITEMS: [char; 5] = ['a', 'b', 'c', 'd', 'e'];
+    #[test]
+    fn a_slice_takes_every_third_item_from_its_index_and_nothing_from_fewer_items_than_slices() {
+        let picked = SECOND_OF_THREE.picked(ITEMS.to_vec());
+        assert_eq!(
+            (picked, SECOND_OF_THREE.picked(ITEMS[..2].to_vec())),
+            (Some(vec!['b', 'e']), None)
+        );
     }
 }
