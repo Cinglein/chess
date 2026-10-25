@@ -1,17 +1,21 @@
 use std::num::NonZeroUsize;
 
 use task::Millis;
+use task::MutantCount;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Tally {
-    count: usize,
+    count: MutantCount,
     millis: Millis,
 }
 
 impl Tally {
     #[must_use]
-    pub const fn one(millis: Millis) -> Tally {
-        Tally { count: 1, millis }
+    pub fn one(millis: Millis) -> Tally {
+        Tally {
+            count: MutantCount::from(1),
+            millis,
+        }
     }
 
     #[must_use]
@@ -24,7 +28,7 @@ impl Tally {
 
     #[must_use]
     pub fn mean(self) -> Millis {
-        NonZeroUsize::new(self.count)
+        NonZeroUsize::new(self.count.into())
             .map_or(Millis::default(), |count| self.millis.divided_by(count))
     }
 }

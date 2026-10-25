@@ -45,7 +45,7 @@ mod inner { pub fn depth() -> u16 { 1 } }
     const RAW: &str = "use serde_json::Value; pub struct Raw(Value); impl Raw { fn inner(&self) -> &Value { &self.0 } }";
     const FILES: [(&str, &str); 5] = [
         ("crates/a/src/depth.rs", NEWTYPE),
-        ("crates/a/src/limits.rs", BARE),
+        ("tooling/a/src/limits.rs", BARE),
         ("crates/a/src/pair.rs", "\npub struct Pair(u8, u8);"),
         ("crates/a/src/raw.rs", RAW),
         ("crates/a/src/wire.rs", WIRE),

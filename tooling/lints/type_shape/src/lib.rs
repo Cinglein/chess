@@ -8,6 +8,7 @@ use syn::{
     Signature, Type, TypePath, TypeTuple,
 };
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -62,7 +63,10 @@ struct TypeShapes<'scan> {
 
 impl TypeShapes<'_> {
     fn violation(&self, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(self.path.into(), span.start().line), message)
+        Violation::new(
+            Site::Line(self.path.into(), LineNumber::from(span)),
+            message,
+        )
     }
 
     fn check_type(&mut self, ty: &Type) {

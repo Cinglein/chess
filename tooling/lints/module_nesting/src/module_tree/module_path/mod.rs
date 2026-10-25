@@ -108,7 +108,7 @@ impl ModulePath {
 
     pub fn crosses_directory_boundary(&self, user: &ModulePath, modules: &[ModulePath]) -> bool {
         (1..self.segments.len()).any(|cut| {
-            let boundary = self.truncated(cut);
+            let boundary = self.truncated_to_length(cut);
             modules
                 .iter()
                 .any(|module| module.relates::<Same>(&boundary) && module.file.ends_with("/mod.rs"))
@@ -116,10 +116,10 @@ impl ModulePath {
         })
     }
 
-    pub fn truncated(&self, depth: usize) -> ModulePath {
+    pub fn truncated_to_length(&self, length: usize) -> ModulePath {
         ModulePath {
             crate_root: self.crate_root.clone(),
-            segments: self.segments.iter().take(depth).cloned().collect(),
+            segments: self.segments.iter().take(length).cloned().collect(),
             file: String::new(),
         }
     }

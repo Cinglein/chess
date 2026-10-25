@@ -9,18 +9,24 @@ use task::SupportModules;
 use task::Violation;
 use task::{Policy, Share};
 
+mod file_count;
+mod line_count;
 mod measurement;
+mod test_count;
 mod test_scan;
 
+use file_count::FileCount;
+use line_count::LineCount;
 use measurement::Measurement;
+use test_count::TestCount;
 use test_scan::TestScan;
 
 #[derive(Default)]
 pub struct TestBudget {
-    files: usize,
-    lines: usize,
-    tests: usize,
-    test_lines: usize,
+    files: FileCount,
+    lines: LineCount,
+    tests: TestCount,
+    test_lines: LineCount,
     violations: Vec<Violation>,
 }
 
@@ -35,10 +41,10 @@ impl TestBudget {
     }
 
     fn measure(file: &SourceFile, support: &[PathBuf], policy: &Policy) -> Self {
-        let lines = file.text().lines().count();
+        let lines = LineCount::from(file.text().lines().count());
         let scanned = TestScan::budget(file.path(), file.syntax(), policy);
         Self {
-            files: 1,
+            files: FileCount::from(1),
             lines,
             test_lines: if support.contains(&file.path().to_owned()) {
                 lines
@@ -58,19 +64,19 @@ impl TestBudget {
             Measurement::new(
                 "tests across the workspace",
                 self.tests,
-                policy
-                    .share(Share::TestsPerHundredFiles)
-                    .applied_to(self.files),
-            ),
+                self.files.tests_allowed(policy),
+            )
+            .overrun(),
             Measurement::new(
                 "test lines",
                 self.test_lines,
                 policy.share(Share::TestLinePercent).applied_to(self.lines),
-            ),
+            )
+            .overrun(),
         ]
         .into_iter()
-        .filter(Measurement::exceeded)
-        .map(|measurement| Violation::new(Site::Workspace, measurement.to_string()));
+        .flatten()
+        .map(|overrun| Violation::new(Site::Workspace, overrun));
         Report::new(
             "test budget exceeded",
             self.violations.into_iter().chain(global).collect(),

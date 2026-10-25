@@ -1,13 +1,14 @@
 use syn::{Item, ItemUse, UseTree, Visibility};
 
 use task::CrateName;
+use task::LineNumber;
 use task::SourceFile;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Export {
     crate_name: CrateName,
     name: String,
-    line: usize,
+    line: LineNumber,
 }
 
 impl Export {
@@ -37,7 +38,7 @@ impl Export {
         &self.name
     }
 
-    pub fn line(&self) -> usize {
+    pub fn line(&self) -> LineNumber {
         self.line
     }
 
@@ -52,12 +53,12 @@ impl Export {
             UseTree::Name(name) => vec![Export {
                 crate_name: crate_name.clone(),
                 name: name.ident.to_string(),
-                line: name.ident.span().start().line,
+                line: LineNumber::from(name.ident.span()),
             }],
             UseTree::Rename(rename) => vec![Export {
                 crate_name: crate_name.clone(),
                 name: rename.rename.to_string(),
-                line: rename.rename.span().start().line,
+                line: LineNumber::from(rename.rename.span()),
             }],
             UseTree::Glob(_) => Vec::new(),
         }
