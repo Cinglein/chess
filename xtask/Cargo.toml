@@ -8,10 +8,12 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+settings = { path = "../crates/settings" }
+toml = "0.9"
 derive_more = { version = "2", features = ["display"] }
 sysinfo = "0.39"
 board = { path = "../crates/board" }
-enum-map = "3"
+enum-map = { version = "3", features = ["serde"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 quote = "1"
 rustc_lexer = { package = "ra-ap-rustc_lexer", version = "0.174.0" }

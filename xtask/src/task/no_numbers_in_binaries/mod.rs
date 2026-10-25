@@ -2,6 +2,7 @@ use syn::visit::Visit;
 use syn::{ItemMod, LitFloat, LitInt};
 
 use crate::task::binary_files::BinaryFiles;
+use crate::task::named_numbers::NamedNumbers;
 use crate::task::report::Report;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -43,7 +44,9 @@ impl<'ast> Visit<'ast> for Numbers {
     }
 
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
-        self.0.push(literal.span().start().line);
+        if !NamedNumbers::is_unit(literal.base10_digits()) {
+            self.0.push(literal.span().start().line);
+        }
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {

@@ -1,0 +1,41 @@
+vague = [
+    "with", "from", "into", "for", "get", "set", "make", "check", "build", "create", "init",
+    "process", "handle", "helper", "util", "data", "value", "item", "thing", "execute",
+    "perform", "update", "compute", "manage",
+]
+
+[limits]
+parameters = 4
+nesting = 2
+reexports = 8
+private_fns_per_type = 4
+edges_per_vertex = 4
+tests_per_file = 3
+assertions_per_test = 3
+lines_per_test = 20
+literals_per_test = 4
+largest_integer = 64
+parallel_jobs = 2
+mutants_per_shard = 64
+most_shards = 16
+slowest_shown = 5
+
+[floors]
+fn_name = 3
+lifetime_name = 2
+
+[shares]
+tests_per_hundred_files = 40
+test_line_percent = 18
+
+[memory_gib]
+granted = 8
+reserve = 1
+per_compiler_task = 2
+for_the_tests = 2
+
+[millis]
+sample_every = 20
+discover_every = 100
+per_test = 1000
+total = 4000

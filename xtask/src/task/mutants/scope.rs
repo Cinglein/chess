@@ -1,6 +1,7 @@
 use std::fs;
 
 use crate::task::failure::Failure;
+use crate::task::policy::{Limit, Policy};
 use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
@@ -14,7 +15,6 @@ pub enum Scope {
 impl Scope {
     const BASE: &str = "origin/main";
     const DIFF_FILE: &str = "target/mutants.diff";
-    const PARALLEL_JOBS: &str = "2";
 
     pub fn warm_build_directory(
         self,
@@ -39,6 +39,7 @@ impl Scope {
         self,
         workspace: &Workspace,
         selection: &Selection,
+        policy: &Policy,
     ) -> Result<Vec<String>, Failure> {
         match self {
             Scope::ChangedLines => {
@@ -51,7 +52,7 @@ impl Scope {
                 })?;
                 Ok(vec![
                     String::from("--jobs"),
-                    String::from(Self::PARALLEL_JOBS),
+                    policy.limit(Limit::ParallelJobs).count().to_string(),
                     String::from("--in-diff"),
                     String::from(Self::DIFF_FILE),
                 ])

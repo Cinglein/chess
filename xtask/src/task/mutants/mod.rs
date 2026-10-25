@@ -1,4 +1,3 @@
-mod available_gib;
 mod memory_watch;
 mod mutants_exit;
 mod scope;
@@ -8,12 +7,13 @@ pub use scope::Scope;
 use std::env;
 use std::fs::{self, File};
 
-use available_gib::AvailableGib;
 use memory_watch::MemoryWatch;
 use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
+use crate::task::available_gib::AvailableGib;
 use crate::task::failure::Failure;
+use crate::task::policy::{MemoryShare, Policy};
 use crate::task::selection::Selection;
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
@@ -26,29 +26,37 @@ impl Mutants {
     const PROCESS_NAME: &str = "cargo-mutants";
     const SHARD_VARIABLE: &str = "MUTANTS_SHARD";
 
-    pub fn run(workspace: &Workspace, scope: Scope, selection: &Selection) -> Result<(), Failure> {
+    pub fn run(
+        workspace: &Workspace,
+        scope: Scope,
+        selection: &Selection,
+        policy: &Policy,
+    ) -> Result<(), Failure> {
         if scope == Scope::Workspace && selection.is_empty() {
             println!("mutants: no crate affected");
             return Ok(());
         }
         let _lock = Self::exclusive_lock(workspace)?;
         Self::refuse_if_another_run_exists()?;
-        let budget = Self::refuse_if_memory_is_short()?;
+        let budget = Self::refuse_if_memory_is_short(policy)?;
         scope.warm_build_directory(workspace, selection)?;
         let arguments: Vec<String> = [
             String::from("mutants"),
             String::from("--jobserver-tasks"),
-            budget.compiler_tasks().to_string(),
+            budget
+                .minus(policy.memory(MemoryShare::ForTheTests))
+                .divided_by(policy.memory(MemoryShare::PerCompilerTask))
+                .to_string(),
             String::from("--output"),
             String::from(Self::OUTPUT_DIRECTORY),
         ]
         .into_iter()
-        .chain(scope.arguments(workspace, selection)?)
+        .chain(scope.arguments(workspace, selection, policy)?)
         .chain(Self::shard())
         .collect();
         let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
         let mut child = workspace.spawn_cargo(&borrowed)?;
-        let status = MemoryWatch::over(&child, budget).guard(&mut child)?;
+        let status = MemoryWatch::over(&child, budget, policy).guard(&mut child)?;
         MutantsExit::accepts(status)
             .then_some(())
             .ok_or_else(|| Failure::Cargo(borrowed.join(" ")))
@@ -94,14 +102,14 @@ impl Mutants {
         Ok(())
     }
 
-    fn refuse_if_memory_is_short() -> Result<AvailableGib, Failure> {
+    fn refuse_if_memory_is_short(policy: &Policy) -> Result<AvailableGib, Failure> {
         let available = AvailableGib::measured();
-        if available < AvailableGib::GRANTED {
+        if available < policy.memory(MemoryShare::Granted) {
             return Err(Failure::Refused(format!(
                 "{available} available, the granted budget of {} must be free before mutating",
-                AvailableGib::GRANTED
+                policy.memory(MemoryShare::Granted)
             )));
         }
-        Ok(AvailableGib::GRANTED)
+        Ok(policy.memory(MemoryShare::Granted))
     }
 }

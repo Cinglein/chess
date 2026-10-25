@@ -2,21 +2,20 @@ mod module_tree;
 
 use module_tree::ModuleTree;
 
+use crate::task::policy::{Limit, Policy};
 use crate::task::report::Report;
 use crate::task::source_file::SourceFile;
 
 pub struct ModuleNesting;
 
 impl ModuleNesting {
-    const MAX_REEXPORTS: usize = 8;
-
-    pub fn report(files: &[SourceFile]) -> Report {
+    pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
         let tree = ModuleTree::collect(files);
         Report::new(
             "modules nest by use: a file used only inside one sibling belongs inside it",
             tree.misplaced()
                 .chain(tree.deep_uses())
-                .chain(tree.crowded(Self::MAX_REEXPORTS))
+                .chain(tree.crowded(policy.limit(Limit::Reexports).count()))
                 .collect(),
         )
     }
@@ -24,7 +23,10 @@ impl ModuleNesting {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::ModuleNesting;
+    use crate::task::policy::Policy;
     use crate::task::source_file::SourceFile;
 
     const LIB: &str = "mod hub; mod spoke; mod rim; pub use hub::Hub;";
@@ -47,7 +49,7 @@ mod tests {
         let files = FILES.map(|(path, text)| {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
-        let report = ModuleNesting::report(&files).to_string();
+        let report = ModuleNesting::report(&files, &Policy::defaults()).to_string();
         assert!(
             REPORTED.iter().all(|line| report.contains(line)) && !report.contains("hub.rs:"),
             "{report}"

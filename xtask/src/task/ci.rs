@@ -1,6 +1,9 @@
+use settings::EmbeddedDefaults;
+
 use crate::task::clippy::Clippy;
 use crate::task::failure::Failure;
 use crate::task::lint::Lint;
+use crate::task::policy::Policy;
 use crate::task::selection::Selection;
 use crate::task::test::Test;
 use crate::task::test_time::TestTime;
@@ -16,7 +19,7 @@ impl Ci {
         Clippy::run(workspace, selection)?;
         Wasm::run(workspace, selection)?;
         Test::run(workspace, selection)?;
-        TestTime::run(workspace, selection)?;
+        TestTime::run(workspace, selection, &Policy::defaults())?;
         Lint::run(workspace)
     }
 }

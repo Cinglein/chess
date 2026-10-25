@@ -16,8 +16,8 @@ use crate::task::violation::Violation;
 pub struct NamedNumbers;
 
 impl NamedNumbers {
-    const COVERED: &str = "crates/";
-    const UNITS: [&str; 4] = ["0", "1", "0.0", "1.0"];
+    const COVERED: &str = "";
+    const UNITS: &[&str] = &["0", "1", "0.0", "1.0"];
 
     pub fn report(files: &[SourceFile]) -> Report {
         let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
@@ -44,7 +44,7 @@ impl NamedNumbers {
         )
     }
 
-    fn is_unit(digits: &str) -> bool {
+    pub fn is_unit(digits: &str) -> bool {
         Self::UNITS.contains(&digits.trim_start_matches('-'))
     }
 

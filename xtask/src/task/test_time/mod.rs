@@ -8,6 +8,7 @@ use test_binary::TestBinary;
 use test_timing::TestTiming;
 
 use crate::task::failure::Failure;
+use crate::task::policy::{Interval, Limit, Policy};
 use crate::task::report::Report;
 use crate::task::selection::Selection;
 use crate::task::site::Site;
@@ -19,11 +20,11 @@ pub struct TestTime {
 }
 
 impl TestTime {
-    const MAX_PER_TEST: Duration = Duration::from_secs(1);
-    const MAX_TOTAL: Duration = Duration::from_secs(4);
-    const SLOWEST_SHOWN: usize = 5;
-
-    pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
+    pub fn run(
+        workspace: &Workspace,
+        selection: &Selection,
+        policy: &Policy,
+    ) -> Result<(), Failure> {
         if selection.is_empty() {
             println!("test time: no crate affected");
             return Ok(());
@@ -35,40 +36,40 @@ impl TestTime {
             .into_iter()
             .flatten()
             .collect();
-        TestTime { timings }.report().verdict()
+        TestTime { timings }.report(policy).verdict()
     }
 
-    fn report(mut self) -> Report {
+    fn report(mut self, policy: &Policy) -> Report {
         self.timings.sort_by_key(|timing| Reverse(timing.elapsed()));
         let total: Duration = self.timings.iter().map(TestTiming::elapsed).sum();
         println!(
             "test time: {} tests in {total:.2?}, slowest {}:",
             self.timings.len(),
-            Self::SLOWEST_SHOWN
+            policy.limit(Limit::SlowestShown).count()
         );
         self.timings
             .iter()
-            .take(Self::SLOWEST_SHOWN)
+            .take(policy.limit(Limit::SlowestShown).count())
             .for_each(|timing| println!("  {timing}"));
         let slow = self
             .timings
             .iter()
-            .filter(|timing| timing.elapsed() > Self::MAX_PER_TEST)
+            .filter(|timing| timing.elapsed() > policy.interval(Interval::PerTest).duration())
             .map(|timing| {
                 Violation::new(
                     Site::Workspace,
                     format!(
                         "{timing}, at most {:?} allowed per test",
-                        Self::MAX_PER_TEST
+                        policy.interval(Interval::PerTest).duration()
                     ),
                 )
             });
-        let whole = (total > Self::MAX_TOTAL).then(|| {
+        let whole = (total > policy.interval(Interval::Total).duration()).then(|| {
             Violation::new(
                 Site::Workspace,
                 format!(
                     "the suite took {total:.2?}, at most {:?} allowed",
-                    Self::MAX_TOTAL
+                    policy.interval(Interval::Total).duration()
                 ),
             )
         });
