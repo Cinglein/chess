@@ -144,6 +144,7 @@ impl Drop for UciProcess {
 #[cfg(test)]
 mod tests {
     use super::{Opponent, UciProcess};
+    use crate::fixtures::MATE_IN_ONE;
     use board::Board;
     use engine::{Engine, Sink};
     use std::env;
@@ -156,7 +157,6 @@ mod tests {
     use std::time::{Duration, Instant};
     use uci::{Command, EngineOption, GoLimits, Position, Response, Switch};
     const PROGRAM: &str = "stockfish";
-    const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const MATING_MOVE: &str = "a1a8";
     const START: Position<'static> = Position::played(Board::START, &[]);
     const THINK: GoLimits = GoLimits::MoveTime(Duration::from_millis(50));

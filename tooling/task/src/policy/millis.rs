@@ -22,6 +22,11 @@ impl Millis {
     }
 
     #[must_use]
+    pub const fn whole_seconds(self) -> u64 {
+        self.duration().as_secs()
+    }
+
+    #[must_use]
     pub fn times(self, count: usize) -> Millis {
         Millis(self.0 * u64::try_from(count).unwrap_or(u64::MAX))
     }
@@ -51,5 +56,14 @@ impl Millis {
 impl fmt::Display for Millis {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "{}", self.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Millis;
+    #[test]
+    fn whole_seconds_drops_the_fraction_of_a_second() {
+        assert_eq!(Millis::new(64).times(32).whole_seconds(), 2);
     }
 }
