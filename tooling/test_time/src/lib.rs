@@ -1,9 +1,11 @@
+mod finding;
 mod test_binary;
 mod test_timing;
 
 use std::cmp::Reverse;
 use std::time::Duration;
 
+use finding::Finding;
 use test_binary::TestBinary;
 use test_timing::TestTiming;
 
@@ -59,25 +61,25 @@ impl TestTime {
             .map(|timing| {
                 Violation::new(
                     Site::Workspace,
-                    format!(
-                        "{timing}, at most {:?} allowed per test",
-                        policy.interval(Interval::PerTest).duration()
-                    ),
+                    Finding::SlowTest {
+                        timing: timing.clone(),
+                        allowed: policy.interval(Interval::PerTest).duration(),
+                    },
                 )
             });
         let whole = (total > policy.interval(Interval::Total).duration()).then(|| {
             Violation::new(
                 Site::Workspace,
-                format!(
-                    "the suite took {total:.2?}, at most {:?} allowed",
-                    policy.interval(Interval::Total).duration()
-                ),
+                Finding::SlowSuite {
+                    total,
+                    allowed: policy.interval(Interval::Total).duration(),
+                },
             )
         });
         let none = self
             .timings
             .is_empty()
-            .then(|| Violation::new(Site::Workspace, "no tests were found to time"));
+            .then(|| Violation::new(Site::Workspace, Finding::NoTests));
         Report::new(
             "test time budget exceeded",
             slow.chain(whole).chain(none).collect(),

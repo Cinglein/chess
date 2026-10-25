@@ -1,7 +1,9 @@
+mod finding;
 mod module_path;
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use finding::Finding;
 use module_path::{Ancestor, InsideSibling, ModulePath};
 
 use task::ReexportCount;
@@ -40,7 +42,7 @@ impl ModuleTree {
                 self.home_of(module).map(|home| {
                     Violation::new(
                         Site::File(module.file().into()),
-                        format!("used only from {home}; move it inside that module"),
+                        Finding::UsedFromOneSibling { home },
                     )
                 })
             })
@@ -59,10 +61,10 @@ impl ModuleTree {
             .map(move |(module, count)| {
                 Violation::new(
                     Site::File(module.file().into()),
-                    format!(
-                        "re-exports {count} items, at most {} allowed; split the module",
-                        most.count()
-                    ),
+                    Finding::CrowdedReexports {
+                        count: *count,
+                        most,
+                    },
                 )
             })
     }
@@ -91,9 +93,9 @@ impl ModuleTree {
                         .then(|| {
                             Violation::new(
                                 Site::File(module.file().into()),
-                                format!(
-                                    "reaches into {target}; import the parent's re-export instead"
-                                ),
+                                Finding::ReachesPastModRs {
+                                    target: target.clone(),
+                                },
                             )
                         }),
                 );

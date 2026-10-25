@@ -1,9 +1,13 @@
+mod finding;
+
 use std::collections::BTreeMap;
 
+use finding::Finding;
 use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, Visibility};
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -29,12 +33,11 @@ impl PrivateFns {
                         .map(move |(type_name, names)| {
                             Violation::new(
                                 Site::File(file.path().into()),
-                                format!(
-                                    "{type_name} has {} private fns, at most {} allowed: {}",
-                                    names.len(),
-                                    policy.limit(Limit::PrivateFnsPerType).count(),
-                                    names.join(", ")
-                                ),
+                                Finding::TooManyPrivateFns {
+                                    type_name,
+                                    names,
+                                    most: policy.limit(Limit::PrivateFnsPerType),
+                                },
                             )
                         })
                 })
@@ -42,7 +45,7 @@ impl PrivateFns {
         )
     }
 
-    fn private_fns(file: &syn::File) -> BTreeMap<String, Vec<String>> {
+    fn private_fns(file: &syn::File) -> BTreeMap<Name, Vec<Name>> {
         let mut counter = PrivateFnCounter::default();
         counter.visit_file(file);
         counter.0
@@ -50,13 +53,13 @@ impl PrivateFns {
 }
 
 #[derive(Default)]
-struct PrivateFnCounter(BTreeMap<String, Vec<String>>);
+struct PrivateFnCounter(BTreeMap<Name, Vec<Name>>);
 
 impl PrivateFnCounter {
-    fn private_names(item: &ItemImpl) -> impl Iterator<Item = String> {
+    fn private_names(item: &ItemImpl) -> impl Iterator<Item = Name> {
         item.items.iter().filter_map(|member| match member {
             ImplItem::Fn(function) if matches!(function.vis, Visibility::Inherited) => {
-                Some(function.sig.ident.to_string())
+                Some(Name::from(&function.sig.ident))
             }
             _ => None,
         })
@@ -68,7 +71,13 @@ impl<'ast> Visit<'ast> for PrivateFnCounter {
         match Walk::inherent_impls(item) {
             Walk::Entered => self
                 .0
-                .entry(item.self_ty.to_token_stream().to_string().replace(' ', ""))
+                .entry(Name::from(
+                    item.self_ty
+                        .to_token_stream()
+                        .to_string()
+                        .replace(' ', "")
+                        .as_str(),
+                ))
                 .or_default()
                 .extend(Self::private_names(item)),
             Walk::Skipped => {}

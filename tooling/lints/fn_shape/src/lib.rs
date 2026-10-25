@@ -1,3 +1,6 @@
+mod finding;
+
+use finding::Finding;
 use proc_macro2::Span;
 use std::path::Path;
 use syn::spanned::Spanned;
@@ -92,8 +95,8 @@ struct Shapes<'scan> {
 }
 
 impl Shapes<'_> {
-    fn found(path: &Path, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(path.into(), LineNumber::from(span)), message)
+    fn found(path: &Path, span: Span, finding: Finding) -> Violation {
+        Violation::new(Site::Line(path.into(), LineNumber::from(span)), finding)
     }
 
     fn nested(&mut self, span: Span, visit: impl FnOnce(&mut Self)) {
@@ -105,10 +108,9 @@ impl Shapes<'_> {
             Self::found(
                 self.path,
                 span,
-                &format!(
-                    "control flow nested deeper than {} levels; lift the inner part into a method",
-                    self.policy.limit(Limit::Nesting).count()
-                ),
+                Finding::DeepNesting {
+                    most: self.policy.limit(Limit::Nesting),
+                },
             )
         }));
         visit(self);
@@ -136,10 +138,9 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
             Self::found(
                 self.path,
                 span,
-                &format!(
-                    "more than {} parameters; group the ones that travel together into a struct",
-                    self.policy.limit(Limit::Parameters).count()
-                ),
+                Finding::WideSignature {
+                    most: self.policy.limit(Limit::Parameters),
+                },
             )
         }));
         syn::visit::visit_signature(self, signature);
@@ -149,26 +150,14 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
         self.violations.extend(
             FnShape::binds_bool(local)
                 .then_some(local.span())
-                .map(|span| {
-                    Self::found(
-                        self.path,
-                        span,
-                        "boolean local; inline a one-use condition or make a mode a type",
-                    )
-                }),
+                .map(|span| Self::found(self.path, span, Finding::BooleanLocal)),
         );
         self.violations.extend(
             local
                 .init
                 .as_ref()
                 .filter(|init| matches!(*init.expr, Expr::Tuple(_)))
-                .map(|_| {
-                    Self::found(
-                        self.path,
-                        local.span(),
-                        "tuple literal bound to a local; name it as a struct",
-                    )
-                }),
+                .map(|_| Self::found(self.path, local.span(), Finding::TupleLocal)),
         );
         syn::visit::visit_local(self, local);
     }
@@ -179,13 +168,7 @@ impl<'ast> Visit<'ast> for Shapes<'_> {
                 .first()
                 .filter(|seed| matches!(seed, Expr::Tuple(_)))
                 .filter(|_| call.method == "fold" || call.method == "try_fold")
-                .map(|_| {
-                    Self::found(
-                        self.path,
-                        call.method.span(),
-                        "tuple accumulator in a fold; give the accumulator a type",
-                    )
-                }),
+                .map(|_| Self::found(self.path, call.method.span(), Finding::TupleAccumulator)),
         );
         syn::visit::visit_expr_method_call(self, call);
     }

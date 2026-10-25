@@ -1,7 +1,9 @@
 mod bag_candidates;
+mod finding;
 mod name_uses;
 
 use bag_candidates::BagCandidates;
+use finding::Finding;
 use name_uses::NameUses;
 
 use task::Name;
@@ -30,10 +32,9 @@ impl NoParameterBags {
                         .map(|candidate| {
                             Violation::new(
                                 Site::Line(file.path().into(), candidate.line()),
-                                format!(
-                                    "{} only carries values into one other file; give it the logic that consumes it",
-                                    candidate.name()
-                                ),
+                                Finding::ParameterBag {
+                                    name: candidate.name().clone(),
+                                },
                             )
                         })
                         .collect::<Vec<Violation>>()

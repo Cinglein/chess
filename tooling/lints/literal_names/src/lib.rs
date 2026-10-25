@@ -1,3 +1,6 @@
+mod finding;
+
+use finding::Finding;
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
@@ -25,7 +28,9 @@ impl LiteralNames {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("fn {name} names nothing; say what it does"),
+                                Finding::VagueName {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })

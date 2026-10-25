@@ -2,6 +2,7 @@ use std::fmt;
 use std::path::Path;
 use std::time::Duration;
 
+#[derive(Clone)]
 pub(super) struct TestTiming {
     binary: String,
     test: String,

@@ -1,6 +1,10 @@
+mod finding;
+
+use finding::Finding;
 use syn::{Ident, Item, ItemFn, ItemMod};
 
 use task::LineNumber;
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -21,7 +25,9 @@ impl NoFreeFns {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("fn {name}"),
+                                Finding::FreeFn {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })

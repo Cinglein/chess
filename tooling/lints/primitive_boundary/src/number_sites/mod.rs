@@ -12,6 +12,7 @@ use syn::{
     ItemStruct, ItemType, Signature, TraitItemConst, TypePath,
 };
 
+use super::finding::Finding;
 use task::BitBoundary;
 use task::LineNumber;
 use task::Policy;
@@ -89,28 +90,27 @@ impl<'scan> NumberSites<'scan> {
         if Self::is_named(path, &Self::PRIMITIVES) {
             Sighting::Number(Violation::new(
                 site,
-                format!(
-                    "bare {} in {}; name what it counts with a newtype",
-                    path.path.segments[0].ident, self.context
-                ),
+                Finding::BarePrimitive {
+                    primitive: Name::from(&path.path.segments[0].ident),
+                    context: self.context.clone(),
+                },
             ))
         } else if self.policy.lists::<WireType>(&wire) {
             Sighting::Number(Violation::new(
                 site,
-                format!(
-                    "{wire} in {} is a wire form; parse it into a type at the door",
-                    self.context
-                ),
+                Finding::WireForm {
+                    wire,
+                    context: self.context.clone(),
+                },
             ))
         } else if Self::is_named(path, &Self::SIZES)
             && !self.context.matches::<LoweredInfix>(&Self::SIZE_WORDS)
         {
             Sighting::Size(Violation::new(
                 site,
-                format!(
-                    "usize in {} is neither a length nor an index; a count gets a newtype, a size says so in its name",
-                    self.context
-                ),
+                Finding::UnnamedSize {
+                    context: self.context.clone(),
+                },
             ))
         } else {
             Sighting::Nothing

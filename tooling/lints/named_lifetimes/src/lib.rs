@@ -1,3 +1,6 @@
+mod finding;
+
+use finding::Finding;
 use syn::visit::Visit;
 
 use syn::{Ident, LifetimeParam};
@@ -25,7 +28,9 @@ impl NamedLifetimes {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("'{name}"),
+                                Finding::ShortLifetime {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })
