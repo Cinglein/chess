@@ -92,9 +92,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   invocation as a `CommandLine` of typed arguments (`CargoArgument`, `GitArgument`, `MutantsArgument`, and the
   rest) plus `Display` values such as a `CrateName`, and `Workspace::line` roots it.
 - Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
-  cast is allowed only inside a `const fn`, `const` item, or `const` block, or in one of the
-  three bit boundary files `square.rs`, `bitboard.rs`, and `slider/magic.rs`; elsewhere use
-  `From`, `TryFrom`, or an `EnumMap`. Loops in const context walk a slice with
+  cast is allowed only inside a `const fn`, `const` item, or `const` block, or in a bit boundary
+  file (the one list in `tooling/task/src/bit_boundary.rs`); elsewhere use `From`, `TryFrom`,
+  or an `EnumMap`. Loops in const context walk a slice with
   `while let [head, rest @ ..]` or recurse; no counter loops. `cargo xtask const-shape` enforces
   both.
 - A family of behaviours is a trait with zero-sized implementors, not an enum matched on at
@@ -120,8 +120,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   type's door and never waits there. A primitive number type (`u8`..`u128`, `i8`..`i128`, `f32`,
   `f64`) appears in a field, variant, const, or signature only in
   the file of a newtype over it (`Depth(u8)`, `NodeCount(u64)`, `Score(i32)`) or in a bit-boundary
-  file (`square.rs`, `direction.rs`, `slider/magic.rs`, `slider/magics.rs`,
-  `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `xtask/src/task/magics/`). Locals and
+  file (`BitBoundary` in `tooling/task`: `square/`, `bitboard/`, `direction.rs`, `slider/magic.rs`,
+  `slider/magics.rs`, `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `tooling/magics/src/`;
+  const-shape, primitive-boundary and named-numbers share it). Locals and
   turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. A `usize` is a
   container size or index: in `crates/` it may be declared only under a name that says so
   (`length`, `capacity`, `size`, `bytes`, `index`); a `usize` named after what it counts is a
