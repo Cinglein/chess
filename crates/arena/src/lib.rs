@@ -1,6 +1,8 @@
 mod arena_error;
 mod chosen_move;
 mod entrant;
+#[cfg(test)]
+mod fixtures;
 mod game;
 mod in_process_engine;
 mod openings;
