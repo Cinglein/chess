@@ -46,26 +46,27 @@ impl ModulePath {
         modules: &[ModulePath],
     ) -> Option<ModulePath> {
         let first = path.first()?.as_str();
-        let mut segments = match first {
+        let start = match first {
             "crate" => Vec::new(),
             "super" => file.parent()?.segments,
             _ => file.segments.clone(),
         };
         let skip = usize::from(matches!(first, "crate" | "super" | "self"));
-        if skip == 0 {
-            let child = file.child(first);
-            modules
+        (skip != 0
+            || modules
                 .iter()
-                .find(|module| module.relates::<Same>(&child))?;
-        }
-        for segment in path.iter().skip(skip) {
-            match segment.as_str() {
-                "super" => {
-                    segments.pop()?;
-                }
-                other => segments.push(other.to_owned()),
-            }
-        }
+                .any(|module| module.relates::<Same>(&file.child(first))))
+        .then_some(())?;
+        let segments =
+            path.iter()
+                .skip(skip)
+                .try_fold(start, |mut segments, segment| match segment.as_str() {
+                    "super" => segments.pop().and(Some(segments)),
+                    other => {
+                        segments.push(other.to_owned());
+                        Some(segments)
+                    }
+                })?;
         Some(ModulePath {
             crate_root: file.crate_root.clone(),
             segments,

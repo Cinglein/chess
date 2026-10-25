@@ -27,10 +27,7 @@ impl ModuleTree {
             deep_uses: Vec::new(),
             reexports: BTreeMap::new(),
         };
-        files.iter().fold(empty, |mut tree, file| {
-            tree.absorb(file);
-            tree
-        })
+        files.iter().fold(empty, ModuleTree::absorbed)
     }
 
     pub fn violations(&self) -> impl Iterator<Item = Violation> + '_ {
@@ -61,32 +58,46 @@ impl ModuleTree {
             })
     }
 
-    fn absorb(&mut self, file: &SourceFile) {
-        let Some(module) = ModulePath::of_file(file.path()) else {
-            return;
-        };
-        self.reexports
-            .insert(module.clone(), UseEdges::count_reexports(file.syntax()));
-        for path in UseEdges::in_file(file.syntax()) {
-            self.absorb_use(&module, &path);
+    fn absorbed(mut self, file: &SourceFile) -> ModuleTree {
+        match ModulePath::of_file(file.path()) {
+            Some(module) => {
+                self.reexports
+                    .insert(module.clone(), UseEdges::count_reexports(file.syntax()));
+                UseEdges::in_file(file.syntax())
+                    .iter()
+                    .fold(self, |tree, path| tree.absorbing(&module, path))
+            }
+            None => self,
         }
     }
 
-    fn absorb_use(&mut self, module: &ModulePath, path: &[String]) {
-        let Some(target) = ModulePath::from_use(module, path, &self.modules) else {
-            return;
-        };
-        if let Some(used) = ModulePath::deepest_module_containing(&self.modules, &target, module) {
-            self.users
-                .entry(used.clone())
-                .or_default()
-                .insert(module.clone());
+    fn absorbing(mut self, module: &ModulePath, path: &[String]) -> ModuleTree {
+        match ModulePath::from_use(module, path, &self.modules) {
+            Some(target) => {
+                let used = ModulePath::deepest_module_containing(&self.modules, &target, module);
+                self.record_user(used.cloned(), module);
+                self.deep_uses.extend(
+                    target
+                        .crosses_directory_boundary(module, &self.modules)
+                        .then(|| {
+                            Violation::new(
+                                Site::File(module.file().into()),
+                                format!(
+                                    "reaches into {target}; import the parent's re-export instead"
+                                ),
+                            )
+                        }),
+                );
+                self
+            }
+            None => self,
         }
-        if target.crosses_directory_boundary(module, &self.modules) {
-            self.deep_uses.push(Violation::new(
-                Site::File(module.file().into()),
-                format!("reaches into {target}; import the parent's re-export instead"),
-            ));
+    }
+
+    fn record_user(&mut self, used: Option<ModulePath>, module: &ModulePath) -> bool {
+        match used {
+            Some(used) => self.users.entry(used).or_default().insert(module.clone()),
+            None => false,
         }
     }
 
@@ -97,18 +108,18 @@ impl ModuleTree {
             .iter()
             .filter(|user| !module.relates::<Ancestor>(user))
             .collect();
-        if outsiders
+        outsiders
             .iter()
-            .any(|user| !user.relates::<InsideSibling>(module))
-        {
-            return None;
-        }
-        let homes: BTreeSet<ModulePath> = outsiders
-            .iter()
-            .map(|user| user.truncated(module.segments().len()))
-            .collect();
-        (homes.len() == 1)
-            .then(|| homes.into_iter().next())
+            .all(|user| user.relates::<InsideSibling>(module))
+            .then(|| {
+                let homes: BTreeSet<ModulePath> = outsiders
+                    .iter()
+                    .map(|user| user.truncated(module.segments().len()))
+                    .collect();
+                (homes.len() == 1)
+                    .then(|| homes.into_iter().next())
+                    .flatten()
+            })
             .flatten()
     }
 }

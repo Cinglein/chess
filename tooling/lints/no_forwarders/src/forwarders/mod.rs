@@ -1,12 +1,14 @@
+mod impl_target;
 mod parameter;
 mod struct_fields;
 
 use std::collections::BTreeMap;
 
+use impl_target::ImplTarget;
 use parameter::Parameter;
 use struct_fields::StructFields;
 use syn::visit::Visit;
-use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, Stmt, Type};
+use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, Stmt};
 
 use super::forwarder::Forwarder;
 use super::workspace_types::WorkspaceTypes;
@@ -37,29 +39,28 @@ impl<'types> Forwarders<'types> {
     }
 
     fn classify(&self, function: &ImplItemFn) -> Option<Forwarder> {
-        let [Stmt::Expr(expr, None)] = function.block.stmts.as_slice() else {
-            return None;
-        };
         let params: Vec<Parameter> = function
             .sig
             .inputs
             .iter()
             .filter_map(Parameter::describe)
             .collect();
-        let callee = match expr {
-            Expr::MethodCall(call)
+        let callee = match function.block.stmts.as_slice() {
+            [Stmt::Expr(Expr::MethodCall(call), None)]
                 if self
                     .receiver_type(&call.receiver, &params)
                     .is_some_and(|name| self.types.declares(&name))
                     && call.args.iter().all(|arg| Self::forwards(arg, &params)) =>
             {
-                call.method.to_string()
+                Some(call.method.to_string())
             }
-            Expr::Call(call) if call.args.iter().all(|arg| Self::forwards(arg, &params)) => {
-                self.workspace_callee(&call.func)?
+            [Stmt::Expr(Expr::Call(call), None)]
+                if call.args.iter().all(|arg| Self::forwards(arg, &params)) =>
+            {
+                self.workspace_callee(&call.func)
             }
-            _ => return None,
-        };
+            _ => None,
+        }?;
         Some(Forwarder::new(function.sig.ident.clone(), callee))
     }
 
@@ -75,39 +76,46 @@ impl<'types> Forwarders<'types> {
     }
 
     fn field_type(&self, field: &ExprField) -> Option<String> {
-        let Expr::Path(base) = &*field.base else {
-            return None;
-        };
-        if !base.path.is_ident("self") {
-            return None;
+        match &*field.base {
+            Expr::Path(base) if base.path.is_ident("self") => self
+                .structs
+                .get(&self.self_type)?
+                .field_type(&field.member, &self.concrete),
+            _ => None,
         }
-        self.structs
-            .get(&self.self_type)?
-            .field_type(&field.member, &self.concrete)
     }
 
     fn workspace_callee(&self, func: &Expr) -> Option<String> {
-        let Expr::Path(path) = func else { return None };
-        let segments: Vec<String> = path
-            .path
-            .segments
-            .iter()
-            .map(|segment| segment.ident.to_string())
-            .collect();
-        let [.., owner, method] = segments.as_slice() else {
-            return None;
-        };
-        let owner = if owner == "Self" {
-            &self.self_type
-        } else {
-            owner
-        };
-        (self.types.declares(owner) && method.starts_with(char::is_lowercase))
-            .then(|| format!("{owner}::{method}"))
+        let segments = Self::path_segments(func)?;
+        match segments.as_slice() {
+            [.., owner, method] => {
+                let owner = if owner == "Self" {
+                    &self.self_type
+                } else {
+                    owner
+                };
+                (self.types.declares(owner) && method.starts_with(char::is_lowercase))
+                    .then(|| format!("{owner}::{method}"))
+            }
+            _ => None,
+        }
     }
 }
 
 impl Forwarders<'_> {
+    fn path_segments(func: &Expr) -> Option<Vec<String>> {
+        match func {
+            Expr::Path(path) => Some(
+                path.path
+                    .segments
+                    .iter()
+                    .map(|segment| segment.ident.to_string())
+                    .collect(),
+            ),
+            _ => None,
+        }
+    }
+
     fn forwards(expr: &Expr, params: &[Parameter]) -> bool {
         match expr {
             Expr::Path(path) => Parameter::named_by(params, &path.path).is_some(),
@@ -132,18 +140,14 @@ impl<'ast> Visit<'ast> for Forwarders<'_> {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        if item.trait_.is_some() {
-            return;
+        match ImplTarget::describe(item) {
+            ImplTarget::Inherent(segment) => {
+                self.self_type = segment.ident.to_string();
+                self.concrete = StructFields::type_arguments(segment);
+                syn::visit::visit_item_impl(self, item);
+            }
+            ImplTarget::Skipped => {}
         }
-        let Type::Path(path) = &*item.self_ty else {
-            return;
-        };
-        let Some(segment) = path.path.segments.last() else {
-            return;
-        };
-        self.self_type = segment.ident.to_string();
-        self.concrete = StructFields::type_arguments(segment);
-        syn::visit::visit_item_impl(self, item);
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {

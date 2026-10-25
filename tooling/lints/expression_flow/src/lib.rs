@@ -1,5 +1,8 @@
+mod fn_body;
+
 use std::collections::BTreeMap;
 
+use fn_body::FnBody;
 use proc_macro2::Span;
 use std::path::Path;
 use syn::spanned::Spanned;
@@ -8,7 +11,7 @@ use syn::visit::Visit;
 use syn::{
     BinOp, Block, Expr, ExprAssign, ExprBinary, ExprBreak, ExprContinue, ExprForLoop, ExprIf,
     ExprLoop, ExprReturn, ExprWhile, Ident, ImplItemConst, ImplItemFn, ItemConst, ItemFn, ItemMod,
-    Local, Pat, PatIdent, Signature, Stmt, TraitItemFn,
+    Local, Pat, PatIdent, Stmt, TraitItemFn,
 };
 
 use task::Report;
@@ -94,22 +97,17 @@ impl Flows<'_> {
         self.violations.push(Self::found(self.path, span, message));
     }
 
-    fn walk_body(signature: &Signature) -> Walk {
-        match signature.constness {
-            None => Walk::Entered,
-            Some(_) => Walk::Skipped,
-        }
-    }
-
     fn visit_body(&mut self, body: &Block) {
         let mut locals = MutableLocals::default();
         locals.visit_block(body);
-        locals.only_reassigned().into_iter().for_each(|span| {
-            self.report(
-                span,
-                "mutable local that is only reassigned; a mutable binding is borrowed as &mut or has methods called on it",
-            );
-        });
+        self.violations
+            .extend(locals.only_reassigned().into_iter().map(|span| {
+                Self::found(
+                    self.path,
+                    span,
+                    "mutable local that is only reassigned; a mutable binding is borrowed as &mut or has methods called on it",
+                )
+            }));
         self.visit_block(body);
     }
 }
@@ -127,43 +125,42 @@ impl<'ast> Visit<'ast> for Flows<'_> {
     fn visit_impl_item_const(&mut self, _: &'ast ImplItemConst) {}
 
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        match Self::walk_body(&function.sig) {
-            Walk::Entered => self.visit_body(&function.block),
-            Walk::Skipped => {}
+        match FnBody::scanned_unless_const(&function.sig, Some(&function.block)) {
+            FnBody::Scanned(body) => self.visit_body(body),
+            FnBody::Skipped => {}
         }
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {
-        match Self::walk_body(&function.sig) {
-            Walk::Entered => self.visit_body(&function.block),
-            Walk::Skipped => {}
+        match FnBody::scanned_unless_const(&function.sig, Some(&function.block)) {
+            FnBody::Scanned(body) => self.visit_body(body),
+            FnBody::Skipped => {}
         }
     }
 
     fn visit_trait_item_fn(&mut self, function: &'ast TraitItemFn) {
-        match Self::walk_body(&function.sig) {
-            Walk::Entered => function
-                .default
-                .iter()
-                .for_each(|body| self.visit_body(body)),
-            Walk::Skipped => {}
+        match FnBody::scanned_unless_const(&function.sig, function.default.as_ref()) {
+            FnBody::Scanned(body) => self.visit_body(body),
+            FnBody::Skipped => {}
         }
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
         let last = block.stmts.len().saturating_sub(1);
-        block
-            .stmts
-            .iter()
-            .enumerate()
-            .filter(|(index, statement)| ExpressionFlow::is_dropped(statement, *index == last))
-            .map(|(_, statement)| statement.span())
-            .for_each(|span| {
-                self.report(
-                    span,
-                    "if or match whose value is dropped; let it produce the value the function returns",
-                );
-            });
+        self.violations.extend(
+            block
+                .stmts
+                .iter()
+                .enumerate()
+                .filter(|(index, statement)| ExpressionFlow::is_dropped(statement, *index == last))
+                .map(|(_, statement)| {
+                    Self::found(
+                        self.path,
+                        statement.span(),
+                        "if or match whose value is dropped; let it produce the value the function returns",
+                    )
+                }),
+        );
         syn::visit::visit_block(self, block);
     }
 
