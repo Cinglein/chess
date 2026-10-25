@@ -8,15 +8,15 @@ use std::path::{Path, PathBuf};
 use syn::visit::Visit;
 use syn::{Fields, ItemEnum, ItemImpl, ItemType};
 
-use super::type_name::TypeName;
 use task::Name;
 use task::SourceFile;
+use task::TypeName;
 
 #[derive(Default)]
 pub struct Declarations {
     vertices: BTreeSet<TypeName>,
     aliases: BTreeMap<TypeName, TypeName>,
-    sum_types: BTreeMap<Name, PathBuf>,
+    sum_types: BTreeMap<Name, BTreeSet<PathBuf>>,
     path: PathBuf,
 }
 
@@ -55,7 +55,7 @@ impl Declarations {
     pub fn is_foreign_sum_type(&self, enum_name: &Name, path: &Path) -> bool {
         self.sum_types
             .get(enum_name)
-            .is_some_and(|home| home != path)
+            .is_some_and(|homes| !homes.contains(path))
     }
 
     fn vertex(item: &ItemImpl) -> Option<TypeName> {
@@ -64,6 +64,17 @@ impl Declarations {
             .and_then(|(_, path, _)| path.segments.last())
             .filter(|segment| segment.ident == "State")
             .map(|_| TypeName::from_type(&item.self_ty))
+    }
+
+    fn record_sum_type(&mut self, name: Option<Name>) -> bool {
+        match name {
+            Some(name) => self
+                .sum_types
+                .entry(name)
+                .or_default()
+                .insert(self.path.clone()),
+            None => false,
+        }
     }
 
     fn sum_type(item: &ItemEnum) -> Option<Name> {
@@ -86,7 +97,6 @@ impl<'ast> Visit<'ast> for Declarations {
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        self.sum_types
-            .extend(Self::sum_type(item).map(|name| (name, self.path.clone())));
+        self.record_sum_type(Self::sum_type(item));
     }
 }

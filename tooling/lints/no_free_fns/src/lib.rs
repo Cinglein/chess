@@ -1,6 +1,10 @@
+mod finding;
+
+use finding::Finding;
 use syn::{Ident, Item, ItemFn, ItemMod};
 
 use task::LineNumber;
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -21,7 +25,9 @@ impl NoFreeFns {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("fn {name}"),
+                                Finding::FreeFn {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })
@@ -61,21 +67,19 @@ impl NoFreeFns {
 #[cfg(test)]
 mod tests {
     use super::NoFreeFns;
+    use task::SourceFile;
     const SOURCE: &str = "
 fn main() {} fn helper() {}
 struct S; impl S { fn method(&self) {} fn associated() {} }
 trait T { fn required(); fn provided() {} }
 mod inner { fn nested() {} #[cfg(test)] mod tests { #[test] fn a_test() {} fn test_helper() {} } }
 ";
-    const FLAGGED: [&str; 3] = ["helper", "nested", "test_helper"];
+    const REPORTED: [&str; 3] = [":2: fn helper", ":5: fn nested", ":5: fn test_helper"];
 
     #[test]
     fn flags_module_level_functions_but_not_methods_main_or_tests() {
-        let parsed = syn::parse_file(SOURCE).unwrap();
-        let names: Vec<String> = NoFreeFns::free_fns(&parsed.items)
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        assert_eq!(names, FLAGGED);
+        let file = SourceFile::parse("free.rs", SOURCE.to_owned()).unwrap();
+        let report = NoFreeFns::report(core::slice::from_ref(&file));
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

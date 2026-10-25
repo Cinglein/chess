@@ -10,9 +10,9 @@ use syn::{FnArg, ImplItemFn, Type};
 
 use super::declarations::Declarations;
 use super::impl_context::ImplContext;
-use super::type_name::TypeName;
 use task::LineNumber;
 use task::Site;
+use task::TypeName;
 
 pub struct FunctionShape {
     site: Site,

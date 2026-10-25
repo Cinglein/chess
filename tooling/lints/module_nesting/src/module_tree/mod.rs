@@ -1,13 +1,16 @@
+mod finding;
 mod module_path;
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use finding::Finding;
 use module_path::{Ancestor, InsideSibling, ModulePath};
 
 use task::ReexportCount;
 use task::Site;
 use task::SourceFile;
 use task::UseEdges;
+use task::UsePath;
 use task::Violation;
 use task::{Limit, Policy};
 
@@ -40,7 +43,7 @@ impl ModuleTree {
                 self.home_of(module).map(|home| {
                     Violation::new(
                         Site::File(module.file().into()),
-                        format!("used only from {home}; move it inside that module"),
+                        Finding::UsedFromOneSibling { home },
                     )
                 })
             })
@@ -59,10 +62,10 @@ impl ModuleTree {
             .map(move |(module, count)| {
                 Violation::new(
                     Site::File(module.file().into()),
-                    format!(
-                        "re-exports {count} items, at most {} allowed; split the module",
-                        most.count()
-                    ),
+                    Finding::CrowdedReexports {
+                        count: *count,
+                        most,
+                    },
                 )
             })
     }
@@ -80,7 +83,7 @@ impl ModuleTree {
         }
     }
 
-    fn absorbing(mut self, module: &ModulePath, path: &[String]) -> ModuleTree {
+    fn absorbing(mut self, module: &ModulePath, path: &UsePath) -> ModuleTree {
         match ModulePath::from_use(module, path, &self.modules) {
             Some(target) => {
                 let used = ModulePath::deepest_module_containing(&self.modules, &target, module);
@@ -91,9 +94,9 @@ impl ModuleTree {
                         .then(|| {
                             Violation::new(
                                 Site::File(module.file().into()),
-                                format!(
-                                    "reaches into {target}; import the parent's re-export instead"
-                                ),
+                                Finding::ReachesPastModRs {
+                                    target: target.clone(),
+                                },
                             )
                         }),
                 );

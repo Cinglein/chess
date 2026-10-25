@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use quote::ToTokens;
 use syn::punctuated::Punctuated;
 use syn::visit::Visit;
 use syn::{
@@ -50,21 +49,6 @@ impl NamedNumbers {
         Self::UNITS.contains(&digits.trim_start_matches('-'))
     }
 
-    fn walk(item: &ItemImpl) -> Walk {
-        if item.attrs.iter().any(|attribute| {
-            attribute.path().is_ident("cfg")
-                && attribute
-                    .meta
-                    .to_token_stream()
-                    .to_string()
-                    .contains("test")
-        }) {
-            Walk::Skipped
-        } else {
-            Walk::Entered
-        }
-    }
-
     fn unnamed(digits: &str, line: LineNumber) -> Option<LineNumber> {
         (!Self::is_unit(digits)).then_some(line)
     }
@@ -82,7 +66,7 @@ impl<'ast> Visit<'ast> for Numbers {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        match NamedNumbers::walk(item) {
+        match Walk::outside_tests(&item.attrs) {
             Walk::Entered => syn::visit::visit_item_impl(self, item),
             Walk::Skipped => {}
         }

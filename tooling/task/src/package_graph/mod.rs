@@ -1,13 +1,15 @@
 mod metadata;
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
 
 use metadata::Metadata;
 
-use task::CrateName;
-use task::Failure;
+use crate::crate_name::CrateName;
+use crate::failure::Failure;
 
 pub struct PackageGraph {
+    directories: BTreeMap<CrateName, PathBuf>,
     dependents: BTreeMap<CrateName, BTreeSet<CrateName>>,
 }
 
@@ -29,6 +31,16 @@ impl PackageGraph {
             },
         );
         Ok(PackageGraph {
+            directories: metadata
+                .packages()
+                .iter()
+                .map(|package| {
+                    (
+                        package.name().clone(),
+                        package.directory(metadata.workspace_root()),
+                    )
+                })
+                .collect(),
             dependents: metadata
                 .packages()
                 .iter()
@@ -44,6 +56,20 @@ impl PackageGraph {
     #[must_use]
     pub fn names(&self) -> BTreeSet<CrateName> {
         self.dependents.keys().cloned().collect()
+    }
+
+    #[must_use]
+    pub fn directories(&self) -> &BTreeMap<CrateName, PathBuf> {
+        &self.directories
+    }
+
+    #[must_use]
+    pub fn containing(&self, path: &Path) -> Option<&CrateName> {
+        self.directories
+            .iter()
+            .filter(|(_, directory)| path.starts_with(directory))
+            .max_by_key(|(_, directory)| directory.components().count())
+            .map(|(name, _)| name)
     }
 
     #[must_use]
@@ -65,14 +91,17 @@ impl PackageGraph {
 mod tests {
     use super::PackageGraph;
     use std::collections::BTreeSet;
-    const METADATA: &str = r#"{"packages": [
-        {"name": "board", "dependencies": [{"name": "serde", "path": null}]},
-        {"name": "search", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
-        {"name": "engine", "dependencies": [{"name": "search", "path": "/w/crates/search"}]}
+    use std::path::Path;
+    const METADATA: &str = r#"{"workspace_root": "/w", "packages": [
+        {"name": "board", "manifest_path": "/w/crates/board/Cargo.toml", "dependencies": [{"name": "serde", "path": null}]},
+        {"name": "search", "manifest_path": "/w/crates/search/Cargo.toml", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
+        {"name": "engine", "manifest_path": "/w/crates/engine/Cargo.toml", "dependencies": [{"name": "search", "path": "/w/crates/search"}]}
     ]}"#;
     const BOARD: &str = "board";
     const ENGINE: &str = "engine";
     const CRATES: usize = 3;
+    const INSIDE: &str = "crates/board/src/lib.rs";
+    const OUTSIDE: &str = "xtask/src/main.rs";
 
     #[test]
     fn the_closure_of_a_crate_is_every_crate_that_depends_on_it_transitively_and_itself() {
@@ -85,6 +114,18 @@ mod tests {
                 closure.contains(&ENGINE.parse().unwrap())
             ),
             (CRATES, CRATES, true)
+        );
+    }
+
+    #[test]
+    fn a_path_belongs_to_the_package_whose_manifest_directory_contains_it() {
+        let graph = PackageGraph::from_metadata(METADATA).unwrap();
+        assert_eq!(
+            (
+                graph.containing(Path::new(INSIDE)),
+                graph.containing(Path::new(OUTSIDE))
+            ),
+            (BOARD.parse().ok().as_ref(), None)
         );
     }
 }

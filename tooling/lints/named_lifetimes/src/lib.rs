@@ -1,3 +1,6 @@
+mod finding;
+
+use finding::Finding;
 use syn::visit::Visit;
 
 use syn::{Ident, LifetimeParam};
@@ -25,7 +28,9 @@ impl NamedLifetimes {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("'{name}"),
+                                Finding::ShortLifetime {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })
@@ -65,20 +70,17 @@ impl<'ast> Visit<'ast> for ShortLifetimes<'_> {
 mod tests {
     use super::NamedLifetimes;
     use settings::EmbeddedDefaults;
-    use task::Policy;
+    use task::{Policy, SourceFile};
     const SOURCE: &str = "
 struct Scan<'a, 'scan> { text: &'a str, path: &'scan Path, owned: &'static str }
 impl<'b> Scan<'b, '_> { fn view<'c>(&'c self) -> &'c str { self.text } }
 ";
-    const FLAGGED: [&str; 3] = ["a", "b", "c"];
+    const REPORTED: [&str; 3] = [":2: 'a", ":3: 'b", ":3: 'c"];
 
     #[test]
     fn flags_single_letter_lifetimes_where_they_are_declared() {
-        let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let names: Vec<String> = NamedLifetimes::short_lifetimes(&parsed, &Policy::defaults())
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        assert_eq!(names, FLAGGED);
+        let file = SourceFile::parse("scan.rs", SOURCE.to_owned()).unwrap();
+        let report = NamedLifetimes::report(core::slice::from_ref(&file), &Policy::defaults());
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

@@ -7,6 +7,8 @@ use sysinfo::{Pid, Process, ProcessRefreshKind, ProcessesToUpdate, System};
 
 use task::AvailableGib;
 use task::Failure;
+use task::KilledProcess;
+use task::KilledProcesses;
 use task::Site;
 use task::{Interval, MemoryShare, Policy};
 
@@ -17,7 +19,7 @@ pub struct MemoryWatch<'policy> {
     system: System,
     members: Vec<Pid>,
     last_discovery: Instant,
-    killed: Vec<String>,
+    killed: Vec<KilledProcess>,
 }
 
 impl<'policy> MemoryWatch<'policy> {
@@ -56,11 +58,10 @@ impl<'policy> MemoryWatch<'policy> {
         if self.killed.is_empty() {
             Ok(status)
         } else {
-            Err(Failure::Refused(format!(
-                "the {} budget was enforced by killing {}; bound the tests that grew under those mutants",
-                self.budget,
-                self.killed.join(", ")
-            )))
+            Err(Failure::BudgetEnforced {
+                budget: self.budget,
+                killed: KilledProcesses::from(self.killed),
+            })
         }
     }
 
@@ -88,7 +89,7 @@ impl<'policy> MemoryWatch<'policy> {
         self.killed.extend(self.enforce());
     }
 
-    fn enforce(&self) -> Option<String> {
+    fn enforce(&self) -> Option<KilledProcess> {
         let tree: Vec<&Process> = self
             .members
             .iter()
@@ -101,13 +102,7 @@ impl<'policy> MemoryWatch<'policy> {
             || self.system.available_memory() < reserve.bytes())
         .then(|| {
             largest.kill();
-            format!(
-                "{} (pid {}) at {} of {} used",
-                largest.name().to_string_lossy(),
-                largest.pid(),
-                AvailableGib::from_bytes(largest.memory()),
-                AvailableGib::from_bytes(used)
-            )
+            KilledProcess::new(largest, AvailableGib::from_bytes(used))
         })
     }
 
@@ -148,6 +143,6 @@ mod tests {
         let mut child = Command::new("sleep").arg("30").spawn().unwrap();
         let outcome =
             MemoryWatch::over(&child, AvailableGib::from_bytes(0), &policy).guard(&mut child);
-        assert!(matches!(outcome, Err(Failure::Refused(_))));
+        assert!(matches!(outcome, Err(Failure::BudgetEnforced { .. })));
     }
 }

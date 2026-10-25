@@ -16,10 +16,9 @@ impl Export {
     pub fn in_root(file: &SourceFile) -> Vec<Export> {
         file.crate_name()
             .filter(|_| file.path().ends_with("src/lib.rs"))
-            .and_then(|name| name.parse::<CrateName>().ok())
             .map_or_else(Vec::new, |crate_name| {
                 Self::reexports(file)
-                    .flat_map(|used| Self::leaves(&crate_name, &used.tree))
+                    .flat_map(|used| Self::leaves(crate_name, &used.tree))
                     .collect()
             })
     }

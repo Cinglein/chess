@@ -3,6 +3,7 @@ use std::path::Path;
 use syn::visit::Visit;
 use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Ident, ItemImpl, ItemMod};
 
+use super::finding::Finding;
 use task::LineNumber;
 use task::Site;
 use task::SourceFile;
@@ -17,7 +18,6 @@ pub struct TextSites {
 }
 
 impl TextSites {
-    const TEXT_DOMAIN: &str = "crates/";
     const DOOR_TRAITS: [&str; 3] = ["FromStr", "TryFrom", "Display"];
     const INSPECTING: [&str; 8] = [
         "split_whitespace", "split_once", "trim", "trim_start", "trim_end", "chars",
@@ -26,13 +26,9 @@ impl TextSites {
     const PRODUCING: [&str; 2] = ["to_string", "push_str"];
 
     pub fn violations(file: &SourceFile) -> Vec<Violation> {
-        if file.path().starts_with(Self::TEXT_DOMAIN) {
-            let mut sites = TextSites::default();
-            sites.visit_file(file.syntax());
-            sites.outside_doors(file.path())
-        } else {
-            Vec::new()
-        }
+        let mut sites = TextSites::default();
+        sites.visit_file(file.syntax());
+        sites.outside_doors(file.path())
     }
 
     fn outside_doors(self, path: &Path) -> Vec<Violation> {
@@ -42,9 +38,9 @@ impl TextSites {
                 .map(|ident| {
                     Violation::new(
                         Site::Line(path.into(), LineNumber::from(ident.span())),
-                        format!(
-                            "{ident} handles text outside a door; parse in FromStr or render in Display"
-                        ),
+                        Finding::TextOutsideDoor {
+                            handler: Name::from(&ident),
+                        },
                     )
                 })
                 .collect()

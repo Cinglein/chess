@@ -1,3 +1,6 @@
+mod finding;
+
+use finding::Finding;
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
@@ -25,7 +28,9 @@ impl LiteralNames {
                         .map(move |name| {
                             Violation::new(
                                 Site::Line(file.path().into(), LineNumber::from(name.span())),
-                                format!("fn {name} names nothing; say what it does"),
+                                Finding::VagueName {
+                                    name: Name::from(&name),
+                                },
                             )
                         })
                 })
@@ -93,7 +98,7 @@ impl<'ast> Visit<'ast> for VagueNames<'_> {
 mod tests {
     use super::LiteralNames;
     use settings::EmbeddedDefaults;
-    use task::Policy;
+    use task::{Policy, SourceFile};
     const SOURCE: &str = "
 struct W;
 impl W { fn of(x: u8) -> W { W } fn check(&self) {} fn new() -> W { W } fn least_significant_bit(&self) -> u8 { 0 } }
@@ -101,15 +106,15 @@ impl From<u8> for W { fn from(x: u8) -> W { W } } trait T { fn do_it(&self); fn 
 fn process() {} mod inner { fn handle() {} }
 #[cfg(test)] mod tests { fn make() {} }
 ";
-    const FLAGGED: [&str; 5] = ["of", "check", "go", "process", "handle"];
+    const REPORTED: [&str; 5] = [
+        ":3: fn of names nothing", ":3: fn check names nothing", ":4: fn go names nothing",
+        ":5: fn process names nothing", ":5: fn handle names nothing",
+    ];
 
     #[test]
     fn flags_prepositions_and_vague_verbs_but_not_new_trait_impls_or_tests() {
-        let parsed = syn::parse_file(SOURCE).unwrap();
-        let names: Vec<String> = LiteralNames::vague_names(&parsed, &Policy::defaults())
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        assert_eq!(names, FLAGGED);
+        let file = SourceFile::parse("w.rs", SOURCE.to_owned()).unwrap();
+        let report = LiteralNames::report(core::slice::from_ref(&file), &Policy::defaults());
+        assert!(report.lists_exactly(&REPORTED), "{report}");
     }
 }

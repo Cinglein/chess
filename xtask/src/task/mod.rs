@@ -3,6 +3,7 @@ mod clippy;
 mod coverage;
 mod lint;
 mod test;
+mod usage;
 mod wasm;
 
 use std::path::Path;
@@ -14,6 +15,7 @@ use crate::task::clippy::Clippy;
 use crate::task::coverage::Coverage;
 use crate::task::lint::Lint;
 use crate::task::test::Test;
+use crate::task::usage::Usage;
 use crate::task::wasm::Wasm;
 use affected::Affected;
 use affected::Job;
@@ -41,6 +43,7 @@ use public_surface::PublicSurface;
 use settings_shape::SettingsShape;
 use stacked::Stacked;
 use state_graph::StateGraph;
+use task::CrateName;
 use task::Failure;
 use task::Policy;
 use task::Workspace;
@@ -89,14 +92,12 @@ pub enum Task {
 impl Task {
     #[must_use]
     pub fn usage() -> Failure {
-        Failure::Usage(format!(
-            "usage: cargo xtask <{}> [--affected], or cargo xtask mutant-costs <directory>",
-            Self::VARIANTS.join("|")
-        ))
+        Failure::from(Usage)
     }
 
     pub fn run(self, mut flags: impl Iterator<Item = String>) -> Result<(), Failure> {
-        let workspace = Workspace::locate();
+        let Ok(tool) = env!("CARGO_PKG_NAME").parse::<CrateName>();
+        let workspace = Workspace::locate(tool)?;
         let policy = Policy::defaults();
         let coverage = match self {
             Task::MutantCosts => Coverage::Everything,

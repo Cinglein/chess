@@ -1,6 +1,6 @@
 use syn::{ReturnType, Type, TypeTuple};
 
-use super::super::type_name::TypeName;
+use task::TypeName;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Returns {

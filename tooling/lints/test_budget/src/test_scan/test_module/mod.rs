@@ -16,7 +16,9 @@ use syn::{ItemFn, ItemMod, LitInt, Macro};
 use super::super::TestBudget;
 use super::super::line_count::LineCount;
 use super::super::test_count::TestCount;
+use super::finding::Finding;
 use task::LineNumber;
+use task::Name;
 use task::Site;
 use task::Violation;
 use task::{Limit, Policy};
@@ -49,7 +51,15 @@ impl<'scan> TestModule<'scan> {
         TestCounts::tally(&function.block)
             .overruns(self.policy)
             .into_iter()
-            .map(|overrun| Violation::new(site.clone(), format!("fn {name} {overrun}")))
+            .map(|overrun| {
+                Violation::new(
+                    site.clone(),
+                    Finding::TestOverrun {
+                        name: Name::from(name),
+                        overrun,
+                    },
+                )
+            })
             .collect()
     }
 
@@ -84,14 +94,17 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
     }
 
     fn visit_lit_int(&mut self, integer: &'ast LitInt) {
-        let largest = self.policy.limit(Limit::LargestInteger).count();
+        let largest = self.policy.limit(Limit::LargestInteger);
         let finding = integer
             .base10_parse::<usize>()
-            .is_ok_and(|value| value > largest)
+            .is_ok_and(|value| !largest.allows(value))
             .then(|| {
                 Violation::new(
                     Site::Line(self.path.into(), LineNumber::from(integer.span())),
-                    format!("integer literal {integer} in test code, at most {largest} allowed"),
+                    Finding::LargeLiteral {
+                        literal: integer.clone(),
+                        most: largest,
+                    },
                 )
             });
         self.budget.violations.extend(finding);
@@ -102,7 +115,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
             .then(|| {
                 Violation::new(
                     Site::Line(self.path.into(), LineNumber::from(invocation.span())),
-                    "assertion outside a test; helpers return values and tests assert them",
+                    Finding::AssertionOutsideTest,
                 )
             });
         self.budget.violations.extend(finding);

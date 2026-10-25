@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::super::type_name::TypeName;
+use task::TypeName;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Edge {

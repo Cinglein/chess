@@ -1,7 +1,9 @@
 mod export;
+mod finding;
 mod foreign_references;
 
 use export::Export;
+use finding::Finding;
 use foreign_references::ForeignReferences;
 
 use task::BinaryFiles;
@@ -33,10 +35,9 @@ impl PublicSurface {
                         .map(move |export| {
                             Violation::new(
                                 Site::Line(file.path().into(), export.line()),
-                                format!(
-                                    "{} is exported but no other crate names it; export it when a user appears",
-                                    export.name()
-                                ),
+                                Finding::UnnamedExport {
+                                    name: export.name().clone(),
+                                },
                             )
                         })
                 })
@@ -51,19 +52,23 @@ mod tests {
     use task::SourceFile;
     const LIB: &str =
         "mod x; use x::Private;\npub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
-    const FILES: [(&str, &str); 4] = [
-        ("crates/a/src/lib.rs", LIB),
-        ("crates/a/src/main.rs", "use a::Wired; fn main() {}"),
+    const FILES: [(&str, &str, &str); 4] = [
+        ("a", "crates/a/src/lib.rs", LIB),
+        ("a", "crates/a/src/main.rs", "use a::Wired; fn main() {}"),
         (
-            "crates/b/src/main.rs", "use a::Used; fn main() { a::Seen::go(); }",
+            "b", "crates/b/src/main.rs", "use a::Used; fn main() { a::Seen::go(); }",
         ),
-        ("crates/c/src/lib.rs", "mod y; pub use y::Lonely;"),
+        ("c", "crates/c/src/lib.rs", "mod y; pub use y::Lonely;"),
     ];
     const REPORTED: [&str; 1] = ["crates/a/src/lib.rs:2: Unused is exported"];
 
     #[test]
     fn flags_an_unnamed_reexport_but_counts_the_crates_own_binary_as_a_user() {
-        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
+        let files = FILES.map(|(name, path, text)| {
+            SourceFile::parse(path, text.to_owned())
+                .unwrap()
+                .in_crate(name.parse().unwrap())
+        });
         let report = PublicSurface::report(&files);
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }

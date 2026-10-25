@@ -1,5 +1,5 @@
-use super::super::type_name::TypeName;
 use task::Name;
+use task::TypeName;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ImplKind {

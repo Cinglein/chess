@@ -1,8 +1,9 @@
 use std::fs;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 use syn::ItemMod;
 
+use crate::crate_name::CrateName;
 use crate::failure::Failure;
 use crate::site::Site;
 use crate::walk::Walk;
@@ -10,18 +11,23 @@ use crate::workspace::Workspace;
 
 pub struct SourceFile {
     path: PathBuf,
+    crate_name: Option<CrateName>,
     text: String,
     syntax: syn::File,
 }
 
 impl SourceFile {
-    pub fn read(workspace: &Workspace, file: &Path) -> Result<Self, Failure> {
+    pub fn read(
+        workspace: &Workspace,
+        file: &Path,
+        crate_name: CrateName,
+    ) -> Result<Self, Failure> {
         let path = workspace.relative(file);
         let text = fs::read_to_string(file).map_err(|error| Failure::Io {
             site: Site::File(path.clone()),
             error,
         })?;
-        Self::parse(path, text)
+        Self::parse(path, text).map(|parsed| parsed.in_crate(crate_name))
     }
 
     pub fn parse(path: impl Into<PathBuf>, text: String) -> Result<Self, Failure> {
@@ -30,7 +36,20 @@ impl SourceFile {
             site: Site::File(path.clone()),
             error,
         })?;
-        Ok(Self { path, text, syntax })
+        Ok(Self {
+            path,
+            crate_name: None,
+            text,
+            syntax,
+        })
+    }
+
+    #[must_use]
+    pub fn in_crate(self, crate_name: CrateName) -> SourceFile {
+        SourceFile {
+            crate_name: Some(crate_name),
+            ..self
+        }
     }
 
     #[must_use]
@@ -39,16 +58,8 @@ impl SourceFile {
     }
 
     #[must_use]
-    pub fn crate_name(&self) -> Option<&str> {
-        let mut components = self.path.components();
-        match components.next() {
-            Some(Component::Normal(root)) if root == "crates" || root == "tooling" => components
-                .map(Component::as_os_str)
-                .find(|name| *name != "lints")
-                .and_then(|name| name.to_str()),
-            Some(Component::Normal(root)) if root == "xtask" => Some("xtask"),
-            _ => None,
-        }
+    pub fn crate_name(&self) -> Option<&CrateName> {
+        self.crate_name.as_ref()
     }
 
     #[must_use]
@@ -78,26 +89,18 @@ impl SourceFile {
 
 #[cfg(test)]
 mod tests {
-    use super::{SourceFile, Walk};
-    const NAMED: [(&str, Option<&str>); 5] = [
-        ("crates/board/src/square.rs", Some("board")),
-        ("tooling/lints/fn_shape/src/lib.rs", Some("fn_shape")),
-        ("tooling/task/src/lib.rs", Some("task")),
-        ("xtask/src/main.rs", Some("xtask")),
-        ("other/board/src/lib.rs", None),
-    ];
+    use super::{CrateName, SourceFile, Walk};
+    const PATH: &str = "crates/board/src/square.rs";
+    const BOARD: &str = "board";
     const MODULES: &str = "#[cfg(test)] mod tests {} #[cfg(feature = \"proptest\")] mod strategies {} #[allow(test)] mod odd {}";
     const TEST_MODULES: usize = 1;
 
     #[test]
-    fn a_file_names_its_crate_from_its_path_and_only_a_cfg_test_module_is_a_test_module() {
-        let names = NAMED.map(|(path, _)| {
-            SourceFile::parse(path.to_owned(), String::new())
-                .expect("empty is valid")
-                .crate_name()
-                .map(str::to_owned)
-        });
-        assert_eq!(names, NAMED.map(|(_, name)| name.map(str::to_owned)));
+    fn a_file_knows_its_crate_only_once_placed_and_only_a_cfg_test_module_is_a_test_module() {
+        let parsed = SourceFile::parse(PATH, String::new()).expect("empty is valid");
+        let board: CrateName = BOARD.parse().unwrap();
+        assert!(parsed.crate_name().is_none());
+        assert_eq!(parsed.in_crate(board.clone()).crate_name(), Some(&board));
         let parsed = syn::parse_file(MODULES).expect("valid rust");
         let test_modules = parsed
             .items

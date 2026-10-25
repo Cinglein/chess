@@ -1,5 +1,7 @@
+mod finding;
 mod test_module;
 
+use finding::Finding;
 use test_module::TestModule;
 
 use std::path::Path;
@@ -33,11 +35,10 @@ impl<'scan> TestScan<'scan> {
         let overrun = (!policy.limit(Limit::TestsPerFile).allows(scan.budget.tests)).then(|| {
             Violation::new(
                 Site::File(path.into()),
-                format!(
-                    "{} tests, at most {} allowed",
-                    scan.budget.tests,
-                    policy.limit(Limit::TestsPerFile).count()
-                ),
+                Finding::TooManyTests {
+                    tests: scan.budget.tests,
+                    most: policy.limit(Limit::TestsPerFile),
+                },
             )
         });
         scan.budget.violations.extend(overrun);

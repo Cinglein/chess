@@ -1,8 +1,8 @@
+mod driver;
 mod tool_scope;
-mod tool_trigger;
 
+pub use driver::Driver;
 pub use tool_scope::ToolScope;
-pub use tool_trigger::ToolTrigger;
 
 use enum_map::Enum;
 use serde::Serialize;
@@ -24,34 +24,19 @@ pub enum Job {
 }
 
 impl Job {
-    const SHARED_ENTRIES: &[&str] = &[
-        "xtask/src/main.rs", "xtask/src/lib.rs", "xtask/src/task/mod.rs", "xtask/Cargo.toml",
-    ];
-
-    pub fn entries(self) -> impl Iterator<Item = &'static str> {
-        let own: &[&str] = match self {
-            Job::Fmt | Job::Mutants | Job::Full => &[],
-            Job::Clippy => &["xtask/src/task/clippy.rs", "xtask/src/task/wasm.rs"],
-            Job::Test => &["xtask/src/task/test.rs"],
-            Job::Lint => &["xtask/src/task/lint.rs"],
-        };
-        Self::SHARED_ENTRIES.iter().chain(own).copied()
-    }
-
     #[must_use]
-    pub fn tool_trigger(self) -> ToolTrigger {
+    pub fn driver(self) -> Driver {
         match self {
-            Job::Fmt | Job::Clippy | Job::Test | Job::Lint => ToolTrigger::AnyToolChange,
-            Job::Mutants | Job::Full => ToolTrigger::ReachedEntry,
+            Job::Fmt | Job::Clippy | Job::Test | Job::Lint => Driver::Cargo,
+            Job::Mutants | Job::Full => Driver::CargoMutants,
         }
     }
 
     #[must_use]
     pub fn tool_scope(self) -> ToolScope {
         match self {
-            Job::Clippy | Job::Test => ToolScope::PlusTheTool,
             Job::Full => ToolScope::Everything,
-            Job::Fmt | Job::Lint | Job::Mutants => ToolScope::ProductOnly,
+            Job::Fmt | Job::Clippy | Job::Test | Job::Lint | Job::Mutants => ToolScope::ProductOnly,
         }
     }
 }

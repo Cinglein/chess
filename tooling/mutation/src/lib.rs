@@ -7,11 +7,12 @@ use std::fs::{self, File};
 use sysinfo::{ProcessesToUpdate, System};
 
 use task::AvailableGib;
+use task::FailedRuns;
 use task::Failure;
 use task::Selection;
 use task::Site;
 use task::Workspace;
-use task::{CargoArgument, MutantsArgument, Program};
+use task::{CargoArgument, CommandLine, MutantsArgument, Program};
 use task::{Interval, MemoryShare, Policy};
 
 pub struct Mutants;
@@ -45,19 +46,19 @@ impl Mutants {
                 .argument(MutantsArgument::Timeout)
                 .argument(policy.interval(Interval::TestTimeout).whole_seconds());
             let runs = scope.applied(line, workspace, selection, policy)?;
-            let failed: Vec<String> = runs
+            let failed: Vec<CommandLine> = runs
                 .iter()
                 .map(|run| run.accepted(budget, policy))
                 .collect::<Result<Vec<bool>, Failure>>()?
                 .into_iter()
                 .zip(&runs)
                 .filter(|(accepted, _)| !accepted)
-                .map(|(_, run)| run.line().to_string())
+                .map(|(_, run)| run.line().clone())
                 .collect();
             failed
                 .is_empty()
                 .then_some(())
-                .ok_or_else(|| Failure::Command(failed.join("\n")))
+                .ok_or_else(|| Failure::Runs(FailedRuns::from(failed)))
         }
     }
 
@@ -69,12 +70,8 @@ impl Mutants {
         let path = workspace.root().join(Self::LOCK_FILE);
         fs::create_dir_all(path.parent().unwrap_or(workspace.root())).map_err(io)?;
         let lock = File::create(path).map_err(io)?;
-        lock.try_lock().map_err(|_| {
-            Failure::Refused(format!(
-                "another cargo xtask mutants holds {}; one run at a time",
-                Self::LOCK_FILE
-            ))
-        })?;
+        lock.try_lock()
+            .map_err(|_| Failure::LockHeld(Self::LOCK_FILE.into()))?;
         Ok(lock)
     }
 
@@ -82,10 +79,7 @@ impl Mutants {
         let mut system = System::new();
         system.refresh_processes(ProcessesToUpdate::All, true);
         match system.processes_by_name(Self::PROCESS_NAME.as_ref()).next() {
-            Some(_) => Err(Failure::Refused(format!(
-                "a {} process is already running; one run at a time",
-                Self::PROCESS_NAME
-            ))),
+            Some(_) => Err(Failure::AlreadyRunning(Self::PROCESS_NAME)),
             None => Ok(()),
         }
     }
@@ -93,10 +87,10 @@ impl Mutants {
     fn refuse_if_memory_is_short(policy: &Policy) -> Result<AvailableGib, Failure> {
         let available = AvailableGib::measured();
         if available < policy.memory(MemoryShare::Granted) {
-            Err(Failure::Refused(format!(
-                "{available} available, the granted budget of {} must be free before mutating",
-                policy.memory(MemoryShare::Granted)
-            )))
+            Err(Failure::MemoryShort {
+                available,
+                granted: policy.memory(MemoryShare::Granted),
+            })
         } else {
             Ok(policy.memory(MemoryShare::Granted))
         }

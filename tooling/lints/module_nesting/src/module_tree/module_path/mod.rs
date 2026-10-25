@@ -11,15 +11,21 @@ pub use same::Same;
 use std::fmt;
 use std::path::Path;
 
+use task::UsePath;
+use task::{Name, Whole};
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ModulePath {
     crate_root: String,
-    segments: Vec<String>,
+    segments: Vec<Name>,
     file: String,
 }
 
 impl ModulePath {
     const SOURCE_ROOTS: [&str; 2] = ["src/lib.rs", "src/main.rs"];
+    const CRATE: &str = "crate";
+    const SUPER: &str = "super";
+    const ANCHORS: [&str; 3] = ["crate", "super", "self"];
 
     pub fn of_file(path: &Path) -> Option<ModulePath> {
         let file = path.to_string_lossy();
@@ -30,8 +36,8 @@ impl ModulePath {
             .parent()
             .into_iter()
             .flat_map(Path::components)
-            .map(|component| component.as_os_str().to_string_lossy().into_owned())
-            .chain((!Self::is_crate_root(&file) && stem != "mod").then_some(stem))
+            .map(|component| Name::from(&*component.as_os_str().to_string_lossy()))
+            .chain((!Self::is_crate_root(&file) && stem != "mod").then(|| Name::from(&*stem)))
             .collect();
         Some(ModulePath {
             crate_root: crate_root.to_owned(),
@@ -42,28 +48,32 @@ impl ModulePath {
 
     pub fn from_use(
         file: &ModulePath,
-        path: &[String],
+        path: &UsePath,
         modules: &[ModulePath],
     ) -> Option<ModulePath> {
-        let first = path.first()?.as_str();
-        let start = match first {
-            "crate" => Vec::new(),
-            "super" => file.parent()?.segments,
-            _ => file.segments.clone(),
+        let first = path.first()?;
+        let start = if *first == Self::CRATE {
+            Vec::new()
+        } else if *first == Self::SUPER {
+            file.parent()?.segments
+        } else {
+            file.segments.clone()
         };
-        let skip = usize::from(matches!(first, "crate" | "super" | "self"));
+        let skip = usize::from(first.matches::<Whole>(&Self::ANCHORS));
         (skip != 0
             || modules
                 .iter()
                 .any(|module| module.relates::<Same>(&file.child(first))))
         .then_some(())?;
         let segments =
-            path.iter()
+            path.segments()
+                .iter()
                 .skip(skip)
-                .try_fold(start, |mut segments, segment| match segment.as_str() {
-                    "super" => segments.pop().and(Some(segments)),
-                    other => {
-                        segments.push(other.to_owned());
+                .try_fold(start, |mut segments, segment| {
+                    if *segment == Self::SUPER {
+                        segments.pop().and(Some(segments))
+                    } else {
+                        segments.push(segment.clone());
                         Some(segments)
                     }
                 })?;
@@ -89,7 +99,7 @@ impl ModulePath {
         &self.file
     }
 
-    pub fn segments(&self) -> &[String] {
+    pub fn segments(&self) -> &[Name] {
         &self.segments
     }
 
@@ -124,14 +134,14 @@ impl ModulePath {
         }
     }
 
-    fn child(&self, name: &str) -> ModulePath {
+    fn child(&self, name: &Name) -> ModulePath {
         ModulePath {
             crate_root: self.crate_root.clone(),
             segments: self
                 .segments
                 .iter()
                 .cloned()
-                .chain(Some(name.to_owned()))
+                .chain(Some(name.clone()))
                 .collect(),
             file: String::new(),
         }

@@ -1,11 +1,12 @@
-use quote::ToTokens;
 use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use syn::{ItemStruct, Visibility};
+use syn::{Index, ItemStruct, Member, Visibility};
 
+use super::finding::Finding;
 use task::LineNumber;
+use task::Name;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
@@ -36,15 +37,14 @@ impl<'ast> Visit<'ast> for FieldVisibility<'_> {
             .map(|(index, field)| {
                 Violation::new(
                     Site::Line(self.path.into(), LineNumber::from(field.span())),
-                    format!(
-                        "field {} of {} is {}; struct fields are private",
-                        field
+                    Finding::ExposedField {
+                        field: field
                             .ident
-                            .as_ref()
-                            .map_or_else(|| index.to_string(), ToString::to_string),
-                        item.ident,
-                        field.vis.to_token_stream().to_string().replace(' ', "")
-                    ),
+                            .clone()
+                            .map_or_else(|| Member::Unnamed(Index::from(index)), Member::Named),
+                        owner: Name::from(&item.ident),
+                        visibility: field.vis.clone(),
+                    },
                 )
             });
         self.violations.extend(exposed);

@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
-use crate::package_graph::PackageGraph;
 use task::CrateName;
+use task::PackageGraph;
 use task::SourceFile;
 
 pub struct TestedCrates(BTreeSet<CrateName>);
@@ -16,7 +16,7 @@ impl TestedCrates {
                 .iter()
                 .filter(|file| file.text().contains(Self::TEST_ATTRIBUTE))
                 .filter_map(SourceFile::crate_name)
-                .filter_map(|name| name.parse().ok())
+                .cloned()
                 .collect(),
         )
     }

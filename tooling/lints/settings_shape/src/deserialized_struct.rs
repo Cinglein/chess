@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use quote::ToTokens;
+use proc_macro2::TokenTree;
 use syn::punctuated::Punctuated;
 use syn::visit::Visit;
 use syn::{Attribute, Fields, ItemStruct, Path, Token, TypePath};
@@ -19,7 +19,7 @@ pub struct DeserializedStruct {
 }
 
 impl DeserializedStruct {
-    const KEY_SHAPES: &[&str] = &["deny_unknown_fields", "transparent", "try_from", "from ="];
+    const KEY_SHAPES: [&str; 4] = ["deny_unknown_fields", "transparent", "try_from", "from"];
 
     pub fn from_item(path: &std::path::Path, item: &ItemStruct) -> Option<DeserializedStruct> {
         (matches!(item.fields, Fields::Named(_)) && Self::derives_deserialize(&item.attrs)).then(
@@ -78,9 +78,14 @@ impl DeserializedStruct {
 
     fn shapes_its_keys(attribute: &Attribute) -> bool {
         attribute.path().is_ident("serde")
-            && Self::KEY_SHAPES
-                .iter()
-                .any(|shape| attribute.meta.to_token_stream().to_string().contains(shape))
+            && attribute
+                .meta
+                .require_list()
+                .is_ok_and(|list| list.tokens.clone().into_iter().any(Self::is_key_shape))
+    }
+
+    fn is_key_shape(token: TokenTree) -> bool {
+        matches!(token, TokenTree::Ident(ident) if Self::KEY_SHAPES.iter().any(|shape| ident == shape))
     }
 }
 
