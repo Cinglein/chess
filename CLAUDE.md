@@ -45,7 +45,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `no-forwarders`, `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`,
   `primitive-boundary`, `private-fns`, `public-surface`, `settings-shape`, `state-graph`,
   `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask mutants`,
+  `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask affected`, which prints the crates a
+  change reaches as changed crates plus their reverse dependents, `cargo xtask mutants`,
   `cargo xtask mutants-full`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
 
@@ -125,7 +126,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   enforces it. A settings struct lives in the binary, implements `settings::EmbeddedDefaults`
   with its default file, and every struct that derives `Deserialize` with named fields carries
   `#[serde(deny_unknown_fields)]`, so a misspelt key is an error; `cargo xtask settings-shape`
-  enforces that.
+  enforces that in `crates/`, since xtask reads external schemas such as `cargo metadata`.
 - A number has a name. In `crates/`, outside tests, test support files, and the bit boundary
   files, a numeric literal other than 0 and 1 appears only inside a `const` item, so every
   tunable can be found by name and moved to a setting or a parameter when its value is measured.

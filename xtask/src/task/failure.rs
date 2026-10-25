@@ -15,6 +15,8 @@ pub enum Failure {
     Git(String),
     #[error("gh failed: {0}")]
     GitHub(String),
+    #[error("cargo metadata is not the shape expected: {0}")]
+    Metadata(#[from] serde_json::Error),
     #[error("refused: {0}")]
     Refused(String),
     #[error("{site}: {error}")]
