@@ -43,8 +43,6 @@ impl Scope {
             Scope::ChangedLines => {
                 Self::write_diff(workspace)?;
                 let line = line
-                    .argument(MutantsArgument::Output)
-                    .argument(output.root().display())
                     .argument(MutantsArgument::InDiff)
                     .argument(Self::DIFF_FILE);
                 let line = match env::var(Self::SLICE_VARIABLE) {
@@ -53,10 +51,20 @@ impl Scope {
                         .argument(spelled.parse::<Slice>()?),
                     Err(_) => line,
                 };
-                Ok(vec![MutantsRun::new(
-                    Self::tested_by_changes(line, workspace)?,
-                    output.root().to_path_buf(),
-                )])
+                let reaches = Changes::SinceMain.reaches(workspace)?;
+                let changed: BTreeSet<CrateName> =
+                    reaches.iter().filter_map(Reach::package).collect();
+                if reaches.contains(&Reach::Everything) || changed.is_empty() {
+                    Ok(vec![MutantsRun::new(
+                        line.argument(MutantsArgument::Output)
+                            .argument(output.root().display())
+                            .argument(MutantsArgument::TestWorkspaceOn),
+                        output.root().to_path_buf(),
+                    )])
+                } else {
+                    let line = line.argument(MutantsArgument::BaselineSkip);
+                    Self::one_shard(&line, workspace, &output, &Shard::Whole(changed))
+                }
             }
             Scope::Workspace => match env::var(Self::SHARD_VARIABLE) {
                 Ok(spelled) => Self::one_shard(&line, workspace, &output, &spelled.parse()?),
@@ -95,21 +103,6 @@ impl Scope {
                 ))
             })
             .collect()
-    }
-
-    fn tested_by_changes(line: CommandLine, workspace: &Workspace) -> Result<CommandLine, Failure> {
-        let reaches = Changes::SinceMain.reaches(workspace)?;
-        let changed: BTreeSet<CrateName> = reaches.iter().filter_map(Reach::package).collect();
-        if reaches.contains(&Reach::Everything) || changed.is_empty() {
-            Ok(line.argument(MutantsArgument::TestWorkspaceOn))
-        } else {
-            let graph = Affected::package_graph(workspace)?;
-            let tested = TestedCrates::collect(&workspace.source_files()?);
-            let packages = TestPackages::around(&Shard::Whole(changed), &graph, &tested);
-            Ok(line
-                .argument(MutantsArgument::TestWorkspaceOff)
-                .arguments(packages.arguments()))
-        }
     }
 
     fn write_diff(workspace: &Workspace) -> Result<(), Failure> {
