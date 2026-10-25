@@ -1,4 +1,5 @@
 use core::iter::Sum;
+use core::num::NonZeroI32;
 use core::ops::{Add, Neg};
 
 use derive_more::{Add, Display, FromStr, Sub};
@@ -52,17 +53,12 @@ impl Score {
     }
 
     #[must_use]
-    pub fn mated_in(plies: u8) -> Score {
-        -Self::mate_in(plies)
-    }
-
-    #[must_use]
-    pub fn mating_in_moves(moves: i32) -> Score {
+    pub fn mating_in_moves(moves: NonZeroI32) -> Score {
         let plies = |count: i32| u8::try_from(count).unwrap_or(u8::MAX);
-        if moves > 0 {
-            Self::mate_in(plies(Self::PLIES_PER_MOVE * moves - 1))
+        if moves.is_positive() {
+            Self::mate_in(plies(Self::PLIES_PER_MOVE * moves.get() - 1))
         } else {
-            Self::mated_in(plies(-Self::PLIES_PER_MOVE * moves))
+            -Self::mate_in(plies(-Self::PLIES_PER_MOVE * moves.get()))
         }
     }
 
@@ -126,27 +122,27 @@ const _: () = assert!(
 mod tests {
     use proptest::prelude::*;
 
+    use core::num::{NonZeroI8, NonZeroI32};
+
     use super::Score;
 
     const PLIES: u8 = 3;
-    const TWO_MOVES: i32 = 2;
+    const TWO_MOVES: NonZeroI32 = NonZeroI32::new(2).unwrap();
 
     #[test]
     fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_a_quicker_mate_scores_higher()
     {
-        proptest!(|(moves: i8)| {
-            prop_assume!(moves != 0);
-            let moves = i32::from(moves);
+        proptest!(|(moves: NonZeroI8)| {
+            let moves = NonZeroI32::from(moves);
             prop_assert_eq!(
                 (Score::mating_in_moves(moves).mate_in_moves(), (-Score::mating_in_moves(moves)).mate_in_moves()),
-                (Some(moves), Some(-moves))
+                (Some(moves.get()), Some(-moves.get()))
             );
-            prop_assert!(Score::mating_in_moves(moves) > Score::mating_in_moves(moves + 1));
+            if let Some(later) = NonZeroI32::new(moves.get() + 1) {
+                prop_assert!(Score::mating_in_moves(moves) > Score::mating_in_moves(later));
+            }
         });
-        assert_eq!(
-            (Score::mating_in_moves(TWO_MOVES), Score::mating_in_moves(0)),
-            (Score::mate_in(PLIES), Score::mated_in(0))
-        );
+        assert_eq!(Score::mating_in_moves(TWO_MOVES), Score::mate_in(PLIES));
     }
 
     #[test]

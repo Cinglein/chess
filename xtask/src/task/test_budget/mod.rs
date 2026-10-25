@@ -1,5 +1,6 @@
 use std::iter::Sum;
 use std::ops::Add;
+use std::path::PathBuf;
 
 use crate::task::policy::{Policy, Share};
 use crate::task::report::Report;
@@ -25,7 +26,7 @@ pub struct TestBudget {
 
 impl TestBudget {
     pub fn report(files: &[SourceFile], policy: &Policy) -> Report {
-        let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
+        let support: Vec<PathBuf> = files.iter().flat_map(SupportModules::paths).collect();
         files
             .iter()
             .map(|file| Self::measure(file, &support, policy))
@@ -33,7 +34,7 @@ impl TestBudget {
             .summarise(policy)
     }
 
-    fn measure(file: &SourceFile, support: &[String], policy: &Policy) -> Self {
+    fn measure(file: &SourceFile, support: &[PathBuf], policy: &Policy) -> Self {
         let lines = file.text().lines().count();
         let scanned = TestScan::budget(file.path(), file.syntax(), policy);
         Self {
@@ -99,6 +100,8 @@ impl Sum for TestBudget {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use settings::EmbeddedDefaults;
 
     use super::TestScan;
@@ -139,11 +142,12 @@ mod tests {
     #[test]
     fn counts_assertions_literals_and_variants_inside_macros() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
-        let joined: Vec<String> = TestScan::budget("example.rs", &parsed, &Policy::defaults())
-            .violations
-            .iter()
-            .map(ToString::to_string)
-            .collect();
+        let joined: Vec<String> =
+            TestScan::budget(Path::new("example.rs"), &parsed, &Policy::defaults())
+                .violations
+                .iter()
+                .map(ToString::to_string)
+                .collect();
         let joined = joined.join("\n");
         assert!(
             REPORTED.iter().all(|report| joined.contains(report)),

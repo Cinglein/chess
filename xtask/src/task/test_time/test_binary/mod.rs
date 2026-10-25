@@ -6,9 +6,9 @@ use std::time::Instant;
 use test_argument::TestArgument;
 
 use super::test_timing::TestTiming;
-use crate::task::command_line::{CargoArgument, CommandLine, Program};
+use crate::task::command_line::{CargoArgument, CommandLine, Program, Stderr, Stdout};
 use crate::task::failure::Failure;
-use crate::task::selection::Selection;
+use crate::task::selection::{CargoTool, Selection};
 use crate::task::workspace::Workspace;
 
 pub(super) struct TestBinary {
@@ -26,12 +26,12 @@ impl TestBinary {
         let built = workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Test)
-            .arguments(selection.package_arguments())
+            .arguments(selection.arguments::<CargoTool>())
             .argument(CargoArgument::AllFeatures)
             .argument(CargoArgument::NoRun)
             .argument(CargoArgument::Color)
             .argument(CargoArgument::Never)
-            .stderr()?;
+            .captured::<Stderr>()?;
         Ok(built
             .lines()
             .filter_map(|line| line.split_once(Self::EXECUTABLE))
@@ -56,7 +56,7 @@ impl TestBinary {
             .argument(TestArgument::List)
             .argument(TestArgument::Format)
             .argument(TestArgument::Terse)
-            .stdout()?;
+            .captured::<Stdout>()?;
         Ok(listed
             .lines()
             .filter_map(|line| line.strip_suffix(Self::TEST_SUFFIX))
@@ -70,7 +70,7 @@ impl TestBinary {
             .argument(TestArgument::Exact)
             .argument(&test)
             .argument(TestArgument::Quiet)
-            .stdout()?;
+            .captured::<Stdout>()?;
         Ok(TestTiming::new(self.name(), test, started.elapsed()))
     }
 

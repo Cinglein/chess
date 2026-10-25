@@ -31,7 +31,7 @@ impl SettingsShape {
                 .filter(|item| owned.contains(item.name()) && item.keys() == Keys::Open)
                 .map(|item| {
                     Violation::new(
-                        Site::Line(item.path().to_owned(), item.line()),
+                        Site::Line(item.path().into(), item.line()),
                         "struct is read from a settings file we write but lacks #[serde(deny_unknown_fields)]; a misspelt key must be an error, not a silent default",
                     )
                 })

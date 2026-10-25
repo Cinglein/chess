@@ -38,7 +38,7 @@ impl<'policy> MemoryWatch<'policy> {
 
     pub fn guard(mut self, child: &mut Child) -> Result<ExitStatus, Failure> {
         let io = |error| Failure::Io {
-            site: Site::File(String::from("cargo-mutants")),
+            site: Site::File("cargo-mutants".into()),
             error,
         };
         let status = loop {

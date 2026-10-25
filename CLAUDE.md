@@ -183,9 +183,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   declared in this workspace is a forwarder: expose the part instead, or call the target
   directly. Newtypes may still name a foreign type's method (`Bitboard::count` over
   `u64::count_ones`). `cargo xtask no-forwarders` enforces it.
-- No two non-`pub` functions on one type share a signature (generics, receiver, parameter types,
-  return type). Two such helpers mean a value is missing its type: `alpha` and `beta` both returning
-  `Score` became `Bound<Lower>` and `Bound<Upper>`. `cargo xtask distinct-signatures` enforces it.
+- No two functions on one type share a signature (generics, receiver, parameter types, return
+  type), public or not. Two such functions mean a value is missing its type or the part they
+  differ by is missing its type parameter: `alpha` and `beta` both returning `Score` became
+  `Bound<Lower>` and `Bound<Upper>`, and `remaining` and `increment` on `Clock` became
+  `time::<Remaining>` and `time::<Increment>`. Prefer a zero-sized type parameter over a runtime
+  enum, except where a `const fn` must dispatch, as `Bitboard::combined(other, SetOperation)`
+  does. `cargo xtask distinct-signatures` enforces it.
 - Invariants live as high as possible: a type that cannot represent the invalid state, else a
   `const _: () = assert!(..)` at compile time, else a test. A test must fail for a reason no type,
   const assertion, or other test catches. `cargo xtask test-budget` enforces the budget: at most

@@ -33,7 +33,7 @@ impl MagicTables {
     pub fn write(&self, workspace_root: &Path) -> Result<(), Failure> {
         let path = workspace_root.join(Self::OUTPUT);
         fs::write(&path, self.to_string()).map_err(|error| Failure::Io {
-            site: Site::File(Self::OUTPUT.to_owned()),
+            site: Site::File(Self::OUTPUT.into()),
             error,
         })?;
         println!("wrote {}", Self::OUTPUT);

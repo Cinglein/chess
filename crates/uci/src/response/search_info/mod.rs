@@ -99,11 +99,16 @@ impl proptest::arbitrary::Arbitrary for SearchInfo {
     type Strategy = proptest::strategy::BoxedStrategy<SearchInfo>;
 
     fn arbitrary_with((): ()) -> Self::Strategy {
+        use core::num::NonZeroI32;
         use proptest::strategy::Strategy;
         let score = proptest::prop_oneof![
             (-29_999i32..=29_999).prop_map(Score::new),
-            (1i32..=100).prop_map(Score::mating_in_moves),
-            (-100i32..=-1).prop_map(Score::mating_in_moves),
+            (1i32..=100).prop_map(|moves| Score::mating_in_moves(
+                NonZeroI32::new(moves).unwrap_or(NonZeroI32::MIN)
+            )),
+            (-100i32..=-1).prop_map(|moves| Score::mating_in_moves(
+                NonZeroI32::new(moves).unwrap_or(NonZeroI32::MIN)
+            )),
         ];
         (
             proptest::arbitrary::any::<Depth>(),

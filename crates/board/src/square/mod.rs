@@ -1,3 +1,7 @@
+mod extent;
+
+pub use extent::{Between, Extent, Through};
+
 use core::fmt;
 use core::ops::Add;
 use core::str::FromStr;
@@ -5,11 +9,12 @@ use core::str::FromStr;
 use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
+use crate::axis::Axis;
 use crate::bitboard::Bitboard;
 use crate::direction::Direction;
 use crate::file::File;
 use crate::rank::Rank;
-use crate::slider::{Bishop, Rook, Slider};
+use crate::slider::Slider;
 
 #[derive(
     Clone,
@@ -61,33 +66,11 @@ impl Square {
     }
 
     #[must_use]
-    pub fn between(self, other: Square) -> Bitboard {
-        let origin = Bitboard::from_square(self);
-        let target = Bitboard::from_square(other);
-        if self.aligned_by::<Rook>(other) {
-            Rook::attacks(self, target) & Rook::attacks(other, origin)
-        } else if self.aligned_by::<Bishop>(other) {
-            Bishop::attacks(self, target) & Bishop::attacks(other, origin)
-        } else {
-            Bitboard::EMPTY
-        }
+    pub fn line<X: Extent>(self, other: Square) -> Bitboard {
+        X::trace(self, other)
     }
 
-    #[must_use]
-    pub fn line_through(self, other: Square) -> Bitboard {
-        let ends = Bitboard::from_square(self).including(other);
-        if self.aligned_by::<Rook>(other) {
-            (Rook::attacks(self, Bitboard::EMPTY) & Rook::attacks(other, Bitboard::EMPTY))
-                .disjoint_union(ends)
-        } else if self.aligned_by::<Bishop>(other) {
-            (Bishop::attacks(self, Bitboard::EMPTY) & Bishop::attacks(other, Bitboard::EMPTY))
-                .disjoint_union(ends)
-        } else {
-            Bitboard::EMPTY
-        }
-    }
-
-    fn aligned_by<S: Slider>(self, other: Square) -> bool {
+    pub(super) fn aligned_by<S: Slider>(self, other: Square) -> bool {
         S::attacks(self, Bitboard::EMPTY).contains(other)
     }
 }
@@ -97,8 +80,8 @@ impl<D: Into<Direction>> Add<D> for Square {
 
     fn add(self, direction: D) -> Option<Square> {
         let direction = direction.into();
-        let file_index = (self.file() as u8).checked_add_signed(direction.file_step())?;
-        let rank_index = (self.rank() as u8).checked_add_signed(direction.rank_step())?;
+        let file_index = (self.file() as u8).checked_add_signed(direction.step(Axis::File))?;
+        let rank_index = (self.rank() as u8).checked_add_signed(direction.step(Axis::Rank))?;
         Some(Square::new(
             File::from_repr(file_index)?,
             Rank::from_repr(rank_index)?,
@@ -144,6 +127,8 @@ impl proptest::arbitrary::Arbitrary for Square {
 
 #[cfg(test)]
 mod tests {
+    use super::{Between, Through};
+    use crate::bitboard::SetOperation;
     use proptest::prelude::*;
 
     use super::Square;
@@ -153,9 +138,9 @@ mod tests {
     #[test]
     fn aligned_squares_lie_on_their_line_and_between_lies_inside_it() {
         proptest!(|(origin: Square, other: Square)| {
-            let line = origin.line_through(other);
+            let line = origin.line::<Through>(other);
             prop_assert!(line.is_empty() || (line.contains(origin) && line.contains(other)));
-            prop_assert!(origin.between(other).difference(line).is_empty() && line == other.line_through(origin));
+            prop_assert!(origin.line::<Between>(other).combined(line, SetOperation::Difference).is_empty() && line == other.line::<Through>(origin));
         });
     }
 

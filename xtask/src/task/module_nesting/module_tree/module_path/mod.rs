@@ -1,3 +1,13 @@
+mod ancestor;
+mod inside_sibling;
+mod relation;
+mod same;
+
+pub use ancestor::Ancestor;
+pub use inside_sibling::InsideSibling;
+pub use relation::Relation;
+pub use same::Same;
+
 use std::fmt;
 use std::path::Path;
 
@@ -11,7 +21,8 @@ pub struct ModulePath {
 impl ModulePath {
     const SOURCE_ROOTS: [&str; 2] = ["src/lib.rs", "src/main.rs"];
 
-    pub fn of_file(file: &str) -> Option<ModulePath> {
+    pub fn of_file(path: &Path) -> Option<ModulePath> {
+        let file = path.to_string_lossy();
         let (crate_root, inside) = file.split_once("/src/")?;
         let inside = Path::new(inside);
         let stem = inside.file_stem()?.to_string_lossy().into_owned();
@@ -20,12 +31,12 @@ impl ModulePath {
             .into_iter()
             .flat_map(Path::components)
             .map(|component| component.as_os_str().to_string_lossy().into_owned())
-            .chain((!Self::is_crate_root(file) && stem != "mod").then_some(stem))
+            .chain((!Self::is_crate_root(&file) && stem != "mod").then_some(stem))
             .collect();
         Some(ModulePath {
             crate_root: crate_root.to_owned(),
             segments,
-            file: file.to_owned(),
+            file: file.into_owned(),
         })
     }
 
@@ -43,7 +54,9 @@ impl ModulePath {
         let skip = usize::from(matches!(first, "crate" | "super" | "self"));
         if skip == 0 {
             let child = file.child(first);
-            modules.iter().find(|module| module.same_module(&child))?;
+            modules
+                .iter()
+                .find(|module| module.relates::<Same>(&child))?;
         }
         for segment in path.iter().skip(skip) {
             match segment.as_str() {
@@ -67,7 +80,7 @@ impl ModulePath {
     ) -> Option<&'tree ModulePath> {
         modules
             .iter()
-            .filter(|module| module.is_ancestor_of(target) && !module.same_module(user))
+            .filter(|module| module.relates::<Ancestor>(target) && !module.relates::<Same>(user))
             .max_by_key(|module| module.segments.len())
     }
 
@@ -88,21 +101,8 @@ impl ModulePath {
         })
     }
 
-    pub fn same_module(&self, other: &ModulePath) -> bool {
-        self.crate_root == other.crate_root && self.segments == other.segments
-    }
-
-    pub fn is_ancestor_of(&self, other: &ModulePath) -> bool {
-        self.crate_root == other.crate_root && other.segments.starts_with(&self.segments)
-    }
-
-    pub fn is_inside_a_sibling_of(&self, module: &ModulePath) -> bool {
-        let depth = module.segments.len();
-        module
-            .parent()
-            .is_some_and(|parent| parent.is_ancestor_of(self))
-            && self.segments.len() >= depth
-            && !self.truncated(depth).same_module(module)
+    pub fn relates<R: Relation>(&self, other: &ModulePath) -> bool {
+        R::holds(self, other)
     }
 
     pub fn crosses_directory_boundary(&self, user: &ModulePath, modules: &[ModulePath]) -> bool {
@@ -110,8 +110,8 @@ impl ModulePath {
             let boundary = self.truncated(cut);
             modules
                 .iter()
-                .any(|module| module.same_module(&boundary) && module.file.ends_with("/mod.rs"))
-                && !boundary.is_ancestor_of(user)
+                .any(|module| module.relates::<Same>(&boundary) && module.file.ends_with("/mod.rs"))
+                && !boundary.relates::<Ancestor>(user)
         })
     }
 

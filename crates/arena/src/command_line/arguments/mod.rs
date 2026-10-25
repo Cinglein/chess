@@ -1,6 +1,12 @@
+mod challenger;
 mod contestant;
+mod reference;
+mod role;
 
+pub use challenger::Challenger;
 pub use contestant::Contestant;
+pub use reference::Reference;
+pub use role::Role;
 
 use std::path::{Path, PathBuf};
 
@@ -22,12 +28,8 @@ pub struct Arguments {
 }
 
 impl Arguments {
-    pub const fn challenger(&self) -> &Contestant {
-        &self.challenger
-    }
-
-    pub const fn reference(&self) -> &Contestant {
-        &self.reference
+    pub fn contestant<R: Role>(&self) -> &Contestant {
+        R::pick(self)
     }
 
     pub fn config(&self) -> &Path {

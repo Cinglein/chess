@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use syn::visit::Visit;
 use syn::{
     Block, ConstParam, Field, Fields, ImplItemConst, ItemConst, ItemEnum, ItemImpl, ItemMod,
@@ -10,7 +12,7 @@ use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
 
 pub struct NumberSites {
-    path: String,
+    path: PathBuf,
     context: String,
     newtypes: Vec<String>,
     numbers: Vec<Violation>,

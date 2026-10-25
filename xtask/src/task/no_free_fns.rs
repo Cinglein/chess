@@ -18,7 +18,7 @@ impl NoFreeFns {
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
-                                Site::Line(file.path().to_owned(), name.span().start().line),
+                                Site::Line(file.path().into(), name.span().start().line),
                                 format!("fn {name}"),
                             )
                         })

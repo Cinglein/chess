@@ -1,3 +1,11 @@
+mod clock_part;
+mod increment;
+mod remaining;
+
+pub use clock_part::ClockPart;
+pub use increment::Increment;
+pub use remaining::Remaining;
+
 use core::fmt;
 use core::time::Duration;
 
@@ -30,19 +38,8 @@ impl Clock {
     }
 
     #[must_use]
-    pub const fn remaining(&self, side: Color) -> Duration {
-        match side {
-            Color::White => self.white,
-            Color::Black => self.black,
-        }
-    }
-
-    #[must_use]
-    pub const fn increment(&self, side: Color) -> Duration {
-        match side {
-            Color::White => self.white_increment,
-            Color::Black => self.black_increment,
-        }
+    pub fn time<P: ClockPart>(&self, side: Color) -> Duration {
+        P::read(self, side)
     }
 
     #[must_use]
@@ -104,16 +101,16 @@ mod tests {
     use board::Color;
     use proptest::prelude::*;
 
-    use super::Clock;
+    use super::{Clock, Increment, Remaining};
 
     #[test]
     fn the_mover_loses_what_it_spent_and_gains_its_increment_while_the_other_clock_stands() {
         proptest!(|(clock: Clock, side: Color, spent_millis: u32)| {
             let spent = Duration::from_millis(u64::from(spent_millis));
             let after = clock.minus_spent_plus_increment(side, spent);
-            prop_assert_eq!(after.remaining(side), clock.remaining(side).saturating_sub(spent) + clock.increment(side));
-            prop_assert_eq!(after.remaining(!side), clock.remaining(!side));
-            prop_assert_eq!(after.increment(side), clock.increment(side));
+            prop_assert_eq!(after.time::<Remaining>(side), clock.time::<Remaining>(side).saturating_sub(spent) + clock.time::<Increment>(side));
+            prop_assert_eq!(after.time::<Remaining>(!side), clock.time::<Remaining>(!side));
+            prop_assert_eq!(after.time::<Increment>(side), clock.time::<Increment>(side));
         });
     }
 }

@@ -1,4 +1,5 @@
 use syn::visit::Visit;
+
 use syn::{Ident, LifetimeParam};
 
 use crate::task::policy::{Floor, Policy};
@@ -20,7 +21,7 @@ impl NamedLifetimes {
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
-                                Site::Line(file.path().to_owned(), name.span().start().line),
+                                Site::Line(file.path().into(), name.span().start().line),
                                 format!("'{name}"),
                             )
                         })
@@ -64,7 +65,7 @@ mod tests {
     use crate::task::policy::Policy;
 
     const SOURCE: &str = "
-struct Scan<'a, 'scan> { text: &'a str, path: &'scan str, owned: &'static str }
+struct Scan<'a, 'scan> { text: &'a str, path: &'scan Path, owned: &'static str }
 impl<'b> Scan<'b, '_> { fn view<'c>(&'c self) -> &'c str { self.text } }
 ";
     const FLAGGED: [&str; 3] = ["a", "b", "c"];

@@ -2,11 +2,17 @@ mod cargo_argument;
 mod git_argument;
 mod mutants_argument;
 mod program;
+mod stderr;
+mod stdout;
+mod stream;
 
 pub use cargo_argument::CargoArgument;
 pub use git_argument::GitArgument;
 pub use mutants_argument::MutantsArgument;
 pub use program::Program;
+pub use stderr::Stderr;
+pub use stdout::Stdout;
+pub use stream::Stream;
 
 use std::fmt;
 use std::path::PathBuf;
@@ -61,17 +67,11 @@ impl CommandLine {
             .map_err(|_| Failure::Command(self.to_string()))
     }
 
-    pub fn stdout(&self) -> Result<String, Failure> {
-        self.captured()
-            .map(|output| String::from_utf8_lossy(&output.stdout).into_owned())
+    pub fn captured<S: Stream>(&self) -> Result<String, Failure> {
+        self.output().map(|output| S::pick(&output))
     }
 
-    pub fn stderr(&self) -> Result<String, Failure> {
-        self.captured()
-            .map(|output| String::from_utf8_lossy(&output.stderr).into_owned())
-    }
-
-    fn captured(&self) -> Result<Output, Failure> {
+    fn output(&self) -> Result<Output, Failure> {
         let output = self
             .command()
             .output()

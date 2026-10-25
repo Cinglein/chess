@@ -1,10 +1,11 @@
 use syn::{Item, UseTree, Visibility};
 
+use crate::task::crate_name::CrateName;
 use crate::task::source_file::SourceFile;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Export {
-    crate_name: String,
+    crate_name: CrateName,
     name: String,
     line: usize,
 }
@@ -13,7 +14,8 @@ impl Export {
     pub fn in_root(file: &SourceFile) -> Vec<Export> {
         let Some(crate_name) = file
             .crate_name()
-            .filter(|_| file.path().ends_with("/src/lib.rs"))
+            .filter(|_| file.path().ends_with("src/lib.rs"))
+            .and_then(|name| name.parse::<CrateName>().ok())
         else {
             return Vec::new();
         };
@@ -24,11 +26,11 @@ impl Export {
                 Item::Use(used) if !matches!(used.vis, Visibility::Inherited) => Some(used),
                 _ => None,
             })
-            .flat_map(|used| Self::leaves(crate_name, &used.tree))
+            .flat_map(|used| Self::leaves(&crate_name, &used.tree))
             .collect()
     }
 
-    pub fn crate_name(&self) -> &str {
+    pub fn crate_name(&self) -> &CrateName {
         &self.crate_name
     }
 
@@ -40,7 +42,7 @@ impl Export {
         self.line
     }
 
-    fn leaves(crate_name: &str, tree: &UseTree) -> Vec<Export> {
+    fn leaves(crate_name: &CrateName, tree: &UseTree) -> Vec<Export> {
         match tree {
             UseTree::Path(path) => Self::leaves(crate_name, &path.tree),
             UseTree::Group(group) => group
@@ -49,12 +51,12 @@ impl Export {
                 .flat_map(|item| Self::leaves(crate_name, item))
                 .collect(),
             UseTree::Name(name) => vec![Export {
-                crate_name: crate_name.to_owned(),
+                crate_name: crate_name.clone(),
                 name: name.ident.to_string(),
                 line: name.ident.span().start().line,
             }],
             UseTree::Rename(rename) => vec![Export {
-                crate_name: crate_name.to_owned(),
+                crate_name: crate_name.clone(),
                 name: rename.rename.to_string(),
                 line: rename.rename.span().start().line,
             }],

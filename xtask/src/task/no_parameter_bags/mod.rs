@@ -28,7 +28,7 @@ impl NoParameterBags {
                         })
                         .map(|candidate| {
                             Violation::new(
-                                Site::Line(file.path().to_owned(), candidate.line()),
+                                Site::Line(file.path().into(), candidate.line()),
                                 format!(
                                     "{} only carries values into one other file; give it the logic that consumes it",
                                     candidate.name()

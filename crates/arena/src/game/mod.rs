@@ -17,7 +17,7 @@ use std::ops::ControlFlow;
 use std::time::{Duration, Instant};
 
 use board::{Board, Color, State};
-use uci::{Clock, Position};
+use uci::{Clock, Position, Remaining};
 
 use crate::chosen_move::ChosenMove;
 use crate::opponent::Opponent;
@@ -101,7 +101,7 @@ impl Game {
         let timely = (!self
             .rules
             .thinking()
-            .forfeits(spent, self.clock.remaining(side)))
+            .forfeits(spent, self.clock.time::<Remaining>(side)))
         .then_some(())
         .ok_or(Termination::TimeForfeit);
         let reached = self
@@ -149,7 +149,7 @@ mod tests {
 
     use board::{Board, Color, FullmoveNumber, NodeCount, PlyCount};
     use eval::Score;
-    use uci::Clock;
+    use uci::{Clock, Increment, Remaining};
 
     use super::script::Script;
     use super::{Finished, Game};
@@ -300,12 +300,16 @@ mod tests {
         ) else {
             panic!()
         };
-        let charged = after.clock.remaining(MOVER);
-        let (before, increment) = (GENEROUS.remaining(MOVER), GENEROUS.increment(MOVER));
+        let charged = after.clock.time::<Remaining>(MOVER);
+        let before = GENEROUS.time::<Remaining>(MOVER);
+        let increment = GENEROUS.time::<Increment>(MOVER);
         assert!(
             charged > before && charged < before + increment,
             "{charged:?}"
         );
-        assert_eq!(after.clock.remaining(WAITER), GENEROUS.remaining(WAITER));
+        assert_eq!(
+            after.clock.time::<Remaining>(WAITER),
+            GENEROUS.time::<Remaining>(WAITER)
+        );
     }
 }

@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
 
 use syn::visit::Visit;
 use syn::{Fields, ItemEnum, ItemImpl, ItemType};
@@ -10,8 +11,8 @@ use crate::task::source_file::SourceFile;
 pub struct Declarations {
     vertices: BTreeSet<TypeName>,
     aliases: BTreeMap<TypeName, TypeName>,
-    sum_types: BTreeMap<String, String>,
-    path: String,
+    sum_types: BTreeMap<String, PathBuf>,
+    path: PathBuf,
 }
 
 impl Declarations {
@@ -46,7 +47,7 @@ impl Declarations {
         self.vertices.len()
     }
 
-    pub fn is_foreign_sum_type(&self, enum_name: &str, path: &str) -> bool {
+    pub fn is_foreign_sum_type(&self, enum_name: &str, path: &Path) -> bool {
         self.sum_types
             .get(enum_name)
             .is_some_and(|home| home != path)

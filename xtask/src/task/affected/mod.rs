@@ -8,11 +8,11 @@ use package_graph::PackageGraph;
 use plan::Plan;
 use reach::Reach;
 
-use crate::task::command_line::{CargoArgument, GitArgument, MutantsArgument, Program};
+use crate::task::command_line::{CargoArgument, GitArgument, MutantsArgument, Program, Stdout};
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::policy::Policy;
-use crate::task::selection::Selection;
+use crate::task::selection::{MutationTool, Selection};
 use crate::task::workspace::Workspace;
 
 pub struct Affected;
@@ -35,8 +35,8 @@ impl Affected {
             .line(Program::Cargo)
             .argument(CargoArgument::Mutants)
             .argument(MutantsArgument::List)
-            .arguments(Selection::Crates(crates.clone()).explicit_packages())
-            .stdout()?
+            .arguments(Selection::Crates(crates.clone()).arguments::<MutationTool>())
+            .captured::<Stdout>()?
             .lines()
             .count())
     }
@@ -48,13 +48,13 @@ impl Affected {
             .argument(GitArgument::NameOnly)
             .argument(GitArgument::MergeBase)
             .argument(Self::BASE)
-            .stdout()?;
+            .captured::<Stdout>()?;
         let metadata = workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Metadata)
             .argument(CargoArgument::FormatVersionOne)
             .argument(CargoArgument::NoDeps)
-            .stdout()?;
+            .captured::<Stdout>()?;
         let graph = PackageGraph::from_metadata(&metadata)?;
         Ok(Self::crates(&graph, changed.lines()))
     }

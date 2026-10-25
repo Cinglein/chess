@@ -1,3 +1,4 @@
+use core::num::NonZeroI32;
 use core::time::Duration;
 
 use board::{LongAlgebraic, NodeCount};
@@ -56,7 +57,9 @@ impl InfoBuilder {
                 ..cleared
             },
             InfoKey::Mate => InfoBuilder {
-                score: token.parse::<i32>().ok().map(Score::mating_in_moves),
+                score: token.parse::<i32>().ok().map(|moves| {
+                    NonZeroI32::new(moves).map_or(-Score::mate_in(0), Score::mating_in_moves)
+                }),
                 ..cleared
             },
             InfoKey::Nodes => InfoBuilder {

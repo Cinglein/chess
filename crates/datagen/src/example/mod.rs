@@ -8,6 +8,7 @@ use bulletformat::{BulletFormat, ChessBoard};
 
 use crate::datagen_error::DatagenError;
 use crate::position_count::PositionCount;
+use board::SetOperation;
 use white_result::WhiteResult;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -32,9 +33,10 @@ impl TryFrom<Label> for Example {
     fn try_from(label: Label) -> Result<Example, DatagenError> {
         let placement = label.board().placement();
         let both = |kind| {
-            placement
-                .pieces(Color::White, kind)
-                .disjoint_union(placement.pieces(Color::Black, kind))
+            placement.pieces(Color::White, kind).combined(
+                placement.pieces(Color::Black, kind),
+                SetOperation::DisjointUnion,
+            )
         };
         let bitboards = [
             placement.occupied_by(Color::White).bits(),

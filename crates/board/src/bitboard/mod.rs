@@ -1,15 +1,18 @@
+mod set_operation;
 mod square_iter;
 mod subset_iter;
 
+pub use set_operation::SetOperation;
 pub use square_iter::SquareIter;
 pub use subset_iter::SubsetIter;
 
 use core::fmt;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
+use core::ops::{BitAnd, BitOr, BitXor, BitXorAssign, Not};
 
 use itertools::Itertools;
 use strum::{EnumCount, VariantArray};
 
+use crate::axis::Axis;
 use crate::direction::Direction;
 use crate::file::File;
 use crate::rank::Rank;
@@ -38,7 +41,10 @@ impl Bitboard {
         let mut squares = Bitboard::EMPTY;
         let mut ranks = Rank::VARIANTS;
         while let [rank, rest @ ..] = ranks {
-            squares = squares.including(Square::new(file, *rank));
+            squares = squares.combined(
+                Self::from_square(Square::new(file, *rank)),
+                SetOperation::Union,
+            );
             ranks = rest;
         }
         squares
@@ -49,7 +55,10 @@ impl Bitboard {
         let mut squares = Bitboard::EMPTY;
         let mut files = File::VARIANTS;
         while let [file, rest @ ..] = files {
-            squares = squares.including(Square::new(*file, rank));
+            squares = squares.combined(
+                Self::from_square(Square::new(*file, rank)),
+                SetOperation::Union,
+            );
             files = rest;
         }
         squares
@@ -76,39 +85,16 @@ impl Bitboard {
     }
 
     #[must_use]
-    pub const fn including(self, square: Square) -> Bitboard {
-        Bitboard(self.0 | Self::from_square(square).0)
-    }
-
-    #[must_use]
-    pub const fn excluding(self, square: Square) -> Bitboard {
-        Bitboard(self.0 & !Self::from_square(square).0)
-    }
-
-    #[must_use]
-    pub const fn union(self, other: Bitboard) -> Bitboard {
-        Bitboard(self.0 | other.0)
-    }
-
-    #[must_use]
-    pub const fn disjoint_union(self, other: Bitboard) -> Bitboard {
-        debug_assert!(self.intersection(other).is_empty());
-        self.union(other)
-    }
-
-    #[must_use]
-    pub const fn intersection(self, other: Bitboard) -> Bitboard {
-        Bitboard(self.0 & other.0)
-    }
-
-    #[must_use]
-    pub const fn difference(self, other: Bitboard) -> Bitboard {
-        Bitboard(self.0 & !other.0)
-    }
-
-    #[must_use]
-    pub const fn complement(self) -> Bitboard {
-        Bitboard(!self.0)
+    pub const fn combined(self, other: Bitboard, operation: SetOperation) -> Bitboard {
+        match operation {
+            SetOperation::Union => Bitboard(self.0 | other.0),
+            SetOperation::DisjointUnion => {
+                debug_assert!(self.0 & other.0 == 0);
+                self.combined(other, SetOperation::Union)
+            }
+            SetOperation::Intersection => Bitboard(self.0 & other.0),
+            SetOperation::Difference => Bitboard(self.0 & !other.0),
+        }
     }
 
     #[must_use]
@@ -124,18 +110,13 @@ impl Bitboard {
     }
 
     #[must_use]
-    pub const fn subset_after(self, subset: Bitboard) -> Bitboard {
-        Bitboard(subset.0.wrapping_sub(self.0) & self.0)
-    }
-
-    #[must_use]
     pub const fn shift(self, direction: Direction) -> Bitboard {
-        let vertical = match direction.rank_step() {
+        let vertical = match direction.step(Axis::Rank) {
             1 => self.0 << File::COUNT,
             -1 => self.0 >> File::COUNT,
             _ => self.0,
         };
-        let horizontal = match direction.file_step() {
+        let horizontal = match direction.step(Axis::File) {
             1 => (vertical & !Self::file(File::H).0) << 1,
             -1 => (vertical & !Self::file(File::A).0) >> 1,
             _ => vertical,
@@ -148,7 +129,7 @@ impl BitAnd for Bitboard {
     type Output = Bitboard;
 
     fn bitand(self, other: Bitboard) -> Bitboard {
-        self.intersection(other)
+        Bitboard(self.0 & other.0)
     }
 }
 
@@ -156,7 +137,7 @@ impl BitOr for Bitboard {
     type Output = Bitboard;
 
     fn bitor(self, other: Bitboard) -> Bitboard {
-        self.union(other)
+        Bitboard(self.0 | other.0)
     }
 }
 
@@ -172,19 +153,7 @@ impl Not for Bitboard {
     type Output = Bitboard;
 
     fn not(self) -> Bitboard {
-        self.complement()
-    }
-}
-
-impl BitAndAssign for Bitboard {
-    fn bitand_assign(&mut self, other: Bitboard) {
-        self.0 &= other.0;
-    }
-}
-
-impl BitOrAssign for Bitboard {
-    fn bitor_assign(&mut self, other: Bitboard) {
-        self.0 |= other.0;
+        Bitboard(!self.0)
     }
 }
 
@@ -202,9 +171,9 @@ impl From<Square> for Bitboard {
 
 impl FromIterator<Square> for Bitboard {
     fn from_iter<I: IntoIterator<Item = Square>>(squares: I) -> Bitboard {
-        squares
-            .into_iter()
-            .fold(Bitboard::EMPTY, Bitboard::including)
+        squares.into_iter().fold(Bitboard::EMPTY, |set, square| {
+            set.combined(Bitboard::from_square(square), SetOperation::Union)
+        })
     }
 }
 
@@ -244,6 +213,10 @@ impl proptest::arbitrary::Arbitrary for Bitboard {
 
 #[cfg(test)]
 mod tests {
+    use super::SetOperation;
+
+    const JOIN: SetOperation = SetOperation::Union;
+    const LEAVE: SetOperation = SetOperation::Difference;
     use std::collections::HashSet;
 
     use proptest::prelude::*;
@@ -273,11 +246,11 @@ mod tests {
     #[test]
     fn a_square_joins_and_leaves_a_set_and_subsets_of_a_mask_are_its_distinct_sub_bitboards() {
         proptest!(|(set: Bitboard, square: Square)| {
-            prop_assert!(set.including(square).contains(square) && set.excluding(square) == set & !Bitboard::from(square));
+            prop_assert!(set.combined(Bitboard::from(square), JOIN).contains(square) && set.combined(Bitboard::from(square), LEAVE) == set & !Bitboard::from(square));
             let mask = set & Bitboard::rank(Rank::One);
             let subsets: Vec<Bitboard> = SubsetIter::new(mask).take((1 << mask.count()) + 1).collect();
             prop_assert_eq!(subsets.len(), 1 << mask.count());
-            prop_assert!(subsets.iter().collect::<HashSet<_>>().len() == subsets.len() && subsets.iter().all(|subset| subset.difference(mask).is_empty()));
+            prop_assert!(subsets.iter().collect::<HashSet<_>>().len() == subsets.len() && subsets.iter().all(|subset| subset.combined(mask, LEAVE).is_empty()));
         });
     }
 }

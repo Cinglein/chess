@@ -1,13 +1,13 @@
 mod command_word;
-mod engine_option;
 mod go_limits;
 mod position;
 
-pub use engine_option::{Elo, EngineOption, Switch};
-pub use go_limits::{Clock, GoLimits};
+pub use go_limits::{Clock, GoLimits, Increment, Remaining};
 pub use position::Position;
 
 use core::fmt;
+
+use crate::engine_option::EngineOption;
 
 use command_word::CommandWord;
 

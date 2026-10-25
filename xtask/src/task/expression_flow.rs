@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 
 use proc_macro2::Span;
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{
     BinOp, Block, Expr, ExprAssign, ExprBinary, ExprBreak, ExprContinue, ExprForLoop, ExprIf,
     ExprLoop, ExprReturn, ExprWhile, Ident, ImplItemConst, ImplItemFn, ItemConst, ItemFn, ItemMod,
@@ -74,14 +76,14 @@ impl ExpressionFlow {
 }
 
 struct Flows<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     violations: Vec<Violation>,
 }
 
 impl Flows<'_> {
     fn report(&mut self, span: Span, message: &str) {
         self.violations.push(Violation::new(
-            Site::Line(self.path.to_owned(), span.start().line),
+            Site::Line(self.path.into(), span.start().line),
             message,
         ));
     }

@@ -1,5 +1,7 @@
 use proc_macro2::Span;
+use std::path::Path;
 use syn::visit::Visit;
+
 use syn::{
     Expr, ExprCast, ExprConst, ExprForLoop, ExprLoop, ExprWhile, ImplItemConst, ImplItemFn,
     ItemConst, ItemFn, ItemMod,
@@ -14,8 +16,8 @@ pub struct ConstShape;
 
 impl ConstShape {
     const BOUNDARY_FILES: [&str; 3] = [
-        "crates/board/src/square.rs",
-        "crates/board/src/bitboard.rs",
+        "crates/board/src/square/",
+        "crates/board/src/bitboard/",
         "crates/board/src/slider/magic.rs",
     ];
 
@@ -38,7 +40,7 @@ impl ConstShape {
 }
 
 struct ConstContexts<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     const_depth: usize,
     violations: Vec<Violation>,
 }
@@ -46,7 +48,7 @@ struct ConstContexts<'scan> {
 impl ConstContexts<'_> {
     fn report(&mut self, span: Span, message: &str) {
         self.violations.push(Violation::new(
-            Site::Line(self.path.to_owned(), span.start().line),
+            Site::Line(self.path.into(), span.start().line),
             message,
         ));
     }
@@ -97,7 +99,7 @@ impl<'ast> Visit<'ast> for ConstContexts<'_> {
         if self.const_depth == 0
             && !ConstShape::BOUNDARY_FILES
                 .iter()
-                .any(|boundary| self.path.ends_with(boundary))
+                .any(|boundary| self.path.starts_with(boundary))
         {
             self.report(
                 cast.as_token.span,

@@ -7,8 +7,10 @@ use scope::Scope;
 use test_counts::TestCounts;
 
 use proc_macro2::Span;
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{ItemFn, ItemMod, LitInt, Macro};
 
 use super::super::TestBudget;
@@ -18,14 +20,14 @@ use crate::task::site::Site;
 use crate::task::violation::Violation;
 
 pub(super) struct TestModule<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     policy: &'scan Policy,
     scope: Scope,
     budget: TestBudget,
 }
 
 impl<'scan> TestModule<'scan> {
-    pub(super) fn budget(path: &'scan str, module: &ItemMod, policy: &'scan Policy) -> TestBudget {
+    pub(super) fn budget(path: &'scan Path, module: &ItemMod, policy: &'scan Policy) -> TestBudget {
         let mut scan = TestModule {
             path,
             policy,
@@ -41,7 +43,7 @@ impl<'scan> TestModule<'scan> {
 
     fn test_violations(&self, function: &ItemFn) -> Vec<Violation> {
         let name = &function.sig.ident;
-        let site = Site::Line(self.path.to_owned(), name.span().start().line);
+        let site = Site::Line(self.path.into(), name.span().start().line);
         TestCounts::tally(&function.block)
             .measurements(self.policy)
             .into_iter()
@@ -81,7 +83,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
             .is_ok_and(|value| value > self.policy.limit(Limit::LargestInteger).count())
         {
             self.budget.violations.push(Violation::new(
-                Site::Line(self.path.to_owned(), integer.span().start().line),
+                Site::Line(self.path.into(), integer.span().start().line),
                 format!(
                     "integer literal {integer} in test code, at most {} allowed",
                     self.policy.limit(Limit::LargestInteger).count()
@@ -93,7 +95,7 @@ impl<'ast> Visit<'ast> for TestModule<'_> {
     fn visit_macro(&mut self, invocation: &'ast Macro) {
         if self.scope == Scope::OutsideTest && TestCounts::is_assertion(invocation) {
             self.budget.violations.push(Violation::new(
-                Site::Line(self.path.to_owned(), invocation.span().start().line),
+                Site::Line(self.path.into(), invocation.span().start().line),
                 "assertion outside a test; helpers return values and tests assert them",
             ));
         }

@@ -5,13 +5,14 @@ use syn::{ItemUse, Path, UseTree};
 
 use super::export::Export;
 use crate::task::binary_files::BinaryFiles;
+use crate::task::crate_name::CrateName;
 use crate::task::source_file::SourceFile;
 
 #[derive(Default)]
 pub struct ForeignReferences {
     own_crate: String,
     names: BTreeSet<String>,
-    crates: BTreeSet<String>,
+    crates: BTreeSet<CrateName>,
 }
 
 impl ForeignReferences {
@@ -36,7 +37,7 @@ impl ForeignReferences {
         self
     }
 
-    pub fn depends_on(&self, crate_name: &str) -> bool {
+    pub fn depends_on(&self, crate_name: &CrateName) -> bool {
         self.crates.contains(crate_name)
     }
 
@@ -45,7 +46,7 @@ impl ForeignReferences {
             .contains(&Self::key(export.crate_name(), export.name()))
     }
 
-    fn key(crate_name: &str, name: &str) -> String {
+    fn key(crate_name: &CrateName, name: &str) -> String {
         format!("{crate_name}::{name}")
     }
 
@@ -63,9 +64,12 @@ impl ForeignReferences {
     }
 
     fn record(&mut self, first: Option<&str>, name: &str) {
-        if let Some(crate_name) = first.filter(|crate_name| *crate_name != self.own_crate) {
-            self.names.insert(Self::key(crate_name, name));
-            self.crates.insert(crate_name.to_owned());
+        if let Some(crate_name) = first
+            .filter(|crate_name| *crate_name != self.own_crate)
+            .and_then(|crate_name| crate_name.parse::<CrateName>().ok())
+        {
+            self.names.insert(Self::key(&crate_name, name));
+            self.crates.insert(crate_name);
         }
     }
 }

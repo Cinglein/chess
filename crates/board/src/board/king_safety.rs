@@ -1,9 +1,12 @@
 use crate::bitboard::Bitboard;
+use crate::bitboard::SetOperation;
 use crate::color::Color;
 use crate::piece_kind::PieceKind;
 use crate::placement::PiecePlacement;
 use crate::slider::{Bishop, Rook, Slider};
+use crate::square::Between;
 use crate::square::Square;
+use crate::square::Through;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct KingSafety {
@@ -28,7 +31,7 @@ impl KingSafety {
             pinned: Self::pins(placement, king, us, occupied),
             targets: match checkers.least_significant_bit() {
                 None => !ours,
-                Some(checker) if checkers.count() == 1 => king.between(checker) | checkers,
+                Some(checker) if checkers.count() == 1 => king.line::<Between>(checker) | checkers,
                 Some(_) => Bitboard::EMPTY,
             },
         })
@@ -47,7 +50,7 @@ impl KingSafety {
     #[must_use]
     pub fn allowed(&self, from: Square) -> Bitboard {
         if self.pinned.contains(from) {
-            self.targets & self.king.line_through(from)
+            self.targets & self.king.line::<Through>(from)
         } else {
             self.targets
         }
@@ -58,14 +61,15 @@ impl KingSafety {
         let queens = theirs(PieceKind::Queen);
         let ours = placement.occupied_by(us);
         let snipers = (Rook::attacks(king, Bitboard::EMPTY)
-            & theirs(PieceKind::Rook).disjoint_union(queens))
-        .disjoint_union(
+            & theirs(PieceKind::Rook).combined(queens, SetOperation::DisjointUnion))
+        .combined(
             Bishop::attacks(king, Bitboard::EMPTY)
-                & theirs(PieceKind::Bishop).disjoint_union(queens),
+                & theirs(PieceKind::Bishop).combined(queens, SetOperation::DisjointUnion),
+            SetOperation::DisjointUnion,
         );
         snipers
             .into_iter()
-            .map(|sniper| king.between(sniper) & occupied)
+            .map(|sniper| king.line::<Between>(sniper) & occupied)
             .filter(|blockers| blockers.count() == 1)
             .filter_map(Bitboard::least_significant_bit)
             .filter(|blocker| ours.contains(*blocker))

@@ -2,7 +2,7 @@ mod clock;
 mod go_builder;
 mod go_key;
 
-pub use clock::Clock;
+pub use clock::{Clock, Increment, Remaining};
 
 use core::fmt;
 use core::time::Duration;

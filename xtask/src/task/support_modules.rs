@@ -11,10 +11,10 @@ pub struct SupportModules {
 }
 
 impl SupportModules {
-    pub fn paths(file: &SourceFile) -> Vec<String> {
+    pub fn paths(file: &SourceFile) -> Vec<PathBuf> {
         let mut modules = SupportModules::default();
         modules.visit_file(file.syntax());
-        let directory = Self::directory_of(Path::new(file.path()));
+        let directory = Self::directory_of(file.path());
         modules
             .names
             .iter()
@@ -24,7 +24,6 @@ impl SupportModules {
                     directory.join(name).join("mod.rs"),
                 ]
             })
-            .map(|path| path.display().to_string())
             .collect()
     }
 

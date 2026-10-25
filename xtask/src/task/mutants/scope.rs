@@ -1,11 +1,11 @@
 use std::fs;
 
 use crate::task::command_line::{
-    CargoArgument, CommandLine, GitArgument, MutantsArgument, Program,
+    CargoArgument, CommandLine, GitArgument, MutantsArgument, Program, Stdout,
 };
 use crate::task::failure::Failure;
 use crate::task::policy::{Limit, Policy};
-use crate::task::selection::Selection;
+use crate::task::selection::{CargoTool, MutationTool, Selection};
 use crate::task::site::Site;
 use crate::task::workspace::Workspace;
 
@@ -29,7 +29,7 @@ impl Scope {
             Scope::Workspace => workspace
                 .line(Program::Cargo)
                 .argument(CargoArgument::Test)
-                .arguments(selection.package_arguments())
+                .arguments(selection.arguments::<CargoTool>())
                 .argument(CargoArgument::Lib)
                 .argument(CargoArgument::NoRun)
                 .run(),
@@ -50,10 +50,10 @@ impl Scope {
                     .argument(GitArgument::Diff)
                     .argument(GitArgument::MergeBase)
                     .argument(Self::BASE)
-                    .stdout()?;
+                    .captured::<Stdout>()?;
                 fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| {
                     Failure::Io {
-                        site: Site::File(Self::DIFF_FILE.to_owned()),
+                        site: Site::File(Self::DIFF_FILE.into()),
                         error,
                     }
                 })?;
@@ -65,7 +65,7 @@ impl Scope {
             }
             Scope::Workspace => Ok(line
                 .argument(MutantsArgument::InPlace)
-                .arguments(selection.explicit_packages())),
+                .arguments(selection.arguments::<MutationTool>())),
         }
     }
 }

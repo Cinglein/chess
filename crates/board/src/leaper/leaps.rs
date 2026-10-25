@@ -2,6 +2,7 @@ use enum_map::EnumMap;
 use strum::{EnumCount, VariantArray};
 
 use crate::bitboard::Bitboard;
+use crate::bitboard::SetOperation;
 use crate::direction::Direction;
 use crate::square::Square;
 
@@ -18,7 +19,7 @@ impl Leaps {
         let mut attacks = Bitboard::EMPTY;
         let mut jumps = self.0;
         while let [jump, rest @ ..] = jumps {
-            attacks = attacks.union(Self::leap(origin, jump));
+            attacks = attacks.combined(Self::leap(origin, jump), SetOperation::Union);
             jumps = rest;
         }
         attacks

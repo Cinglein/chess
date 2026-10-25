@@ -4,6 +4,7 @@ use core::str::FromStr;
 use strum::ParseError;
 
 use crate::chess_move::{ChessMove, MoveKind};
+use crate::end::End;
 use crate::promotion_piece::PromotionPiece;
 use crate::square::Square;
 
@@ -31,13 +32,8 @@ impl LongAlgebraic {
     }
 
     #[must_use]
-    pub const fn origin(&self) -> Square {
-        self.origin
-    }
-
-    #[must_use]
-    pub const fn destination(&self) -> Square {
-        self.destination
+    pub fn square<E: End>(&self) -> Square {
+        E::pick(self.origin, self.destination)
     }
 }
 

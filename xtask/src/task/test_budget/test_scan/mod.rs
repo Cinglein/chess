@@ -2,6 +2,8 @@ mod test_module;
 
 use test_module::TestModule;
 
+use std::path::Path;
+
 use std::mem;
 
 use syn::ItemMod;
@@ -14,13 +16,13 @@ use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
 
 pub(super) struct TestScan<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     policy: &'scan Policy,
     budget: TestBudget,
 }
 
 impl<'scan> TestScan<'scan> {
-    pub(super) fn budget(path: &'scan str, file: &syn::File, policy: &'scan Policy) -> TestBudget {
+    pub(super) fn budget(path: &'scan Path, file: &syn::File, policy: &'scan Policy) -> TestBudget {
         let mut scan = TestScan {
             path,
             policy,
@@ -29,7 +31,7 @@ impl<'scan> TestScan<'scan> {
         scan.visit_file(file);
         if !policy.limit(Limit::TestsPerFile).allows(scan.budget.tests) {
             scan.budget.violations.push(Violation::new(
-                Site::File(path.to_owned()),
+                Site::File(path.into()),
                 format!(
                     "{} tests, at most {} allowed",
                     scan.budget.tests,

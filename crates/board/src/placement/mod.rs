@@ -17,6 +17,7 @@ use itertools::{Itertools, process_results};
 use strum::{EnumCount, IntoEnumIterator};
 
 use crate::bitboard::Bitboard;
+use crate::bitboard::SetOperation;
 use crate::color::Color;
 use crate::leaper::{BlackPawn, King, Knight, Leaper, WhitePawn};
 use crate::piece::Piece;
@@ -76,28 +77,39 @@ impl<H: Hand> Placement<H> {
         self.pieces[color]
             .values()
             .copied()
-            .fold(Bitboard::EMPTY, Bitboard::disjoint_union)
+            .fold(Bitboard::EMPTY, |set, more| {
+                set.combined(more, SetOperation::DisjointUnion)
+            })
     }
 
     #[must_use]
     pub fn occupied(&self) -> Bitboard {
         self.occupied_by(Color::White)
-            .disjoint_union(self.occupied_by(Color::Black))
+            .combined(self.occupied_by(Color::Black), SetOperation::DisjointUnion)
     }
 
     #[must_use]
     pub fn lacks_mating_material(&self) -> bool {
-        let bishops = self
-            .pieces(Color::White, PieceKind::Bishop)
-            .disjoint_union(self.pieces(Color::Black, PieceKind::Bishop));
-        let knights = self
-            .pieces(Color::White, PieceKind::Knight)
-            .disjoint_union(self.pieces(Color::Black, PieceKind::Knight));
-        let kings = self
-            .pieces(Color::White, PieceKind::King)
-            .disjoint_union(self.pieces(Color::Black, PieceKind::King));
-        self.occupied() == bishops.disjoint_union(knights).disjoint_union(kings)
-            && (bishops.disjoint_union(knights).count() <= 1
+        let bishops = self.pieces(Color::White, PieceKind::Bishop).combined(
+            self.pieces(Color::Black, PieceKind::Bishop),
+            SetOperation::DisjointUnion,
+        );
+        let knights = self.pieces(Color::White, PieceKind::Knight).combined(
+            self.pieces(Color::Black, PieceKind::Knight),
+            SetOperation::DisjointUnion,
+        );
+        let kings = self.pieces(Color::White, PieceKind::King).combined(
+            self.pieces(Color::Black, PieceKind::King),
+            SetOperation::DisjointUnion,
+        );
+        self.occupied()
+            == bishops
+                .combined(knights, SetOperation::DisjointUnion)
+                .combined(kings, SetOperation::DisjointUnion)
+            && (bishops
+                .combined(knights, SetOperation::DisjointUnion)
+                .count()
+                <= 1
                 || (knights.is_empty()
                     && ((bishops & Bitboard::LIGHT_SQUARES).is_empty()
                         || (bishops & !Bitboard::LIGHT_SQUARES).is_empty())))
@@ -118,15 +130,27 @@ impl<H: Hand> Placement<H> {
         };
         let queens = self.pieces(by, PieceKind::Queen);
         (pawn_attacks & self.pieces(by, PieceKind::Pawn))
-            .disjoint_union(Knight::attacks(square) & self.pieces(by, PieceKind::Knight))
-            .disjoint_union(King::attacks(square) & self.pieces(by, PieceKind::King))
-            .disjoint_union(
-                Bishop::attacks(square, occupied)
-                    & self.pieces(by, PieceKind::Bishop).disjoint_union(queens),
+            .combined(
+                Knight::attacks(square) & self.pieces(by, PieceKind::Knight),
+                SetOperation::DisjointUnion,
             )
-            .disjoint_union(
+            .combined(
+                King::attacks(square) & self.pieces(by, PieceKind::King),
+                SetOperation::DisjointUnion,
+            )
+            .combined(
+                Bishop::attacks(square, occupied)
+                    & self
+                        .pieces(by, PieceKind::Bishop)
+                        .combined(queens, SetOperation::DisjointUnion),
+                SetOperation::DisjointUnion,
+            )
+            .combined(
                 Rook::attacks(square, occupied)
-                    & self.pieces(by, PieceKind::Rook).disjoint_union(queens),
+                    & self
+                        .pieces(by, PieceKind::Rook)
+                        .combined(queens, SetOperation::DisjointUnion),
+                SetOperation::DisjointUnion,
             )
     }
 
@@ -156,17 +180,23 @@ impl Placement<Empty> {
     const START_PIECES: EnumMap<Color, EnumMap<PieceKind, Bitboard>> = EnumMap::from_array([
         EnumMap::from_array([
             Bitboard::rank(Rank::Two),
-            Bitboard::from_square(Square::B1).including(Square::G1),
-            Bitboard::from_square(Square::C1).including(Square::F1),
-            Bitboard::from_square(Square::A1).including(Square::H1),
+            Bitboard::from_square(Square::B1)
+                .combined(Bitboard::from_square(Square::G1), SetOperation::Union),
+            Bitboard::from_square(Square::C1)
+                .combined(Bitboard::from_square(Square::F1), SetOperation::Union),
+            Bitboard::from_square(Square::A1)
+                .combined(Bitboard::from_square(Square::H1), SetOperation::Union),
             Bitboard::from_square(Square::D1),
             Bitboard::from_square(Square::E1),
         ]),
         EnumMap::from_array([
             Bitboard::rank(Rank::Seven),
-            Bitboard::from_square(Square::B8).including(Square::G8),
-            Bitboard::from_square(Square::C8).including(Square::F8),
-            Bitboard::from_square(Square::A8).including(Square::H8),
+            Bitboard::from_square(Square::B8)
+                .combined(Bitboard::from_square(Square::G8), SetOperation::Union),
+            Bitboard::from_square(Square::C8)
+                .combined(Bitboard::from_square(Square::F8), SetOperation::Union),
+            Bitboard::from_square(Square::A8)
+                .combined(Bitboard::from_square(Square::H8), SetOperation::Union),
             Bitboard::from_square(Square::D8),
             Bitboard::from_square(Square::E8),
         ]),

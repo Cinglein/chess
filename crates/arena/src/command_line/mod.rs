@@ -7,7 +7,7 @@ pub use command_line_error::CommandLineError;
 
 use ::settings::EmbeddedDefaults;
 use arena::{Openings, Series};
-use arguments::Arguments;
+use arguments::{Arguments, Challenger, Reference};
 use clap::Parser;
 use limited_contestant::LimitedContestant;
 use settings::Settings;
@@ -18,8 +18,10 @@ impl CommandLine {
     pub fn play() -> Result<(), CommandLineError> {
         let arguments = Arguments::parse();
         let settings = Settings::read_or_write_defaults(arguments.config())?;
-        let challenger = LimitedContestant::new(arguments.challenger(), settings.limit_elo());
-        let reference = LimitedContestant::new(arguments.reference(), settings.limit_elo());
+        let challenger =
+            LimitedContestant::new(arguments.contestant::<Challenger>(), settings.limit_elo());
+        let reference =
+            LimitedContestant::new(arguments.contestant::<Reference>(), settings.limit_elo());
         let tally = Series::new(&challenger, &reference, settings.rules()).play(
             Openings::repeated(settings.rounds()),
             settings.concurrency(),

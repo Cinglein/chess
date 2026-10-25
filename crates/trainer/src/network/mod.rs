@@ -5,7 +5,7 @@ use bullet_lib::nn::optimiser::{AdamW, AdamWOptimiser};
 use bullet_lib::trainer::save::SavedFormat;
 use bullet_lib::value::{NoOutputBuckets, ValueTrainer, ValueTrainerBuilder};
 use eval::NetworkFormat;
-use layer::Layer;
+use layer::{Biases, Layer, Weights};
 
 pub struct Network;
 
@@ -17,16 +17,16 @@ impl Network {
             .optimiser(AdamW)
             .inputs(Chess768)
             .save_format(&[
-                SavedFormat::id(Layer::Hidden.weights())
+                SavedFormat::id(Layer::Hidden.saved_as::<Weights>())
                     .round()
                     .quantise::<i16>(NetworkFormat::HIDDEN_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Hidden.biases())
+                SavedFormat::id(Layer::Hidden.saved_as::<Biases>())
                     .round()
                     .quantise::<i16>(NetworkFormat::HIDDEN_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Output.weights())
+                SavedFormat::id(Layer::Output.saved_as::<Weights>())
                     .round()
                     .quantise::<i16>(NetworkFormat::OUTPUT_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Output.biases())
+                SavedFormat::id(Layer::Output.saved_as::<Biases>())
                     .round()
                     .quantise::<i16>(NetworkFormat::OUTPUT_BIAS_QUANTISATION.factor()),
             ])

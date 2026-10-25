@@ -3,6 +3,7 @@ mod edge;
 use edge::Edge;
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
 
 use syn::visit::Visit;
 use syn::{ImplItem, ImplItemFn, ItemImpl, Receiver};
@@ -17,7 +18,7 @@ use crate::task::violation::Violation;
 
 pub struct EdgeScan<'scan> {
     declarations: &'scan Declarations,
-    path: String,
+    path: PathBuf,
     edges: BTreeMap<Edge, BTreeMap<String, Site>>,
     violations: Vec<Violation>,
 }
@@ -26,7 +27,7 @@ impl<'scan> EdgeScan<'scan> {
     pub fn new(declarations: &'scan Declarations) -> Self {
         EdgeScan {
             declarations,
-            path: String::new(),
+            path: PathBuf::new(),
             edges: BTreeMap::new(),
             violations: Vec::new(),
         }

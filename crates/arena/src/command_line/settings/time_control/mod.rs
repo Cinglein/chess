@@ -8,6 +8,7 @@ use board::Color;
 use serde::{Deserialize, Serialize};
 use time_control_error::TimeControlError;
 use uci::Clock;
+use uci::{Increment, Remaining};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
@@ -36,8 +37,8 @@ impl From<TimeControl> for Clock {
 impl From<Clock> for TimeControl {
     fn from(clock: Clock) -> TimeControl {
         TimeControl {
-            base: clock.remaining(Color::White),
-            increment: clock.increment(Color::White),
+            base: clock.time::<Remaining>(Color::White),
+            increment: clock.time::<Increment>(Color::White),
         }
     }
 }
