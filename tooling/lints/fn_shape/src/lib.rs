@@ -221,8 +221,8 @@ mod tests {
     use task::{Policy, SourceFile};
 
     const SOURCE: &str = "
-impl Wide {
-    fn five(a: u8, b: u8, c: u8, d: u8, e: u8) {} fn four(a: u8, b: u8, c: u8, d: u8) {}
+impl Wide { fn four(a: u8, b: u8, c: u8, d: u8) {}
+    fn five(a: u8, b: u8, c: u8, d: u8, e: u8) {}
     fn flags(&self, x: u8) {
         let ready = self.count() > 1; let (lo, hi) = (1, 2);
         let total = self.items.iter().fold((0, 0), |(a, b), x| (a + x, b)); let plain = self.items.iter().fold(0, |a, x| a + x);

@@ -117,9 +117,9 @@ mod tests {
     const SOURCE: &str = "
 impl W {
     fn walk(&self, out: &mut Vec<u8>) {
-        let mut items = self.items.iter().rev(); let frozen = self.items.iter(); let mut total = 0;
+        let mut items = self.items.iter().rev(); let frozen = self.items.iter();
         for item in self.items { out.push(item); } for item in self.items { if item > 1 { out.push(item); } }
-        for item in self.items { if item > 1 { out.push(item); } else { out.clear(); } } for item in self.items { self.visit(item); }
+        for item in self.items { if item > 1 { out.push(item); } else { out.clear(); } } for item in self.items { self.visit(item); } let mut total = 0;
     }
 }
 mod inner { fn fill(out: &mut Vec<u8>) { for item in [1] { out.push(item); } } }

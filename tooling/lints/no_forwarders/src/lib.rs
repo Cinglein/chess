@@ -72,7 +72,7 @@ impl W {
 struct P<H> { hand: H } impl P<Own> { fn to_generic(&self) -> u8 { self.hand.value() } }
 impl From<u64> for W { fn from(bits: u64) -> W { W::to_path(bits) } }
 mod inner { impl W { fn to_inner(&self) -> u8 { self.inner.value() } } }
-#[cfg(test)] mod tests { impl W { fn to_inner(&self) -> u8 { self.inner.value() } } }
+#[cfg(test)] mod tests { impl W { fn to_test(&self) -> u8 { self.inner.value() } } }
 ";
     const REPORTED: [&str; 11] = [
         "fn to_own only forwards to value", "fn to_self only forwards to merge",
