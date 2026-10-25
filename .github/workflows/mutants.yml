@@ -79,10 +79,12 @@ jobs:
     steps:
       - id: verdict
         run: |
-          if echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"'; then
-            echo "failed=true" >> "$GITHUB_OUTPUT"
+          if echo '${{ toJSON(needs) }}' | grep -q '"result": "failure"'; then
+            echo "verdict=failed" >> "$GITHUB_OUTPUT"
+          elif echo '${{ toJSON(needs) }}' | grep -q '"result": "cancelled"'; then
+            echo "verdict=superseded" >> "$GITHUB_OUTPUT"
           else
-            echo "failed=false" >> "$GITHUB_OUTPUT"
+            echo "verdict=green" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/download-artifact@v4
         if: github.ref == 'refs/heads/main'
@@ -95,7 +97,7 @@ jobs:
         run: |
           open=$(gh issue list --state open --json number,title --jq "first(.[] | select(.title == \"$ISSUE_TITLE\") | .number)")
           echo "number=$open" >> "$GITHUB_OUTPUT"
-      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.failed == 'true'
+      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict == 'failed'
         env:
           ISSUE: ${{ steps.issue.outputs.number }}
         run: |
@@ -106,11 +108,11 @@ jobs:
           else
             gh issue create --title "$ISSUE_TITLE" --body-file body.md
           fi
-      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.failed == 'false' && steps.issue.outputs.number != ''
+      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict == 'green' && steps.issue.outputs.number != ''
         env:
           ISSUE: ${{ steps.issue.outputs.number }}
         run: |
           gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
-      - if: steps.verdict.outputs.failed == 'true'
+      - if: steps.verdict.outputs.verdict != 'green'
         run: exit 1
       - run: echo "every shard passed or none was needed"
