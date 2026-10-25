@@ -102,7 +102,7 @@ trait T { fn do_it(&self); fn go(&self); }
 fn process() {}
 mod inner { fn handle() {} }
 #[cfg(test)]
-mod tests { fn handle() {} }
+mod tests { fn make() {} }
 ";
     const FLAGGED: [&str; 5] = ["of", "check", "go", "process", "handle"];
 

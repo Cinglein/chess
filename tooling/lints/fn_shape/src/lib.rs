@@ -240,6 +240,7 @@ impl Wide {
         let missing = !self.ready();
         let inner = (x > 1);
         let empty = self.items.is_empty();
+        let owns = self.has_key();
         while self.busy() { let idle = false; }
         loop { let (p, q) = (1, 2); }
         let sizes = self.items.iter().map(|y| { let big = y > 1; big });
@@ -251,7 +252,7 @@ mod inner { fn deep(&self) { let flag = true; } }
 #[cfg(test)]
 mod tests { fn deep(&self) { let flag = true; } }
 ";
-    const REPORTED: [&str; 13] = [
+    const REPORTED: [&str; 14] = [
         ":3: more than 4 parameters",
         ":6: boolean local",
         ":7: tuple literal bound",
@@ -260,11 +261,12 @@ mod tests { fn deep(&self) { let flag = true; } }
         ":12: boolean local",
         ":13: boolean local",
         ":14: boolean local",
-        ":15: tuple literal bound",
-        ":16: boolean local",
-        ":18: control flow nested deeper",
-        ":18: control flow nested deeper",
-        ":21: boolean local",
+        ":15: boolean local",
+        ":16: tuple literal bound",
+        ":17: boolean local",
+        ":19: control flow nested deeper",
+        ":19: control flow nested deeper",
+        ":22: boolean local",
     ];
 
     #[test]

@@ -148,7 +148,7 @@ const CELLS: u8 = { let mut i = 0; while i < 2 { i += 1; } i };
 impl Table {
     const SIZE: u8 = { for n in 0..2 {} 0 };
     const fn build(key: u8) -> u8 { key as u8 }
-    fn lookup(&self, key: Kind) -> u8 { let z = const { loop {} }; let mut i = 0; while i < 2 { i += 1; } self.0[key as usize] }
+    fn lookup(&self, key: Kind) -> u8 { let z = const { loop {} }; let mut i = 0; while i < 2 { i += 1; } for n in 0..2 {} loop { break self.0[key as usize] } }
 }
 mod inner { fn widen(x: u8) -> u16 { x as u16 } }
 #[cfg(test)]

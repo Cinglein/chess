@@ -86,12 +86,17 @@ impl Walker {
         match side { Side::Left => wire.weight(), Side::Right => 0 };
         match wire { Wire::Live(n) => n.max(1), Wire::Dead => 0 }
     }
+    fn table(wire: Wire) -> i8 { match wire { Wire::Live(_) => -(1), Wire::Dead => [(0, 1)] } }
+    fn peel(wire: Wire) -> u8 { if let Wire::Live(n) = wire { n } else { 0 } }
+    fn force(wire: Wire) -> u8 { let Wire::Live(n) = wire else { return 0 }; n }
 }
 ";
     const FILES: [(&str, &str); 2] = [("hub.rs", VERTICES), ("other.rs", MATCHER)];
-    const REPORTED: [&str; 7] = [
+    const REPORTED: [&str; 9] = [
         "hub.rs:11: field inner of Leaky is pub",
         "other.rs:9: match on Wire outside its file",
+        "other.rs:12: match on Wire outside its file",
+        "other.rs:13: match on Wire outside its file",
         "hub.rs:13: is a hidden edge Hub -> Spoke",
         "hub.rs:14: is a hidden edge Hub -> Rim",
         "hub.rs:18: is a view returning vertex Spoke",

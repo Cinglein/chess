@@ -42,7 +42,7 @@ jobs:
     needs: affected
     if: fromJSON(needs.affected.outputs.plan).jobs.full != null && fromJSON(needs.affected.outputs.plan).jobs.full.shard_count > 0
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
