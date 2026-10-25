@@ -55,7 +55,7 @@ mod tests {
         {"name": "eval", "manifest_path": "/w/crates/eval/Cargo.toml", "dependencies": []}
     ]}"#;
     const POLICY: &str = "pub struct Policy; impl Policy { const DEFAULTS: &str = include_str!(\"../../../policy.toml\"); }";
-    const NETWORK: &str = "pub const NETWORK: &[u8] = include_bytes!(\"./network.bin\");";
+    const NETWORK: &str = "pub const NETWORK: &[u8] = include_bytes!(\"./network.bin\"); pub const OWNER: &str = env!(\"../../../LICENSE\");";
     const FILES: [(&str, &str, &str); 2] = [
         ("task", "tooling/task/src/policy/mod.rs", POLICY),
         ("eval", "crates/eval/src/network.rs", NETWORK),
