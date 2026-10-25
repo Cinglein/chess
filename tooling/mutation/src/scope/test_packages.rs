@@ -26,25 +26,17 @@ mod tests {
     use affected::{PackageGraph, TestedCrates};
     use task::SourceFile;
 
-    const METADATA: &str = r#"{"packages": [
-        {"name": "board", "dependencies": []},
-        {"name": "eval", "dependencies": [{"name": "board", "path": "/w/crates/board"}]},
-        {"name": "search", "dependencies": [{"name": "eval", "path": "/w/crates/eval"}]}
-    ]}"#;
+    const METADATA: &str = r#"{"packages": [{"name": "board", "dependencies": []}, {"name": "eval", "dependencies": [{"name": "board", "path": "/w/crates/board"}]}, {"name": "search", "dependencies": [{"name": "eval", "path": "/w/crates/eval"}]}]}"#;
+    const EVAL: &str = "#[cfg(test)] mod tests { #[test] fn t() {} }";
     const FILES: [(&str, &str); 2] = [
-        (
-            "crates/eval/src/lib.rs",
-            "#[cfg(test)] mod tests { #[test] fn t() {} }",
-        ),
+        ("crates/eval/src/lib.rs", EVAL),
         ("crates/search/src/lib.rs", "pub struct S;"),
     ];
     const ARGUMENTS: [&str; 4] = ["--test-package", "board", "--test-package", "eval"];
 
     #[test]
     fn a_run_is_tested_by_its_crate_and_by_the_dependents_that_have_tests() {
-        let files = FILES.map(|(path, text)| {
-            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
-        });
+        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
         let graph = PackageGraph::from_metadata(METADATA).unwrap();
         let tested = TestedCrates::collect(&files);
         let packages = TestPackages::around(&"board".parse().unwrap(), &graph, &tested);

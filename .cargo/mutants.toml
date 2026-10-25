@@ -27,6 +27,7 @@ exclude_re = [
     "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",
+    "MagicSearch::spreads_well",
     "<impl Iterator for XorShift>::next",
     "XorShift::sparse",
     "Mutants::run",
