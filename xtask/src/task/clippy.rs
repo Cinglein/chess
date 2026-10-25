@@ -1,3 +1,4 @@
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -10,16 +11,15 @@ impl Clippy {
             println!("clippy: no crate affected");
             return Ok(());
         }
-        let arguments: Vec<String> = [String::from("clippy")]
-            .into_iter()
-            .chain(selection.package_arguments())
-            .chain(
-                ["--all-targets", "--all-features", "--", "-D", "warnings"]
-                    .into_iter()
-                    .map(String::from),
-            )
-            .collect();
-        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        workspace.cargo(&borrowed)
+        workspace
+            .line(Program::Cargo)
+            .argument(CargoArgument::Clippy)
+            .arguments(selection.package_arguments())
+            .argument(CargoArgument::AllTargets)
+            .argument(CargoArgument::AllFeatures)
+            .argument(CargoArgument::ToolArguments)
+            .argument(CargoArgument::Deny)
+            .argument(CargoArgument::Warnings)
+            .run()
     }
 }

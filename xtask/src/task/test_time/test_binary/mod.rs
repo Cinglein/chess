@@ -1,8 +1,12 @@
+mod test_argument;
+
 use std::path::PathBuf;
-use std::process::Command;
 use std::time::Instant;
 
+use test_argument::TestArgument;
+
 use super::test_timing::TestTiming;
+use crate::task::command_line::{CargoArgument, CommandLine, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -19,17 +23,15 @@ impl TestBinary {
         workspace: &Workspace,
         selection: &Selection,
     ) -> Result<Vec<TestBinary>, Failure> {
-        let arguments: Vec<String> = [String::from("test")]
-            .into_iter()
-            .chain(selection.package_arguments())
-            .chain(
-                ["--all-features", "--no-run", "--color", "never"]
-                    .into_iter()
-                    .map(String::from),
-            )
-            .collect();
-        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        let built = workspace.cargo_output(&borrowed)?;
+        let built = workspace
+            .line(Program::Cargo)
+            .argument(CargoArgument::Test)
+            .arguments(selection.package_arguments())
+            .argument(CargoArgument::AllFeatures)
+            .argument(CargoArgument::NoRun)
+            .argument(CargoArgument::Color)
+            .argument(CargoArgument::Never)
+            .stderr()?;
         Ok(built
             .lines()
             .filter_map(|line| line.split_once(Self::EXECUTABLE))
@@ -49,7 +51,12 @@ impl TestBinary {
     }
 
     fn tests(&self) -> Result<Vec<String>, Failure> {
-        let listed = self.output(&["--list", "--format", "terse"])?;
+        let listed = self
+            .line()
+            .argument(TestArgument::List)
+            .argument(TestArgument::Format)
+            .argument(TestArgument::Terse)
+            .stdout()?;
         Ok(listed
             .lines()
             .filter_map(|line| line.strip_suffix(Self::TEST_SUFFIX))
@@ -59,21 +66,16 @@ impl TestBinary {
 
     fn timed(&self, test: String) -> Result<TestTiming, Failure> {
         let started = Instant::now();
-        self.output(&["--exact", &test, "--quiet"])?;
+        self.line()
+            .argument(TestArgument::Exact)
+            .argument(&test)
+            .argument(TestArgument::Quiet)
+            .stdout()?;
         Ok(TestTiming::new(self.name(), test, started.elapsed()))
     }
 
-    fn output(&self, args: &[&str]) -> Result<String, Failure> {
-        let failure = || Failure::Cargo(format!("test {} {}", self.name(), args.join(" ")));
-        let output = Command::new(&self.path)
-            .args(args)
-            .output()
-            .map_err(|_| failure())?;
-        output
-            .status
-            .success()
-            .then(|| String::from_utf8_lossy(&output.stdout).into_owned())
-            .ok_or_else(failure)
+    fn line(&self) -> CommandLine {
+        CommandLine::new(Program::Executable(self.path.clone()))
     }
 
     fn name(&self) -> String {

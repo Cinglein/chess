@@ -1,6 +1,7 @@
 use settings::EmbeddedDefaults;
 
 use crate::task::clippy::Clippy;
+use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::lint::Lint;
 use crate::task::policy::Policy;
@@ -15,7 +16,12 @@ pub struct Ci;
 impl Ci {
     pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
         println!("ci: checking {selection}");
-        workspace.cargo(&["fmt", "--all", "--check"])?;
+        workspace
+            .line(Program::Cargo)
+            .argument(CargoArgument::Fmt)
+            .argument(CargoArgument::All)
+            .argument(CargoArgument::Check)
+            .run()?;
         Clippy::run(workspace, selection)?;
         Wasm::run(workspace, selection)?;
         Test::run(workspace, selection)?;

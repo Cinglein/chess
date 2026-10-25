@@ -12,6 +12,7 @@ use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
 use crate::task::available_gib::AvailableGib;
+use crate::task::command_line::{CargoArgument, CommandLine, MutantsArgument, Program};
 use crate::task::failure::Failure;
 use crate::task::policy::{MemoryShare, Policy};
 use crate::task::selection::Selection;
@@ -40,33 +41,30 @@ impl Mutants {
         Self::refuse_if_another_run_exists()?;
         let budget = Self::refuse_if_memory_is_short(policy)?;
         scope.warm_build_directory(workspace, selection)?;
-        let arguments: Vec<String> = [
-            String::from("mutants"),
-            String::from("--jobserver-tasks"),
-            budget
-                .minus(policy.memory(MemoryShare::ForTheTests))
-                .divided_by(policy.memory(MemoryShare::PerCompilerTask))
-                .to_string(),
-            String::from("--output"),
-            String::from(Self::OUTPUT_DIRECTORY),
-        ]
-        .into_iter()
-        .chain(scope.arguments(workspace, selection, policy)?)
-        .chain(Self::shard())
-        .collect();
-        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        let mut child = workspace.spawn_cargo(&borrowed)?;
+        let line = workspace
+            .line(Program::Cargo)
+            .argument(CargoArgument::Mutants)
+            .argument(MutantsArgument::JobserverTasks)
+            .argument(
+                budget
+                    .minus(policy.memory(MemoryShare::ForTheTests))
+                    .divided_by(policy.memory(MemoryShare::PerCompilerTask)),
+            )
+            .argument(MutantsArgument::Output)
+            .argument(Self::OUTPUT_DIRECTORY);
+        let line = Self::sharded(scope.applied(line, workspace, selection, policy)?);
+        let mut child = line.spawn()?;
         let status = MemoryWatch::over(&child, budget, policy).guard(&mut child)?;
         MutantsExit::accepts(status)
             .then_some(())
-            .ok_or_else(|| Failure::Cargo(borrowed.join(" ")))
+            .ok_or_else(|| Failure::Command(line.to_string()))
     }
 
-    fn shard() -> Vec<String> {
-        env::var(Self::SHARD_VARIABLE)
-            .ok()
-            .map(|shard| vec![String::from("--shard"), shard])
-            .unwrap_or_default()
+    fn sharded(line: CommandLine) -> CommandLine {
+        match env::var(Self::SHARD_VARIABLE) {
+            Ok(shard) => line.argument(MutantsArgument::Shard).argument(shard),
+            Err(_) => line,
+        }
     }
 
     fn exclusive_lock(workspace: &Workspace) -> Result<File, Failure> {

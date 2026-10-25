@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 
 use crate::task::affected::Affected;
+use crate::task::command_line::CargoArgument;
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::workspace::Workspace;
@@ -33,7 +34,7 @@ impl Selection {
 
     pub fn package_arguments(&self) -> Vec<String> {
         match self {
-            Selection::Workspace => vec![String::from("--workspace")],
+            Selection::Workspace => vec![CargoArgument::Workspace.to_string()],
             Selection::Crates(_) => self.explicit_packages(),
         }
     }
@@ -43,7 +44,7 @@ impl Selection {
             Selection::Workspace => Vec::new(),
             Selection::Crates(crates) => crates
                 .iter()
-                .flat_map(|name| [String::from("--package"), name.to_string()])
+                .flat_map(|name| [CargoArgument::Package.to_string(), name.to_string()])
                 .collect(),
         }
     }
