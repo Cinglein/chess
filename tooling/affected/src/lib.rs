@@ -127,8 +127,6 @@ impl Affected {
         if selection.is_empty() {
             return Ok(Vec::new());
         }
-        let graph = Self::package_graph(workspace)?;
-        let tested = TestedCrates::collect(&workspace.source_files()?);
         let counts = ListedMutant::tally(
             &workspace
                 .line(Program::Cargo)
@@ -141,9 +139,8 @@ impl Affected {
         Ok(counts
             .into_iter()
             .map(|(name, mutants)| {
-                let tested_packages = tested.around(&graph, &BTreeSet::from([name.clone()])).len();
                 let each = policy.mutant_millis().for_crate(&name);
-                CrateLoad::new(name, mutants, tested_packages, each)
+                CrateLoad::new(name, mutants, each, policy)
             })
             .collect())
     }
