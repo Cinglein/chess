@@ -46,11 +46,9 @@ impl ShuffledData {
 
 #[cfg(test)]
 mod tests {
+    use super::{ShuffleSeed, ShuffledData};
     use std::fs;
     use std::path::PathBuf;
-
-    use super::{ShuffleSeed, ShuffledData};
-
     const RECORDS: usize = 16;
     const SEED: ShuffleSeed = ShuffleSeed::new(5);
     const OTHER_SEED: ShuffleSeed = ShuffleSeed::new(6);

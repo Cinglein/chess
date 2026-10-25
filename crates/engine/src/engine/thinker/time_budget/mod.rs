@@ -28,13 +28,10 @@ impl TimeBudget {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
-    use board::Color;
-    use uci::Clock;
-
     use super::TimeBudget;
-
+    use board::Color;
+    use std::time::Duration;
+    use uci::Clock;
     const COMFORTABLE: Clock = Clock::new(
         Duration::from_secs(60),
         Duration::from_secs(60),

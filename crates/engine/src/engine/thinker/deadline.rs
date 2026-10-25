@@ -37,14 +37,11 @@ impl Interrupt for Deadline<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::time::Instant;
-
+    use super::Deadline;
     use board::NodeCount;
     use search::Interrupt;
-
-    use super::Deadline;
-
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::time::Instant;
     const CHECK: NodeCount = NodeCount::new(1 << 10);
     const LIMIT: NodeCount = NodeCount::new(1 << 11);
     const OFF_CHECK: NodeCount = NodeCount::new((1 << 11) + 1);

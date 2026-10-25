@@ -74,10 +74,8 @@ impl fmt::Display for EngineOption<'_> {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-
     use super::{Elo, EngineOption, Switch};
-
+    use proptest::prelude::*;
     const OTHER: EngineOption<'static> = EngineOption::Other {
         name: "Hash",
         setting: "16",

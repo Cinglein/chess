@@ -48,14 +48,11 @@ impl Plan {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
-
-    use settings::EmbeddedDefaults;
-
     use super::{Job, JobPlan, Plan};
     use crate::crate_load::CrateLoad;
+    use settings::EmbeddedDefaults;
+    use std::collections::{BTreeMap, BTreeSet};
     use task::{Interval, Policy};
-
     const ONE: usize = 1;
     const EVAL: &str = "eval";
     const SHARDED: &str = r#""shards":["eval/0/2","eval/1/2"],"shard_count":2"#;

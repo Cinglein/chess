@@ -135,9 +135,6 @@ impl<'position> Node<'position> {
 
 #[cfg(test)]
 mod tests {
-    use board::{Board, LongAlgebraic, NodeCount};
-    use eval::{PieceSquareTables, Score};
-
     use super::super::Negamax;
     use super::super::ordered_moves::Killers;
     use super::super::table::{RootDistance, TableEntry, TranspositionTable};
@@ -146,7 +143,8 @@ mod tests {
     use super::Node;
     use crate::search::Uninterrupted;
     use crate::search::depth::Depth;
-
+    use board::{Board, LongAlgebraic, NodeCount};
+    use eval::{PieceSquareTables, Score};
     const KNIGHT_FORK: &str = "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
     const HANGING_QUEEN: &str = "4k3/8/8/3q4/3Q4/8/8/4K3 w - - 0 1";
     const FORKING_CHECK: &str = "b5c7";

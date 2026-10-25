@@ -115,7 +115,6 @@ impl<'ast> Visit<'ast> for IteratorCalls {
 mod tests {
     use super::ManualIteration;
     use task::SourceFile;
-
     const SOURCE: &str = "
 impl W {
     fn walk(&self, out: &mut Vec<u8>) {

@@ -33,11 +33,9 @@ impl StoredScore {
 
 #[cfg(test)]
 mod tests {
+    use super::{RootDistance, StoredScore};
     use eval::Score;
     use proptest::prelude::*;
-
-    use super::{RootDistance, StoredScore};
-
     #[test]
     fn a_mate_stored_at_one_distance_reads_at_another_as_the_same_mate_from_the_root() {
         proptest!(|(stored_at: u8, beyond: u8, read_at: u8, score: Score)| {

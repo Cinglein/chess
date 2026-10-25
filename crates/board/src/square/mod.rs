@@ -127,12 +127,10 @@ impl proptest::arbitrary::Arbitrary for Square {
 
 #[cfg(test)]
 mod tests {
+    use super::Square;
     use super::{Between, Through};
     use crate::bitboard::SetOperation;
     use proptest::prelude::*;
-
-    use super::Square;
-
     const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
 
     #[test]

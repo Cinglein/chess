@@ -93,10 +93,8 @@ impl Policy {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::{Limit, Policy};
-
+    use settings::EmbeddedDefaults;
     const CHECK: &str = "check";
     const LONG_ENOUGH: &str = "report";
 

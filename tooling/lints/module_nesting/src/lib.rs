@@ -23,11 +23,9 @@ impl ModuleNesting {
 
 #[cfg(test)]
 mod tests {
-    use settings::EmbeddedDefaults;
-
     use super::ModuleNesting;
+    use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
-
     const LIB: &str =
         "mod hub; mod spoke; mod rim; pub use hub::Hub; pub use rim::{A, B, C, D, E, F, G, H};";
     const HUB: &str = "use crate::spoke::Spoke; use crate::spoke::part::Part; pub struct Hub(Spoke, Part); pub use crate::rim::{A, B, C, D, E, F, G, H};";

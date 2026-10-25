@@ -278,7 +278,6 @@ impl<'ast> Visit<'ast> for MutableLocals {
 mod tests {
     use super::ExpressionFlow;
     use task::SourceFile;
-
     const SOURCE: &str = "
 impl Flow {
     fn guards(&self, items: &[u8]) -> u8 {

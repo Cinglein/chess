@@ -32,7 +32,6 @@ impl WorkerCount {
 #[cfg(test)]
 mod tests {
     use super::WorkerCount;
-
     const THREE: WorkerCount = WorkerCount(3);
     const NONE: WorkerCount = WorkerCount(0);
     const ONE: WorkerCount = WorkerCount(1);

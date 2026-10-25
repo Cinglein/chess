@@ -35,7 +35,6 @@ impl SplitMix64 {
 #[cfg(test)]
 mod tests {
     use super::SplitMix64;
-
     const REFERENCE_STREAM: [&str; 3] = ["e220a8397b1dcdaf", "6e789e6aa1b965f4", "6c45d188009454f"];
 
     #[test]

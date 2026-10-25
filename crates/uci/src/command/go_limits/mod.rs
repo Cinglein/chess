@@ -98,10 +98,8 @@ impl proptest::arbitrary::Arbitrary for GoLimits {
 
 #[cfg(test)]
 mod tests {
-    use proptest::prelude::*;
-
     use super::GoLimits;
-
+    use proptest::prelude::*;
     #[test]
     fn limits_print_back_to_themselves_and_expose_exactly_their_own_kind() {
         proptest!(|(limits: GoLimits)| {

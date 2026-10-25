@@ -76,7 +76,6 @@ impl Reach {
 #[cfg(test)]
 mod tests {
     use super::Reach;
-
     const PACKAGE_PATHS: [&str; 1] = ["crates/eval/src/score.rs"];
     const TOOL_PATHS: [&str; 2] = ["xtask/src/task/lint.rs", "xtask/policy.toml"];
     const EVERYTHING_PATHS: [&str; 2] = ["Cargo.lock", ".github/ci.yml"];

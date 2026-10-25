@@ -75,11 +75,9 @@ impl fmt::Display for Position<'_> {
 
 #[cfg(test)]
 mod tests {
+    use super::Position;
     use board::{Board, LongAlgebraic};
     use proptest::prelude::*;
-
-    use super::Position;
-
     #[test]
     fn a_played_position_prints_as_a_line_that_parses_to_the_same_start_and_moves() {
         proptest!(|(board: Board, played in proptest::collection::vec(any::<LongAlgebraic>(), 0..8))| {

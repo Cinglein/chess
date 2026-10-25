@@ -124,7 +124,6 @@ impl<'ast> Visit<'ast> for SignatureIndex {
 mod tests {
     use super::DistinctSignatures;
     use task::SourceFile;
-
     const SOURCE: &str = "
 struct W;
 impl W { fn alpha(self) -> u8 { 0 } fn beta(self) -> u8 { 0 } pub fn gamma(self) -> u8 { 0 } }
