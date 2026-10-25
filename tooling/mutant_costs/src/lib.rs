@@ -92,15 +92,34 @@ impl fmt::Display for MutantCosts {
 
 #[cfg(test)]
 mod tests {
+    use std::{env, fs, process};
+
     use super::{MutantCosts, Outcomes};
 
-    const OUTCOMES: &str = r#"{"outcomes": [{"scenario": "Baseline", "phase_results": [{"phase": "Build", "duration": 9.0}]}, {"scenario": {"Mutant": {"package": "board", "file": "x"}}, "phase_results": [{"phase": "Build", "duration": 1.5}, {"phase": "Test", "duration": 0.54}]}, {"scenario": {"Mutant": {"package": "eval"}}, "phase_results": [{"phase": "Build", "duration": 1.0}]}]}"#;
+    const SNIPPET: &str = r#"{"outcomes": [{"scenario": "Baseline", "phase_results": [{"phase": "Build", "duration": 9.0}]}, {"scenario": {"Mutant": {"package": "board", "file": "x"}}, "phase_results": [{"phase": "Build", "duration": 2.5}, {"phase": "Test", "duration": 0.5}]}, {"scenario": {"Mutant": {"package": "eval"}}, "phase_results": [{"phase": "Build", "duration": 1.0}]}]}"#;
     const TABLE: &str =
-        "[mutant_millis]\ndefault = 1500\n\n[mutant_millis.crates]\nboard = 2000\neval = 1000\n";
+        "[mutant_millis]\ndefault = 2000\n\n[mutant_millis.crates]\nboard = 3000\neval = 1000\n";
+    const SCRATCH: &str = "chess-costs";
+    const NESTED: [&str; 3] = ["a", "b", "outcomes.json"];
+    const DECOY: &str = "other.json";
 
     #[test]
     fn mutant_phases_are_averaged_per_crate_and_overall_then_rounded_to_a_hundred_millis() {
-        let costs = MutantCosts::tally([Outcomes::parse(OUTCOMES).unwrap()]);
+        let costs = MutantCosts::tally([Outcomes::parse(SNIPPET).unwrap()]);
         assert_eq!(costs.to_string(), TABLE);
+    }
+
+    #[test]
+    fn outcome_files_are_found_under_nested_directories_and_other_files_are_skipped() {
+        let root = env::temp_dir().join(format!("{SCRATCH}-{}", process::id()));
+        let file = NESTED
+            .iter()
+            .fold(root.clone(), |path, part| path.join(part));
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, SCRATCH).unwrap();
+        fs::write(root.join(DECOY), SCRATCH).unwrap();
+        let found = MutantCosts::outcome_files(&root);
+        fs::remove_dir_all(&root).unwrap();
+        assert_eq!(found.unwrap(), vec![file]);
     }
 }
