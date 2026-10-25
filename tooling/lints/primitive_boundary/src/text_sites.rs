@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use syn::visit::Visit;
 use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Ident, ItemImpl, ItemMod};
 
@@ -23,26 +25,31 @@ impl TextSites {
     const PRODUCING: [&str; 2] = ["to_string", "push_str"];
 
     pub fn violations(file: &SourceFile) -> Vec<Violation> {
-        if !file.path().starts_with(Self::TEXT_DOMAIN) {
-            return Vec::new();
+        if file.path().starts_with(Self::TEXT_DOMAIN) {
+            let mut sites = TextSites::default();
+            sites.visit_file(file.syntax());
+            sites.outside_doors(file.path())
+        } else {
+            Vec::new()
         }
-        let mut sites = TextSites::default();
-        sites.visit_file(file.syntax());
-        if !sites.doors.is_empty() {
-            return Vec::new();
+    }
+
+    fn outside_doors(self, path: &Path) -> Vec<Violation> {
+        if self.doors.is_empty() {
+            self.found
+                .into_iter()
+                .map(|ident| {
+                    Violation::new(
+                        Site::Line(path.into(), ident.span().start().line),
+                        format!(
+                            "{ident} handles text outside a door; parse in FromStr or render in Display"
+                        ),
+                    )
+                })
+                .collect()
+        } else {
+            Vec::new()
         }
-        sites
-            .found
-            .into_iter()
-            .map(|ident| {
-                Violation::new(
-                    Site::Line(file.path().into(), ident.span().start().line),
-                    format!(
-                        "{ident} handles text outside a door; parse in FromStr or render in Display"
-                    ),
-                )
-            })
-            .collect()
     }
 
     fn door_trait(item: &ItemImpl) -> Option<Ident> {
@@ -51,6 +58,19 @@ impl TextSites {
             .and_then(|(_, path, _)| path.segments.last())
             .map(|segment| segment.ident.clone())
             .filter(|ident| Self::DOOR_TRAITS.contains(&ident.to_string().as_str()))
+    }
+
+    fn text_constructor(call: &ExprCall) -> Option<Ident> {
+        let segments = match &*call.func {
+            Expr::Path(path) => path.path.segments.iter().collect::<Vec<_>>(),
+            _ => Vec::new(),
+        };
+        match segments.as_slice() {
+            [first, second] if first.ident == "String" && second.ident == "from" => {
+                Some(second.ident.clone())
+            }
+            _ => None,
+        }
     }
 }
 
@@ -69,27 +89,26 @@ impl<'ast> Visit<'ast> for TextSites {
 
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
         let name = call.method.to_string();
-        if Self::INSPECTING.contains(&name.as_str()) || Self::PRODUCING.contains(&name.as_str()) {
-            self.found.push(call.method.clone());
-        }
+        self.found.extend(
+            (Self::INSPECTING.contains(&name.as_str()) || Self::PRODUCING.contains(&name.as_str()))
+                .then(|| call.method.clone()),
+        );
         syn::visit::visit_expr_method_call(self, call);
     }
 
     fn visit_expr_macro(&mut self, expr: &'ast ExprMacro) {
-        if expr.mac.path.is_ident("format") {
-            self.found.extend(expr.mac.path.get_ident().cloned());
-        }
+        self.found.extend(
+            expr.mac
+                .path
+                .get_ident()
+                .filter(|ident| *ident == "format")
+                .cloned(),
+        );
         syn::visit::visit_expr_macro(self, expr);
     }
 
     fn visit_expr_call(&mut self, call: &'ast ExprCall) {
-        if let Expr::Path(path) = &*call.func
-            && let [first, second] = path.path.segments.iter().collect::<Vec<_>>().as_slice()
-            && first.ident == "String"
-            && second.ident == "from"
-        {
-            self.found.push(second.ident.clone());
-        }
+        self.found.extend(Self::text_constructor(call));
         syn::visit::visit_expr_call(self, call);
     }
 }
