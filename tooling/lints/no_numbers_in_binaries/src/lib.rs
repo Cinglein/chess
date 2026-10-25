@@ -60,21 +60,20 @@ mod tests {
     use super::NoNumbersInBinaries;
     use task::SourceFile;
 
-    const MAIN: &str = "mod worker; fn main() {}";
     const WORKER: &str = "pub struct W; impl W { pub fn size() -> usize { 42 } pub fn rate() -> f64 { 2.5 } }\nmod inner { pub fn depth() -> u8 { 7 } }\n#[cfg(test)]\nmod tests { fn depth() -> u8 { 7 } }";
-    const LIB: &str = "pub struct L; impl L { pub fn size() -> usize { 42 } }";
     const FILES: [(&str, &str); 3] = [
-        ("crates/a/src/main.rs", MAIN),
+        ("crates/a/src/main.rs", "mod worker; fn main() {}"),
         ("crates/a/src/worker.rs", WORKER),
-        ("crates/a/src/lib.rs", LIB),
+        (
+            "crates/a/src/lib.rs",
+            "pub struct L; impl L { pub fn size() -> usize { 42 } }",
+        ),
     ];
     const REPORTED: [&str; 3] = ["worker.rs:1:", "worker.rs:1:", "worker.rs:2:"];
 
     #[test]
     fn flags_literals_in_a_module_reached_from_main_but_not_in_the_library_or_tests() {
-        let files = FILES.map(|(path, text)| {
-            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
-        });
+        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
         let report = NoNumbersInBinaries::report(&files);
         assert!(report.lists_exactly(&REPORTED), "{report}");
     }

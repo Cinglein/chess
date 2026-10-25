@@ -62,26 +62,16 @@ mod tests {
     use super::NoFreeFns;
 
     const SOURCE: &str = "
-fn main() {}
-fn helper() {}
-struct S;
-impl S { fn method(&self) {} fn associated() {} }
+fn main() {} fn helper() {}
+struct S; impl S { fn method(&self) {} fn associated() {} }
 trait T { fn required(); fn provided() {} }
-mod inner {
-    fn nested() {}
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn a_test() {}
-        fn test_helper() {}
-    }
-}
+mod inner { fn nested() {} #[cfg(test)] mod tests { #[test] fn a_test() {} fn test_helper() {} } }
 ";
     const FLAGGED: [&str; 3] = ["helper", "nested", "test_helper"];
 
     #[test]
     fn flags_module_level_functions_but_not_methods_main_or_tests() {
-        let parsed = syn::parse_file(SOURCE).expect("valid rust");
+        let parsed = syn::parse_file(SOURCE).unwrap();
         let names: Vec<String> = NoFreeFns::free_fns(&parsed.items)
             .iter()
             .map(ToString::to_string)
