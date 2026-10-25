@@ -4,10 +4,10 @@ use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{FnArg, ImplItem, ItemImpl, ItemMod, ReturnType, Signature};
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct DistinctSignatures;
 

@@ -3,13 +3,14 @@ use std::path::{Path, PathBuf};
 
 use syn::{Item, ItemMod};
 
-use crate::task::source_file::SourceFile;
+use crate::source_file::SourceFile;
 
 pub struct BinaryFiles(BTreeSet<PathBuf>);
 
 impl BinaryFiles {
     const BINARY_ROOT: &str = "src/main.rs";
 
+    #[must_use]
     pub fn collect(files: &[SourceFile]) -> BinaryFiles {
         let by_path: BTreeMap<&Path, &SourceFile> =
             files.iter().map(|file| (file.path(), file)).collect();
@@ -21,6 +22,7 @@ impl BinaryFiles {
         BinaryFiles(members)
     }
 
+    #[must_use]
     pub fn contains(&self, path: &Path) -> bool {
         self.0.contains(path)
     }

@@ -3,7 +3,6 @@ use settings::EmbeddedDefaults;
 use crate::task::const_shape::ConstShape;
 use crate::task::distinct_signatures::DistinctSignatures;
 use crate::task::expression_flow::ExpressionFlow;
-use crate::task::failure::Failure;
 use crate::task::fn_shape::FnShape;
 use crate::task::literal_names::LiteralNames;
 use crate::task::manual_iteration::ManualIteration;
@@ -15,16 +14,17 @@ use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
 use crate::task::no_numbers_in_binaries::NoNumbersInBinaries;
 use crate::task::no_parameter_bags::NoParameterBags;
-use crate::task::policy::Policy;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
-use crate::task::report::Report;
 use crate::task::settings_shape::SettingsShape;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
 use crate::task::type_shape::TypeShape;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Policy;
+use task::Report;
+use task::Workspace;
 
 pub struct Lint;
 

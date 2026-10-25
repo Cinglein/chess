@@ -4,7 +4,7 @@ use syn::{Block, ExprLit, ExprPath, Macro};
 
 use super::super::super::measurement::Measurement;
 use super::macro_arguments::MacroArguments;
-use crate::task::policy::{Limit, Policy};
+use task::{Limit, Policy};
 
 #[derive(Default)]
 pub(super) struct TestCounts {

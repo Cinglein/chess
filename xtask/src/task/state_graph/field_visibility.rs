@@ -5,9 +5,9 @@ use syn::visit::Visit;
 
 use syn::{ItemStruct, Visibility};
 
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct FieldVisibility<'scan> {
     path: &'scan Path,

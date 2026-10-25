@@ -1,7 +1,7 @@
 use crate::task::affected::{Affected, Job, Plan};
-use crate::task::failure::Failure;
-use crate::task::selection::Selection;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Selection;
+use task::Workspace;
 
 pub enum Coverage {
     Everything,

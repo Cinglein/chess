@@ -11,9 +11,9 @@ use edge_scan::EdgeScan;
 use field_visibility::FieldVisibility;
 use variant_matches::VariantMatches;
 
-use crate::task::policy::{Limit, Policy};
-use crate::task::report::Report;
-use crate::task::source_file::SourceFile;
+use task::Report;
+use task::SourceFile;
+use task::{Limit, Policy};
 
 pub struct StateGraph;
 
@@ -49,8 +49,8 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::StateGraph;
-    use crate::task::policy::Policy;
-    use crate::task::source_file::SourceFile;
+    use task::Policy;
+    use task::SourceFile;
 
     const VERTICES: &str = "
 pub struct Hub;

@@ -2,12 +2,12 @@ use std::iter::Sum;
 use std::ops::Add;
 use std::path::PathBuf;
 
-use crate::task::policy::{Policy, Share};
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::support_modules::SupportModules;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::SupportModules;
+use task::Violation;
+use task::{Policy, Share};
 
 mod measurement;
 mod test_scan;
@@ -105,7 +105,7 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::TestScan;
-    use crate::task::policy::Policy;
+    use task::Policy;
 
     const SOURCE: &str = "
 #[cfg(test)]

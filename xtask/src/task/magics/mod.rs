@@ -3,10 +3,10 @@ mod xor_shift;
 
 use magic_tables::MagicTables;
 
-use crate::task::command_line::{CargoArgument, Program};
-use crate::task::failure::Failure;
 use crate::task::magics::xor_shift::XorShift;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Workspace;
+use task::{CargoArgument, Program};
 
 pub struct Magics;
 

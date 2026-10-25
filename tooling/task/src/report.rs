@@ -1,7 +1,7 @@
 use std::fmt;
 
-use crate::task::failure::Failure;
-use crate::task::violation::Violation;
+use crate::failure::Failure;
+use crate::violation::Violation;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Report {
@@ -10,6 +10,7 @@ pub struct Report {
 }
 
 impl Report {
+    #[must_use]
     pub fn new(headline: &'static str, violations: Vec<Violation>) -> Report {
         Report {
             headline,
@@ -17,6 +18,7 @@ impl Report {
         }
     }
 
+    #[must_use]
     pub fn is_clean(&self) -> bool {
         self.violations.is_empty()
     }

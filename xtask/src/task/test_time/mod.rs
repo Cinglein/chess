@@ -7,13 +7,13 @@ use std::time::Duration;
 use test_binary::TestBinary;
 use test_timing::TestTiming;
 
-use crate::task::failure::Failure;
-use crate::task::policy::{Interval, Limit, Policy};
-use crate::task::report::Report;
-use crate::task::selection::Selection;
-use crate::task::site::Site;
-use crate::task::violation::Violation;
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Report;
+use task::Selection;
+use task::Site;
+use task::Violation;
+use task::Workspace;
+use task::{Interval, Limit, Policy};
 
 pub struct TestTime {
     timings: Vec<TestTiming>,

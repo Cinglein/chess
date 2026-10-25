@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::task::crate_name::CrateName;
+use task::CrateName;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Reach {
@@ -12,6 +12,8 @@ pub enum Reach {
 
 impl Reach {
     const CRATES: &str = "crates";
+    const TOOLING: &str = "tooling";
+    const LINTS: &str = "lints";
     const TOOL: &str = "xtask";
     const INERT_DIRECTORIES: [&str; 1] = [".claude"];
     const INERT_EXTENSIONS: [&str; 1] = ["md"];
@@ -20,8 +22,9 @@ impl Reach {
         let path = Path::new(path);
         match path
             .strip_prefix(Self::CRATES)
+            .or_else(|_| path.strip_prefix(Self::TOOLING))
             .ok()
-            .and_then(Self::first_component)
+            .and_then(Self::first_crate)
         {
             Some(name) => Reach::Package(name),
             None if path.starts_with(Self::TOOL) => Reach::Tool(path.to_path_buf()),
@@ -55,11 +58,16 @@ impl Reach {
             })
     }
 
-    fn first_component(inside: &Path) -> Option<CrateName> {
-        inside
+    fn first_crate(inside: &Path) -> Option<CrateName> {
+        let names: Vec<String> = inside
             .components()
-            .next()
-            .and_then(|component| component.as_os_str().to_string_lossy().parse().ok())
+            .filter(|component| component.as_os_str() != Self::LINTS)
+            .map(|component| component.as_os_str().to_string_lossy().into_owned())
+            .collect();
+        match names.as_slice() {
+            [directory, _, ..] => directory.parse().ok(),
+            _ => None,
+        }
     }
 }
 

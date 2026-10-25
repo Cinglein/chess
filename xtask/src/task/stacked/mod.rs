@@ -4,8 +4,8 @@ use std::env;
 
 use gh_argument::GhArgument;
 
-use crate::task::command_line::{CommandLine, Program, Stdout};
-use crate::task::failure::Failure;
+use task::Failure;
+use task::{CommandLine, Program, Stdout};
 
 pub struct Stacked;
 

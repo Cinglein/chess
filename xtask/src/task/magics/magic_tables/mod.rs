@@ -8,11 +8,11 @@ use std::path::Path;
 use board::{Bishop, Rook, Slider, Square};
 use enum_map::EnumMap;
 
-use crate::task::failure::Failure;
 use crate::task::magics::xor_shift::XorShift;
-use crate::task::site::Site;
 use hex_literal::HexLiteral;
 use magic_search::MagicSearch;
+use task::Failure;
+use task::Site;
 
 pub struct MagicTables {
     rook: EnumMap<Square, u64>,

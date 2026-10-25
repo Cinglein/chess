@@ -1,9 +1,9 @@
 use syn::visit::Visit;
 use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Ident, ItemImpl, ItemMod};
 
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 #[derive(Default)]
 pub struct TextSites {

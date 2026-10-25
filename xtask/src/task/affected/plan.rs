@@ -4,8 +4,8 @@ use serde::Serialize;
 
 use super::job::Job;
 use super::job_plan::JobPlan;
-use crate::task::policy::Policy;
-use crate::task::selection::Selection;
+use task::Policy;
+use task::Selection;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Plan {

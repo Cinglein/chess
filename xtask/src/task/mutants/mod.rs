@@ -11,13 +11,13 @@ use memory_watch::MemoryWatch;
 use mutants_exit::MutantsExit;
 use sysinfo::{ProcessesToUpdate, System};
 
-use crate::task::available_gib::AvailableGib;
-use crate::task::command_line::{CargoArgument, CommandLine, MutantsArgument, Program};
-use crate::task::failure::Failure;
-use crate::task::policy::{MemoryShare, Policy};
-use crate::task::selection::Selection;
-use crate::task::site::Site;
-use crate::task::workspace::Workspace;
+use task::AvailableGib;
+use task::Failure;
+use task::Selection;
+use task::Site;
+use task::Workspace;
+use task::{CargoArgument, CommandLine, MutantsArgument, Program};
+use task::{MemoryShare, Policy};
 
 pub struct Mutants;
 

@@ -4,9 +4,9 @@ use syn::visit::Visit;
 use syn::{ItemUse, Path, UseTree};
 
 use super::export::Export;
-use crate::task::binary_files::BinaryFiles;
-use crate::task::crate_name::CrateName;
-use crate::task::source_file::SourceFile;
+use task::BinaryFiles;
+use task::CrateName;
+use task::SourceFile;
 
 #[derive(Default)]
 pub struct ForeignReferences {

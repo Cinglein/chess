@@ -6,10 +6,10 @@ use std::time::Instant;
 use test_argument::TestArgument;
 
 use super::test_timing::TestTiming;
-use crate::task::command_line::{CargoArgument, CommandLine, Program, Stderr, Stdout};
-use crate::task::failure::Failure;
-use crate::task::selection::{CargoTool, Selection};
-use crate::task::workspace::Workspace;
+use task::Failure;
+use task::Workspace;
+use task::{CargoArgument, CommandLine, Program, Stderr, Stdout};
+use task::{CargoTool, Selection};
 
 pub(super) struct TestBinary {
     path: PathBuf,

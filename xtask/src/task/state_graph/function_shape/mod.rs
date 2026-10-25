@@ -11,7 +11,7 @@ use syn::{FnArg, ImplItemFn, Type};
 use super::declarations::Declarations;
 use super::impl_context::ImplContext;
 use super::type_name::TypeName;
-use crate::task::site::Site;
+use task::Site;
 
 pub struct FunctionShape {
     site: Site,

@@ -8,10 +8,10 @@ use syn::{
     TypePath, TypeTuple,
 };
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct TypeShape;
 
@@ -125,7 +125,7 @@ impl<'ast> Visit<'ast> for TypeFindings {
 #[cfg(test)]
 mod tests {
     use super::TypeShape;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 struct Flags { ready: bool, pair: (u8, u8) }

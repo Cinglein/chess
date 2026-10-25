@@ -1,11 +1,11 @@
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
-use crate::task::policy::Policy;
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Policy;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct LiteralNames;
 
@@ -86,7 +86,7 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::LiteralNames;
-    use crate::task::policy::Policy;
+    use task::Policy;
 
     const SOURCE: &str = "
 struct W;

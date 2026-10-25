@@ -8,11 +8,11 @@ use syn::{
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
 };
 
-use crate::task::policy::{Limit, Policy};
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
+use task::{Limit, Policy};
 
 pub struct FnShape;
 
@@ -223,8 +223,8 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::FnShape;
-    use crate::task::policy::Policy;
-    use crate::task::source_file::SourceFile;
+    use task::Policy;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 impl Wide {

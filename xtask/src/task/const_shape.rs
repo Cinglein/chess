@@ -7,10 +7,10 @@ use syn::{
     ItemConst, ItemFn, ItemMod,
 };
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct ConstShape;
 
@@ -140,7 +140,7 @@ impl<'ast> Visit<'ast> for ConstContexts<'_> {
 #[cfg(test)]
 mod tests {
     use super::ConstShape;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
 impl Table {

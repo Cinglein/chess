@@ -17,12 +17,12 @@ use reach::Reach;
 use strum::IntoEnumIterator;
 use tool_graph::ToolGraph;
 
-use crate::task::command_line::{CargoArgument, GitArgument, MutantsArgument, Program, Stdout};
-use crate::task::crate_name::CrateName;
-use crate::task::failure::Failure;
-use crate::task::policy::Policy;
-use crate::task::selection::{MutationTool, Selection};
-use crate::task::workspace::Workspace;
+use task::CrateName;
+use task::Failure;
+use task::Policy;
+use task::Workspace;
+use task::{CargoArgument, GitArgument, MutantsArgument, Program, Stdout};
+use task::{MutationTool, Selection};
 
 pub struct Affected;
 
@@ -133,7 +133,7 @@ impl Affected {
 #[cfg(test)]
 mod tests {
     use super::{Affected, Job, PackageGraph, Reach, ToolGraph};
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const METADATA: &str = r#"{"packages": [
         {"name": "board", "dependencies": []},

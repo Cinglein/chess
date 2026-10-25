@@ -6,10 +6,10 @@ use syn::{
     ItemStruct, ItemType, Signature, TraitItemConst, TypePath,
 };
 
-use crate::task::bit_boundary::BitBoundary;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::BitBoundary;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct NumberSites {
     path: PathBuf,

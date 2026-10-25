@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 
 use module_file::ModuleFile;
 
-use crate::task::source_file::SourceFile;
-use crate::task::use_edges::UseEdges;
+use task::SourceFile;
+use task::UseEdges;
 
 pub struct ToolGraph {
     dependencies: BTreeMap<PathBuf, BTreeSet<PathBuf>>,
@@ -70,7 +70,7 @@ impl ToolGraph {
 #[cfg(test)]
 mod tests {
     use super::ToolGraph;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const LINT: &str = "use crate::task::fn_shape::FnShape; pub struct Lint;";
     const FN_SHAPE: &str = "use crate::task::report::Report; pub struct FnShape;";

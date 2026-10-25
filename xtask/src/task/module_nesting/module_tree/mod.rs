@@ -4,10 +4,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use module_path::{Ancestor, InsideSibling, ModulePath};
 
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::use_edges::UseEdges;
-use crate::task::violation::Violation;
+use task::Site;
+use task::SourceFile;
+use task::UseEdges;
+use task::Violation;
 
 pub struct ModuleTree {
     modules: Vec<ModulePath>,

@@ -8,12 +8,12 @@ use syn::{
     TraitItemConst,
 };
 
-use crate::task::bit_boundary::BitBoundary;
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::support_modules::SupportModules;
-use crate::task::violation::Violation;
+use task::BitBoundary;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::SupportModules;
+use task::Violation;
 
 pub struct NamedNumbers;
 
@@ -128,7 +128,7 @@ impl<'ast> Visit<'ast> for Numbers {
 #[cfg(test)]
 mod tests {
     use super::NamedNumbers;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const SOURCE: &str = "
         pub struct Clock;

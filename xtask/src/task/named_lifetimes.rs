@@ -2,11 +2,11 @@ use syn::visit::Visit;
 
 use syn::{Ident, LifetimeParam};
 
-use crate::task::policy::{Floor, Policy};
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
+use task::{Floor, Policy};
 
 pub struct NamedLifetimes;
 
@@ -62,7 +62,7 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::NamedLifetimes;
-    use crate::task::policy::Policy;
+    use task::Policy;
 
     const SOURCE: &str = "
 struct Scan<'a, 'scan> { text: &'a str, path: &'scan Path, owned: &'static str }

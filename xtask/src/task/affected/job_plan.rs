@@ -2,9 +2,9 @@ use std::collections::BTreeSet;
 
 use serde::Serialize;
 
-use crate::task::crate_name::CrateName;
-use crate::task::policy::{Limit, Policy};
-use crate::task::selection::Selection;
+use task::CrateName;
+use task::Selection;
+use task::{Limit, Policy};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct JobPlan {
@@ -50,7 +50,7 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::JobPlan;
-    use crate::task::policy::{Limit, Policy};
+    use task::{Limit, Policy};
 
     const SOME: usize = 2;
     const THREE: usize = 3;

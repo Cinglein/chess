@@ -4,10 +4,10 @@ use std::time::Instant;
 
 use sysinfo::{Pid, Process, ProcessRefreshKind, ProcessesToUpdate, System};
 
-use crate::task::available_gib::AvailableGib;
-use crate::task::failure::Failure;
-use crate::task::policy::{Interval, MemoryShare, Policy};
-use crate::task::site::Site;
+use task::AvailableGib;
+use task::Failure;
+use task::Site;
+use task::{Interval, MemoryShare, Policy};
 
 pub struct MemoryWatch<'policy> {
     root: Pid,
@@ -143,7 +143,7 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::{AvailableGib, Failure, MemoryWatch};
-    use crate::task::policy::Policy;
+    use task::Policy;
 
     #[test]
     fn a_tree_over_its_budget_is_killed_and_the_run_is_refused() {

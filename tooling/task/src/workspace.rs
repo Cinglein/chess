@@ -1,10 +1,10 @@
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 
-use crate::task::command_line::{CommandLine, Program};
-use crate::task::failure::Failure;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
+use crate::command_line::{CommandLine, Program};
+use crate::failure::Failure;
+use crate::site::Site;
+use crate::source_file::SourceFile;
 
 pub struct Workspace {
     root: PathBuf,
@@ -12,19 +12,28 @@ pub struct Workspace {
 
 impl Workspace {
     const EXCLUDED_DIRECTORIES: [&str; 2] = ["target", ".git"];
+    const MANIFEST: &str = "Cargo.toml";
+    const WORKSPACE_TABLE: &str = "[workspace]";
 
+    #[must_use]
     pub fn locate() -> Workspace {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .expect("xtask lives directly under the workspace root")
+            .ancestors()
+            .find(|directory| {
+                fs::read_to_string(directory.join(Self::MANIFEST))
+                    .is_ok_and(|manifest| manifest.contains(Self::WORKSPACE_TABLE))
+            })
+            .expect("the tooling lives inside the workspace")
             .to_path_buf();
         Workspace { root }
     }
 
+    #[must_use]
     pub fn root(&self) -> &Path {
         &self.root
     }
 
+    #[must_use]
     pub fn line(&self, program: Program) -> CommandLine {
         CommandLine::new(program).in_directory(self.root.clone())
     }
@@ -38,6 +47,7 @@ impl Workspace {
             .collect()
     }
 
+    #[must_use]
     pub fn relative(&self, path: &Path) -> PathBuf {
         path.strip_prefix(&self.root).unwrap_or(path).to_path_buf()
     }

@@ -1,8 +1,8 @@
-use crate::task::command_line::{CargoArgument, Program};
-use crate::task::crate_name::CrateName;
-use crate::task::failure::Failure;
-use crate::task::selection::Selection;
-use crate::task::workspace::Workspace;
+use task::CrateName;
+use task::Failure;
+use task::Selection;
+use task::Workspace;
+use task::{CargoArgument, Program};
 
 pub struct Wasm;
 

@@ -4,12 +4,12 @@ mod foreign_references;
 use export::Export;
 use foreign_references::ForeignReferences;
 
-use crate::task::binary_files::BinaryFiles;
+use task::BinaryFiles;
 
-use crate::task::report::Report;
-use crate::task::site::Site;
-use crate::task::source_file::SourceFile;
-use crate::task::violation::Violation;
+use task::Report;
+use task::Site;
+use task::SourceFile;
+use task::Violation;
 
 pub struct PublicSurface;
 
@@ -48,7 +48,7 @@ impl PublicSurface {
 #[cfg(test)]
 mod tests {
     use super::PublicSurface;
-    use crate::task::source_file::SourceFile;
+    use task::SourceFile;
 
     const LIB: &str = "mod x; pub use x::{Used, Unused, Wired}; pub use x::Original as Seen;";
     const MAIN: &str = "use a::Used; fn main() { a::Seen::go(); }";

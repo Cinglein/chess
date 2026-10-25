@@ -5,7 +5,7 @@ use syn::visit::Visit;
 use syn::{Fields, ItemEnum, ItemImpl, ItemType};
 
 use super::type_name::TypeName;
-use crate::task::source_file::SourceFile;
+use task::SourceFile;
 
 #[derive(Default)]
 pub struct Declarations {

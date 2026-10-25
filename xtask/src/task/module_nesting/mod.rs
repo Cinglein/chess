@@ -2,9 +2,9 @@ mod module_tree;
 
 use module_tree::ModuleTree;
 
-use crate::task::policy::{Limit, Policy};
-use crate::task::report::Report;
-use crate::task::source_file::SourceFile;
+use task::Report;
+use task::SourceFile;
+use task::{Limit, Policy};
 
 pub struct ModuleNesting;
 
@@ -25,8 +25,8 @@ mod tests {
     use settings::EmbeddedDefaults;
 
     use super::ModuleNesting;
-    use crate::task::policy::Policy;
-    use crate::task::source_file::SourceFile;
+    use task::Policy;
+    use task::SourceFile;
 
     const LIB: &str = "mod hub; mod spoke; mod rim; pub use hub::Hub;";
     const HUB: &str = "use crate::spoke::Spoke; pub struct Hub(Spoke);";
