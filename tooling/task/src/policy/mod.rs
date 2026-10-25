@@ -31,6 +31,7 @@ use vague::Vague;
 use vocabulary::Vocabulary;
 
 use crate::available_gib::AvailableGib;
+use crate::name::Name;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -81,19 +82,19 @@ impl Policy {
     }
 
     #[must_use]
-    pub fn is_vague(&self, name: &str) -> bool {
-        !self.floor(Floor::FnName).allows(name.len()) || self.lists::<Vague>(name)
+    pub fn is_vague(&self, name: &Name) -> bool {
+        !self.floor(Floor::FnName).allows(name.length()) || self.lists::<Vague>(name)
     }
 
     #[must_use]
-    pub fn lists<V: Vocabulary>(&self, word: &str) -> bool {
-        V::entries(self).iter().any(|entry| entry == word)
+    pub fn lists<V: Vocabulary>(&self, word: &impl PartialEq<String>) -> bool {
+        V::entries(self).iter().any(|entry| word == entry)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Limit, Policy};
+    use super::{Limit, Name, Policy};
     use settings::EmbeddedDefaults;
     const CHECK: &str = "check";
     const LONG_ENOUGH: &str = "report";
@@ -105,9 +106,9 @@ mod tests {
         assert_eq!(read, Policy::defaults());
         let costs = read.mutant_millis();
         assert!(
-            read.is_vague(CHECK)
-                && !read.is_vague(LONG_ENOUGH)
-                && costs.for_crate(&"board".parse().unwrap())
+            read.is_vague(&Name::from(CHECK))
+                && !read.is_vague(&Name::from(LONG_ENOUGH))
+                && costs.for_crate(&"engine".parse().unwrap())
                     != costs.for_crate(&"unlisted".parse().unwrap())
         );
         assert!(

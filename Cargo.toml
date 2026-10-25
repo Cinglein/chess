@@ -81,9 +81,6 @@ opt-level = 0
 [profile.test.package.public_surface]
 opt-level = 0
 
-[profile.test.package.rustfmt.toml]
-opt-level = 0
-
 [profile.test.package.settings_shape]
 opt-level = 0
 

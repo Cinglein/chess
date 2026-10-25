@@ -3,10 +3,11 @@ use std::collections::BTreeSet;
 use syn::visit::Visit;
 use syn::{ItemEnum, ItemStruct, ItemTrait};
 
+use task::Name;
 use task::SourceFile;
 
 #[derive(Default)]
-pub struct WorkspaceTypes(BTreeSet<String>);
+pub struct WorkspaceTypes(BTreeSet<Name>);
 
 impl WorkspaceTypes {
     pub fn collect(files: &[SourceFile]) -> WorkspaceTypes {
@@ -18,21 +19,21 @@ impl WorkspaceTypes {
             })
     }
 
-    pub fn declares(&self, name: &str) -> bool {
+    pub fn declares(&self, name: &Name) -> bool {
         self.0.contains(name)
     }
 }
 
 impl<'ast> Visit<'ast> for WorkspaceTypes {
     fn visit_item_struct(&mut self, item: &'ast ItemStruct) {
-        self.0.insert(item.ident.to_string());
+        self.0.insert(Name::from(&item.ident));
     }
 
     fn visit_item_enum(&mut self, item: &'ast ItemEnum) {
-        self.0.insert(item.ident.to_string());
+        self.0.insert(Name::from(&item.ident));
     }
 
     fn visit_item_trait(&mut self, item: &'ast ItemTrait) {
-        self.0.insert(item.ident.to_string());
+        self.0.insert(Name::from(&item.ident));
     }
 }

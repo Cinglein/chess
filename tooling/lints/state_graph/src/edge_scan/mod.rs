@@ -15,6 +15,7 @@ use super::declarations::Declarations;
 use super::function_shape::FunctionShape;
 use super::impl_context::ImplContext;
 use super::type_name::TypeName;
+use task::Name;
 use task::Site;
 use task::SourceFile;
 use task::Violation;
@@ -23,7 +24,7 @@ use task::{Limit, Policy};
 pub struct EdgeScan<'scan> {
     declarations: &'scan Declarations,
     path: PathBuf,
-    edges: BTreeMap<Edge, BTreeMap<String, Site>>,
+    edges: BTreeMap<Edge, BTreeMap<Name, Site>>,
     violations: Vec<Violation>,
 }
 
@@ -67,7 +68,7 @@ impl<'scan> EdgeScan<'scan> {
                     )
                 });
         let fan_out = self.edges.iter().fold(
-            BTreeMap::<&TypeName, BTreeSet<&String>>::new(),
+            BTreeMap::<&TypeName, BTreeSet<&Name>>::new(),
             |mut fan_out, (edge, names)| {
                 fan_out
                     .entry(edge.source())

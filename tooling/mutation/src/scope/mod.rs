@@ -6,7 +6,7 @@ use std::collections::BTreeSet;
 use std::env;
 use std::fs;
 
-use affected::{Changes, Reach, TestedCrates};
+use affected::{Affected, Changes, Packing, Reach, TestedCrates};
 use mutants_run::MutantsRun;
 use output_directory::OutputDirectory;
 use task::CrateName;
@@ -15,7 +15,8 @@ use task::Shard;
 use task::Site;
 use task::Slice;
 use task::Workspace;
-use task::{CommandLine, GitArgument, MutantsArgument, Program, Stdout};
+use task::{CargoArgument, CommandLine, GitArgument, MutantsArgument, Program, Stdout};
+use task::{Interval, Policy};
 use task::{MutationTool, Selection};
 use test_packages::TestPackages;
 
@@ -36,6 +37,7 @@ impl Scope {
         line: CommandLine,
         workspace: &Workspace,
         selection: &Selection,
+        policy: &Policy,
     ) -> Result<Vec<MutantsRun>, Failure> {
         let output = OutputDirectory::cleared(workspace.root())?;
         let line = line.argument(MutantsArgument::InPlace);
@@ -45,14 +47,10 @@ impl Scope {
                 let line = line
                     .argument(MutantsArgument::InDiff)
                     .argument(Self::DIFF_FILE);
-                let slice = env::var(Self::SLICE_VARIABLE)
-                    .ok()
-                    .map(|spelled| spelled.parse::<Slice>())
-                    .transpose()?;
-                Self::changed_lines(line, workspace, &output, slice)
+                Self::changed_lines(line, workspace, &output, policy)
             }
             Scope::Workspace => match env::var(Self::SHARD_VARIABLE) {
-                Ok(spelled) => Self::one_shard(&line, workspace, &output, &spelled.parse()?),
+                Ok(spelled) => Self::shard_runs(&line, workspace, &output, &[spelled.parse()?]),
                 Err(_) => Ok(vec![MutantsRun::new(
                     line.argument(MutantsArgument::Output)
                         .argument(output.root().display())
@@ -68,59 +66,66 @@ impl Scope {
         line: CommandLine,
         workspace: &Workspace,
         output: &OutputDirectory,
-        slice: Option<Slice>,
+        policy: &Policy,
     ) -> Result<Vec<MutantsRun>, Failure> {
         let changed: BTreeSet<CrateName> = Changes::SinceMain
             .reaches(workspace)?
             .iter()
             .filter_map(Reach::package)
             .collect();
-        let sliced = |line: CommandLine| match slice {
-            Some(slice) => line.argument(MutantsArgument::Shard).argument(slice),
-            None => line,
-        };
+        let slice = env::var(Self::SLICE_VARIABLE)
+            .ok()
+            .map(|spelled| spelled.parse::<Slice>())
+            .transpose()?;
         if changed.is_empty() {
+            let sliced = match slice {
+                Some(slice) => line.argument(MutantsArgument::Shard).argument(slice),
+                None => line,
+            };
             Ok(vec![MutantsRun::new(
-                sliced(line)
+                sliced
                     .argument(MutantsArgument::Output)
                     .argument(output.root().display())
                     .argument(MutantsArgument::TestWorkspaceOn),
                 output.root().to_path_buf(),
             )])
         } else {
+            let listing = workspace
+                .line(Program::Cargo)
+                .argument(CargoArgument::Mutants)
+                .argument(MutantsArgument::InDiff)
+                .argument(Self::DIFF_FILE);
+            let loads = Affected::loads(listing, &Selection::Crates(changed), policy)?;
+            let packed = Packing::shards(&loads, policy.interval(Interval::PerSlice));
+            let shards = match slice {
+                Some(slice) => slice.picked(packed),
+                None => packed,
+            };
             let line = line.argument(MutantsArgument::BaselineSkip);
-            match slice.and_then(|slice| slice.picked(changed.iter().cloned().collect())) {
-                Some(picked) => Self::one_shard(
-                    &line,
-                    workspace,
-                    output,
-                    &Shard::Whole(picked.into_iter().collect()),
-                ),
-                None => Self::one_shard(&sliced(line), workspace, output, &Shard::Whole(changed)),
-            }
+            Self::shard_runs(&line, workspace, output, &shards)
         }
     }
 
-    fn one_shard(
+    fn shard_runs(
         line: &CommandLine,
         workspace: &Workspace,
         output: &OutputDirectory,
-        shard: &Shard,
+        shards: &[Shard],
     ) -> Result<Vec<MutantsRun>, Failure> {
         let graph = workspace.packages();
         let tested = TestedCrates::collect(&workspace.source_files()?);
-        shard
-            .runs()
+        shards
             .iter()
+            .flat_map(Shard::runs)
             .map(|run| {
-                let directory = output.prepared_for(run)?;
+                let directory = output.prepared_for(&run)?;
                 Ok(MutantsRun::new(
                     line.clone()
                         .argument(MutantsArgument::Output)
                         .argument(directory.display())
                         .argument(MutantsArgument::TestWorkspaceOff)
                         .arguments(run.arguments())
-                        .arguments(TestPackages::around(run, graph, &tested).arguments()),
+                        .arguments(TestPackages::around(&run, graph, &tested).arguments()),
                     directory,
                 ))
             })

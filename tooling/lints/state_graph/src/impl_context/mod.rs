@@ -7,6 +7,7 @@ use syn::{ImplItemFn, ItemImpl, Visibility};
 use super::declarations::Declarations;
 use super::function_shape::FunctionShape;
 use super::type_name::TypeName;
+use task::Name;
 
 pub struct ImplContext {
     self_type: TypeName,
@@ -20,7 +21,7 @@ impl ImplContext {
             .trait_
             .as_ref()
             .and_then(|(_, path, _)| path.segments.last())
-            .map(|segment| segment.ident.to_string());
+            .map(|segment| Name::from(&segment.ident));
         let kind = match (trait_name, declarations.is_vertex(&self_type)) {
             (Some(name), true) => ImplKind::TraitOnVertex(name),
             (Some(name), false) => ImplKind::TraitOnValue(name),
@@ -46,10 +47,10 @@ impl ImplContext {
         self.in_trait() || matches!(function.vis, Visibility::Public(_))
     }
 
-    pub fn edge_name(&self, function: &ImplItemFn) -> String {
+    pub fn edge_name(&self, function: &ImplItemFn) -> Name {
         self.kind
             .trait_name()
-            .map_or_else(|| function.sig.ident.to_string(), str::to_owned)
+            .map_or_else(|| Name::from(&function.sig.ident), Name::clone)
     }
 
     pub fn edge_source(&self, shape: &FunctionShape) -> Option<TypeName> {

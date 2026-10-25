@@ -1,11 +1,13 @@
 use syn::visit::Visit;
 use syn::{ExprPath, Pat, PatStruct, PatTupleStruct, Path};
 
+use task::Name;
+
 #[derive(Default)]
-pub struct VariantPaths(Vec<String>);
+pub struct VariantPaths(Vec<Name>);
 
 impl VariantPaths {
-    pub fn in_pat(pat: &Pat) -> Vec<String> {
+    pub fn in_pat(pat: &Pat) -> Vec<Name> {
         let mut paths = VariantPaths::default();
         paths.visit_pat(pat);
         paths.0
@@ -16,7 +18,7 @@ impl VariantPaths {
             path.segments
                 .iter()
                 .nth_back(1)
-                .map(|parent| parent.ident.to_string()),
+                .map(|parent| Name::from(&parent.ident)),
         );
     }
 }

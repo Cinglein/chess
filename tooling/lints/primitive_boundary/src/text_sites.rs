@@ -8,6 +8,7 @@ use task::Site;
 use task::SourceFile;
 use task::Violation;
 use task::Walk;
+use task::{Name, Whole};
 
 #[derive(Default)]
 pub struct TextSites {
@@ -57,7 +58,7 @@ impl TextSites {
             .as_ref()
             .and_then(|(_, path, _)| path.segments.last())
             .map(|segment| segment.ident.clone())
-            .filter(|ident| Self::DOOR_TRAITS.contains(&ident.to_string().as_str()))
+            .filter(|ident| Name::from(ident).matches::<Whole>(&Self::DOOR_TRAITS))
     }
 
     fn text_constructor(call: &ExprCall) -> Option<Ident> {
@@ -88,9 +89,9 @@ impl<'ast> Visit<'ast> for TextSites {
     }
 
     fn visit_expr_method_call(&mut self, call: &'ast ExprMethodCall) {
-        let name = call.method.to_string();
+        let name = Name::from(&call.method);
         self.found.extend(
-            (Self::INSPECTING.contains(&name.as_str()) || Self::PRODUCING.contains(&name.as_str()))
+            (name.matches::<Whole>(&Self::INSPECTING) || name.matches::<Whole>(&Self::PRODUCING))
                 .then(|| call.method.clone()),
         );
         syn::visit::visit_expr_method_call(self, call);

@@ -9,6 +9,7 @@ mod tested_crates;
 
 pub use changes::Changes;
 pub use job::Job;
+pub use job_plan::Packing;
 pub use plan::Plan;
 pub use reach::Reach;
 pub use tested_crates::TestedCrates;
@@ -26,7 +27,7 @@ use task::Failure;
 use task::PackageGraph;
 use task::Policy;
 use task::Workspace;
-use task::{CargoArgument, MutantsArgument, Program, Stdout};
+use task::{CargoArgument, CommandLine, MutantsArgument, Program, Stdout};
 use task::{MutationTool, Selection};
 
 pub struct Affected;
@@ -35,7 +36,15 @@ impl Affected {
     pub fn run(workspace: &Workspace, policy: &Policy, plan: Plan) -> Result<(), Failure> {
         let loads = plan
             .job(Job::Full)
-            .map(|full| Self::loads(workspace, &full.selection(), policy))
+            .map(|full| {
+                Self::loads(
+                    workspace
+                        .line(Program::Cargo)
+                        .argument(CargoArgument::Mutants),
+                    &full.selection(),
+                    policy,
+                )
+            })
             .transpose()?;
         let sharded = match loads {
             Some(loads) => plan.with_full_sharded(&loads, policy),
@@ -79,8 +88,8 @@ impl Affected {
             .collect()
     }
 
-    fn loads(
-        workspace: &Workspace,
+    pub fn loads(
+        listing: CommandLine,
         selection: &Selection,
         policy: &Policy,
     ) -> Result<Vec<CrateLoad>, Failure> {
@@ -88,9 +97,7 @@ impl Affected {
             Ok(Vec::new())
         } else {
             let counts = ListedMutant::tally(
-                &workspace
-                    .line(Program::Cargo)
-                    .argument(CargoArgument::Mutants)
+                &listing
                     .argument(MutantsArgument::List)
                     .argument(MutantsArgument::Json)
                     .arguments(selection.arguments::<MutationTool>())

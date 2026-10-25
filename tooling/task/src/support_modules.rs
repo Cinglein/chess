@@ -3,12 +3,13 @@ use std::path::{Path, PathBuf};
 use syn::ItemMod;
 use syn::visit::Visit;
 
+use crate::name::Name;
 use crate::source_file::SourceFile;
 use crate::walk::Walk;
 
 #[derive(Default)]
 pub struct SupportModules {
-    names: Vec<String>,
+    names: Vec<Name>,
 }
 
 impl SupportModules {
@@ -22,7 +23,7 @@ impl SupportModules {
             .iter()
             .flat_map(|name| {
                 [
-                    directory.join(format!("{name}.rs")),
+                    directory.join(name).with_extension("rs"),
                     directory.join(name).join("mod.rs"),
                 ]
             })
@@ -43,7 +44,7 @@ impl<'ast> Visit<'ast> for SupportModules {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
         self.names.extend(
             (module.content.is_none() && SourceFile::walk(module) == Walk::Skipped)
-                .then(|| module.ident.to_string()),
+                .then(|| Name::from(&module.ident)),
         );
         syn::visit::visit_item_mod(self, module);
     }

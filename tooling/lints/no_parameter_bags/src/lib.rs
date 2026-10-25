@@ -4,6 +4,7 @@ mod name_uses;
 use bag_candidates::BagCandidates;
 use name_uses::NameUses;
 
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -41,7 +42,7 @@ impl NoParameterBags {
         )
     }
 
-    fn has_one_consumer_besides_index(uses: &[NameUses], index: usize, name: &str) -> bool {
+    fn has_one_consumer_besides_index(uses: &[NameUses], index: usize, name: &Name) -> bool {
         uses.iter()
             .enumerate()
             .filter(|(other, file_uses)| *other != index && file_uses.mentions(name))

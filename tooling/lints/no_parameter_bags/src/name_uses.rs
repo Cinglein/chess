@@ -3,10 +3,11 @@ use std::collections::BTreeSet;
 use syn::Ident;
 use syn::visit::Visit;
 
+use task::Name;
 use task::SourceFile;
 
 #[derive(Default)]
-pub struct NameUses(BTreeSet<String>);
+pub struct NameUses(BTreeSet<Name>);
 
 impl NameUses {
     pub fn in_file(file: &SourceFile) -> NameUses {
@@ -15,13 +16,13 @@ impl NameUses {
         uses
     }
 
-    pub fn mentions(&self, name: &str) -> bool {
+    pub fn mentions(&self, name: &Name) -> bool {
         self.0.contains(name)
     }
 }
 
 impl<'ast> Visit<'ast> for NameUses {
     fn visit_ident(&mut self, ident: &'ast Ident) {
-        self.0.insert(ident.to_string());
+        self.0.insert(Name::from(ident));
     }
 }
