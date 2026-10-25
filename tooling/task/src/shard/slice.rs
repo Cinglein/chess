@@ -48,3 +48,18 @@ impl FromStr for Slice {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Slice;
+    const SECOND_OF_THREE: Slice = Slice::new(1, 3);
+    const ITEMS: [char; 5] = ['a', 'b', 'c', 'd', 'e'];
+    #[test]
+    fn a_slice_takes_every_third_item_from_its_index_and_nothing_from_fewer_items_than_slices() {
+        let picked = SECOND_OF_THREE.picked(ITEMS.to_vec());
+        assert_eq!(
+            (picked, SECOND_OF_THREE.picked(ITEMS[..2].to_vec())),
+            (Some(vec!['b', 'e']), None)
+        );
+    }
+}
