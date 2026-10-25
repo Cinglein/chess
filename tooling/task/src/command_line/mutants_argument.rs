@@ -25,4 +25,6 @@ pub enum MutantsArgument {
     TestWorkspaceOff,
     #[strum(serialize = "--baseline=skip")]
     BaselineSkip,
+    #[strum(serialize = "--timeout")]
+    Timeout,
 }

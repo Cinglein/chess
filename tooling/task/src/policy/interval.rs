@@ -11,4 +11,5 @@ pub enum Interval {
     Total,
     PerShard,
     PerCrate,
+    TestTimeout,
 }

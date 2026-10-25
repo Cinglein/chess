@@ -22,6 +22,11 @@ impl Millis {
     }
 
     #[must_use]
+    pub const fn whole_seconds(self) -> u64 {
+        self.duration().as_secs()
+    }
+
+    #[must_use]
     pub fn times(self, count: usize) -> Millis {
         Millis(self.0 * u64::try_from(count).unwrap_or(u64::MAX))
     }
