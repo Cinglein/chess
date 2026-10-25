@@ -1,8 +1,7 @@
-use std::env;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command};
 
+use crate::task::command_line::{CommandLine, Program};
 use crate::task::failure::Failure;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
@@ -26,66 +25,8 @@ impl Workspace {
         &self.root
     }
 
-    pub fn cargo(&self, args: &[&str]) -> Result<(), Failure> {
-        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-        Command::new(cargo)
-            .args(args)
-            .current_dir(&self.root)
-            .status()
-            .ok()
-            .filter(std::process::ExitStatus::success)
-            .map(|_| ())
-            .ok_or_else(|| Failure::Cargo(args.join(" ")))
-    }
-
-    pub fn spawn_cargo(&self, args: &[&str]) -> Result<Child, Failure> {
-        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-        Command::new(cargo)
-            .args(args)
-            .current_dir(&self.root)
-            .spawn()
-            .map_err(|_| Failure::Cargo(args.join(" ")))
-    }
-
-    pub fn git_output(&self, args: &[&str]) -> Result<String, Failure> {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(&self.root)
-            .output()
-            .map_err(|_| Failure::Git(args.join(" ")))?;
-        if output.status.success() {
-            Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-        } else {
-            Err(Failure::Git(args.join(" ")))
-        }
-    }
-
-    pub fn cargo_stdout(&self, args: &[&str]) -> Result<String, Failure> {
-        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-        let output = Command::new(cargo)
-            .args(args)
-            .current_dir(&self.root)
-            .output()
-            .map_err(|_| Failure::Cargo(args.join(" ")))?;
-        output
-            .status
-            .success()
-            .then(|| String::from_utf8_lossy(&output.stdout).into_owned())
-            .ok_or_else(|| Failure::Cargo(args.join(" ")))
-    }
-
-    pub fn cargo_output(&self, args: &[&str]) -> Result<String, Failure> {
-        let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-        let output = Command::new(cargo)
-            .args(args)
-            .current_dir(&self.root)
-            .output()
-            .map_err(|_| Failure::Cargo(args.join(" ")))?;
-        output
-            .status
-            .success()
-            .then(|| String::from_utf8_lossy(&output.stderr).into_owned())
-            .ok_or_else(|| Failure::Cargo(args.join(" ")))
+    pub fn line(&self, program: Program) -> CommandLine {
+        CommandLine::new(program).in_directory(self.root.clone())
     }
 
     pub fn source_files(&self) -> Result<Vec<SourceFile>, Failure> {

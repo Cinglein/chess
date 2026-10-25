@@ -82,6 +82,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   crate root is exempt. `cargo xtask module-nesting` enforces all three.
 - Derive enum plumbing with `strum` (`VariantArray`, `EnumCount`, `FromRepr`, `EnumIter`,
   `EnumString`, `Display`) instead of hand-written variant arrays, counts, or letter tables.
+  Fixed words are variants, never literals: xtask builds every cargo, git, gh, and test-binary
+  invocation as a `CommandLine` of typed words (`CargoWord`, `GitWord`, `MutantsWord`, and the
+  rest) plus `Display` values such as a `CrateName`, and `Workspace::line` roots it.
 - Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
   cast is allowed only inside a `const fn`, `const` item, or `const` block, or in one of the
   three bit boundary files `square.rs`, `bitboard.rs`, and `slider/magic.rs`; elsewhere use

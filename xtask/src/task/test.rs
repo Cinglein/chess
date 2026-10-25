@@ -1,3 +1,4 @@
+use crate::task::command_line::{CargoWord, Program};
 use crate::task::failure::Failure;
 use crate::task::selection::Selection;
 use crate::task::workspace::Workspace;
@@ -10,12 +11,11 @@ impl Test {
             println!("test: no crate affected");
             return Ok(());
         }
-        let arguments: Vec<String> = [String::from("test")]
-            .into_iter()
-            .chain(selection.package_arguments())
-            .chain([String::from("--all-features")])
-            .collect();
-        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        workspace.cargo(&borrowed)
+        workspace
+            .line(Program::Cargo)
+            .word(CargoWord::Test)
+            .words(selection.package_words())
+            .word(CargoWord::AllFeatures)
+            .run()
     }
 }

@@ -1,5 +1,6 @@
 use std::fs;
 
+use crate::task::command_line::{CargoWord, CommandLine, GitWord, MutantsWord, Program};
 use crate::task::failure::Failure;
 use crate::task::policy::{Limit, Policy};
 use crate::task::selection::Selection;
@@ -23,44 +24,46 @@ impl Scope {
     ) -> Result<(), Failure> {
         match self {
             Scope::ChangedLines => Ok(()),
-            Scope::Workspace => {
-                let arguments: Vec<String> = [String::from("test")]
-                    .into_iter()
-                    .chain(selection.package_arguments())
-                    .chain([String::from("--lib"), String::from("--no-run")])
-                    .collect();
-                let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-                workspace.cargo(&borrowed)
-            }
+            Scope::Workspace => workspace
+                .line(Program::Cargo)
+                .word(CargoWord::Test)
+                .words(selection.package_words())
+                .word(CargoWord::Lib)
+                .word(CargoWord::NoRun)
+                .run(),
         }
     }
 
-    pub fn arguments(
+    pub fn applied(
         self,
+        line: CommandLine,
         workspace: &Workspace,
         selection: &Selection,
         policy: &Policy,
-    ) -> Result<Vec<String>, Failure> {
+    ) -> Result<CommandLine, Failure> {
         match self {
             Scope::ChangedLines => {
-                let diff = workspace.git_output(&["diff", "--merge-base", Self::BASE])?;
+                let diff = workspace
+                    .line(Program::Git)
+                    .word(GitWord::Diff)
+                    .word(GitWord::MergeBase)
+                    .word(Self::BASE)
+                    .stdout()?;
                 fs::write(workspace.root().join(Self::DIFF_FILE), diff).map_err(|error| {
                     Failure::Io {
                         site: Site::File(Self::DIFF_FILE.to_owned()),
                         error,
                     }
                 })?;
-                Ok(vec![
-                    String::from("--jobs"),
-                    policy.limit(Limit::ParallelJobs).count().to_string(),
-                    String::from("--in-diff"),
-                    String::from(Self::DIFF_FILE),
-                ])
+                Ok(line
+                    .word(MutantsWord::Jobs)
+                    .word(policy.limit(Limit::ParallelJobs).count())
+                    .word(MutantsWord::InDiff)
+                    .word(Self::DIFF_FILE))
             }
-            Scope::Workspace => Ok([String::from("--in-place")]
-                .into_iter()
-                .chain(selection.explicit_packages())
-                .collect()),
+            Scope::Workspace => Ok(line
+                .word(MutantsWord::InPlace)
+                .words(selection.explicit_packages())),
         }
     }
 }

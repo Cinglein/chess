@@ -1,6 +1,10 @@
-use std::env;
-use std::process::Command;
+mod gh_word;
 
+use std::env;
+
+use gh_word::GhWord;
+
+use crate::task::command_line::{CommandLine, Program};
 use crate::task::failure::Failure;
 
 pub struct Stacked;
@@ -42,29 +46,20 @@ impl Stacked {
     }
 
     fn base_and_stack(owner: &str, name: &str, number: &str) -> Result<String, Failure> {
-        let output = Command::new("gh")
-            .args([
-                "api",
-                "graphql",
-                "-f",
-                &format!("query={}", Self::QUERY),
-                "-F",
-                &format!("owner={owner}"),
-                "-F",
-                &format!("name={name}"),
-                "-F",
-                &format!("number={number}"),
-                "--jq",
-                Self::BASE_AND_STACK,
-            ])
-            .output()
-            .map_err(|error| Failure::GitHub(error.to_string()))?;
-        if output.status.success() {
-            Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
-        } else {
-            Err(Failure::GitHub(
-                String::from_utf8_lossy(&output.stderr).trim().to_owned(),
-            ))
-        }
+        CommandLine::new(Program::GitHub)
+            .word(GhWord::Api)
+            .word(GhWord::Graphql)
+            .word(GhWord::Field)
+            .word(format!("query={}", Self::QUERY))
+            .word(GhWord::TypedField)
+            .word(format!("owner={owner}"))
+            .word(GhWord::TypedField)
+            .word(format!("name={name}"))
+            .word(GhWord::TypedField)
+            .word(format!("number={number}"))
+            .word(GhWord::Jq)
+            .word(Self::BASE_AND_STACK)
+            .stdout()
+            .map(|answer| answer.trim().to_owned())
     }
 }

@@ -9,10 +9,8 @@ use crate::task::site::Site;
 pub enum Failure {
     #[error("{0}")]
     Usage(String),
-    #[error("cargo {0} failed")]
-    Cargo(String),
-    #[error("git {0} failed")]
-    Git(String),
+    #[error("{0} failed")]
+    Command(String),
     #[error("gh failed: {0}")]
     GitHub(String),
     #[error("cargo metadata is not the shape expected: {0}")]

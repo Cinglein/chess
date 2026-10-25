@@ -8,6 +8,7 @@ use package_graph::PackageGraph;
 use plan::Plan;
 use reach::Reach;
 
+use crate::task::command_line::{CargoWord, GitWord, MutantsWord, Program};
 use crate::task::crate_name::CrateName;
 use crate::task::failure::Failure;
 use crate::task::policy::Policy;
@@ -30,18 +31,30 @@ impl Affected {
         if crates.is_empty() {
             return Ok(0);
         }
-        let arguments: Vec<String> = [String::from("mutants"), String::from("--list")]
-            .into_iter()
-            .chain(Selection::Crates(crates.clone()).explicit_packages())
-            .collect();
-        let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
-        Ok(workspace.cargo_stdout(&borrowed)?.lines().count())
+        Ok(workspace
+            .line(Program::Cargo)
+            .word(CargoWord::Mutants)
+            .word(MutantsWord::List)
+            .words(Selection::Crates(crates.clone()).explicit_packages())
+            .stdout()?
+            .lines()
+            .count())
     }
 
     pub fn reached(workspace: &Workspace) -> Result<BTreeSet<CrateName>, Failure> {
-        let changed = workspace.git_output(&["diff", "--name-only", "--merge-base", Self::BASE])?;
-        let metadata =
-            workspace.cargo_stdout(&["metadata", "--format-version", "1", "--no-deps"])?;
+        let changed = workspace
+            .line(Program::Git)
+            .word(GitWord::Diff)
+            .word(GitWord::NameOnly)
+            .word(GitWord::MergeBase)
+            .word(Self::BASE)
+            .stdout()?;
+        let metadata = workspace
+            .line(Program::Cargo)
+            .word(CargoWord::Metadata)
+            .word(CargoWord::FormatVersionOne)
+            .word(CargoWord::NoDeps)
+            .stdout()?;
         let graph = PackageGraph::from_metadata(&metadata)?;
         Ok(Self::crates(&graph, changed.lines()))
     }
