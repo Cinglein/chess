@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use quote::ToTokens;
 use syn::visit::Visit;
-use syn::{FnArg, ImplItem, ItemImpl, ItemMod, ReturnType, Signature, Visibility};
+use syn::{FnArg, ImplItem, ItemImpl, ItemMod, ReturnType, Signature};
 
 use crate::task::report::Report;
 use crate::task::site::Site;
@@ -14,7 +14,7 @@ pub struct DistinctSignatures;
 impl DistinctSignatures {
     pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
-            "two helpers on one type with the same signature hide a missing type",
+            "two functions on one type with the same signature hide a missing type or type parameter",
             files
                 .iter()
                 .flat_map(|file| {
@@ -22,7 +22,7 @@ impl DistinctSignatures {
                         .into_iter()
                         .map(move |(shape, names)| {
                             Violation::new(
-                                Site::File(file.path().to_owned()),
+                                Site::File(file.path().into()),
                                 format!(
                                     "{} share the signature {shape}; distinguish the types they take or return",
                                     names.join(", ")
@@ -105,7 +105,7 @@ impl<'ast> Visit<'ast> for SignatureIndex {
             return;
         }
         let helpers = item.items.iter().filter_map(|member| match member {
-            ImplItem::Fn(function) if !matches!(function.vis, Visibility::Public(_)) => Some((
+            ImplItem::Fn(function) => Some((
                 Shape::describe(item, &function.sig),
                 function.sig.ident.to_string(),
             )),
@@ -131,10 +131,10 @@ impl W {
     pub(crate) fn epsilon(self, other: u8) -> u8 { other }
 }
 ";
-    const SHARED: [&str; 2] = ["alpha", "beta"];
+    const SHARED: [&str; 3] = ["alpha", "beta", "gamma"];
 
     #[test]
-    fn groups_non_pub_fns_of_one_type_by_receiver_parameters_and_return() {
+    fn groups_every_fn_of_one_type_by_receiver_parameters_and_return_public_or_not() {
         let parsed = syn::parse_file(SOURCE).expect("valid rust");
         let shared = DistinctSignatures::shared(&parsed);
         assert_eq!(shared.len(), 1);
