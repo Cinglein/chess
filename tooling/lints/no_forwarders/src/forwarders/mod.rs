@@ -8,7 +8,7 @@ use impl_target::ImplTarget;
 use parameter::Parameter;
 use struct_fields::StructFields;
 use syn::visit::Visit;
-use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, Stmt};
+use syn::{Expr, ExprField, ImplItemFn, ItemImpl, ItemMod, ItemStruct, PathSegment, Stmt};
 
 use super::forwarder::Forwarder;
 use super::workspace_types::WorkspaceTypes;
@@ -116,6 +116,11 @@ impl Forwarders<'_> {
         }
     }
 
+    fn targeting(&mut self, segment: &PathSegment) {
+        self.self_type = segment.ident.to_string();
+        self.concrete = StructFields::type_arguments(segment);
+    }
+
     fn forwards(expr: &Expr, params: &[Parameter]) -> bool {
         match expr {
             Expr::Path(path) => Parameter::named_by(params, &path.path).is_some(),
@@ -140,14 +145,7 @@ impl<'ast> Visit<'ast> for Forwarders<'_> {
     }
 
     fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
-        match ImplTarget::describe(item) {
-            ImplTarget::Inherent(segment) => {
-                self.self_type = segment.ident.to_string();
-                self.concrete = StructFields::type_arguments(segment);
-                syn::visit::visit_item_impl(self, item);
-            }
-            ImplTarget::Skipped => {}
-        }
+        ImplTarget::describe(item).walked_by(self, item);
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {

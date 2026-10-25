@@ -45,10 +45,6 @@ impl ExpressionFlow {
         flows.violations
     }
 
-    fn lonely_if(expr: &ExprIf) -> Option<Span> {
-        expr.else_branch.is_none().then_some(expr.if_token.span)
-    }
-
     fn is_dropped(statement: &Stmt, last: bool) -> bool {
         match statement {
             Stmt::Expr(Expr::If(_) | Expr::Match(_), semicolon) => semicolon.is_some() || !last,
@@ -97,6 +93,10 @@ impl Flows<'_> {
         self.violations.push(Self::found(self.path, span, message));
     }
 
+    fn lonely_if(expr: &ExprIf) -> Option<Span> {
+        expr.else_branch.is_none().then_some(expr.if_token.span)
+    }
+
     fn visit_body(&mut self, body: &Block) {
         let mut locals = MutableLocals::default();
         locals.visit_block(body);
@@ -125,24 +125,15 @@ impl<'ast> Visit<'ast> for Flows<'_> {
     fn visit_impl_item_const(&mut self, _: &'ast ImplItemConst) {}
 
     fn visit_item_fn(&mut self, function: &'ast ItemFn) {
-        match FnBody::scanned_unless_const(&function.sig, Some(&function.block)) {
-            FnBody::Scanned(body) => self.visit_body(body),
-            FnBody::Skipped => {}
-        }
+        FnBody::scanned_unless_const(&function.sig, Some(&function.block)).walked_by(self);
     }
 
     fn visit_impl_item_fn(&mut self, function: &'ast ImplItemFn) {
-        match FnBody::scanned_unless_const(&function.sig, Some(&function.block)) {
-            FnBody::Scanned(body) => self.visit_body(body),
-            FnBody::Skipped => {}
-        }
+        FnBody::scanned_unless_const(&function.sig, Some(&function.block)).walked_by(self);
     }
 
     fn visit_trait_item_fn(&mut self, function: &'ast TraitItemFn) {
-        match FnBody::scanned_unless_const(&function.sig, function.default.as_ref()) {
-            FnBody::Scanned(body) => self.visit_body(body),
-            FnBody::Skipped => {}
-        }
+        FnBody::scanned_unless_const(&function.sig, function.default.as_ref()).walked_by(self);
     }
 
     fn visit_block(&mut self, block: &'ast Block) {
@@ -165,7 +156,7 @@ impl<'ast> Visit<'ast> for Flows<'_> {
     }
 
     fn visit_expr_if(&mut self, expr: &'ast ExprIf) {
-        self.violations.extend(ExpressionFlow::lonely_if(expr).map(|span| {
+        self.violations.extend(Self::lonely_if(expr).map(|span| {
             Self::found(
                 self.path,
                 span,
