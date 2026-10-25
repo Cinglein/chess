@@ -1,13 +1,12 @@
 mod module_path;
-mod use_edge;
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use module_path::{Ancestor, InsideSibling, ModulePath};
-use use_edge::UseEdges;
 
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
+use crate::task::use_edges::UseEdges;
 use crate::task::violation::Violation;
 
 pub struct ModuleTree {

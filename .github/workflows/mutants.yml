@@ -35,20 +35,20 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
           else
-            echo 'plan={"crates":["all"],"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}' >> "$GITHUB_OUTPUT"
+            echo 'plan={"jobs":{"full":{"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}}}' >> "$GITHUB_OUTPUT"
           fi
 
   full:
     needs: affected
-    if: fromJSON(needs.affected.outputs.plan).shard_count > 0
+    if: fromJSON(needs.affected.outputs.plan).jobs.full != null && fromJSON(needs.affected.outputs.plan).jobs.full.shard_count > 0
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.affected.outputs.plan).shards }}
+        shard: ${{ fromJSON(needs.affected.outputs.plan).jobs.full.shards }}
     env:
-      MUTANTS_SHARD: ${{ matrix.shard }}/${{ fromJSON(needs.affected.outputs.plan).shard_count }}
+      MUTANTS_SHARD: ${{ matrix.shard }}/${{ fromJSON(needs.affected.outputs.plan).jobs.full.shard_count }}
     steps:
       - uses: actions/checkout@v4
         with:

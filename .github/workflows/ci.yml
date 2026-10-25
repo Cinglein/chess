@@ -34,12 +34,12 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
           else
-            echo 'plan={"crates":["all"],"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}' >> "$GITHUB_OUTPUT"
+            echo 'plan={"jobs":{"fmt":{},"clippy":{},"test":{},"lint":{},"mutants":{},"full":{"shards":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"shard_count":16}}}' >> "$GITHUB_OUTPUT"
           fi
 
   fmt:
     needs: affected
-    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
+    if: fromJSON(needs.affected.outputs.plan).jobs.fmt != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
 
   clippy:
     needs: affected
-    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
+    if: fromJSON(needs.affected.outputs.plan).jobs.clippy != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
 
   test:
     needs: affected
-    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
+    if: fromJSON(needs.affected.outputs.plan).jobs.test != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
 
   lint:
     needs: affected
-    if: join(fromJSON(needs.affected.outputs.plan).crates) != ''
+    if: fromJSON(needs.affected.outputs.plan).jobs.lint != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
 
   mutants:
     needs: affected
-    if: github.event_name == 'pull_request' && join(fromJSON(needs.affected.outputs.plan).crates) != ''
+    if: github.event_name == 'pull_request' && fromJSON(needs.affected.outputs.plan).jobs.mutants != null
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

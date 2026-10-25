@@ -219,11 +219,16 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job covering
   comments, free functions, the test budget, and the state graph. Run `cargo xtask ci` locally
   before opening a PR. CI runs only what a change reaches: an `affected` job in each workflow
-  publishes the plan from `cargo xtask affected` (the crates and mutant shards sized at
-  64 mutants each up to 16), every job is gated on it and runs its task with `--affected` on a
-  pull request, pushes to `main` and the Monday schedule run everything, and `ci-gate` and
-  `mutants-gate` always run and fail if any job they need failed, so they are the checks to
-  require.
+  publishes the plan from `cargo xtask affected`, one entry per job (`fmt`, `clippy`, `test`,
+  `lint`, `mutants`, `full`) with that job's crates and, for `full`, mutant shards sized by the
+  policy. A crate change reaches every job over the crate and its dependents. An xtask change
+  reaches `fmt`, `lint`, and xtask's own `clippy` and `test` always, and `mutants` or `full`
+  only when the changed file is in the `use` and `mod` closure of that job's entry files
+  (`task/mutants/mod.rs`; `task/affected/mod.rs`, `main.rs`, `lib.rs`, `task/mod.rs`, and
+  `Cargo.toml` reach every job); a tool rerun covers every crate. Every job is gated on its
+  entry and runs its task with `--affected` on a pull request, pushes to `main` and the Monday
+  schedule run everything, and `ci-gate` and `mutants-gate` always run and fail if any job they
+  need failed, so they are the checks to require.
 - Never silence a lint with a blanket `allow`. Use `#[expect(clippy::name, reason = "...")]` on the
   smallest item that needs it. The reason is an attribute, not a comment, and `expect` fails if the
   lint stops firing. Prefer fixing the code, for example `usize::from` or `u8::try_from` over `as`.
