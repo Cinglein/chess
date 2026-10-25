@@ -32,7 +32,7 @@ impl PublicSurface {
                         })
                         .map(move |export| {
                             Violation::new(
-                                Site::Line(file.path().to_owned(), export.line()),
+                                Site::Line(file.path().into(), export.line()),
                                 format!(
                                     "{} is exported but no other crate names it; export it when a user appears",
                                     export.name()

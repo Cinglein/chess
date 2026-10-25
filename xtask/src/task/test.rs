@@ -1,6 +1,6 @@
 use crate::task::command_line::{CargoArgument, Program};
 use crate::task::failure::Failure;
-use crate::task::selection::Selection;
+use crate::task::selection::{CargoTool, Selection};
 use crate::task::workspace::Workspace;
 
 pub struct Test;
@@ -14,7 +14,7 @@ impl Test {
         workspace
             .line(Program::Cargo)
             .argument(CargoArgument::Test)
-            .arguments(selection.package_arguments())
+            .arguments(selection.arguments::<CargoTool>())
             .argument(CargoArgument::AllFeatures)
             .run()
     }

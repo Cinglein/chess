@@ -38,16 +38,13 @@ impl Workspace {
             .collect()
     }
 
-    pub fn relative(&self, path: &Path) -> String {
-        path.strip_prefix(&self.root)
-            .unwrap_or(path)
-            .display()
-            .to_string()
+    pub fn relative(&self, path: &Path) -> PathBuf {
+        path.strip_prefix(&self.root).unwrap_or(path).to_path_buf()
     }
 
     fn rust_files_under(directory: &Path) -> Result<Vec<PathBuf>, Failure> {
         let io = |error| Failure::Io {
-            site: Site::File(directory.display().to_string()),
+            site: Site::File(directory.to_path_buf()),
             error,
         };
         fs::read_dir(directory)

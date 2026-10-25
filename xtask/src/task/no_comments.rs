@@ -17,7 +17,7 @@ impl NoComments {
                     Self::comment_lines(file.text())
                         .into_iter()
                         .map(move |line| {
-                            Violation::new(Site::Line(file.path().to_owned(), line), "comment")
+                            Violation::new(Site::Line(file.path().into(), line), "comment")
                         })
                 })
                 .collect(),

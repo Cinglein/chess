@@ -21,7 +21,9 @@ impl Iterator for SubsetIter {
 
     fn next(&mut self) -> Option<Bitboard> {
         let subset = self.next.take()?;
-        self.next = Some(self.mask.subset_after(subset)).filter(|following| !following.is_empty());
+        let following =
+            Bitboard::from_bits(subset.bits().wrapping_sub(self.mask.bits()) & self.mask.bits());
+        self.next = Some(following).filter(|following| !following.is_empty());
         Some(subset)
     }
 }

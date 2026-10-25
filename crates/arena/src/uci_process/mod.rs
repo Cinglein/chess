@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 use board::Color;
 use line_reader::LineReader;
-use uci::{Command, EngineOption, GoLimits, Position, Response};
+use uci::{Command, EngineOption, GoLimits, Position, Remaining, Response};
 
 use crate::arena_error::ArenaError;
 use crate::chosen_move::ChosenMove;
@@ -101,8 +101,8 @@ impl UciProcess {
             .or_else(|| {
                 limits.clock().map(|clock| {
                     clock
-                        .remaining(Color::White)
-                        .max(clock.remaining(Color::Black))
+                        .time::<Remaining>(Color::White)
+                        .max(clock.time::<Remaining>(Color::Black))
                 })
             })
             .map_or(Self::UNBOUNDED, |budget| budget + Self::GRACE)

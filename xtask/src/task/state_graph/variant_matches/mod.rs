@@ -2,8 +2,10 @@ mod variant_paths;
 
 use variant_paths::VariantPaths;
 
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{Expr, ExprLet, ExprMatch, Local, Pat};
 
 use super::declarations::Declarations;
@@ -13,7 +15,7 @@ use crate::task::violation::Violation;
 
 pub struct VariantMatches<'scan> {
     declarations: &'scan Declarations,
-    path: &'scan str,
+    path: &'scan Path,
     violations: Vec<Violation>,
 }
 
@@ -39,7 +41,7 @@ impl<'scan> VariantMatches<'scan> {
 
     fn report(&mut self, pat: &Pat, enum_name: &str) {
         self.violations.push(Violation::new(
-            Site::Line(self.path.to_owned(), pat.span().start().line),
+            Site::Line(self.path.into(), pat.span().start().line),
             format!("match on {enum_name} outside its file; dispatch through a trait"),
         ));
     }

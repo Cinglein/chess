@@ -4,6 +4,8 @@ mod returns;
 use body::Body;
 use returns::Returns;
 
+use std::path::Path;
+
 use syn::{FnArg, ImplItemFn, Type};
 
 use super::declarations::Declarations;
@@ -20,7 +22,7 @@ pub struct FunctionShape {
 
 impl FunctionShape {
     pub fn describe(
-        path: &str,
+        path: &Path,
         function: &ImplItemFn,
         context: &ImplContext,
         declarations: &Declarations,
@@ -30,7 +32,7 @@ impl FunctionShape {
             declarations.is_vertex(&name).then_some(name)
         };
         FunctionShape {
-            site: Site::Line(path.to_owned(), function.sig.ident.span().start().line),
+            site: Site::Line(path.into(), function.sig.ident.span().start().line),
             returns: Returns::classify(&function.sig.output, vertex),
             vertex_parameters: function
                 .sig

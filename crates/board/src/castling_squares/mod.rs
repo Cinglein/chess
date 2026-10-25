@@ -1,5 +1,10 @@
-use crate::bitboard::Bitboard;
+mod castler;
+
+pub use castler::Castler;
+
+use crate::bitboard::{Bitboard, SetOperation};
 use crate::castling_right::CastlingRight;
+use crate::end::End;
 use crate::square::Square;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -28,27 +33,13 @@ impl CastlingSquares {
     }
 
     #[must_use]
-    pub const fn king_origin(self) -> Square {
-        self.king_origin
-    }
-
-    #[must_use]
-    pub const fn king_destination(self) -> Square {
-        self.king_destination
-    }
-
-    #[must_use]
-    pub const fn rook_origin(self) -> Square {
-        self.rook_origin
-    }
-
-    #[must_use]
-    pub const fn rook_destination(self) -> Square {
-        self.rook_destination
+    pub fn square<C: Castler, E: End>(self) -> Square {
+        E::pick(C::origin(self), C::destination(self))
     }
 
     #[must_use]
     pub const fn footprint(self) -> Bitboard {
-        Bitboard::from_square(self.king_origin).including(self.rook_origin)
+        Bitboard::from_square(self.king_origin)
+            .combined(Bitboard::from_square(self.rook_origin), SetOperation::Union)
     }
 }

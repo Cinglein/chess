@@ -1,8 +1,10 @@
+use std::path::Path;
+
 pub struct BitBoundary;
 
 impl BitBoundary {
     const FILES: [&str; 7] = [
-        "crates/board/src/square.rs",
+        "crates/board/src/square/",
         "crates/board/src/direction.rs",
         "crates/board/src/slider/magic.rs",
         "crates/board/src/slider/magics.rs",
@@ -11,7 +13,7 @@ impl BitBoundary {
         "xtask/src/task/magics/",
     ];
 
-    pub fn covers(path: &str) -> bool {
+    pub fn covers(path: &Path) -> bool {
         Self::FILES
             .iter()
             .any(|boundary| path.starts_with(boundary))

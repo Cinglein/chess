@@ -10,7 +10,7 @@ use std::time::Instant;
 
 use ::settings::EmbeddedDefaults;
 use arena::RandomOpenings;
-use arguments::Arguments;
+use arguments::{Arguments, Config, Output};
 use clap::Parser;
 use datagen::{Example, Progress, SelfPlay};
 use settings::Settings;
@@ -20,9 +20,10 @@ pub struct CommandLine;
 impl CommandLine {
     pub fn generate() -> Result<(), CommandLineError> {
         let arguments = Arguments::parse();
-        let settings = Settings::read_or_write_defaults(arguments.config())?;
-        let mut output =
-            BufWriter::new(File::create(arguments.output()).map_err(CommandLineError::Output)?);
+        let settings = Settings::read_or_write_defaults(arguments.path::<Config>())?;
+        let mut output = BufWriter::new(
+            File::create(arguments.path::<Output>()).map_err(CommandLineError::Output)?,
+        );
         let games = SelfPlay::new(
             RandomOpenings::seeded(arguments.seed(), settings.opening_plies()),
             settings.rules(),

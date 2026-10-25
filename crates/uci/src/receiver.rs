@@ -1,4 +1,5 @@
-use crate::command::{EngineOption, GoLimits, Position};
+use crate::command::{GoLimits, Position};
+use crate::engine_option::EngineOption;
 
 pub trait Receiver<'line>: Sized {
     #[must_use]

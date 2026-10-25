@@ -69,7 +69,7 @@ impl Mutants {
 
     fn exclusive_lock(workspace: &Workspace) -> Result<File, Failure> {
         let io = |error| Failure::Io {
-            site: Site::File(Self::LOCK_FILE.to_owned()),
+            site: Site::File(Self::LOCK_FILE.into()),
             error,
         };
         let path = workspace.root().join(Self::LOCK_FILE);

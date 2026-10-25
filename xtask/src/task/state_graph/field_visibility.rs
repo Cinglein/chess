@@ -1,6 +1,8 @@
 use quote::ToTokens;
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{ItemStruct, Visibility};
 
 use crate::task::site::Site;
@@ -8,7 +10,7 @@ use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
 
 pub struct FieldVisibility<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     violations: Vec<Violation>,
 }
 
@@ -32,7 +34,7 @@ impl<'ast> Visit<'ast> for FieldVisibility<'_> {
             .filter(|(_, field)| !matches!(field.vis, Visibility::Inherited))
             .map(|(index, field)| {
                 Violation::new(
-                    Site::Line(self.path.to_owned(), field.span().start().line),
+                    Site::Line(self.path.into(), field.span().start().line),
                     format!(
                         "field {} of {} is {}; struct fields are private",
                         field

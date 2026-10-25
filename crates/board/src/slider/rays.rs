@@ -1,6 +1,7 @@
 use strum::{EnumCount, VariantArray};
 
 use crate::bitboard::Bitboard;
+use crate::bitboard::SetOperation;
 use crate::diagonal::Diagonal;
 use crate::direction::Direction;
 use crate::file::File;
@@ -25,7 +26,10 @@ impl Rays {
         let mut attacks = Bitboard::EMPTY;
         let mut directions: &[Direction] = &self.0;
         while let [direction, rest @ ..] = directions {
-            attacks = attacks.union(Self::cast(origin.shift(*direction), *direction, occupied));
+            attacks = attacks.combined(
+                Self::cast(origin.shift(*direction), *direction, occupied),
+                SetOperation::Union,
+            );
             directions = rest;
         }
         attacks
@@ -34,13 +38,15 @@ impl Rays {
     #[must_use]
     pub const fn relevant_occupancy(self, square: Square) -> Bitboard {
         let outer_ranks = Bitboard::rank(Rank::One)
-            .union(Bitboard::rank(Rank::Eight))
-            .difference(Bitboard::rank(square.rank()));
+            .combined(Bitboard::rank(Rank::Eight), SetOperation::Union)
+            .combined(Bitboard::rank(square.rank()), SetOperation::Difference);
         let outer_files = Bitboard::file(File::A)
-            .union(Bitboard::file(File::H))
-            .difference(Bitboard::file(square.file()));
-        self.attacks_by_ray(square, Bitboard::EMPTY)
-            .difference(outer_ranks.union(outer_files))
+            .combined(Bitboard::file(File::H), SetOperation::Union)
+            .combined(Bitboard::file(square.file()), SetOperation::Difference);
+        self.attacks_by_ray(square, Bitboard::EMPTY).combined(
+            outer_ranks.combined(outer_files, SetOperation::Union),
+            SetOperation::Difference,
+        )
     }
 
     #[must_use]
@@ -58,8 +64,10 @@ impl Rays {
         if frontier.is_empty() {
             return Bitboard::EMPTY;
         }
-        let beyond = frontier.difference(occupied).shift(direction);
-        frontier.union(Self::cast(beyond, direction, occupied))
+        let beyond = frontier
+            .combined(occupied, SetOperation::Difference)
+            .shift(direction);
+        frontier.combined(Self::cast(beyond, direction, occupied), SetOperation::Union)
     }
 }
 
@@ -69,7 +77,7 @@ mod tests {
     use strum::IntoEnumIterator;
 
     use super::Rays;
-    use crate::bitboard::Bitboard;
+    use crate::bitboard::{Bitboard, SetOperation};
     use crate::direction::Direction;
     use crate::slider::{Bishop, Rook, Slider};
     use crate::square::Square;
@@ -100,7 +108,7 @@ mod tests {
                 let mut expected = Bitboard::EMPTY;
                 let mut current = square + direction;
                 while let Some(next) = current {
-                    expected = expected.including(next);
+                    expected = expected.combined(Bitboard::from_square(next), SetOperation::Union);
                     current = (!blockers.contains(next)).then(|| next + direction).flatten();
                 }
                 let frontier = Bitboard::from_square(square).shift(direction);

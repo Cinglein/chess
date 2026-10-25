@@ -1,6 +1,8 @@
 use proc_macro2::Span;
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{
     Arm, BinOp, Expr, ExprClosure, ExprForLoop, ExprIf, ExprLoop, ExprMethodCall, ExprWhile, FnArg,
     ItemMod, Lit, Local, Pat, Signature, Type, UnOp,
@@ -84,7 +86,7 @@ impl FnShape {
 }
 
 struct Shapes<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     policy: &'scan Policy,
     depth: usize,
     violations: Vec<Violation>,
@@ -93,7 +95,7 @@ struct Shapes<'scan> {
 impl Shapes<'_> {
     fn report(&mut self, span: Span, message: &str) {
         self.violations.push(Violation::new(
-            Site::Line(self.path.to_owned(), span.start().line),
+            Site::Line(self.path.into(), span.start().line),
             message,
         ));
     }

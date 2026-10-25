@@ -1,3 +1,11 @@
+mod argument_file;
+mod config;
+mod records;
+
+pub use argument_file::ArgumentFile;
+pub use config::Config;
+pub use records::Records;
+
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
@@ -23,15 +31,11 @@ pub struct Arguments {
 }
 
 impl Arguments {
-    pub fn records(&self) -> &Path {
-        &self.records
+    pub fn path<F: ArgumentFile>(&self) -> &Path {
+        F::pick(self)
     }
 
     pub const fn seed(&self) -> ShuffleSeed {
         self.seed
-    }
-
-    pub fn config(&self) -> &Path {
-        &self.config
     }
 }

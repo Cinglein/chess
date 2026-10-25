@@ -1,3 +1,11 @@
+mod cargo_tool;
+mod mutation_tool;
+mod tool;
+
+pub use cargo_tool::CargoTool;
+pub use mutation_tool::MutationTool;
+pub use tool::Tool;
+
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -32,16 +40,12 @@ impl Selection {
         })
     }
 
-    pub fn package_arguments(&self) -> Vec<String> {
+    pub fn arguments<T: Tool>(&self) -> Vec<String> {
         match self {
-            Selection::Workspace => vec![CargoArgument::Workspace.to_string()],
-            Selection::Crates(_) => self.explicit_packages(),
-        }
-    }
-
-    pub fn explicit_packages(&self) -> Vec<String> {
-        match self {
-            Selection::Workspace => Vec::new(),
+            Selection::Workspace => T::whole_workspace()
+                .map(|argument| argument.to_string())
+                .into_iter()
+                .collect(),
             Selection::Crates(crates) => crates
                 .iter()
                 .flat_map(|name| [CargoArgument::Package.to_string(), name.to_string()])
@@ -88,7 +92,7 @@ impl fmt::Display for Selection {
 mod tests {
     use std::collections::BTreeSet;
 
-    use super::Selection;
+    use super::{CargoTool, Selection};
 
     const EVAL: &str = "eval";
     const SEARCH: &str = "search";
@@ -102,10 +106,10 @@ mod tests {
             SEARCH.parse().unwrap(),
             EVAL.parse().unwrap(),
         ]));
-        assert_eq!(crates.package_arguments(), PACKAGES);
+        assert_eq!(crates.arguments::<CargoTool>(), PACKAGES);
         assert_eq!(
             (
-                Selection::Workspace.package_arguments(),
+                Selection::Workspace.arguments::<CargoTool>(),
                 crates.includes(&EVAL.parse().unwrap()),
                 crates.includes(&BOARD.parse().unwrap())
             ),

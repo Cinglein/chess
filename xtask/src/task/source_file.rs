@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Component, Path, PathBuf};
 
 use syn::ItemMod;
 
@@ -8,7 +8,7 @@ use crate::task::site::Site;
 use crate::task::workspace::Workspace;
 
 pub struct SourceFile {
-    path: String,
+    path: PathBuf,
     text: String,
     syntax: syn::File,
 }
@@ -23,7 +23,8 @@ impl SourceFile {
         Self::parse(path, text)
     }
 
-    pub fn parse(path: String, text: String) -> Result<Self, Failure> {
+    pub fn parse(path: impl Into<PathBuf>, text: String) -> Result<Self, Failure> {
+        let path = path.into();
         let syntax = syn::parse_file(&text).map_err(|error| Failure::Parse {
             site: Site::File(path.clone()),
             error,
@@ -31,14 +32,18 @@ impl SourceFile {
         Ok(Self { path, text, syntax })
     }
 
-    pub fn path(&self) -> &str {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
     pub fn crate_name(&self) -> Option<&str> {
-        match self.path.strip_prefix("crates/") {
-            Some(inside) => inside.split('/').next(),
-            None => self.path.strip_prefix("xtask/").map(|_| "xtask"),
+        let mut components = self.path.components();
+        match components.next() {
+            Some(Component::Normal(root)) if root == "crates" => components
+                .next()
+                .and_then(|component| component.as_os_str().to_str()),
+            Some(Component::Normal(root)) if root == "xtask" => Some("xtask"),
+            _ => None,
         }
     }
 

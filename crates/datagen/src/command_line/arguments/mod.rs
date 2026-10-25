@@ -1,3 +1,11 @@
+mod argument_file;
+mod config;
+mod output;
+
+pub use argument_file::ArgumentFile;
+pub use config::Config;
+pub use output::Output;
+
 use std::path::{Path, PathBuf};
 
 use arena::Seed;
@@ -25,15 +33,11 @@ pub struct Arguments {
 }
 
 impl Arguments {
-    pub fn output(&self) -> &Path {
-        &self.output
+    pub fn path<F: ArgumentFile>(&self) -> &Path {
+        F::pick(self)
     }
 
     pub const fn seed(&self) -> Seed {
         self.seed
-    }
-
-    pub fn config(&self) -> &Path {
-        &self.config
     }
 }

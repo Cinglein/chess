@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
 use syn::visit::Visit;
@@ -7,7 +9,7 @@ use super::keys::Keys;
 
 #[derive(Debug)]
 pub struct DeserializedStruct {
-    path: String,
+    path: PathBuf,
     line: usize,
     name: String,
     field_types: Vec<String>,
@@ -17,7 +19,7 @@ pub struct DeserializedStruct {
 impl DeserializedStruct {
     const KEY_SHAPES: &[&str] = &["deny_unknown_fields", "transparent", "try_from", "from ="];
 
-    pub fn from_item(path: &str, item: &ItemStruct) -> Option<DeserializedStruct> {
+    pub fn from_item(path: &std::path::Path, item: &ItemStruct) -> Option<DeserializedStruct> {
         (matches!(item.fields, Fields::Named(_)) && Self::derives_deserialize(&item.attrs)).then(
             || {
                 let mut types = FieldTypes::default();
@@ -37,7 +39,7 @@ impl DeserializedStruct {
         )
     }
 
-    pub fn path(&self) -> &str {
+    pub fn path(&self) -> &std::path::Path {
         &self.path
     }
 

@@ -1,5 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 
+mod axis;
 mod bitboard;
 mod board;
 mod castling_right;
@@ -9,6 +10,7 @@ mod chess_move;
 mod color;
 mod diagonal;
 mod direction;
+mod end;
 mod file;
 mod leaper;
 mod long_algebraic;
@@ -28,7 +30,7 @@ mod state;
 mod zobrist;
 mod zobrist_keys;
 
-pub use bitboard::{Bitboard, SubsetIter};
+pub use bitboard::{Bitboard, SetOperation, SubsetIter};
 pub use board::{Board, FullmoveNumber, HalfmoveClock, MoveList};
 pub use chess_move::{ChessMove, MoveKind};
 pub use color::Color;

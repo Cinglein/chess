@@ -4,7 +4,7 @@ use std::env;
 
 use gh_argument::GhArgument;
 
-use crate::task::command_line::{CommandLine, Program};
+use crate::task::command_line::{CommandLine, Program, Stdout};
 use crate::task::failure::Failure;
 
 pub struct Stacked;
@@ -59,7 +59,7 @@ impl Stacked {
             .argument(format!("number={number}"))
             .argument(GhArgument::Jq)
             .argument(Self::BASE_AND_STACK)
-            .stdout()
+            .captured::<Stdout>()
             .map(|answer| answer.trim().to_owned())
     }
 }

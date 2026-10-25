@@ -3,7 +3,7 @@ mod use_edge;
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use module_path::ModulePath;
+use module_path::{Ancestor, InsideSibling, ModulePath};
 use use_edge::UseEdges;
 
 use crate::task::site::Site;
@@ -34,19 +34,19 @@ impl ModuleTree {
         })
     }
 
-    pub fn misplaced(&self) -> impl Iterator<Item = Violation> + '_ {
-        self.modules.iter().filter_map(|module| {
-            self.home_of(module).map(|home| {
-                Violation::new(
-                    Site::File(module.file().to_owned()),
-                    format!("used only from {home}; move it inside that module"),
-                )
+    pub fn violations(&self) -> impl Iterator<Item = Violation> + '_ {
+        let deep_uses = self.deep_uses.iter().cloned();
+        self.modules
+            .iter()
+            .filter_map(|module| {
+                self.home_of(module).map(|home| {
+                    Violation::new(
+                        Site::File(module.file().into()),
+                        format!("used only from {home}; move it inside that module"),
+                    )
+                })
             })
-        })
-    }
-
-    pub fn deep_uses(&self) -> impl Iterator<Item = Violation> + '_ {
-        self.deep_uses.iter().cloned()
+            .chain(deep_uses)
     }
 
     pub fn crowded(&self, max: usize) -> impl Iterator<Item = Violation> + '_ {
@@ -56,7 +56,7 @@ impl ModuleTree {
             .filter(move |(_, count)| **count > max)
             .map(move |(module, count)| {
                 Violation::new(
-                    Site::File(module.file().to_owned()),
+                    Site::File(module.file().into()),
                     format!("re-exports {count} items, at most {max} allowed; split the module"),
                 )
             })
@@ -85,7 +85,7 @@ impl ModuleTree {
         }
         if target.crosses_directory_boundary(module, &self.modules) {
             self.deep_uses.push(Violation::new(
-                Site::File(module.file().to_owned()),
+                Site::File(module.file().into()),
                 format!("reaches into {target}; import the parent's re-export instead"),
             ));
         }
@@ -96,11 +96,11 @@ impl ModuleTree {
             .users
             .get(module)?
             .iter()
-            .filter(|user| !module.is_ancestor_of(user))
+            .filter(|user| !module.relates::<Ancestor>(user))
             .collect();
         if outsiders
             .iter()
-            .any(|user| !user.is_inside_a_sibling_of(module))
+            .any(|user| !user.relates::<InsideSibling>(module))
         {
             return None;
         }

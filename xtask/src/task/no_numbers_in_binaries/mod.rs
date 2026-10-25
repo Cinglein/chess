@@ -23,7 +23,7 @@ impl NoNumbersInBinaries {
                     numbers.visit_file(file.syntax());
                     numbers.0.into_iter().map(move |line| {
                         Violation::new(
-                            Site::Line(file.path().to_owned(), line),
+                            Site::Line(file.path().into(), line),
                             "numeric literal in a binary; read it from the settings file or its embedded defaults",
                         )
                     })

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
 use syn::visit::Visit;
@@ -16,26 +18,23 @@ use crate::task::violation::Violation;
 pub struct NamedNumbers;
 
 impl NamedNumbers {
-    const COVERED: &str = "";
     const UNITS: &[&str] = &["0", "1", "0.0", "1.0"];
 
     pub fn report(files: &[SourceFile]) -> Report {
-        let support: Vec<String> = files.iter().flat_map(SupportModules::paths).collect();
+        let support: Vec<PathBuf> = files.iter().flat_map(SupportModules::paths).collect();
         Report::new(
             "a number has a name: outside tests, a literal other than 0 and 1 sits in a const item",
             files
                 .iter()
                 .filter(|file| {
-                    file.path().starts_with(Self::COVERED)
-                        && !BitBoundary::covers(file.path())
-                        && !support.contains(&file.path().to_owned())
+                    !BitBoundary::covers(file.path()) && !support.contains(&file.path().to_owned())
                 })
                 .flat_map(|file| {
                     let mut numbers = Numbers::default();
                     numbers.visit_file(file.syntax());
                     numbers.lines.into_iter().map(move |line| {
                         Violation::new(
-                            Site::Line(file.path().to_owned(), line),
+                            Site::Line(file.path().into(), line),
                             "numeric literal outside a const item; name it as a const so it can be found and tuned",
                         )
                     })

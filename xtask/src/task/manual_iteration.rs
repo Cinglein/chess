@@ -1,6 +1,8 @@
 use proc_macro2::Span;
+use std::path::Path;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
+
 use syn::{Block, Expr, ExprForLoop, ExprMethodCall, ItemMod, Local, Pat, Stmt};
 
 use crate::task::report::Report;
@@ -62,14 +64,14 @@ impl ManualIteration {
 }
 
 struct Iterations<'scan> {
-    path: &'scan str,
+    path: &'scan Path,
     violations: Vec<Violation>,
 }
 
 impl Iterations<'_> {
     fn report(&mut self, span: Span, message: &str) {
         self.violations.push(Violation::new(
-            Site::Line(self.path.to_owned(), span.start().line),
+            Site::Line(self.path.into(), span.start().line),
             message,
         ));
     }

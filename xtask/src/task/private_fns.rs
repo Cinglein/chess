@@ -26,7 +26,7 @@ impl PrivateFns {
                         })
                         .map(move |(type_name, names)| {
                             Violation::new(
-                                Site::File(file.path().to_owned()),
+                                Site::File(file.path().into()),
                                 format!(
                                     "{type_name} has {} private fns, at most {} allowed: {}",
                                     names.len(),

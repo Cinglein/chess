@@ -1,4 +1,5 @@
 use crate::bitboard::Bitboard;
+use crate::bitboard::SetOperation;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Magic {
@@ -32,7 +33,7 @@ impl Magic {
     #[must_use]
     pub const fn index(&self, occupied: Bitboard) -> usize {
         let hash = occupied
-            .intersection(self.mask)
+            .combined(self.mask, SetOperation::Intersection)
             .bits()
             .wrapping_mul(self.multiplier);
         self.offset + ((hash >> 1) >> self.shift) as usize

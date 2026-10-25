@@ -45,7 +45,7 @@ impl TextSites {
             .into_iter()
             .map(|ident| {
                 Violation::new(
-                    Site::Line(file.path().to_owned(), ident.span().start().line),
+                    Site::Line(file.path().into(), ident.span().start().line),
                     format!(
                         "{ident} handles text outside a door; parse in FromStr or render in Display"
                     ),

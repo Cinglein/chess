@@ -13,8 +13,7 @@ impl ModuleNesting {
         let tree = ModuleTree::collect(files);
         Report::new(
             "modules nest by use: a file used only inside one sibling belongs inside it",
-            tree.misplaced()
-                .chain(tree.deep_uses())
+            tree.violations()
                 .chain(tree.crowded(policy.limit(Limit::Reexports).count()))
                 .collect(),
         )
