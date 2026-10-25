@@ -1,6 +1,11 @@
 exclude_globs = [
     "xtask/**",
-    "tooling/**",
+    "tooling/affected/**",
+    "tooling/magics/**",
+    "tooling/mutation/**",
+    "tooling/stacked/**",
+    "tooling/task/**",
+    "tooling/test_time/**",
     "crates/*/src/main.rs",
     "crates/chess/**",
     "crates/tui/**",
