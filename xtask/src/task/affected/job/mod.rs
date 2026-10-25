@@ -53,8 +53,15 @@ impl Job {
     pub fn tool_scope(self) -> ToolScope {
         match self {
             Job::Clippy | Job::Test => ToolScope::PlusTheTool,
-            Job::Full => ToolScope::Everything,
+            Job::Full => ToolScope::SmokeCrate,
             Job::Fmt | Job::Lint | Job::Mutants => ToolScope::ProductOnly,
+        }
+    }
+
+    pub fn workflow(self) -> &'static str {
+        match self {
+            Job::Fmt | Job::Clippy | Job::Test | Job::Lint | Job::Mutants => "ci",
+            Job::Full => "mutants",
         }
     }
 }

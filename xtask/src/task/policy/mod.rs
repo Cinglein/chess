@@ -23,10 +23,12 @@ use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
 
 use crate::task::available_gib::AvailableGib;
+use crate::task::crate_name::CrateName;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Policy {
+    smoke_crate: CrateName,
     vague: Vec<String>,
     limits: EnumMap<Limit, Most>,
     floors: EnumMap<Floor, Least>,
@@ -58,6 +60,10 @@ impl Policy {
 
     pub fn interval(&self, interval: Interval) -> Millis {
         self.millis[interval]
+    }
+
+    pub fn smoke_crate(&self) -> &CrateName {
+        &self.smoke_crate
     }
 
     pub fn is_vague(&self, name: &str) -> bool {

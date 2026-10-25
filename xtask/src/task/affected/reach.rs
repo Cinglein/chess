@@ -8,11 +8,13 @@ pub enum Reach {
     Nothing,
     Package(CrateName),
     Tool(PathBuf),
+    Workflow(String),
 }
 
 impl Reach {
     const CRATES: &str = "crates";
     const TOOL: &str = "xtask";
+    const WORKFLOWS: &str = ".github/workflows";
     const INERT_DIRECTORIES: [&str; 1] = [".claude"];
     const INERT_EXTENSIONS: [&str; 1] = ["md"];
 
@@ -25,6 +27,11 @@ impl Reach {
         {
             Some(name) => Reach::Package(name),
             None if path.starts_with(Self::TOOL) => Reach::Tool(path.to_path_buf()),
+            None if path.starts_with(Self::WORKFLOWS) => Reach::Workflow(
+                path.file_stem()
+                    .map(|stem| stem.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+            ),
             None if Self::is_inert(path) => Reach::Nothing,
             None => Reach::Everything,
         }
@@ -33,14 +40,21 @@ impl Reach {
     pub fn package(&self) -> Option<CrateName> {
         match self {
             Reach::Package(name) => Some(name.clone()),
-            Reach::Everything | Reach::Nothing | Reach::Tool(_) => None,
+            Reach::Everything | Reach::Nothing | Reach::Tool(_) | Reach::Workflow(_) => None,
         }
     }
 
     pub fn tool_file(&self) -> Option<&Path> {
         match self {
             Reach::Tool(path) => Some(path),
-            Reach::Everything | Reach::Nothing | Reach::Package(_) => None,
+            Reach::Everything | Reach::Nothing | Reach::Package(_) | Reach::Workflow(_) => None,
+        }
+    }
+
+    pub fn workflow(&self) -> Option<&str> {
+        match self {
+            Reach::Workflow(name) => Some(name),
+            Reach::Everything | Reach::Nothing | Reach::Package(_) | Reach::Tool(_) => None,
         }
     }
 
@@ -69,11 +83,12 @@ mod tests {
 
     const PACKAGE_PATHS: [&str; 1] = ["crates/eval/src/score.rs"];
     const TOOL_PATHS: [&str; 2] = ["xtask/src/task/lint.rs", "xtask/policy.toml"];
-    const EVERYTHING_PATHS: [&str; 2] = ["Cargo.lock", ".github/ci.yml"];
+    const EVERYTHING_PATHS: [&str; 2] = ["Cargo.lock", ".github/dependabot.yml"];
+    const WORKFLOW_PATH: &str = ".github/workflows/mutants.yml";
     const NOTHING_PATHS: [&str; 2] = ["README.md", ".claude/settings.json"];
 
     #[test]
-    fn a_path_reaches_its_crate_the_tool_everything_or_nothing() {
+    fn a_path_reaches_its_crate_the_tool_a_workflow_everything_or_nothing() {
         assert!(
             PACKAGE_PATHS
                 .iter()
@@ -83,6 +98,7 @@ mod tests {
             TOOL_PATHS
                 .iter()
                 .all(|path| Reach::reached_by(path).tool_file().is_some())
+                && Reach::reached_by(WORKFLOW_PATH).workflow() == Some("mutants")
         );
         assert!(
             EVERYTHING_PATHS

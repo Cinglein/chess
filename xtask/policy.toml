@@ -1,3 +1,5 @@
+smoke_crate = "fen"
+
 vague = [
     "with", "from", "into", "for", "get", "set", "make", "check", "build", "create", "init",
     "process", "handle", "helper", "util", "data", "value", "item", "thing", "execute",

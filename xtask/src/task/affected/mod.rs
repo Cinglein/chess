@@ -31,7 +31,7 @@ impl Affected {
     const TOOL: &str = "xtask";
 
     pub fn run(workspace: &Workspace, policy: &Policy) -> Result<(), Failure> {
-        let plan = Self::plan(workspace)?;
+        let plan = Self::plan(workspace, policy)?;
         let full = plan
             .job(Job::Full)
             .map(|full| Self::mutant_count(workspace, &full.selection()))
@@ -44,7 +44,7 @@ impl Affected {
         Ok(())
     }
 
-    pub fn plan(workspace: &Workspace) -> Result<Plan, Failure> {
+    pub fn plan(workspace: &Workspace, policy: &Policy) -> Result<Plan, Failure> {
         let changed = workspace
             .line(Program::Git)
             .argument(GitArgument::Diff)
@@ -61,13 +61,14 @@ impl Affected {
         let reaches: Vec<Reach> = changed.lines().map(Reach::reached_by).collect();
         let graph = PackageGraph::from_metadata(&metadata)?;
         let tool_graph = ToolGraph::from_files(&workspace.source_files()?);
-        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches)))
+        Ok(Plan::new(Self::jobs(&graph, &tool_graph, &reaches, policy)))
     }
 
     fn jobs(
         graph: &PackageGraph,
         tool_graph: &ToolGraph,
         reaches: &[Reach],
+        policy: &Policy,
     ) -> BTreeMap<Job, JobPlan> {
         let everything = || reaches.contains(&Reach::Everything);
         let product = if everything() {
@@ -82,6 +83,9 @@ impl Affected {
             .collect();
         let touched = |job: Job| {
             everything()
+                || reaches
+                    .iter()
+                    .any(|reach| reach.workflow() == Some(job.workflow()))
                 || (job.tool_trigger() == ToolTrigger::AnyToolChange && !tool_files.is_empty())
                 || tool_graph
                     .closure(job.entries())
@@ -93,7 +97,7 @@ impl Affected {
             .map(|job| {
                 (
                     job,
-                    JobPlan::over(&Self::crates_for(job, touched(job), &product, graph)),
+                    JobPlan::over(&Self::crates_for(job, touched(job), &product, policy)),
                 )
             })
             .collect()
@@ -103,12 +107,12 @@ impl Affected {
         job: Job,
         touched: bool,
         product: &BTreeSet<CrateName>,
-        graph: &PackageGraph,
+        policy: &Policy,
     ) -> BTreeSet<CrateName> {
         let extra: BTreeSet<CrateName> = match job.tool_scope() {
             ToolScope::PlusTheTool if touched => Self::TOOL.parse().into_iter().collect(),
-            ToolScope::Everything if touched => graph.names(),
-            ToolScope::ProductOnly | ToolScope::PlusTheTool | ToolScope::Everything => {
+            ToolScope::SmokeCrate if touched => BTreeSet::from([policy.smoke_crate().clone()]),
+            ToolScope::ProductOnly | ToolScope::PlusTheTool | ToolScope::SmokeCrate => {
                 BTreeSet::new()
             }
         };
@@ -132,7 +136,10 @@ impl Affected {
 
 #[cfg(test)]
 mod tests {
+    use settings::EmbeddedDefaults;
+
     use super::{Affected, Job, PackageGraph, Reach, ToolGraph};
+    use crate::task::policy::Policy;
     use crate::task::source_file::SourceFile;
 
     const METADATA: &str = r#"{"packages": [
@@ -146,6 +153,7 @@ mod tests {
         ("xtask/src/task/fn_shape.rs", "pub struct FnShape;"),
     ];
     const LINT_CHANGE: &str = "xtask/src/task/fn_shape.rs";
+    const SHARD_WORKFLOW: &str = ".github/workflows/mutants.yml";
     const TOOL: &str = "xtask";
     const RUNS: [Job; 2] = [Job::Lint, Job::Clippy];
     const SKIPS: [Job; 2] = [Job::Full, Job::Mutants];
@@ -157,7 +165,13 @@ mod tests {
             SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
         });
         let tool_graph = ToolGraph::from_files(&files);
-        let jobs = Affected::jobs(&graph, &tool_graph, &[Reach::reached_by(LINT_CHANGE)]);
+        let policy = Policy::defaults();
+        let jobs = Affected::jobs(
+            &graph,
+            &tool_graph,
+            &[Reach::reached_by(LINT_CHANGE)],
+            &policy,
+        );
         assert!(RUNS.iter().all(|job| jobs.contains_key(job)));
         assert!(SKIPS.iter().all(|job| !jobs.contains_key(job)));
         assert!(
@@ -165,5 +179,19 @@ mod tests {
                 .selection()
                 .includes(&TOOL.parse().unwrap())
         );
+    }
+
+    #[test]
+    fn a_shard_workflow_change_reaches_only_the_full_job_over_the_smoke_crate() {
+        let graph = PackageGraph::from_metadata(METADATA).unwrap();
+        let policy = Policy::defaults();
+        let jobs = Affected::jobs(
+            &graph,
+            &ToolGraph::from_files(&[]),
+            &[Reach::reached_by(SHARD_WORKFLOW)],
+            &policy,
+        );
+        assert_eq!(jobs.keys().copied().collect::<Vec<Job>>(), vec![Job::Full]);
+        assert!(jobs[&Job::Full].selection().includes(policy.smoke_crate()));
     }
 }

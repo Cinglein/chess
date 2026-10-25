@@ -3,5 +3,5 @@
 pub enum ToolScope {
     ProductOnly,
     PlusTheTool,
-    Everything,
+    SmokeCrate,
 }

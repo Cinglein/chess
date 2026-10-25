@@ -225,7 +225,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   reaches `fmt`, `lint`, and xtask's own `clippy` and `test` always, and `mutants` or `full`
   only when the changed file is in the `use` and `mod` closure of that job's entry files
   (`task/mutants/mod.rs`; `task/affected/mod.rs`, `main.rs`, `lib.rs`, `task/mod.rs`, and
-  `Cargo.toml` reach every job); a tool rerun covers every crate. Every job is gated on its
+  `Cargo.toml` reach every job). A workflow file reaches the jobs it defines, `ci.yml` the five
+  CI jobs and `mutants.yml` the shards. A tool or workflow change runs `full` over the
+  `smoke_crate` from `xtask/policy.toml` as one shard, enough to exercise the runner; the
+  weekly run on `main` keeps the whole-workspace guarantee. Every job is gated on its
   entry and runs its task with `--affected` on a pull request, pushes to `main` and the Monday
   schedule run everything, and `ci-gate` and `mutants-gate` always run and fail if any job they
   need failed, so they are the checks to require.
