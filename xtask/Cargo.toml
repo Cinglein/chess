@@ -34,6 +34,7 @@ state_graph = { path = "../tooling/lints/state_graph" }
 test_budget = { path = "../tooling/lints/test_budget" }
 type_shape = { path = "../tooling/lints/type_shape" }
 mutation = { path = "../tooling/mutation" }
+mutant_costs = { path = "../tooling/mutant_costs" }
 settings = { path = "../crates/settings" }
 task = { path = "../tooling/task" }
 toml = "0.9"
