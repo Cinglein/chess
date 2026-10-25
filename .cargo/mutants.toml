@@ -23,6 +23,7 @@ exclude_re = [
     "Affected::run",
     "Affected::loads",
     "Changes::reaches",
+    "Scope::tested_by_changes",
     "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",

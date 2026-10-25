@@ -1,3 +1,7 @@
+mod slice;
+
+pub use slice::Slice;
+
 use std::collections::BTreeSet;
 use std::fmt;
 use std::str::FromStr;
@@ -9,11 +13,7 @@ use crate::failure::Failure;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Shard {
     Whole(BTreeSet<CrateName>),
-    Slice {
-        crate_name: CrateName,
-        index: usize,
-        count: usize,
-    },
+    Slice { crate_name: CrateName, slice: Slice },
 }
 
 impl Shard {
@@ -47,11 +47,8 @@ impl Shard {
             .flat_map(|name| [CargoArgument::Package.to_string(), name.to_string()]);
         match self {
             Shard::Whole(_) => packages.collect(),
-            Shard::Slice { index, count, .. } => packages
-                .chain([
-                    MutantsArgument::Shard.to_string(),
-                    format!("{index}{}{count}", Self::CUT),
-                ])
+            Shard::Slice { slice, .. } => packages
+                .chain([MutantsArgument::Shard.to_string(), slice.to_string()])
                 .collect(),
         }
     }
@@ -64,15 +61,9 @@ impl fmt::Display for Shard {
                 let names: Vec<String> = crates.iter().map(ToString::to_string).collect();
                 formatter.write_str(&names.join(&Self::JOIN.to_string()))
             }
-            Shard::Slice {
-                crate_name,
-                index,
-                count,
-            } => write!(
-                formatter,
-                "{crate_name}{cut}{index}{cut}{count}",
-                cut = Self::CUT
-            ),
+            Shard::Slice { crate_name, slice } => {
+                write!(formatter, "{crate_name}{}{slice}", Self::CUT)
+            }
         }
     }
 }
@@ -86,23 +77,20 @@ impl FromStr for Shard {
                 "{text} is not a shard; expected a+b+c or crate/index/count"
             ))
         };
-        match text.split(Self::CUT).collect::<Vec<&str>>().as_slice() {
-            [crate_name, index, count] => {
+        match text.split_once(Self::CUT) {
+            Some((crate_name, slice)) => {
                 let Ok(crate_name) = crate_name.parse::<CrateName>();
                 Ok(Shard::Slice {
                     crate_name,
-                    index: index.parse().map_err(|_| malformed())?,
-                    count: count.parse().map_err(|_| malformed())?,
+                    slice: slice.parse().map_err(|_| malformed())?,
                 })
             }
-            [whole] => Ok(Shard::Whole(
-                whole
-                    .split(Self::JOIN)
+            None => Ok(Shard::Whole(
+                text.split(Self::JOIN)
                     .filter(|name| !name.is_empty())
                     .filter_map(|name| name.parse().ok())
                     .collect(),
             )),
-            _ => Err(malformed()),
         }
     }
 }

@@ -5,8 +5,8 @@ use std::cmp::Reverse;
 use bin::Bin;
 
 use crate::crate_load::CrateLoad;
-use task::Shard;
 use task::{Interval, Policy};
+use task::{Shard, Slice};
 
 pub struct Packing;
 
@@ -37,8 +37,7 @@ impl Packing {
         let name = load.name().clone();
         (0..count).map(move |index| Shard::Slice {
             crate_name: name.clone(),
-            index,
-            count,
+            slice: Slice::new(index, count),
         })
     }
 }

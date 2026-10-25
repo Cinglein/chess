@@ -33,6 +33,7 @@ impl Reach {
         }
     }
 
+    #[must_use]
     pub fn package(&self) -> Option<CrateName> {
         match self {
             Reach::Package(name) => Some(name.clone()),
@@ -40,6 +41,7 @@ impl Reach {
         }
     }
 
+    #[must_use]
     pub fn tool_file(&self) -> Option<&Path> {
         match self {
             Reach::Tool(path) => Some(path),

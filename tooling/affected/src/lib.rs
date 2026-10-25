@@ -13,6 +13,7 @@ pub use changes::Changes;
 pub use job::Job;
 pub use package_graph::PackageGraph;
 pub use plan::Plan;
+pub use reach::Reach;
 pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -22,7 +23,6 @@ use crate_load::CrateLoad;
 use job::{ToolScope, ToolTrigger};
 use job_plan::JobPlan;
 use listed_mutant::ListedMutant;
-use reach::Reach;
 use strum::IntoEnumIterator;
 use tool_graph::ToolGraph;
 
