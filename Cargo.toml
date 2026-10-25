@@ -5,6 +5,7 @@ members = [
     "tooling/affected",
     "tooling/lints/*",
     "tooling/magics",
+    "tooling/mutant_costs",
     "tooling/mutation",
     "tooling/stacked",
     "tooling/task",

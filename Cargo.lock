@@ -707,6 +707,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4caf9c718f831a8568f030576e6a6e6aa487ed5f8732ddb0ba79e9a3ea0421ca"
 
 [[package]]
+name = "mutant_costs"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "task",
+]
+
+[[package]]
 name = "mutation"
 version = "0.1.0"
 dependencies = [
@@ -1813,6 +1822,7 @@ dependencies = [
  "magics",
  "manual_iteration",
  "module_nesting",
+ "mutant_costs",
  "mutation",
  "named_lifetimes",
  "named_numbers",

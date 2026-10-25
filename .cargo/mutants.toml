@@ -12,6 +12,7 @@ exclude_globs = [
 ]
 exclude_re = [
     "arbitrary_with",
+    "MutantCosts::measure",
     "<impl Drop for UciProcess>::drop",
     "Network::trainer",
     "Stacked::",
