@@ -43,3 +43,19 @@ impl fmt::Display for AvailableGib {
         write!(formatter, "{} GiB", self.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::AvailableGib;
+
+    const SIX: AvailableGib = AvailableGib(6);
+    const TWO: AvailableGib = AvailableGib(2);
+    const THIRDS: usize = 3;
+
+    #[test]
+    fn gibibytes_round_down_from_bytes_divide_whole_and_print_their_unit() {
+        assert_eq!(AvailableGib::from_bytes(SIX.bytes() + 1), SIX);
+        assert_eq!(SIX.divided_by(TWO), THIRDS);
+        assert_eq!(SIX.to_string(), "6 GiB");
+    }
+}

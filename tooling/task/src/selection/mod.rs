@@ -81,9 +81,11 @@ mod tests {
     const BOARD: &str = "board";
     const PACKAGES: [&str; 4] = ["--package", EVAL, "--package", SEARCH];
     const WORKSPACE: [&str; 1] = ["--workspace"];
+    const SHOWN: [&str; 3] = ["the whole workspace", "no crate", "eval, search"];
 
     #[test]
     fn a_crate_selection_names_each_package_and_the_workspace_names_itself() {
+        let (whole, empty) = (Selection::Workspace, Selection::Crates(BTreeSet::new()));
         let crates = Selection::Crates(BTreeSet::from([
             SEARCH.parse().unwrap(),
             EVAL.parse().unwrap(),
@@ -91,11 +93,16 @@ mod tests {
         assert_eq!(crates.arguments::<CargoTool>(), PACKAGES);
         assert_eq!(
             (
-                Selection::Workspace.arguments::<CargoTool>(),
-                crates.includes(&EVAL.parse().unwrap()),
-                crates.includes(&BOARD.parse().unwrap())
+                whole.arguments::<CargoTool>(),
+                [whole.to_string(), empty.to_string(), crates.to_string()]
             ),
-            (WORKSPACE.map(String::from).to_vec(), true, false)
+            (
+                WORKSPACE.map(String::from).to_vec(),
+                SHOWN.map(String::from)
+            )
+        );
+        assert!(
+            crates.includes(&EVAL.parse().unwrap()) && !crates.includes(&BOARD.parse().unwrap())
         );
     }
 }

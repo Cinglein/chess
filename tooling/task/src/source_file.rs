@@ -70,3 +70,38 @@ impl SourceFile {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SourceFile;
+
+    const NAMED: [(&str, Option<&str>); 5] = [
+        ("crates/board/src/square.rs", Some("board")),
+        ("tooling/lints/fn_shape/src/lib.rs", Some("fn_shape")),
+        ("tooling/task/src/lib.rs", Some("task")),
+        ("xtask/src/main.rs", Some("xtask")),
+        ("other/board/src/lib.rs", None),
+    ];
+    const MODULES: &str = "#[cfg(test)] mod tests {} #[cfg(feature = \"proptest\")] mod strategies {} #[allow(test)] mod odd {}";
+    const TEST_MODULES: usize = 1;
+
+    #[test]
+    fn a_file_names_its_crate_from_its_path_and_only_a_cfg_test_module_is_a_test_module() {
+        let names = NAMED.map(|(path, _)| {
+            SourceFile::parse(path.to_owned(), String::new())
+                .expect("empty is valid")
+                .crate_name()
+                .map(str::to_owned)
+        });
+        assert_eq!(names, NAMED.map(|(_, name)| name.map(str::to_owned)));
+        let parsed = syn::parse_file(MODULES).expect("valid rust");
+        let test_modules = parsed
+            .items
+            .iter()
+            .filter(
+                |item| matches!(item, syn::Item::Mod(module) if SourceFile::is_test_module(module)),
+            )
+            .count();
+        assert_eq!(test_modules, TEST_MODULES);
+    }
+}

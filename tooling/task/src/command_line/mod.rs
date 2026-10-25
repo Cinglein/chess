@@ -108,9 +108,17 @@ impl fmt::Display for CommandLine {
 
 #[cfg(test)]
 mod tests {
-    use super::{CargoArgument, CommandLine, Program};
+    use std::path::PathBuf;
+
+    use super::{CargoArgument, CommandLine, Program, Stderr, Stdout};
 
     const SHOWN: &str = "git fmt --all";
+    const PRINT_DIRECTORY: &str = "pwd";
+    const SHELL: &str = "sh";
+    const TO_STDERR: [&str; 2] = ["-c", "echo err >&2"];
+    const SUCCEEDS: &str = "true";
+    const FAILS: &str = "false";
+    const COMPLAINT: &str = "err";
 
     #[test]
     fn a_command_line_prints_its_program_and_arguments_in_order() {
@@ -118,5 +126,25 @@ mod tests {
             .argument(CargoArgument::Fmt)
             .arguments([CargoArgument::All]);
         assert_eq!(line.to_string(), SHOWN);
+    }
+
+    #[test]
+    fn a_command_runs_in_its_directory_and_each_stream_is_captured_on_its_own() {
+        let executable = |name: &str| CommandLine::new(Program::Executable(name.into()));
+        let directory = std::env::temp_dir();
+        let shown = executable(PRINT_DIRECTORY)
+            .in_directory(directory.clone())
+            .captured::<Stdout>()
+            .unwrap();
+        assert_eq!(
+            PathBuf::from(shown.trim()).canonicalize().ok(),
+            directory.canonicalize().ok()
+        );
+        let complaint = executable(SHELL)
+            .arguments(TO_STDERR)
+            .captured::<Stderr>()
+            .unwrap();
+        assert_eq!(complaint.trim(), COMPLAINT);
+        assert!(executable(SUCCEEDS).run().is_ok() && executable(FAILS).run().is_err());
     }
 }

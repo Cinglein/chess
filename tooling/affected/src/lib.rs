@@ -16,7 +16,7 @@ pub use plan::Plan;
 pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate_load::CrateLoad;
 use job::{ToolScope, ToolTrigger};
@@ -82,7 +82,7 @@ impl Affected {
         let tool_files: BTreeSet<PathBuf> = reaches
             .iter()
             .filter_map(Reach::tool_file)
-            .map(|path| ToolGraph::embedded(path).to_path_buf())
+            .map(Path::to_path_buf)
             .collect();
         let touched = |job: Job| {
             everything()
@@ -151,7 +151,9 @@ impl Affected {
 
 #[cfg(test)]
 mod tests {
-    use super::{Affected, Job, PackageGraph, Reach, ToolGraph};
+    use std::collections::BTreeMap;
+
+    use super::{Affected, Job, JobPlan, PackageGraph, Reach, ToolGraph};
     use task::SourceFile;
 
     const METADATA: &str = r#"{"packages": [
@@ -168,21 +170,25 @@ mod tests {
     const TOOL: &str = "xtask";
     const RUNS: [Job; 2] = [Job::Lint, Job::Clippy];
     const SKIPS: [Job; 2] = [Job::Full, Job::Mutants];
+    const TOOL_ROOT: &str = "xtask/src/main.rs";
+    const BOARD_FILE: &str = "crates/board/src/lib.rs";
+    const EVAL: &str = "eval";
 
     #[test]
-    fn a_lint_change_reaches_the_lint_job_and_the_tools_own_checks_but_not_the_mutant_shards() {
+    fn changes_reach_the_jobs_and_crates_their_tool_scope_says_and_no_others() {
         let graph = PackageGraph::from_metadata(METADATA).unwrap();
-        let files = FILES.map(|(path, text)| {
-            SourceFile::parse(path.to_owned(), text.to_owned()).expect("valid rust")
-        });
+        let files = FILES.map(|(path, text)| SourceFile::parse(path, text.to_owned()).unwrap());
         let tool_graph = ToolGraph::from_files(&files);
-        let jobs = Affected::jobs(&graph, &tool_graph, &[Reach::reached_by(LINT_CHANGE)]);
-        assert!(RUNS.iter().all(|job| jobs.contains_key(job)));
-        assert!(SKIPS.iter().all(|job| !jobs.contains_key(job)));
-        assert!(
-            jobs[&Job::Clippy]
-                .selection()
-                .includes(&TOOL.parse().unwrap())
-        );
+        let plan = |reach: &str| Affected::jobs(&graph, &tool_graph, &[Reach::reached_by(reach)]);
+        let (lint, tool, board) = (plan(LINT_CHANGE), plan(TOOL_ROOT), plan(BOARD_FILE));
+        let has = |jobs: &BTreeMap<Job, JobPlan>, job: Job, name: &str| {
+            jobs[&job].selection().includes(&name.parse().unwrap())
+        };
+        let (full, clippy) = (Job::Full, Job::Clippy);
+        let lint_jobs = RUNS.iter().all(|job| lint.contains_key(job))
+            && SKIPS.iter().all(|job| !lint.contains_key(job));
+        assert!(lint_jobs && has(&lint, clippy, TOOL));
+        assert!(has(&tool, full, EVAL) && has(&tool, clippy, TOOL));
+        assert!(!has(&board, clippy, TOOL) && has(&board, full, EVAL) && !has(&board, full, TOOL));
     }
 }

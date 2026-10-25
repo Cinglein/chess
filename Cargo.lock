@@ -1372,6 +1372,7 @@ dependencies = [
 name = "test_time"
 version = "0.1.0"
 dependencies = [
+ "settings",
  "strum",
  "task",
 ]

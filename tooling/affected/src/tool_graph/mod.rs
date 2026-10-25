@@ -14,7 +14,6 @@ pub struct ToolGraph {
 
 impl ToolGraph {
     const TOOL: &str = "xtask/src";
-    const EMBEDDED: [(&str, &str); 1] = [("xtask/policy.toml", "xtask/src/task/policy/mod.rs")];
 
     pub fn from_files(files: &[SourceFile]) -> ToolGraph {
         let known: BTreeSet<&Path> = files
@@ -44,13 +43,6 @@ impl ToolGraph {
         entries: impl Iterator<Item = &'entries str>,
     ) -> BTreeSet<PathBuf> {
         self.grown(entries.map(PathBuf::from).collect())
-    }
-
-    pub fn embedded(path: &Path) -> &Path {
-        Self::EMBEDDED
-            .iter()
-            .find(|(data, _)| Path::new(data) == path)
-            .map_or(path, |(_, source)| Path::new(source))
     }
 
     fn grown(&self, seeds: BTreeSet<PathBuf>) -> BTreeSet<PathBuf> {

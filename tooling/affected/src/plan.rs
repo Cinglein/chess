@@ -45,3 +45,33 @@ impl Plan {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{BTreeMap, BTreeSet};
+
+    use settings::EmbeddedDefaults;
+
+    use super::{Job, JobPlan, Plan};
+    use crate::crate_load::CrateLoad;
+    use task::{Interval, Policy};
+
+    const SOME: usize = 2;
+    const EVAL: &str = "eval";
+    const SHARDED: &str = r#""shards":["eval/0/2","eval/1/2"],"shard_count":2"#;
+    const UNSHARDED: &str = r#""shards":[],"shard_count":0"#;
+
+    #[test]
+    fn only_the_full_job_is_sharded_and_a_missing_job_has_no_plan() {
+        let policy = Policy::defaults();
+        let (full, test, lint) = (Job::Full, Job::Test, Job::Lint);
+        let eval = BTreeSet::from([EVAL.parse().unwrap()]);
+        let jobs = BTreeMap::from([(full, JobPlan::over(&eval)), (test, JobPlan::over(&eval))]);
+        let each = policy.interval(Interval::PerShard);
+        let load = CrateLoad::new(EVAL.parse().unwrap(), SOME, SOME, each);
+        let sharded = Plan::new(jobs).with_full_sharded(core::slice::from_ref(&load), &policy);
+        let json = serde_json::to_string(&sharded).unwrap();
+        assert!(sharded.job(lint).is_none() && sharded.job(test).is_some());
+        assert!(json.contains(SHARDED) && json.contains(UNSHARDED));
+    }
+}

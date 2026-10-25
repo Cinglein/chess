@@ -86,3 +86,22 @@ impl TestBinary {
             .unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TestBinary;
+
+    const BINARY: &str = "target/debug/deps/board-1a2b3c";
+    const NAME: &str = "board";
+
+    #[test]
+    fn a_test_binary_is_named_by_its_file_stem_before_the_hash() {
+        assert_eq!(
+            TestBinary {
+                path: BINARY.into()
+            }
+            .name(),
+            NAME
+        );
+    }
+}
