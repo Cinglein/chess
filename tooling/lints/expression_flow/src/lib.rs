@@ -23,16 +23,10 @@ use task::Walk;
 pub struct ExpressionFlow;
 
 impl ExpressionFlow {
-    const COVERED: &str = "crates/";
-
     pub fn report(files: &[SourceFile]) -> Report {
         Report::new(
             "control flow is an expression; every branch yields the value the function returns",
-            files
-                .iter()
-                .filter(|file| file.path().starts_with(Self::COVERED))
-                .flat_map(Self::violations)
-                .collect(),
+            files.iter().flat_map(Self::violations).collect(),
         )
     }
 
