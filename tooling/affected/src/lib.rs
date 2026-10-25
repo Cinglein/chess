@@ -125,24 +125,25 @@ impl Affected {
         policy: &Policy,
     ) -> Result<Vec<CrateLoad>, Failure> {
         if selection.is_empty() {
-            return Ok(Vec::new());
+            Ok(Vec::new())
+        } else {
+            let counts = ListedMutant::tally(
+                &workspace
+                    .line(Program::Cargo)
+                    .argument(CargoArgument::Mutants)
+                    .argument(MutantsArgument::List)
+                    .argument(MutantsArgument::Json)
+                    .arguments(selection.arguments::<MutationTool>())
+                    .captured::<Stdout>()?,
+            )?;
+            Ok(counts
+                .into_iter()
+                .map(|(name, mutants)| {
+                    let each = policy.mutant_millis().for_crate(&name);
+                    CrateLoad::new(name, mutants, each, policy)
+                })
+                .collect())
         }
-        let counts = ListedMutant::tally(
-            &workspace
-                .line(Program::Cargo)
-                .argument(CargoArgument::Mutants)
-                .argument(MutantsArgument::List)
-                .argument(MutantsArgument::Json)
-                .arguments(selection.arguments::<MutationTool>())
-                .captured::<Stdout>()?,
-        )?;
-        Ok(counts
-            .into_iter()
-            .map(|(name, mutants)| {
-                let each = policy.mutant_millis().for_crate(&name);
-                CrateLoad::new(name, mutants, each, policy)
-            })
-            .collect())
     }
 }
 

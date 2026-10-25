@@ -121,8 +121,12 @@ mod tests {
         let slice: Shard = SLICE.parse().unwrap();
         let whole: Shard = WHOLE.parse().unwrap();
         assert_eq!(
-            (slice.to_string(), whole.to_string()),
-            (SLICE.to_owned(), WHOLE.to_owned())
+            (
+                slice.to_string(),
+                whole.to_string(),
+                "a/b".parse::<Shard>().ok()
+            ),
+            (SLICE.to_owned(), WHOLE.to_owned(), None)
         );
         assert_eq!(
             (slice.arguments(), whole.arguments()),
@@ -131,6 +135,6 @@ mod tests {
                 WHOLE_ARGUMENTS.map(String::from).to_vec()
             )
         );
-        assert!("a/b".parse::<Shard>().is_err());
+        assert_eq!((whole.runs().len(), slice.runs().len()), (2, 1));
     }
 }

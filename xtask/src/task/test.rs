@@ -9,14 +9,15 @@ impl Test {
     pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
         if selection.is_empty() {
             println!("test: no crate affected");
-            return Ok(());
+            Ok(())
+        } else {
+            workspace
+                .line(Program::Cargo)
+                .argument(CargoArgument::Test)
+                .argument(CargoArgument::Lib)
+                .arguments(selection.arguments::<CargoTool>())
+                .argument(CargoArgument::AllFeatures)
+                .run()
         }
-        workspace
-            .line(Program::Cargo)
-            .argument(CargoArgument::Test)
-            .argument(CargoArgument::Lib)
-            .arguments(selection.arguments::<CargoTool>())
-            .argument(CargoArgument::AllFeatures)
-            .run()
     }
 }

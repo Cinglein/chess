@@ -1,3 +1,4 @@
+use std::iter;
 use std::process::{Child, ExitStatus};
 use std::thread;
 use std::time::Instant;
@@ -41,44 +42,50 @@ impl<'policy> MemoryWatch<'policy> {
             site: Site::File("cargo-mutants".into()),
             error,
         };
-        let status = loop {
-            if let Some(status) = child.try_wait().map_err(io)? {
-                break status;
-            }
-            self.sample();
-            thread::sleep(self.policy.interval(Interval::SampleEvery).duration());
-        };
+        let status = iter::from_fn(|| Some(child.try_wait().map_err(io)))
+            .find_map(|waited| match waited {
+                Ok(None) => {
+                    self.sample();
+                    thread::sleep(self.policy.interval(Interval::SampleEvery).duration());
+                    None
+                }
+                Ok(Some(status)) => Some(Ok(status)),
+                Err(error) => Some(Err(error)),
+            })
+            .expect("polling only ends when the child exits")?;
         if self.killed.is_empty() {
-            return Ok(status);
+            Ok(status)
+        } else {
+            Err(Failure::Refused(format!(
+                "the {} budget was enforced by killing {}; bound the tests that grew under those mutants",
+                self.budget,
+                self.killed.join(", ")
+            )))
         }
-        Err(Failure::Refused(format!(
-            "the {} budget was enforced by killing {}; bound the tests that grew under those mutants",
-            self.budget,
-            self.killed.join(", ")
-        )))
     }
 
     fn sample(&mut self) {
         self.system.refresh_memory();
-        if self.last_discovery.elapsed() >= self.policy.interval(Interval::DiscoverEvery).duration()
+        let members = if self.last_discovery.elapsed()
+            >= self.policy.interval(Interval::DiscoverEvery).duration()
         {
             self.system.refresh_processes_specifics(
                 ProcessesToUpdate::All,
                 true,
                 ProcessRefreshKind::nothing().with_memory(),
             );
-            self.members = self.discovered_tree();
             self.last_discovery = Instant::now();
+            self.grown(vec![self.root])
         } else {
             self.system.refresh_processes_specifics(
                 ProcessesToUpdate::Some(&self.members),
                 true,
                 ProcessRefreshKind::nothing().with_memory(),
             );
-        }
-        if let Some(name) = self.enforce() {
-            self.killed.push(name);
-        }
+            self.members.clone()
+        };
+        self.members = members;
+        self.killed.extend(self.enforce());
     }
 
     fn enforce(&self) -> Option<String> {
@@ -88,36 +95,29 @@ impl<'policy> MemoryWatch<'policy> {
             .filter_map(|pid| self.system.process(*pid))
             .collect();
         let used: u64 = tree.iter().map(|process| process.memory()).sum();
-        if used
-            <= self
-                .budget
-                .minus(self.policy.memory(MemoryShare::Reserve))
-                .bytes()
-            && self.system.available_memory() >= self.policy.memory(MemoryShare::Reserve).bytes()
-        {
-            return None;
-        }
+        let reserve = self.policy.memory(MemoryShare::Reserve);
         let largest = tree.iter().max_by_key(|process| process.memory())?;
-        largest.kill();
-        Some(format!(
-            "{} (pid {}) at {} of {} used",
-            largest.name().to_string_lossy(),
-            largest.pid(),
-            AvailableGib::from_bytes(largest.memory()),
-            AvailableGib::from_bytes(used)
-        ))
+        (used > self.budget.minus(reserve).bytes()
+            || self.system.available_memory() < reserve.bytes())
+        .then(|| {
+            largest.kill();
+            format!(
+                "{} (pid {}) at {} of {} used",
+                largest.name().to_string_lossy(),
+                largest.pid(),
+                AvailableGib::from_bytes(largest.memory()),
+                AvailableGib::from_bytes(used)
+            )
+        })
     }
 
-    fn discovered_tree(&self) -> Vec<Pid> {
-        let mut members = vec![self.root];
-        loop {
-            let grown = self.children_outside(&members);
-            if grown.is_empty() {
-                break;
-            }
-            members.extend(grown);
+    fn grown(&self, members: Vec<Pid>) -> Vec<Pid> {
+        let children = self.children_outside(&members);
+        if children.is_empty() {
+            members
+        } else {
+            self.grown(members.into_iter().chain(children).collect())
         }
-        members
     }
 
     fn children_outside(&self, members: &[Pid]) -> Vec<Pid> {

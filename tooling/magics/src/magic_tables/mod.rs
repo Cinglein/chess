@@ -53,9 +53,9 @@ impl MagicTables {
             formatter,
             "pub(super) const {name}: EnumMap<Square, u64> = EnumMap::from_array(["
         )?;
-        for value in values.values() {
-            writeln!(formatter, "    {},", HexLiteral::from(*value))?;
-        }
+        values
+            .values()
+            .try_for_each(|value| writeln!(formatter, "    {},", HexLiteral::from(*value)))?;
         writeln!(formatter, "]);")
     }
 }
@@ -69,5 +69,25 @@ impl fmt::Display for MagicTables {
         Self::fmt_table(formatter, "ROOK", &self.rook)?;
         writeln!(formatter)?;
         Self::fmt_table(formatter, "BISHOP", &self.bishop)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use enum_map::EnumMap;
+
+    use super::MagicTables;
+
+    const EXPECTED: [&str; 3] = [
+        "pub(super) const ROOK: EnumMap<Square, u64>",
+        "pub(super) const BISHOP: EnumMap<Square, u64>", "    0xffff_ffff_ffff_ffff,\n]);",
+    ];
+
+    #[test]
+    fn the_tables_print_as_two_named_constants_of_grouped_hex_literals() {
+        let full = EnumMap::from_fn(|_| u64::MAX);
+        let tables = MagicTables { rook: full, bishop: full };
+        let printed = tables.to_string();
+        assert!(EXPECTED.iter().all(|part| printed.contains(part)));
     }
 }

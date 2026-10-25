@@ -9,17 +9,18 @@ impl Clippy {
     pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
         if selection.is_empty() {
             println!("clippy: no crate affected");
-            return Ok(());
+            Ok(())
+        } else {
+            workspace
+                .line(Program::Cargo)
+                .argument(CargoArgument::Clippy)
+                .arguments(selection.arguments::<CargoTool>())
+                .argument(CargoArgument::AllTargets)
+                .argument(CargoArgument::AllFeatures)
+                .argument(CargoArgument::ToolArguments)
+                .argument(CargoArgument::Deny)
+                .argument(CargoArgument::Warnings)
+                .run()
         }
-        workspace
-            .line(Program::Cargo)
-            .argument(CargoArgument::Clippy)
-            .arguments(selection.arguments::<CargoTool>())
-            .argument(CargoArgument::AllTargets)
-            .argument(CargoArgument::AllFeatures)
-            .argument(CargoArgument::ToolArguments)
-            .argument(CargoArgument::Deny)
-            .argument(CargoArgument::Warnings)
-            .run()
     }
 }
