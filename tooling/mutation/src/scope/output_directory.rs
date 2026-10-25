@@ -5,15 +5,14 @@ use std::path::{Path, PathBuf};
 use task::Failure;
 use task::Shard;
 use task::Site;
-use task::Workspace;
 
 pub struct OutputDirectory(PathBuf);
 
 impl OutputDirectory {
     const ROOT: &str = "target/mutants";
 
-    pub fn cleared(workspace: &Workspace) -> Result<OutputDirectory, Failure> {
-        let root = workspace.root().join(Self::ROOT);
+    pub fn cleared(workspace_root: &Path) -> Result<OutputDirectory, Failure> {
+        let root = workspace_root.join(Self::ROOT);
         match fs::remove_dir_all(&root) {
             Err(error) if error.kind() != ErrorKind::NotFound => Err(Failure::Io {
                 site: Site::File(Self::ROOT.into()),
@@ -35,5 +34,24 @@ impl OutputDirectory {
             error,
         })?;
         Ok(directory)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{env, fs, process};
+
+    use super::OutputDirectory;
+
+    const STALE: &str = "target/mutants/stale/missed.txt";
+    #[test]
+    fn clearing_drops_stale_output_and_a_run_gets_a_directory_named_after_its_crates() {
+        let root = env::temp_dir().join(format!("chess-output-{}", process::id()));
+        fs::create_dir_all(root.join(STALE).parent().unwrap()).unwrap();
+        fs::write(root.join(STALE), STALE).unwrap();
+        let output = OutputDirectory::cleared(&root).unwrap();
+        let prepared = output.prepared_for(&"eval+uci".parse().unwrap()).unwrap();
+        assert!(!root.join(STALE).exists() && prepared.is_dir() && prepared.ends_with("eval+uci"));
+        fs::remove_dir_all(&root).unwrap();
     }
 }

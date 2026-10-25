@@ -37,7 +37,7 @@ impl Scope {
         workspace: &Workspace,
         selection: &Selection,
     ) -> Result<Vec<MutantsRun>, Failure> {
-        let output = OutputDirectory::cleared(workspace)?;
+        let output = OutputDirectory::cleared(workspace.root())?;
         let line = line.argument(MutantsArgument::InPlace);
         match self {
             Scope::ChangedLines => {

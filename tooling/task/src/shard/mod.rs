@@ -108,13 +108,10 @@ mod tests {
     fn a_shard_prints_back_to_its_spelling_and_names_its_packages_and_slice() {
         let slice: Shard = SLICE.parse().unwrap();
         let whole: Shard = WHOLE.parse().unwrap();
-        assert_eq!(
-            (
-                slice.to_string(),
-                whole.to_string(),
-                "a/b".parse::<Shard>().ok()
-            ),
-            (SLICE.to_owned(), WHOLE.to_owned(), None)
+        assert!(
+            slice.to_string() == SLICE
+                && whole.to_string() == WHOLE
+                && "a/b".parse::<Shard>().is_err()
         );
         assert_eq!(
             (slice.arguments(), whole.arguments()),
