@@ -16,6 +16,7 @@ use superbatch_count::SuperbatchCount;
 use wdl_weight::WdlWeight;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Schedule {
     batch_size: usize,
     batches_per_superbatch: BatchCount,

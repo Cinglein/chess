@@ -5,6 +5,7 @@ mod settings;
 
 pub use command_line_error::CommandLineError;
 
+use ::settings::EmbeddedDefaults;
 use arena::{Openings, Series};
 use arguments::Arguments;
 use clap::Parser;

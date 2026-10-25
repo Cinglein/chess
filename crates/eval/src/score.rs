@@ -15,6 +15,7 @@ impl Score {
     pub const DRAW: Score = Score(0);
     pub const INFINITY: Score = Score(32_000);
     const MATE: Score = Score(31_000);
+    const PLIES_PER_MOVE: i32 = 2;
     pub const LONGEST_MATE: Score = Score(30_000);
 
     #[must_use]
@@ -59,17 +60,17 @@ impl Score {
     pub fn mating_in_moves(moves: i32) -> Score {
         let plies = |count: i32| u8::try_from(count).unwrap_or(u8::MAX);
         if moves > 0 {
-            Self::mate_in(plies(2 * moves - 1))
+            Self::mate_in(plies(Self::PLIES_PER_MOVE * moves - 1))
         } else {
-            Self::mated_in(plies(-2 * moves))
+            Self::mated_in(plies(-Self::PLIES_PER_MOVE * moves))
         }
     }
 
     #[must_use]
     pub fn mate_in_moves(self) -> Option<i32> {
         match self.mate_direction() {
-            MateDirection::Winning => Some(((Self::MATE - self).0 + 1) / 2),
-            MateDirection::Losing => Some(-(((Self::MATE + self).0 + 1) / 2)),
+            MateDirection::Winning => Some(((Self::MATE - self).0 + 1) / Self::PLIES_PER_MOVE),
+            MateDirection::Losing => Some(-(((Self::MATE + self).0 + 1) / Self::PLIES_PER_MOVE)),
             MateDirection::None => None,
         }
     }

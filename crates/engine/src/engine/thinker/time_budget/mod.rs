@@ -14,7 +14,7 @@ impl TimeBudget {
     const LEAST: Duration = Duration::from_millis(1);
 
     pub(super) fn is_past_halfway(elapsed: Duration, allowance: Duration) -> bool {
-        elapsed * 2 >= allowance
+        elapsed + elapsed >= allowance
     }
 
     pub(super) fn allot(clock: &Clock, side: Color) -> Duration {

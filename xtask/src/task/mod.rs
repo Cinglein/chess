@@ -1,4 +1,5 @@
 mod binary_files;
+mod bit_boundary;
 mod ci;
 mod const_shape;
 mod distinct_signatures;
@@ -12,6 +13,7 @@ mod manual_iteration;
 mod module_nesting;
 mod mutants;
 mod named_lifetimes;
+mod named_numbers;
 mod no_comments;
 mod no_forwarders;
 mod no_free_fns;
@@ -21,10 +23,12 @@ mod primitive_boundary;
 mod private_fns;
 mod public_surface;
 mod report;
+mod settings_shape;
 mod site;
 mod source_file;
 mod stacked;
 mod state_graph;
+mod support_modules;
 mod test_budget;
 mod test_time;
 mod type_shape;
@@ -45,6 +49,7 @@ use crate::task::manual_iteration::ManualIteration;
 use crate::task::module_nesting::ModuleNesting;
 use crate::task::mutants::{Mutants, Scope};
 use crate::task::named_lifetimes::NamedLifetimes;
+use crate::task::named_numbers::NamedNumbers;
 use crate::task::no_comments::NoComments;
 use crate::task::no_forwarders::NoForwarders;
 use crate::task::no_free_fns::NoFreeFns;
@@ -53,6 +58,7 @@ use crate::task::no_parameter_bags::NoParameterBags;
 use crate::task::primitive_boundary::PrimitiveBoundary;
 use crate::task::private_fns::PrivateFns;
 use crate::task::public_surface::PublicSurface;
+use crate::task::settings_shape::SettingsShape;
 use crate::task::stacked::Stacked;
 use crate::task::state_graph::StateGraph;
 use crate::task::test_budget::TestBudget;
@@ -79,6 +85,7 @@ pub enum Task {
     Mutants,
     MutantsFull,
     NamedLifetimes,
+    NamedNumbers,
     NoComments,
     NoForwarders,
     NoFreeFns,
@@ -87,6 +94,7 @@ pub enum Task {
     PrimitiveBoundary,
     PrivateFns,
     PublicSurface,
+    SettingsShape,
     Stacked,
     StateGraph,
     TestBudget,
@@ -118,6 +126,7 @@ impl Task {
             Task::Mutants => Mutants::run(&workspace, Scope::ChangedLines),
             Task::MutantsFull => Mutants::run(&workspace, Scope::Workspace),
             Task::NamedLifetimes => NamedLifetimes::report(&workspace.source_files()?).verdict(),
+            Task::NamedNumbers => NamedNumbers::report(&workspace.source_files()?).verdict(),
             Task::NoComments => NoComments::report(&workspace.source_files()?).verdict(),
             Task::NoForwarders => NoForwarders::report(&workspace.source_files()?).verdict(),
             Task::NoFreeFns => NoFreeFns::report(&workspace.source_files()?).verdict(),
@@ -130,6 +139,7 @@ impl Task {
             }
             Task::PrivateFns => PrivateFns::report(&workspace.source_files()?).verdict(),
             Task::PublicSurface => PublicSurface::report(&workspace.source_files()?).verdict(),
+            Task::SettingsShape => SettingsShape::report(&workspace.source_files()?).verdict(),
             Task::Stacked => Stacked::run(),
             Task::StateGraph => StateGraph::report(&workspace.source_files()?).verdict(),
             Task::TestBudget => TestBudget::report(&workspace.source_files()?).verdict(),

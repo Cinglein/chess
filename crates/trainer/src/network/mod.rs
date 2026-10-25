@@ -39,7 +39,7 @@ impl Network {
                 );
                 let output = builder.new_affine(
                     Layer::Output.as_ref(),
-                    2 * NetworkFormat::HIDDEN_SIZE,
+                    NetworkFormat::BOTH_PERSPECTIVES_SIZE,
                     NetworkFormat::OUTPUT_SIZE,
                 );
                 let stm_hidden = hidden.forward(stm_inputs).screlu();

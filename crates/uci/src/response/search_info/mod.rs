@@ -84,7 +84,7 @@ impl fmt::Display for SearchInfo {
             InfoKey::Nodes,
             self.nodes,
             InfoKey::Nps,
-            self.nodes.count().saturating_mul(1000) / millis.max(1),
+            self.nodes.per_second(self.elapsed),
             InfoKey::Time
         )?;
         self.best_move.map_or(Ok(()), |notation| {

@@ -6,12 +6,12 @@ use syn::visit::Visit;
 use crate::task::source_file::SourceFile;
 
 #[derive(Default)]
-pub(super) struct SupportModules {
+pub struct SupportModules {
     names: Vec<String>,
 }
 
 impl SupportModules {
-    pub(super) fn paths(file: &SourceFile) -> Vec<String> {
+    pub fn paths(file: &SourceFile) -> Vec<String> {
         let mut modules = SupportModules::default();
         modules.visit_file(file.syntax());
         let directory = Self::directory_of(Path::new(file.path()));

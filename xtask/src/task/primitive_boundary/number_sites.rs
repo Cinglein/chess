@@ -4,6 +4,7 @@ use syn::{
     ItemStruct, ItemType, Signature, TraitItemConst, TypePath,
 };
 
+use crate::task::bit_boundary::BitBoundary;
 use crate::task::site::Site;
 use crate::task::source_file::SourceFile;
 use crate::task::violation::Violation;
@@ -22,22 +23,10 @@ impl NumberSites {
     ];
     const SIZES: [&str; 2] = ["usize", "isize"];
     const SIZE_WORDS: [&str; 6] = ["length", "len", "capacity", "size", "bytes", "index"];
-    const BIT_BOUNDARY_FILES: [&str; 7] = [
-        "crates/board/src/square.rs",
-        "crates/board/src/direction.rs",
-        "crates/board/src/slider/magic.rs",
-        "crates/board/src/slider/magics.rs",
-        "crates/board/src/slider/attack_table.rs",
-        "crates/board/src/zobrist_keys/split_mix.rs",
-        "xtask/src/task/magics/",
-    ];
     const SIZE_DOMAIN: &str = "crates/";
 
     pub fn violations(file: &SourceFile) -> Vec<Violation> {
-        if Self::BIT_BOUNDARY_FILES
-            .iter()
-            .any(|boundary| file.path().starts_with(boundary))
-        {
+        if BitBoundary::covers(file.path()) {
             return Vec::new();
         }
         let mut sites = NumberSites {

@@ -4,6 +4,7 @@ mod settings;
 
 pub use command_line_error::CommandLineError;
 
+use ::settings::EmbeddedDefaults;
 use arguments::Arguments;
 use bullet_lib::value::loader::DirectSequentialDataLoader;
 use clap::Parser;

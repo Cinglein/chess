@@ -24,6 +24,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
+- `crates/settings`: `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
+  file or writes the embedded defaults when it is missing, and `SettingsError` names what went wrong.
 - `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
   itself at fixed nodes from `RandomOpenings` on worker threads and streams every `Finished`
   game over a channel; `Example` turns each `Label` into bullet's 32-byte `ChessBoard` record
@@ -39,9 +41,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   wasm). Crates are added when their milestone starts.
 - `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
   and runs `const-shape`, `distinct-signatures`, `expression-flow`, `fn-shape`, `literal-names`,
-  `manual-iteration`, `module-nesting`, `named-lifetimes`, `no-comments`, `no-forwarders`,
-  `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`, `primitive-boundary`,
-  `private-fns`, `public-surface`, `state-graph`, `test-budget`, and `type-shape`, `cargo xtask wasm`,
+  `manual-iteration`, `module-nesting`, `named-lifetimes`, `named-numbers`, `no-comments`,
+  `no-forwarders`, `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`,
+  `primitive-boundary`, `private-fns`, `public-surface`, `settings-shape`, `state-graph`,
+  `test-budget`, and `type-shape`, `cargo xtask wasm`,
   `cargo xtask test-time`, `cargo xtask stacked`, `cargo xtask mutants`,
   `cargo xtask mutants-full`, `cargo xtask magics`). Lints return a `Report` of
   `Violation`s at a `Site`; every xtask error is a `Failure` variant.
@@ -119,7 +122,14 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - A binary is wiring. Every file reached from a `main.rs` under `crates/` is free of numeric
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
   data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
-  enforces it.
+  enforces it. A settings struct lives in the binary, implements `settings::EmbeddedDefaults`
+  with its default file, and every struct that derives `Deserialize` with named fields carries
+  `#[serde(deny_unknown_fields)]`, so a misspelt key is an error; `cargo xtask settings-shape`
+  enforces that.
+- A number has a name. In `crates/`, outside tests, test support files, and the bit boundary
+  files, a numeric literal other than 0 and 1 appears only inside a `const` item, so every
+  tunable can be found by name and moved to a setting or a parameter when its value is measured.
+  Literals inside macro arguments count. `cargo xtask named-numbers` enforces it.
 - Memory budget: anything this session runs on the owner's laptop stays under 8 GiB, because
   the laptop carries other work. `.cargo/config.toml` caps every cargo build at 3 compiler jobs,
   the mutation task derives its caps from the same 8 GiB (`AvailableGib::GRANTED`), and long

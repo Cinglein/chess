@@ -1,7 +1,7 @@
 use arena::ArenaError;
 use thiserror::Error;
 
-use super::settings::SettingsError;
+use settings::SettingsError;
 
 #[derive(Debug, Error)]
 pub enum CommandLineError {
