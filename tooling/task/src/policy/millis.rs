@@ -58,3 +58,12 @@ impl fmt::Display for Millis {
         write!(formatter, "{}", self.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Millis;
+    #[test]
+    fn whole_seconds_drops_the_fraction_of_a_second() {
+        assert_eq!(Millis::new(64).times(32).whole_seconds(), 2);
+    }
+}
