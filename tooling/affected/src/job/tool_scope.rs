@@ -2,6 +2,5 @@
 #[repr(u8)]
 pub enum ToolScope {
     ProductOnly,
-    PlusTheTool,
     Everything,
 }

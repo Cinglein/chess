@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use task::CrateName;
+use crate::crate_name::CrateName;
 
 #[derive(Debug, Deserialize)]
 pub struct Dependency {

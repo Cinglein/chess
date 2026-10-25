@@ -1,105 +1,95 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
+use crate::job::Driver;
 use task::CrateName;
+use task::PackageGraph;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Reach {
     Everything,
     Nothing,
     Package(CrateName),
-    Tool(PathBuf),
+    Driven(Driver),
 }
 
 impl Reach {
-    const CRATES: &str = "crates";
-    const TOOLING: &str = "tooling";
-    const LINTS: &str = "lints";
-    const TOOL: &str = "xtask";
-    const INERT_DIRECTORIES: [&str; 1] = [".claude"];
+    const ROOT_ENTRIES: [(&str, Reach); 8] = [
+        ("Cargo.toml", Reach::Everything),
+        ("Cargo.lock", Reach::Everything),
+        ("rust-toolchain.toml", Reach::Everything),
+        (".cargo/config.toml", Reach::Everything),
+        (".cargo/mutants.toml", Reach::Driven(Driver::CargoMutants)),
+        (".github", Reach::Everything),
+        (".claude", Reach::Nothing),
+        (".gitignore", Reach::Nothing),
+    ];
     const INERT_EXTENSIONS: [&str; 1] = ["md"];
 
-    pub fn reached_by(path: &str) -> Reach {
-        let path = Path::new(path);
-        match path
-            .strip_prefix(Self::CRATES)
-            .or_else(|_| path.strip_prefix(Self::TOOLING))
-            .ok()
-            .and_then(Self::first_crate)
-        {
-            Some(name) => Reach::Package(name),
-            None if path.starts_with(Self::TOOL) => Reach::Tool(path.to_path_buf()),
-            None if Self::is_inert(path) => Reach::Nothing,
-            None => Reach::Everything,
-        }
+    #[must_use]
+    pub fn reached_by(path: &Path, packages: &PackageGraph) -> Option<Reach> {
+        Self::inert(path)
+            .or_else(|| packages.containing(path).cloned().map(Reach::Package))
+            .or_else(|| {
+                Self::ROOT_ENTRIES
+                    .iter()
+                    .find(|(entry, _)| path.starts_with(entry))
+                    .map(|(_, reach)| reach.clone())
+            })
     }
 
     #[must_use]
     pub fn package(&self) -> Option<CrateName> {
         match self {
             Reach::Package(name) => Some(name.clone()),
-            Reach::Everything | Reach::Nothing | Reach::Tool(_) => None,
+            Reach::Everything | Reach::Nothing | Reach::Driven(_) => None,
         }
     }
 
-    #[must_use]
-    pub fn tool_file(&self) -> Option<&Path> {
-        match self {
-            Reach::Tool(path) => Some(path),
-            Reach::Everything | Reach::Nothing | Reach::Package(_) => None,
-        }
-    }
-
-    fn is_inert(path: &Path) -> bool {
-        Self::INERT_DIRECTORIES
-            .iter()
-            .any(|directory| path.starts_with(directory))
-            || path.extension().is_some_and(|extension| {
+    fn inert(path: &Path) -> Option<Reach> {
+        path.extension()
+            .filter(|extension| {
                 Self::INERT_EXTENSIONS
                     .iter()
-                    .any(|inert| extension == *inert)
+                    .any(|inert| extension == inert)
             })
-    }
-
-    fn first_crate(inside: &Path) -> Option<CrateName> {
-        let names: Vec<String> = inside
-            .components()
-            .filter(|component| component.as_os_str() != Self::LINTS)
-            .map(|component| component.as_os_str().to_string_lossy().into_owned())
-            .collect();
-        match names.as_slice() {
-            [directory, _, ..] => directory.parse().ok(),
-            _ => None,
-        }
+            .map(|_| Reach::Nothing)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Reach;
-    const PACKAGE_PATHS: [&str; 1] = ["crates/eval/src/score.rs"];
-    const TOOL_PATHS: [&str; 2] = ["xtask/src/task/lint.rs", "xtask/policy.toml"];
-    const EVERYTHING_PATHS: [&str; 2] = ["Cargo.lock", ".github/ci.yml"];
+    use super::{Driver, Reach};
+    use std::path::Path;
+    use task::PackageGraph;
+    const METADATA: &str = r#"{"workspace_root": "/w", "packages": [
+        {"name": "eval", "manifest_path": "/w/crates/eval/Cargo.toml", "dependencies": []}
+    ]}"#;
+    const PACKAGE_PATH: &str = "crates/eval/src/score.rs";
+    const EVAL: &str = "eval";
+    const EVERYTHING_PATHS: [&str; 2] = ["Cargo.lock", ".github/workflows/ci.yml"];
     const NOTHING_PATHS: [&str; 2] = ["README.md", ".claude/settings.json"];
+    const MUTATION_CONFIG: &str = ".cargo/mutants.toml";
+    const UNLISTED_ROOT_FILE: &str = "tooling/policy.toml";
 
     #[test]
-    fn a_path_reaches_its_crate_the_tool_everything_or_nothing() {
-        assert!(
-            PACKAGE_PATHS
-                .iter()
-                .all(|path| Reach::reached_by(path).package() == "eval".parse().ok())
-        );
-        assert!(
-            TOOL_PATHS
-                .iter()
-                .all(|path| Reach::reached_by(path).tool_file().is_some())
+    fn a_path_reaches_its_package_a_root_file_its_entry_and_an_unlisted_root_file_waits() {
+        let packages = PackageGraph::from_metadata(METADATA).unwrap();
+        let reach = |path: &str| Reach::reached_by(Path::new(path), &packages);
+        assert_eq!(
+            reach(PACKAGE_PATH).and_then(|reach| reach.package()),
+            EVAL.parse().ok()
         );
         assert!(
             EVERYTHING_PATHS
                 .iter()
-                .all(|path| Reach::reached_by(path) == Reach::Everything)
+                .all(|path| reach(path) == Some(Reach::Everything))
                 && NOTHING_PATHS
                     .iter()
-                    .all(|path| Reach::reached_by(path) == Reach::Nothing)
+                    .all(|path| reach(path) == Some(Reach::Nothing))
+        );
+        assert!(
+            reach(MUTATION_CONFIG) == Some(Reach::Driven(Driver::CargoMutants))
+                && reach(UNLISTED_ROOT_FILE).is_none()
         );
     }
 }
