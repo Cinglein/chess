@@ -1,20 +1,24 @@
 mod changes;
+mod crate_load;
 mod job;
 mod job_plan;
 mod listed_mutant;
 mod package_graph;
 mod plan;
 mod reach;
+mod tested_crates;
 mod tool_graph;
 
 pub use changes::Changes;
 pub use job::Job;
 pub use package_graph::PackageGraph;
 pub use plan::Plan;
+pub use tested_crates::TestedCrates;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
+use crate_load::CrateLoad;
 use job::{ToolScope, ToolTrigger};
 use job_plan::JobPlan;
 use listed_mutant::ListedMutant;
@@ -35,12 +39,12 @@ impl Affected {
     const TOOL: &str = "xtask";
 
     pub fn run(workspace: &Workspace, policy: &Policy, plan: Plan) -> Result<(), Failure> {
-        let counts = plan
+        let loads = plan
             .job(Job::Full)
-            .map(|full| Self::mutant_counts(workspace, &full.selection()))
+            .map(|full| Self::loads(workspace, &full.selection(), policy))
             .transpose()?;
-        let sharded = match counts {
-            Some(counts) => plan.with_full_sharded(&counts, policy),
+        let sharded = match loads {
+            Some(loads) => plan.with_full_sharded(&loads, policy),
             None => plan,
         };
         println!("{}", serde_json::to_string(&sharded)?);
@@ -115,14 +119,17 @@ impl Affected {
         product.iter().cloned().chain(extra).collect()
     }
 
-    fn mutant_counts(
+    fn loads(
         workspace: &Workspace,
         selection: &Selection,
-    ) -> Result<BTreeMap<CrateName, usize>, Failure> {
+        policy: &Policy,
+    ) -> Result<Vec<CrateLoad>, Failure> {
         if selection.is_empty() {
-            return Ok(BTreeMap::new());
+            return Ok(Vec::new());
         }
-        ListedMutant::tally(
+        let graph = Self::package_graph(workspace)?;
+        let tested = TestedCrates::collect(&workspace.source_files()?);
+        let counts = ListedMutant::tally(
             &workspace
                 .line(Program::Cargo)
                 .argument(CargoArgument::Mutants)
@@ -130,7 +137,15 @@ impl Affected {
                 .argument(MutantsArgument::Json)
                 .arguments(selection.arguments::<MutationTool>())
                 .captured::<Stdout>()?,
-        )
+        )?;
+        Ok(counts
+            .into_iter()
+            .map(|(name, mutants)| {
+                let tested_packages = tested.around(&graph, &BTreeSet::from([name.clone()])).len();
+                let each = policy.mutant_millis().for_crate(&name);
+                CrateLoad::new(name, mutants, tested_packages, each)
+            })
+            .collect())
     }
 }
 

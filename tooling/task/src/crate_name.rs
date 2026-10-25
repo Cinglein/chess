@@ -2,9 +2,9 @@ use std::convert::Infallible;
 use std::str::FromStr;
 
 use derive_more::Display;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct CrateName(String);
 

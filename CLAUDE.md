@@ -211,9 +211,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
   whole workspace, or one `MUTANTS_SHARD`: `board/0/5` is one slice of a crate, `eval+fen` is a
   set of whole crates, and a shard runs only the tests of its crates and of the dependents that
-  have tests, so a lint mutant never relinks xtask. The Mutants workflow packs the affected
-  crates' mutants into at most 20 such shards by count, slicing crates bigger than a shard, runs
-  them on every PR and on demand, and a missed mutant anywhere fails the shard. A mutant no test can
+  have tests, so a lint mutant never relinks xtask. The Mutants workflow costs each crate's mutants
+  by the measured `mutant_millis` for that crate (unlisted crates take the default), slices a
+  crate that costs more than `per_shard`, packs the rest by shared test sets, runs the shards on
+  every PR and on demand (remeasure the table from the shard artifacts' `outcomes.json` when a
+  shard runs long), and a missed mutant anywhere fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
   piece-square `placement_table.rs`) and `xtask` are excluded in `.cargo/mutants.toml`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so

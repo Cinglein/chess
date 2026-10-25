@@ -15,8 +15,6 @@ assertions_per_test = 3
 lines_per_test = 20
 literals_per_test = 4
 largest_integer = 64
-mutants_per_shard = 64
-most_shards = 20
 slowest_shown = 5
 
 [floors]
@@ -38,3 +36,26 @@ sample_every = 20
 discover_every = 100
 per_test = 1000
 total = 4000
+per_shard = 200000
+
+[mutant_millis]
+default = 2000
+
+[mutant_millis.crates]
+arena = 1100
+board = 2800
+const_shape = 1300
+datagen = 900
+engine = 2300
+eval = 3000
+expression_flow = 4000
+fn_shape = 1600
+manual_iteration = 2500
+module_nesting = 800
+no_forwarders = 1900
+search = 1900
+settings_shape = 2500
+state_graph = 3100
+test_budget = 3000
+trainer = 1400
+uci = 3800

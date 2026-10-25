@@ -1,10 +1,11 @@
 mod packing;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use packing::Packing;
 use serde::Serialize;
 
+use crate::crate_load::CrateLoad;
 use task::CrateName;
 use task::Policy;
 use task::Selection;
@@ -25,8 +26,8 @@ impl JobPlan {
         }
     }
 
-    pub fn sharded(self, counts: &BTreeMap<CrateName, usize>, policy: &Policy) -> JobPlan {
-        let shards: Vec<String> = Packing::shards(counts, policy)
+    pub fn sharded(self, loads: &[CrateLoad], policy: &Policy) -> JobPlan {
+        let shards: Vec<String> = Packing::shards(loads, policy)
             .iter()
             .map(ToString::to_string)
             .collect();
@@ -49,27 +50,31 @@ impl JobPlan {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeSet;
 
     use settings::EmbeddedDefaults;
 
     use super::JobPlan;
-    use task::{Limit, Policy};
+    use crate::crate_load::CrateLoad;
+    use task::{Interval, Policy};
 
     const SOME: usize = 2;
-    const THREE: usize = 3;
 
     #[test]
     fn shards_follow_the_mutant_counts_and_an_empty_plan_has_none() {
         let policy = Policy::defaults();
-        let per_shard = policy.limit(Limit::MutantsPerShard).count();
         let eval = BTreeSet::from(["eval".parse().unwrap()]);
-        let counts = BTreeMap::from([("eval".parse().unwrap(), per_shard * SOME + SOME)]);
-        let some = JobPlan::over(&eval).sharded(&counts, &policy);
-        let none = JobPlan::over(&BTreeSet::new()).sharded(&BTreeMap::new(), &policy);
+        let load = CrateLoad::new(
+            "eval".parse().unwrap(),
+            SOME,
+            SOME,
+            policy.interval(Interval::PerShard),
+        );
+        let some = JobPlan::over(&eval).sharded(core::slice::from_ref(&load), &policy);
+        let none = JobPlan::over(&BTreeSet::new()).sharded(&[], &policy);
         assert_eq!(
             (some.shards.len(), some.shard_count, none.shards.len()),
-            (THREE, THREE, usize::MIN)
+            (SOME, SOME, usize::MIN)
         );
         assert!(none.selection().is_empty() && !some.selection().is_empty());
     }

@@ -1,50 +1,37 @@
 mod bin;
 
 use std::cmp::Reverse;
-use std::collections::BTreeMap;
 
 use bin::Bin;
 
-use task::CrateName;
+use crate::crate_load::CrateLoad;
 use task::Shard;
-use task::{Limit, Policy};
+use task::{Interval, Policy};
 
 pub struct Packing;
 
 impl Packing {
-    pub fn shards(counts: &BTreeMap<CrateName, usize>, policy: &Policy) -> Vec<Shard> {
-        let total: usize = counts.values().sum();
-        let shard_count = total
-            .div_ceil(policy.limit(Limit::MutantsPerShard).count())
-            .min(policy.limit(Limit::MostShards).count());
-        if shard_count == 0 {
-            return Vec::new();
-        }
-        let target = total.div_ceil(shard_count);
-        let slices: Vec<Shard> = counts
+    pub fn shards(loads: &[CrateLoad], policy: &Policy) -> Vec<Shard> {
+        let target = policy.interval(Interval::PerShard);
+        let slices = loads
             .iter()
-            .filter(|(_, count)| **count > target)
-            .flat_map(|(name, count)| Self::slices(name.clone(), count.div_ceil(target)))
-            .collect();
-        let mut whole: Vec<(&CrateName, &usize)> = counts
-            .iter()
-            .filter(|(_, count)| **count <= target)
-            .collect();
-        whole.sort_by_key(|(_, count)| Reverse(**count));
-        let bins = whole.into_iter().fold(
-            vec![Bin::default(); shard_count.saturating_sub(slices.len()).max(1)],
-            |mut bins, (name, count)| {
-                Bin::lightest(&mut bins).take(name.clone(), *count);
-                bins
-            },
-        );
-        slices
-            .into_iter()
-            .chain(bins.into_iter().filter_map(Bin::shard))
-            .collect()
+            .filter(|load| load.cost() > target)
+            .flat_map(|load| Self::slices(load, load.cost().div_ceil(target)));
+        let mut whole: Vec<&CrateLoad> =
+            loads.iter().filter(|load| load.cost() <= target).collect();
+        whole.sort_by_key(|load| Reverse((load.tested_packages(), load.cost())));
+        let bins = whole.into_iter().fold(Vec::<Bin>::new(), |mut bins, load| {
+            match bins.last_mut().filter(|bin| bin.fits(load.cost(), target)) {
+                Some(bin) => bin.take(load.name().clone(), load.cost()),
+                None => bins.push(Bin::holding(load.name().clone(), load.cost())),
+            }
+            bins
+        });
+        slices.chain(bins.into_iter().map(Bin::shard)).collect()
     }
 
-    fn slices(name: CrateName, count: usize) -> impl Iterator<Item = Shard> {
+    fn slices(load: &CrateLoad, count: usize) -> impl Iterator<Item = Shard> {
+        let name = load.name().clone();
         (0..count).map(move |index| Shard::Slice {
             crate_name: name.clone(),
             index,
@@ -55,23 +42,32 @@ impl Packing {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
-
     use settings::EmbeddedDefaults;
 
     use super::Packing;
-    use task::Policy;
+    use crate::crate_load::CrateLoad;
+    use task::{Interval, Policy};
 
-    const COUNTS: [(&str, usize); 3] = [("a", 60), ("b", 20), ("c", 10)];
-    const SHARDS: [&str; 3] = ["a/0/2", "a/1/2", "b+c"];
+    const LOADS: [(&str, usize, usize, Interval); 4] = [
+        ("a", 2, 2, Interval::PerShard),
+        ("b", 1, 3, Interval::Total),
+        ("c", 1, 1, Interval::PerShard),
+        ("d", 1, 2, Interval::PerTest),
+    ];
+    const SHARDS: [&str; 4] = ["a/0/2", "a/1/2", "b+d", "c"];
 
     #[test]
-    fn crates_above_the_target_are_sliced_and_the_rest_are_packed_largest_first() {
-        let counts: BTreeMap<_, _> = COUNTS
-            .iter()
-            .map(|(name, count)| (name.parse().unwrap(), *count))
-            .collect();
-        let shards: Vec<String> = Packing::shards(&counts, &Policy::defaults())
+    fn crates_costlier_than_a_shard_are_sliced_and_the_rest_are_packed_by_shared_test_sets() {
+        let policy = Policy::defaults();
+        let loads = LOADS.map(|(name, mutants, tested, each)| {
+            CrateLoad::new(
+                name.parse().unwrap(),
+                mutants,
+                tested,
+                policy.interval(each),
+            )
+        });
+        let shards: Vec<String> = Packing::shards(&loads, &policy)
             .iter()
             .map(ToString::to_string)
             .collect();

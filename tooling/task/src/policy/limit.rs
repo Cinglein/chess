@@ -15,7 +15,5 @@ pub enum Limit {
     LinesPerTest,
     LiteralsPerTest,
     LargestInteger,
-    MutantsPerShard,
-    MostShards,
     SlowestShown,
 }

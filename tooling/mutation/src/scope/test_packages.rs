@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use affected::PackageGraph;
+use affected::{PackageGraph, TestedCrates};
 use task::CrateName;
 use task::MutantsArgument;
 use task::Shard;
@@ -9,23 +9,8 @@ use task::SourceFile;
 pub struct TestPackages(BTreeSet<CrateName>);
 
 impl TestPackages {
-    const TEST_ATTRIBUTE: &str = "#[test]";
-
     pub fn around(shard: &Shard, graph: &PackageGraph, files: &[SourceFile]) -> TestPackages {
-        let tested: BTreeSet<CrateName> = files
-            .iter()
-            .filter(|file| file.text().contains(Self::TEST_ATTRIBUTE))
-            .filter_map(SourceFile::crate_name)
-            .filter_map(|name| name.parse().ok())
-            .collect();
-        let mutated = shard.crates();
-        TestPackages(
-            graph
-                .dependents_closure(mutated.clone())
-                .into_iter()
-                .filter(|name| tested.contains(name) || mutated.contains(name))
-                .collect(),
-        )
+        TestPackages(TestedCrates::collect(files).around(graph, &shard.crates()))
     }
 
     pub fn arguments(&self) -> Vec<String> {
