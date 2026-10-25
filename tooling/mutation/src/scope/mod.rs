@@ -6,7 +6,7 @@ use std::collections::BTreeSet;
 use std::env;
 use std::fs;
 
-use affected::{Affected, Changes, Reach, TestedCrates};
+use affected::{Changes, Reach, TestedCrates};
 use mutants_run::MutantsRun;
 use output_directory::OutputDirectory;
 use task::CrateName;
@@ -107,7 +107,7 @@ impl Scope {
         output: &OutputDirectory,
         shard: &Shard,
     ) -> Result<Vec<MutantsRun>, Failure> {
-        let graph = Affected::package_graph(workspace)?;
+        let graph = workspace.packages();
         let tested = TestedCrates::collect(&workspace.source_files()?);
         shard
             .runs()
@@ -120,7 +120,7 @@ impl Scope {
                         .argument(directory.display())
                         .argument(MutantsArgument::TestWorkspaceOff)
                         .arguments(run.arguments())
-                        .arguments(TestPackages::around(run, &graph, &tested).arguments()),
+                        .arguments(TestPackages::around(run, graph, &tested).arguments()),
                     directory,
                 ))
             })

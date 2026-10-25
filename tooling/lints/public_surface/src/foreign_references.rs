@@ -10,7 +10,7 @@ use task::SourceFile;
 
 #[derive(Default)]
 pub struct ForeignReferences {
-    own_crate: String,
+    own_crate: Option<CrateName>,
     names: BTreeSet<String>,
     crates: BTreeSet<CrateName>,
 }
@@ -20,8 +20,7 @@ impl ForeignReferences {
         let own_crate = file
             .crate_name()
             .filter(|_| !binaries.contains(file.path()))
-            .unwrap_or_default()
-            .to_owned();
+            .cloned();
         let mut references = ForeignReferences {
             own_crate,
             names: BTreeSet::new(),
@@ -65,8 +64,8 @@ impl ForeignReferences {
 
     fn record(&mut self, first: Option<&str>, name: &str) {
         first
-            .filter(|crate_name| *crate_name != self.own_crate)
             .and_then(|crate_name| crate_name.parse::<CrateName>().ok())
+            .filter(|crate_name| Some(crate_name) != self.own_crate.as_ref())
             .into_iter()
             .for_each(|crate_name| {
                 self.names.insert(Self::key(&crate_name, name));
