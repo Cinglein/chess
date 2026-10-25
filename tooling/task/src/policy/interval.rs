@@ -12,4 +12,5 @@ pub enum Interval {
     PerShard,
     PerCrate,
     TestTimeout,
+    PerSlice,
 }

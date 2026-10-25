@@ -108,7 +108,7 @@ mod tests {
         assert!(
             read.is_vague(&Name::from(CHECK))
                 && !read.is_vague(&Name::from(LONG_ENOUGH))
-                && costs.for_crate(&"board".parse().unwrap())
+                && costs.for_crate(&"engine".parse().unwrap())
                     != costs.for_crate(&"unlisted".parse().unwrap())
         );
         assert!(

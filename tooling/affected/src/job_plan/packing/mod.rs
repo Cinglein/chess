@@ -5,14 +5,13 @@ use std::cmp::Reverse;
 use bin::Bin;
 
 use crate::crate_load::CrateLoad;
-use task::{Interval, Policy};
+use task::Millis;
 use task::{Shard, Slice, SliceCount};
 
 pub struct Packing;
 
 impl Packing {
-    pub fn shards(loads: &[CrateLoad], policy: &Policy) -> Vec<Shard> {
-        let target = policy.interval(Interval::PerShard);
+    pub fn shards(loads: &[CrateLoad], target: Millis) -> Vec<Shard> {
         let slice_count = |load: &CrateLoad| load.cost().div_ceil(target);
         let slices = loads
             .iter()
@@ -67,7 +66,7 @@ mod tests {
                 &policy,
             )
         });
-        let shards: Vec<String> = Packing::shards(&loads, &policy)
+        let shards: Vec<String> = Packing::shards(&loads, policy.interval(Interval::PerShard))
             .iter()
             .map(ToString::to_string)
             .collect();
