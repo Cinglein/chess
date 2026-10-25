@@ -24,7 +24,7 @@ impl NoParameterBags {
                     candidates
                         .candidates()
                         .filter(|candidate| {
-                            Self::consumer_count(&uses, index, candidate.name()) == 1
+                            Self::has_one_consumer_besides_index(&uses, index, candidate.name())
                         })
                         .map(|candidate| {
                             Violation::new(
@@ -41,11 +41,12 @@ impl NoParameterBags {
         )
     }
 
-    fn consumer_count(uses: &[NameUses], own: usize, name: &str) -> usize {
+    fn has_one_consumer_besides_index(uses: &[NameUses], index: usize, name: &str) -> bool {
         uses.iter()
             .enumerate()
-            .filter(|(index, file_uses)| *index != own && file_uses.mentions(name))
+            .filter(|(other, file_uses)| *other != index && file_uses.mentions(name))
             .count()
+            == 1
     }
 }
 

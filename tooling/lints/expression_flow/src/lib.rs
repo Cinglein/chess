@@ -14,6 +14,7 @@ use syn::{
     Local, Pat, PatIdent, Stmt, TraitItemFn,
 };
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -80,7 +81,7 @@ struct Flows<'scan> {
 
 impl Flows<'_> {
     fn found(path: &Path, span: Span, message: &str) -> Violation {
-        Violation::new(Site::Line(path.into(), span.start().line), message)
+        Violation::new(Site::Line(path.into(), LineNumber::from(span)), message)
     }
 
     fn report(&mut self, span: Span, message: &str) {

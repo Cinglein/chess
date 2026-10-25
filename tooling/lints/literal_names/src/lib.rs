@@ -1,6 +1,7 @@
 use syn::visit::Visit;
 use syn::{Ident, ImplItemFn, ItemFn, ItemImpl, ItemMod, TraitItemFn};
 
+use task::LineNumber;
 use task::Policy;
 use task::Report;
 use task::Site;
@@ -22,7 +23,7 @@ impl LiteralNames {
                         .into_iter()
                         .map(move |name| {
                             Violation::new(
-                                Site::Line(file.path().into(), name.span().start().line),
+                                Site::Line(file.path().into(), LineNumber::from(name.span())),
                                 format!("fn {name} names nothing; say what it does"),
                             )
                         })

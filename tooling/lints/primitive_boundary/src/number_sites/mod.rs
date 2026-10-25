@@ -13,6 +13,7 @@ use syn::{
 };
 
 use task::BitBoundary;
+use task::LineNumber;
 use task::Policy;
 use task::Site;
 use task::SourceFile;
@@ -36,7 +37,6 @@ impl<'scan> NumberSites<'scan> {
     ];
     const SIZES: [&'static str; 2] = ["usize", "isize"];
     const SIZE_WORDS: [&'static str; 6] = ["length", "len", "capacity", "size", "bytes", "index"];
-    const SIZE_DOMAIN: &'static str = "crates/";
 
     pub fn violations(file: &SourceFile, policy: &'scan Policy) -> Vec<Violation> {
         if BitBoundary::covers(file.path()) {
@@ -88,7 +88,7 @@ impl<'scan> NumberSites<'scan> {
         let wire = self.aliases.resolve(&path.path);
         let site = Site::Line(
             self.path.clone(),
-            path.path.segments[0].ident.span().start().line,
+            LineNumber::from(path.path.segments[0].ident.span()),
         );
         if Self::is_named(path, &Self::PRIMITIVES) {
             Sighting::Number(Violation::new(
@@ -106,10 +106,7 @@ impl<'scan> NumberSites<'scan> {
                     self.context
                 ),
             ))
-        } else if Self::is_named(path, &Self::SIZES)
-            && !self.names_a_size()
-            && self.path.starts_with(Self::SIZE_DOMAIN)
-        {
+        } else if Self::is_named(path, &Self::SIZES) && !self.names_a_size() {
             Sighting::Size(Violation::new(
                 site,
                 format!(

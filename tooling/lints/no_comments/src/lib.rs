@@ -1,5 +1,6 @@
 use rustc_lexer::{FrontmatterAllowed, TokenKind, tokenize};
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -25,7 +26,7 @@ impl NoComments {
         )
     }
 
-    fn comment_lines(source: &str) -> Vec<usize> {
+    fn comment_lines(source: &str) -> Vec<LineNumber> {
         tokenize(source, FrontmatterAllowed::Yes)
             .scan(0, |offset, token| {
                 let start = *offset;
@@ -38,18 +39,21 @@ impl NoComments {
                     TokenKind::LineComment { .. } | TokenKind::BlockComment { .. }
                 )
             })
-            .map(|(start, _)| source[..start].matches('\n').count() + 1)
+            .map(|(start, _)| LineNumber::new(source[..start].matches('\n').count() + 1))
             .collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::NoComments;
+    use super::{LineNumber, NoComments};
     #[test]
     fn flags_line_block_and_doc_comments() {
         let source = "fn a() {}\n// one\nfn b() {}\n/* two */\n/// three\nfn c() {}\n";
-        assert_eq!(NoComments::comment_lines(source), vec![2, 4, 5]);
+        assert_eq!(
+            NoComments::comment_lines(source),
+            [2, 4, 5].map(LineNumber::new)
+        );
     }
 
     #[test]

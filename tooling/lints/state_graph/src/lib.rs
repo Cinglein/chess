@@ -11,9 +11,9 @@ use edge_scan::EdgeScan;
 use field_visibility::FieldVisibility;
 use variant_matches::VariantMatches;
 
+use task::Policy;
 use task::Report;
 use task::SourceFile;
-use task::{Limit, Policy};
 
 pub struct StateGraph;
 
@@ -41,7 +41,7 @@ impl StateGraph {
                         .into_iter()
                         .chain(VariantMatches::violations(file, &declarations))
                 })
-                .chain(edges.violations(policy.limit(Limit::EdgesPerVertex).count()))
+                .chain(edges.violations(policy))
                 .collect(),
         )
     }
@@ -49,6 +49,9 @@ impl StateGraph {
 
 #[cfg(test)]
 mod tests {
+    use super::declarations::VertexCount;
+    use super::edge_scan::EdgeCount;
+
     use super::{Declarations, EdgeScan, StateGraph};
     use settings::EmbeddedDefaults;
     use task::{Policy, SourceFile};
@@ -88,8 +91,8 @@ impl Walker {
         "hub.rs:10: returns a tuple holding", "hub.rs:10: takes &mut self on vertex",
         "other.rs:5: takes a vertex and returns", "Hub -> Spoke has 3 edges, at most one",
     ];
-    const VERTEX_COUNT: usize = 3;
-    const EDGE_COUNT: usize = 5;
+    const VERTEX_COUNT: VertexCount = VertexCount::new(3);
+    const EDGE_COUNT: EdgeCount = EdgeCount::new(5);
 
     #[test]
     fn reports_every_broken_edge_field_and_match_and_counts_vertices_through_aliases() {

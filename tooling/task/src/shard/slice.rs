@@ -1,29 +1,30 @@
 use std::fmt;
 use std::str::FromStr;
 
+use super::slice_count::SliceCount;
 use crate::failure::Failure;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Slice {
     index: usize,
-    count: usize,
+    count: SliceCount,
 }
 
 impl Slice {
     const CUT: char = '/';
 
     #[must_use]
-    pub const fn new(index: usize, count: usize) -> Slice {
+    pub const fn at_index(index: usize, count: SliceCount) -> Slice {
         Slice { index, count }
     }
 
     #[must_use]
     pub fn picked<T>(&self, items: Vec<T>) -> Option<Vec<T>> {
-        (items.len() >= self.count).then(|| {
+        (items.len() >= usize::from(self.count)).then(|| {
             items
                 .into_iter()
                 .enumerate()
-                .filter(|(position, _)| position % self.count == self.index)
+                .filter(|(position, _)| position % usize::from(self.count) == self.index)
                 .map(|(_, item)| item)
                 .collect()
         })
@@ -51,8 +52,8 @@ impl FromStr for Slice {
 
 #[cfg(test)]
 mod tests {
-    use super::Slice;
-    const SECOND_OF_THREE: Slice = Slice::new(1, 3);
+    use super::{Slice, SliceCount};
+    const SECOND_OF_THREE: Slice = Slice::at_index(1, SliceCount::new(3));
     const ITEMS: [char; 5] = ['a', 'b', 'c', 'd', 'e'];
     #[test]
     fn a_slice_takes_every_third_item_from_its_index_and_nothing_from_fewer_items_than_slices() {

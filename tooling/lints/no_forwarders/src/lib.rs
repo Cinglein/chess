@@ -7,6 +7,7 @@ use forwarders::Forwarders;
 use syn::visit::Visit;
 use workspace_types::WorkspaceTypes;
 
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -29,7 +30,7 @@ impl NoForwarders {
                             Violation::new(
                                 Site::Line(
                                     file.path().to_owned(),
-                                    forwarder.name().span().start().line,
+                                    LineNumber::from(forwarder.name().span()),
                                 ),
                                 format!(
                                     "fn {} only forwards to {}; expose the part or call that directly",

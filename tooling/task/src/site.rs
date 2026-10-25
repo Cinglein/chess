@@ -1,11 +1,13 @@
 use std::fmt;
 use std::path::PathBuf;
 
+use crate::line_number::LineNumber;
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Site {
     Workspace,
     File(PathBuf),
-    Line(PathBuf, usize),
+    Line(PathBuf, LineNumber),
 }
 
 impl fmt::Display for Site {

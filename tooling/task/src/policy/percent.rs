@@ -7,8 +7,8 @@ pub struct Percent(usize);
 impl Percent {
     const WHOLE: usize = 100;
 
-    pub const fn applied_to(self, whole: usize) -> usize {
-        whole * self.0 / Self::WHOLE
+    pub fn applied_to<Whole: Into<usize>, Part: From<usize>>(self, whole: Whole) -> Part {
+        Part::from(whole.into() * self.0 / Self::WHOLE)
     }
 }
 
@@ -21,6 +21,6 @@ mod tests {
 
     #[test]
     fn a_percent_of_a_whole_rounds_down() {
-        assert_eq!(EIGHTEEN.applied_to(FIFTY), NINE);
+        assert_eq!(EIGHTEEN.applied_to::<usize, usize>(FIFTY), NINE);
     }
 }

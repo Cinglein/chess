@@ -11,9 +11,9 @@ pub struct Repository {
 
 impl Repository {
     const CUT: char = '/';
-    const FIELDS: usize = 2;
+    const FIELDS_LENGTH: usize = 2;
 
-    pub fn fields(&self) -> [GhField; Self::FIELDS] {
+    pub fn fields(&self) -> [GhField; Self::FIELDS_LENGTH] {
         [
             GhField::new(GhKey::Owner, &self.owner),
             GhField::new(GhKey::Name, &self.name),

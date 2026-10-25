@@ -1,11 +1,13 @@
+use task::LineNumber;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Candidate {
     name: String,
-    line: usize,
+    line: LineNumber,
 }
 
 impl Candidate {
-    pub fn new(name: String, line: usize) -> Candidate {
+    pub fn new(name: String, line: LineNumber) -> Candidate {
         Candidate { name, line }
     }
 
@@ -13,7 +15,7 @@ impl Candidate {
         &self.name
     }
 
-    pub fn line(&self) -> usize {
+    pub fn line(&self) -> LineNumber {
         self.line
     }
 }

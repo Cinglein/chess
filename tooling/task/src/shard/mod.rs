@@ -1,6 +1,8 @@
 mod slice;
+mod slice_count;
 
 pub use slice::Slice;
+pub use slice_count::SliceCount;
 
 use std::collections::BTreeSet;
 use std::fmt;

@@ -3,6 +3,7 @@ use syn::{ItemMod, LitFloat, LitInt};
 
 use named_numbers::NamedNumbers;
 use task::BinaryFiles;
+use task::LineNumber;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -36,7 +37,7 @@ impl NoNumbersInBinaries {
 }
 
 #[derive(Default)]
-struct Numbers(Vec<usize>);
+struct Numbers(Vec<LineNumber>);
 
 impl<'ast> Visit<'ast> for Numbers {
     fn visit_item_mod(&mut self, module: &'ast ItemMod) {
@@ -48,12 +49,13 @@ impl<'ast> Visit<'ast> for Numbers {
 
     fn visit_lit_int(&mut self, literal: &'ast LitInt) {
         self.0.extend(
-            (!NamedNumbers::is_unit(literal.base10_digits())).then(|| literal.span().start().line),
+            (!NamedNumbers::is_unit(literal.base10_digits()))
+                .then(|| LineNumber::from(literal.span())),
         );
     }
 
     fn visit_lit_float(&mut self, literal: &'ast LitFloat) {
-        self.0.push(literal.span().start().line);
+        self.0.push(LineNumber::from(literal.span()));
     }
 }
 

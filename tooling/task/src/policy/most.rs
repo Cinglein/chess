@@ -9,7 +9,11 @@ impl Most {
         self.0
     }
 
-    pub const fn allows(self, count: usize) -> bool {
-        count <= self.0
+    pub fn counted<Count: From<usize>>(self) -> Count {
+        Count::from(self.0)
+    }
+
+    pub fn allows(self, count: impl Into<usize>) -> bool {
+        count.into() <= self.0
     }
 }

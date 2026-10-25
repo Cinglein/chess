@@ -2,9 +2,9 @@ mod module_tree;
 
 use module_tree::ModuleTree;
 
+use task::Policy;
 use task::Report;
 use task::SourceFile;
-use task::{Limit, Policy};
 
 pub struct ModuleNesting;
 
@@ -14,9 +14,7 @@ impl ModuleNesting {
         let tree = ModuleTree::collect(files);
         Report::new(
             "modules nest by use: a file used only inside one sibling belongs inside it",
-            tree.violations()
-                .chain(tree.crowded(policy.limit(Limit::Reexports).count()))
-                .collect(),
+            tree.violations().chain(tree.crowded(policy)).collect(),
         )
     }
 }
