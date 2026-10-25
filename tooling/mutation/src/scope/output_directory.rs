@@ -39,10 +39,8 @@ impl OutputDirectory {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, process};
-
     use super::OutputDirectory as Output;
-
+    use std::{env, fs, process};
     const STALE: &str = "target/mutants/stale/missed.txt";
     const RUN: &str = "eval+uci";
 
