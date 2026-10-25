@@ -1,7 +1,9 @@
 mod export;
+mod finding;
 mod foreign_references;
 
 use export::Export;
+use finding::Finding;
 use foreign_references::ForeignReferences;
 
 use task::BinaryFiles;
@@ -33,10 +35,9 @@ impl PublicSurface {
                         .map(move |export| {
                             Violation::new(
                                 Site::Line(file.path().into(), export.line()),
-                                format!(
-                                    "{} is exported but no other crate names it; export it when a user appears",
-                                    export.name()
-                                ),
+                                Finding::UnnamedExport {
+                                    name: export.name().clone(),
+                                },
                             )
                         })
                 })

@@ -3,6 +3,7 @@ use std::path::Path;
 use syn::visit::Visit;
 use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Ident, ItemImpl, ItemMod};
 
+use super::finding::Finding;
 use task::LineNumber;
 use task::Site;
 use task::SourceFile;
@@ -42,9 +43,9 @@ impl TextSites {
                 .map(|ident| {
                     Violation::new(
                         Site::Line(path.into(), LineNumber::from(ident.span())),
-                        format!(
-                            "{ident} handles text outside a door; parse in FromStr or render in Display"
-                        ),
+                        Finding::TextOutsideDoor {
+                            handler: Name::from(&ident),
+                        },
                     )
                 })
                 .collect()

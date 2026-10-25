@@ -17,13 +17,13 @@ pub use interval::Interval;
 pub use limit::Limit;
 pub use memory_share::MemoryShare;
 pub use millis::Millis;
-pub use mutant_millis::MutantMillis;
+pub use most::Most;
 pub use share::Share;
 pub use wire_type::WireType;
 
 use enum_map::EnumMap;
 use least::Least;
-use most::Most;
+use mutant_millis::MutantMillis;
 use percent::Percent;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;

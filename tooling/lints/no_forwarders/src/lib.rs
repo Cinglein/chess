@@ -1,14 +1,17 @@
 mod callee;
+mod finding;
 mod forwarder;
 mod forwarders;
 mod workspace_types;
 
+use finding::Finding;
 use forwarder::Forwarder;
 use forwarders::Forwarders;
 use syn::visit::Visit;
 use workspace_types::WorkspaceTypes;
 
 use task::LineNumber;
+use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
@@ -33,11 +36,10 @@ impl NoForwarders {
                                     file.path().to_owned(),
                                     LineNumber::from(forwarder.name().span()),
                                 ),
-                                format!(
-                                    "fn {} only forwards to {}; expose the part or call that directly",
-                                    forwarder.name(),
-                                    forwarder.callee()
-                                ),
+                                Finding::Forwards {
+                                    name: Name::from(forwarder.name()),
+                                    callee: forwarder.callee().clone(),
+                                },
                             )
                         })
                 })

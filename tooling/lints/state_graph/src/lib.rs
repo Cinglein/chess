@@ -1,6 +1,7 @@
 mod declarations;
 mod edge_scan;
 mod field_visibility;
+mod finding;
 mod function_shape;
 mod impl_context;
 mod type_name;
@@ -82,7 +83,12 @@ impl Walker {
     fn faulty(wire: Wire) -> u8 { match wire { Wire::Faulty { code } => code.max(1), _ => 0 } }
 }
 ";
-    const FILES: [(&str, &str); 2] = [("hub.rs", VERTICES), ("other.rs", MATCHER)];
+    const TWIN: &str = "pub enum Wire { Far(u8) } impl Wire { fn own(&self) -> u8 { match self { Wire::Far(n) => *n } } }";
+    const FILES: [(&str, &str); 3] = [
+        ("hub.rs", VERTICES),
+        ("other.rs", MATCHER),
+        ("far.rs", TWIN),
+    ];
     const REPORTED: [&str; 14] = [
         "hub.rs:5: field inner of Leaky", "other.rs:6: match on Wire", "other.rs:8: match on Wire",
         "other.rs:9: match on Wire", "other.rs:10: match on Wire", "other.rs:11: match on Wire",

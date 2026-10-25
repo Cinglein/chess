@@ -9,10 +9,10 @@ pub struct Violation {
 }
 
 impl Violation {
-    pub fn new(site: Site, message: impl Into<String>) -> Violation {
+    pub fn new(site: Site, finding: impl fmt::Display) -> Violation {
         Violation {
             site,
-            message: message.into(),
+            message: finding.to_string(),
         }
     }
 }

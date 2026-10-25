@@ -35,7 +35,7 @@ pub use mutant_count::MutantCount;
 pub use name::{Casing, LoweredInfix, Name, Prefix, Whole};
 pub use nesting_depth::NestingDepth;
 pub use package_graph::PackageGraph;
-pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Policy, Share, WireType};
+pub use policy::{Floor, Interval, Limit, MemoryShare, Millis, Most, Policy, Share, WireType};
 pub use reexport_count::ReexportCount;
 pub use report::Report;
 pub use selection::{CargoTool, MutationTool, Selection};
