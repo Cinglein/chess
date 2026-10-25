@@ -3,7 +3,6 @@ mod finding;
 use std::collections::BTreeMap;
 
 use finding::Finding;
-use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{ImplItem, ItemImpl, Visibility};
 
@@ -11,6 +10,7 @@ use task::Name;
 use task::Report;
 use task::Site;
 use task::SourceFile;
+use task::TypeName;
 use task::Violation;
 use task::Walk;
 use task::{Limit, Policy};
@@ -45,7 +45,7 @@ impl PrivateFns {
         )
     }
 
-    fn private_fns(file: &syn::File) -> BTreeMap<Name, Vec<Name>> {
+    fn private_fns(file: &syn::File) -> BTreeMap<TypeName, Vec<Name>> {
         let mut counter = PrivateFnCounter::default();
         counter.visit_file(file);
         counter.0
@@ -53,7 +53,7 @@ impl PrivateFns {
 }
 
 #[derive(Default)]
-struct PrivateFnCounter(BTreeMap<Name, Vec<Name>>);
+struct PrivateFnCounter(BTreeMap<TypeName, Vec<Name>>);
 
 impl PrivateFnCounter {
     fn private_names(item: &ItemImpl) -> impl Iterator<Item = Name> {
@@ -71,13 +71,7 @@ impl<'ast> Visit<'ast> for PrivateFnCounter {
         match Walk::inherent_impls(item) {
             Walk::Entered => self
                 .0
-                .entry(Name::from(
-                    item.self_ty
-                        .to_token_stream()
-                        .to_string()
-                        .replace(' ', "")
-                        .as_str(),
-                ))
+                .entry(TypeName::from_type(&item.self_ty))
                 .or_default()
                 .extend(Self::private_names(item)),
             Walk::Skipped => {}

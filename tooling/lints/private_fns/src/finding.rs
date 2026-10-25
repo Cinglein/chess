@@ -2,10 +2,11 @@ use std::fmt;
 
 use task::Most;
 use task::Name;
+use task::TypeName;
 
 pub enum Finding {
     TooManyPrivateFns {
-        type_name: Name,
+        type_name: TypeName,
         names: Vec<Name>,
         most: Most,
     },

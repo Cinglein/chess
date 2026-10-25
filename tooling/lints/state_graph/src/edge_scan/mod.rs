@@ -14,10 +14,10 @@ use super::declarations::Declarations;
 use super::finding::Finding;
 use super::function_shape::FunctionShape;
 use super::impl_context::ImplContext;
-use super::type_name::TypeName;
 use task::Name;
 use task::Site;
 use task::SourceFile;
+use task::TypeName;
 use task::Violation;
 use task::{Limit, Policy};
 

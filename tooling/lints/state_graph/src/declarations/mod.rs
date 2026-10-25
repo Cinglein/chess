@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 use syn::visit::Visit;
 use syn::{Fields, ItemEnum, ItemImpl, ItemType};
 
-use super::type_name::TypeName;
 use task::Name;
 use task::SourceFile;
+use task::TypeName;
 
 #[derive(Default)]
 pub struct Declarations {

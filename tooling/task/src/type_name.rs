@@ -9,6 +9,7 @@ pub struct TypeName(String);
 impl TypeName {
     const WRAPPERS: [&str; 2] = ["Option", "Result"];
 
+    #[must_use]
     pub fn from_type(ty: &Type) -> TypeName {
         TypeName(
             Self::unwrapped(ty)
@@ -18,10 +19,12 @@ impl TypeName {
         )
     }
 
+    #[must_use]
     pub fn named(ident: &Ident) -> TypeName {
         TypeName(ident.to_string())
     }
 
+    #[must_use]
     pub fn or_self(self, self_type: &TypeName) -> TypeName {
         if self.0 == "Self" {
             self_type.clone()

@@ -5,10 +5,10 @@ use quote::ToTokens;
 use syn::{Member, Visibility};
 
 use super::edge_scan::{Edge, EdgeCount};
-use super::type_name::TypeName;
 use task::Most;
 use task::Name;
 use task::Site;
+use task::TypeName;
 
 pub enum Finding {
     TupleHoldsVertex,

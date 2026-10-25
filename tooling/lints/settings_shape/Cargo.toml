@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 task = { path = "../../task" }
 syn = { version = "2", features = ["full", "parsing", "visit"] }
+proc-macro2 = "1"
 quote = "1"
 
 [lints]
