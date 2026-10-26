@@ -19,12 +19,12 @@ impl ResignAdjudication {
     }
 
     #[must_use]
-    pub fn is_lost(&self, score: Score) -> bool {
+    pub fn is_lost(self, score: Score) -> bool {
         score <= -self.beyond_centipawns
     }
 
     #[must_use]
-    pub fn reached(&self, losing_plies: PlyCount) -> bool {
+    pub fn reached(self, losing_plies: PlyCount) -> bool {
         losing_plies >= self.for_plies
     }
 }

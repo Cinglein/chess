@@ -77,10 +77,7 @@ impl<'line> TryFrom<&'line str> for Command<'line> {
         let (head, rest) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
-        match head
-            .parse::<CommandWord>()
-            .map_err(|_| UciError::UnknownCommand)?
-        {
+        match head.parse::<CommandWord>().map_err(|_| UciError::Command)? {
             CommandWord::Uci => Ok(Command::Uci),
             CommandWord::IsReady => Ok(Command::IsReady),
             CommandWord::SetOption => EngineOption::try_from(rest).map(Command::SetOption),

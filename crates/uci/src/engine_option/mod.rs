@@ -31,17 +31,17 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
             .trim()
             .strip_prefix(<&str>::from(OptionWord::Name))
             .and_then(|named| named.split_once(<&str>::from(OptionWord::Value)))
-            .ok_or(UciError::UnknownOption)?;
+            .ok_or(UciError::EngineOption)?;
         let setting = setting.trim();
         match name.trim().parse::<OptionName>() {
             Ok(OptionName::LimitStrength) => setting
                 .parse()
                 .map(EngineOption::LimitStrength)
-                .map_err(|_| UciError::UnknownOption),
+                .map_err(|_| UciError::EngineOption),
             Ok(OptionName::Elo) => setting
                 .parse()
                 .map(EngineOption::Elo)
-                .map_err(|_| UciError::UnknownOption),
+                .map_err(|_| UciError::EngineOption),
             Err(_) => Ok(EngineOption::Other {
                 name: name.trim(),
                 setting,

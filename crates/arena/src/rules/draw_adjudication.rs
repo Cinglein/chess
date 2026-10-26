@@ -25,12 +25,12 @@ impl DrawAdjudication {
     }
 
     #[must_use]
-    pub fn is_level(&self, score: Score) -> bool {
+    pub fn is_level(self, score: Score) -> bool {
         score <= self.within_centipawns && score >= -self.within_centipawns
     }
 
     #[must_use]
-    pub fn reached(&self, level_plies: PlyCount, move_number: FullmoveNumber) -> bool {
+    pub fn reached(self, level_plies: PlyCount, move_number: FullmoveNumber) -> bool {
         level_plies >= self.for_plies && move_number >= self.after_move
     }
 }

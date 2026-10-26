@@ -20,7 +20,7 @@ impl Moves<'_> {
     }
 
     fn parsed(word: &str) -> Result<LongAlgebraic, UciError> {
-        word.parse().map_err(|_| UciError::UnknownMove)
+        word.parse().map_err(|_| UciError::Move)
     }
 }
 
