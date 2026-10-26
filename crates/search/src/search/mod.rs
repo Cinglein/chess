@@ -128,6 +128,7 @@ mod tests {
     const MATES: [(&str, u8, u8); 2] = [(MATE_IN_ONE, 2, 1), (MATE_IN_TWO, 3, 3)];
     const MATING_MOVE: &str = "a1a8";
     const TABLE_ENTRIES: usize = 1 << 16;
+    const THREE_PLIES: Depth = Depth::new(3);
     const CASES: u32 = 12;
 
     struct Fixture;
@@ -151,13 +152,6 @@ mod tests {
 
         fn without_table(board: Board, depth: Depth) -> Search<PieceSquareTables> {
             Self::searched(board, depth, &mut TranspositionTable::new(&mut []))
-        }
-
-        fn deepened_once_more(
-            board: Board,
-            table: &mut TranspositionTable<'_>,
-        ) -> Search<PieceSquareTables> {
-            Self::without_table(board, Depth::new(1)).deepen(table, &Uninterrupted)
         }
     }
 
@@ -222,15 +216,15 @@ mod tests {
     }
 
     #[test]
-    fn one_deepen_scores_the_same_with_a_fresh_table_a_warmed_table_or_none_and_the_warmed_table_saves_nodes()
+    fn deepening_through_one_table_scores_as_without_one_fresh_or_warmed_and_the_warmed_table_saves_nodes()
      {
         proptest!(ProptestConfig::with_cases(CASES), |(board in Opening::boards())| {
             prop_assume!(!board.legal_moves().is_empty());
-            let without = Fixture::deepened_once_more(board, &mut TranspositionTable::new(&mut []));
+            let without = Fixture::without_table(board, THREE_PLIES);
             let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
             let mut table = TranspositionTable::new(&mut store);
-            let fresh = Fixture::deepened_once_more(board, &mut table);
-            let warmed = Fixture::deepened_once_more(board, &mut table);
+            let fresh = Fixture::searched(board, THREE_PLIES, &mut table);
+            let warmed = Fixture::searched(board, THREE_PLIES, &mut table);
             prop_assert_eq!((fresh.score(), warmed.score()), (without.score(), without.score()), "{}", board);
             prop_assert!(warmed.nodes() < fresh.nodes(), "{}: {} vs {}", board, warmed.nodes(), fresh.nodes());
         });
