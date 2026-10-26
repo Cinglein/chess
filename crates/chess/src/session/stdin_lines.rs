@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use uci::Command;
+use uci::{Command, Urgency};
 
 pub struct StdinLines;
 
@@ -24,7 +24,8 @@ impl StdinLines {
 
     fn relay(stop: &AtomicBool, sender: &Sender<String>, line: String) -> ControlFlow<()> {
         stop.fetch_or(
-            Command::try_from(line.as_str()).is_ok_and(|command| command.interrupts()),
+            Command::try_from(line.as_str())
+                .is_ok_and(|command| command.urgency() == Urgency::Interrupting),
             Ordering::Relaxed,
         );
         match sender.send(line) {

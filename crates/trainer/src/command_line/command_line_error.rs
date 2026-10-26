@@ -1,5 +1,5 @@
+use crate::TrainerError;
 use thiserror::Error;
-use trainer::TrainerError;
 
 use settings::SettingsError;
 

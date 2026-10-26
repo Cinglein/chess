@@ -1,4 +1,4 @@
-use arena::ArenaError;
+use crate::ArenaError;
 use thiserror::Error;
 
 use settings::SettingsError;

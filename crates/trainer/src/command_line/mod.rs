@@ -4,12 +4,12 @@ mod settings;
 
 pub use command_line_error::CommandLineError;
 
+use crate::{Network, ShuffledData};
 use ::settings::EmbeddedDefaults;
 use arguments::{Arguments, Config, Records};
 use bullet_lib::value::loader::DirectSequentialDataLoader;
 use clap::Parser;
 use settings::Settings;
-use trainer::{Network, ShuffledData};
 
 pub struct CommandLine;
 

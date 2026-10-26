@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use arena::{ArenaError, InProcessEngine, Opponent, UciProcess};
+use crate::{ArenaError, InProcessEngine, Opponent, UciProcess};
 use strum::EnumString;
 use uci::{Elo, EngineOption, Switch};
 
