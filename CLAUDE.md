@@ -12,14 +12,15 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
   newtype.
 - `crates/uci`: `no_std` protocol types: `Command` parsed by `TryFrom<&str>` (its `Position` holds a
-  `Board` and typed `Moves`, its `EngineOption` typed variants), `Response`
-  printed by `Display`, and the `Receiver` trait through which a command is delivered, so no
-  other crate matches on `Command`.
+  `Board` and typed `Moves`, its `EngineOption` typed variants), and the `Receiver` trait through
+  which a command is delivered, so no other crate matches on `Command`. It re-exports `GoLimits`
+  and `Clock` from `crates/go_limits` and `Response` (printed by `Display`) from
+  `crates/uci_response`, both `no_std`.
 - `crates/engine`: `std` orchestration. `Engine<S: Sink>` owns the board, the transposition
   table, the stop flag, and its output sink, and implements `Receiver`; `Thinker` runs
   iterative deepening against a `Deadline` built from the `go` limits and a `TimeBudget`.
-- `crates/chess`: the UCI binary: a stdin thread that also raises the stop flag on `stop` and
-  `quit`, a stdout sink, and a fold of commands over the engine.
+- `crates/chess`: the UCI binary. Its library's `Session` holds a stdin thread that also raises the
+  stop flag on `stop` and `quit`, a stdout sink, and a fold of commands over the engine.
 - `crates/arena`: `std` match runner. `Opponent` is the trait a game talks to: `UciProcess`
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
@@ -128,7 +129,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `wire_types` in `tooling/policy.toml`, matched by full path through the file's `use` tree)
   appear only in the file of a newtype over them. `cargo xtask primitive-boundary`
   enforces both.
-- A binary is wiring. Every file reached from a `main.rs` under `crates/` is free of numeric
+- A binary is wiring. A `main.rs` holds only `fn main` and imports, so each binary's
+  `command_line` module lives in its library (`cargo xtask thin-main`). Every file reached from a
+  `main.rs` under `crates/` is free of numeric
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
   data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
   enforces it. A settings struct lives in the binary, implements `settings::EmbeddedDefaults`
@@ -223,10 +226,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   that run's shard artifacts and refresh the table with `cargo xtask mutant-costs <directory>`). A missed mutant anywhere
   fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
-  piece-square `placement_table.rs`), `xtask`, and every binary's `main.rs` tree (`main.rs` and the
-  `command_line` module it declares) are excluded in `.cargo/mutants.toml`: the run builds with
-  `--lib`, so a mutant in a binary is never compiled and would pass vacuously; a binary's logic
-  that deserves a mutant belongs in its library. Full
+  piece-square `placement_table.rs`), `xtask`, and every binary's `main.rs` and its library's
+  `command_line` module are excluded in `.cargo/mutants.toml`: the run builds with
+  `--lib`, so a mutant in a binary is never compiled and would pass vacuously, and no test drives
+  a command line; logic that deserves a mutant belongs outside `command_line`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
   `cargo-mutants` process already exists or the granted budget is not free, and runs in place,
