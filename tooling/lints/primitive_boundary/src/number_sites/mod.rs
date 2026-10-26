@@ -9,7 +9,7 @@ use use_aliases::UseAliases;
 use syn::visit::Visit;
 use syn::{
     Block, ConstParam, Field, Fields, ImplItemConst, ItemConst, ItemEnum, ItemImpl, ItemMod,
-    ItemStruct, ItemType, Signature, TraitItemConst, TypePath,
+    ItemStruct, ItemType, Signature, TraitItemConst, Type, TypePath,
 };
 
 use super::finding::Finding;
@@ -75,8 +75,25 @@ impl<'scan> NumberSites<'scan> {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => fields
                 .unnamed
                 .first()
-                .filter(|field| matches!(&field.ty, syn::Type::Path(path) if Self::is_named(path, &Self::PRIMITIVES) || Self::is_named(path, &Self::SIZES) || self.policy.lists::<WireType>(&self.aliases.resolve(&path.path))))
+                .and_then(|field| Self::wrapped_path(&field.ty))
+                .filter(|path| {
+                    Self::is_named(path, &Self::PRIMITIVES)
+                        || Self::is_named(path, &Self::SIZES)
+                        || self
+                            .policy
+                            .lists::<WireType>(&self.aliases.resolve(&path.path))
+                })
                 .map(|_| Name::from(&item.ident)),
+            _ => None,
+        }
+    }
+
+    fn wrapped_path(ty: &Type) -> Option<&TypePath> {
+        match ty {
+            Type::Path(path) => Some(path),
+            Type::Reference(reference) => Self::wrapped_path(&reference.elem),
+            Type::Slice(slice) => Self::wrapped_path(&slice.elem),
+            Type::Array(array) => Self::wrapped_path(&array.elem),
             _ => None,
         }
     }
