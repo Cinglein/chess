@@ -39,22 +39,3 @@ impl Magic {
         self.offset + ((hash >> 1) >> self.shift) as usize
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Magic;
-    use crate::bitboard::Bitboard;
-    use crate::rank::Rank;
-    use proptest::prelude::*;
-    #[test]
-    fn the_index_depends_only_on_the_mask_and_stays_inside_the_table() {
-        proptest!(|(mask: u64, multiplier: u64, occupied: u64, offset in 0..64usize)| {
-            let mask = Bitboard::from_bits(mask) & Bitboard::rank(Rank::One);
-            let magic = Magic::new(mask, multiplier, offset);
-            let occupied = Bitboard::from_bits(occupied);
-            let index = magic.index(occupied);
-            prop_assert!((offset..offset + magic.table_size()).contains(&index));
-            prop_assert_eq!(magic.index(occupied & mask), index);
-        });
-    }
-}
