@@ -1,6 +1,6 @@
+use crate::PositionCount;
 use arena::WorkerCount;
 use board::{NodeCount, PlyCount};
-use datagen::PositionCount;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
 

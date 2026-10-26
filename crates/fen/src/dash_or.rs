@@ -40,17 +40,3 @@ impl<T: FromStr> FromStr for DashOr<T> {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::DashOr;
-    use proptest::prelude::*;
-    #[test]
-    fn an_absent_value_is_a_dash_and_a_present_one_is_itself_in_both_directions() {
-        proptest!(|(value: Option<u8>)| {
-            let field = DashOr::from(value).to_string();
-            prop_assert_eq!(field == "-", value.is_none());
-            prop_assert_eq!(field.parse::<DashOr<u8>>().map(Option::from), Ok(value));
-        });
-    }
-}

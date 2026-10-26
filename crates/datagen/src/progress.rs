@@ -70,15 +70,9 @@ mod tests {
         let progress = Progress::towards(TARGET);
         let then = progress.reported;
         let later = then + Progress::INTERVAL;
-        assert_eq!(
-            (
-                progress.is_due(then),
-                progress.is_due(later),
-                progress.is_due(later + Progress::INTERVAL),
-                progress.acknowledged(later).is_due(later)
-            ),
-            (false, true, true, false)
-        );
+        let due = [then, later, later + Progress::INTERVAL].map(|at| progress.is_due(at));
+        assert_eq!(due, [false, true, true]);
+        assert!(!progress.acknowledged(later).is_due(later));
     }
 
     #[test]

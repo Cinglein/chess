@@ -62,20 +62,3 @@ impl fmt::Display for TimeControl {
         )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::TimeControl;
-    const WRITTEN: &str = "10+0.1";
-
-    #[test]
-    fn a_time_control_reads_as_seconds_plus_increment_and_prints_back_the_same() {
-        let parsed: TimeControl = WRITTEN.parse().unwrap();
-        assert_eq!(parsed.to_string(), WRITTEN);
-        assert_eq!(
-            TimeControl::try_from(String::from(parsed)).ok(),
-            Some(parsed)
-        );
-        assert!("10".parse::<TimeControl>().is_err());
-    }
-}

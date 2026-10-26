@@ -1,0 +1,155 @@
+#![cfg_attr(not(test), no_std)]
+
+mod identity;
+mod no_move;
+mod response_error;
+mod response_word;
+mod search_info;
+
+pub use identity::Identity;
+pub use search_info::SearchInfo;
+
+use core::fmt;
+
+use board::LongAlgebraic;
+use no_move::NoMove;
+use response_word::ResponseWord;
+
+use crate::response_error::ResponseError;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Response<'line> {
+    Id(Identity<'line>),
+    UciOk,
+    ReadyOk,
+    Info(SearchInfo),
+    BestMove(Option<LongAlgebraic>),
+}
+
+impl Response<'_> {
+    #[must_use]
+    pub const fn best_move(&self) -> Option<Option<LongAlgebraic>> {
+        match self {
+            Response::BestMove(notation) => Some(*notation),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn info(&self) -> Option<SearchInfo> {
+        match self {
+            Response::Info(info) => Some(*info),
+            _ => None,
+        }
+    }
+
+    const fn word(&self) -> ResponseWord {
+        match self {
+            Response::Id(_) => ResponseWord::Id,
+            Response::UciOk => ResponseWord::UciOk,
+            Response::ReadyOk => ResponseWord::ReadyOk,
+            Response::Info(_) => ResponseWord::Info,
+            Response::BestMove(_) => ResponseWord::BestMove,
+        }
+    }
+
+    fn parse_best_move(rest: &str) -> Result<Self, ResponseError> {
+        let text = rest.split_whitespace().next().unwrap_or("");
+        match text.parse::<NoMove>() {
+            Ok(_) => Ok(Response::BestMove(None)),
+            Err(_) => text
+                .parse()
+                .map(|notation| Response::BestMove(Some(notation)))
+                .map_err(|_| ResponseError::UnknownMove),
+        }
+    }
+}
+
+impl<'line> TryFrom<&'line str> for Response<'line> {
+    type Error = ResponseError;
+
+    fn try_from(line: &'line str) -> Result<Response<'line>, ResponseError> {
+        let trimmed = line.trim();
+        let (head, rest) = trimmed
+            .split_once(char::is_whitespace)
+            .unwrap_or((trimmed, ""));
+        match head
+            .parse::<ResponseWord>()
+            .map_err(|_| ResponseError::UnknownResponse)?
+        {
+            ResponseWord::Id => Identity::try_from(rest).map(Response::Id),
+            ResponseWord::UciOk => Ok(Response::UciOk),
+            ResponseWord::ReadyOk => Ok(Response::ReadyOk),
+            ResponseWord::Info => SearchInfo::try_from(rest).map(Response::Info),
+            ResponseWord::BestMove => Self::parse_best_move(rest),
+        }
+    }
+}
+
+impl fmt::Display for Response<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}", self.word())?;
+        match self {
+            Response::Id(identity) => write!(formatter, " {identity}"),
+            Response::Info(info) => write!(formatter, " {info}"),
+            Response::BestMove(Some(notation)) => write!(formatter, " {notation}"),
+            Response::BestMove(None) => write!(formatter, " {}", NoMove::Zeros),
+            _ => Ok(()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Response, SearchInfo};
+    use crate::response_error::ResponseError;
+    use board::LongAlgebraic;
+    use eval::Score;
+    use proptest::prelude::*;
+    const STOCKFISH_INFO: &str =
+        "info depth 1 seldepth 0 multipv 1 score cp 0 nodes 0 nps 0 hashfull 0 tbhits 0 time 1 pv ";
+    const STOCKFISH_INFO_KEPT: &str = "info depth 1 score cp 0 nodes 0 nps 0 time 1";
+    const REPORT: &str = "info depth 5 score mate 1 nodes 66 nps 33000 time 2 pv a1a8";
+    const MATED: &str = "info depth 1 score mate 0 nodes 0 nps 0 time 0";
+    const PARSED: [(&str, Result<&str, ResponseError>); 10] = [
+        ("id name chess", Ok("id name chess")),
+        ("id author Cinglein", Ok("id author Cinglein")),
+        ("uciok", Ok("uciok")),
+        ("readyok", Ok("readyok")),
+        (REPORT, Ok(REPORT)),
+        (STOCKFISH_INFO, Ok(STOCKFISH_INFO_KEPT)),
+        ("bestmove (none) ponder e7e5", Ok("bestmove 0000")),
+        (
+            "info string Using 1 thread",
+            Err(ResponseError::IncompleteInfo),
+        ),
+        (
+            "Stockfish 19 by the Stockfish developers",
+            Err(ResponseError::UnknownResponse),
+        ),
+        ("bestmove zz", Err(ResponseError::UnknownMove)),
+    ];
+
+    #[test]
+    fn any_search_report_or_best_move_prints_back_to_itself_and_is_seen_through_its_view() {
+        proptest!(|(info: SearchInfo, notation: Option<LongAlgebraic>)| {
+            let (report, best) = (Response::Info(info), Response::BestMove(notation));
+            for response in [report, best] {
+                let line = response.to_string();
+                prop_assert_eq!(Response::try_from(line.as_str()), Ok(response));
+            }
+            prop_assert_eq!(report.info(), Some(info));
+            prop_assert_eq!((best.best_move(), report.best_move()), (Some(notation), None));
+        });
+    }
+
+    #[test]
+    fn every_response_prints_as_the_line_the_arena_keeps_and_lines_without_a_search_are_rejected() {
+        for (line, kept) in PARSED {
+            let printed = Response::try_from(line).map(|response| response.to_string());
+            assert_eq!(printed, kept.map(String::from), "{line}");
+        }
+        let mated = Response::try_from(MATED).unwrap().info();
+        assert_eq!(mated.map(|info| info.score()), Some(-Score::mate_in(0)));
+    }
+}

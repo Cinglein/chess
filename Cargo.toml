@@ -2,15 +2,7 @@
 resolver = "3"
 members = [
     "crates/*",
-    "tooling/affected",
-    "tooling/corpus_check",
-    "tooling/lints/*",
     "tooling/magics",
-    "tooling/mutant_costs",
-    "tooling/mutation",
-    "tooling/stacked",
-    "tooling/task",
-    "tooling/test_time",
     "xtask",
 ]
 
@@ -31,91 +23,7 @@ missing_panics_doc = "allow"
 opt-level = 2
 debug = "line-tables-only"
 
-[profile.test.package.const_shape]
-opt-level = 0
-
-[profile.test.package.distinct_signatures]
-opt-level = 0
-
-[profile.test.package.expression_flow]
-opt-level = 0
-
-[profile.test.package.fn_shape]
-opt-level = 0
-
-[profile.test.package.literal_names]
-opt-level = 0
-
-[profile.test.package.manual_iteration]
-opt-level = 0
-
-[profile.test.package.module_nesting]
-opt-level = 0
-
-[profile.test.package.named_lifetimes]
-opt-level = 0
-
-[profile.test.package.named_numbers]
-opt-level = 0
-
-[profile.test.package.no_comments]
-opt-level = 0
-
-[profile.test.package.no_forwarders]
-opt-level = 0
-
-[profile.test.package.no_free_fns]
-opt-level = 0
-
-[profile.test.package.no_numbers_in_binaries]
-opt-level = 0
-
-[profile.test.package.no_parameter_bags]
-opt-level = 0
-
-[profile.test.package.primitive_boundary]
-opt-level = 0
-
-[profile.test.package.private_fns]
-opt-level = 0
-
-[profile.test.package.public_surface]
-opt-level = 0
-
-[profile.test.package.settings_shape]
-opt-level = 0
-
-[profile.test.package.state_graph]
-opt-level = 0
-
-[profile.test.package.test_budget]
-opt-level = 0
-
-[profile.test.package.type_shape]
-opt-level = 0
-
-[profile.test.package.affected]
-opt-level = 0
-
-[profile.test.package.corpus_check]
-opt-level = 0
-
 [profile.test.package.magics]
-opt-level = 0
-
-[profile.test.package.mutant_costs]
-opt-level = 0
-
-[profile.test.package.mutation]
-opt-level = 0
-
-[profile.test.package.stacked]
-opt-level = 0
-
-[profile.test.package.task]
-opt-level = 0
-
-[profile.test.package.test_time]
 opt-level = 0
 
 [profile.test.package.xtask]

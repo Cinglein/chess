@@ -1,8 +1,10 @@
 mod arena_error;
 mod chosen_move;
+mod command_line;
 mod entrant;
 #[cfg(test)]
 mod fixtures;
+mod flag;
 mod game;
 mod in_process_engine;
 mod openings;
@@ -15,16 +17,18 @@ mod series;
 mod uci_process;
 mod worker_count;
 
-pub use arena_error::ArenaError;
-pub use entrant::Entrant;
+use arena_error::ArenaError;
+pub use command_line::CommandLine;
+use entrant::Entrant;
 pub use game::{Finished, Game, Label, Verdict};
 pub use in_process_engine::InProcessEngine;
-pub use openings::Openings;
-pub use opponent::Opponent;
+use openings::Openings;
+use opponent::Opponent;
 pub use random_openings::RandomOpenings;
-pub use round_count::RoundCount;
-pub use rules::{DrawAdjudication, ResignAdjudication, Rules, TimeControl};
+use round_count::RoundCount;
+pub use rules::Rules;
+use rules::{DrawAdjudication, ResignAdjudication, TimeControl};
 pub use seed::Seed;
-pub use series::Series;
-pub use uci_process::UciProcess;
+use series::Series;
+use uci_process::UciProcess;
 pub use worker_count::WorkerCount;

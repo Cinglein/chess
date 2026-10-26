@@ -5,8 +5,8 @@ mod settings;
 
 pub use command_line_error::CommandLineError;
 
+use crate::{Openings, Rules, Series};
 use ::settings::EmbeddedDefaults;
-use arena::{Openings, Rules, Series};
 use arguments::{Arguments, Challenger, Reference};
 use clap::Parser;
 use limited_contestant::LimitedContestant;

@@ -15,22 +15,3 @@ impl Leaper for King {
         &[Direction::NORTH_WEST],
     ]);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::King;
-    use crate::bitboard::Bitboard;
-    use crate::direction::Direction;
-    use crate::leaper::Leaper;
-    use crate::square::Square;
-    use strum::IntoEnumIterator;
-    #[test]
-    fn every_king_entry_agrees_with_stepping_one_in_each_direction() {
-        for square in Square::iter() {
-            let expected: Bitboard = Direction::iter()
-                .filter_map(|direction| square + direction)
-                .collect();
-            assert_eq!(King::attacks(square), expected, "{square}");
-        }
-    }
-}

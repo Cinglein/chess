@@ -71,20 +71,15 @@ mod tests {
     fn the_schedule_drops_the_learning_rate_on_its_step_and_saves_on_its_rate() {
         let schedule: Schedule = toml::from_str(WRITTEN).unwrap();
         let training = schedule.training_schedule(NET);
-        assert_eq!(
+        let rates = [BEFORE_DROP, AFTER_DROP].map(|superbatch| {
             (
-                training.lr(FIRST_BATCH, BEFORE_DROP),
-                training.lr(FIRST_BATCH, AFTER_DROP),
-                training.steps.end_superbatch
-            ),
-            (START, DROPPED, LAST)
-        );
+                training.lr(FIRST_BATCH, superbatch),
+                training.should_save(superbatch),
+            )
+        });
         assert_eq!(
-            (
-                training.should_save(BEFORE_DROP),
-                training.should_save(AFTER_DROP)
-            ),
-            (false, true)
+            (rates, training.steps.end_superbatch),
+            ([(START, false), (DROPPED, true)], LAST)
         );
     }
 }

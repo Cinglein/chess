@@ -47,8 +47,8 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
         let (head, fen) = setup.split_once(char::is_whitespace).unwrap_or((setup, ""));
         let start = match head.parse::<PositionWord>() {
             Ok(PositionWord::StartPos) => Ok(Board::START),
-            Ok(PositionWord::Fen) => fen.trim().parse().map_err(|_| UciError::UnknownPosition),
-            _ => Err(UciError::UnknownPosition),
+            Ok(PositionWord::Fen) => fen.trim().parse().map_err(|_| UciError::Position),
+            _ => Err(UciError::Position),
         }?;
         Ok(Position {
             start,
@@ -65,10 +65,9 @@ impl fmt::Display for Position<'_> {
             write!(formatter, "{} {}", PositionWord::Fen, self.start)
         };
         setup?;
-        if self.moves.is_empty() {
-            Ok(())
-        } else {
-            write!(formatter, " {} {}", PositionWord::Moves, self.moves)
+        match self.moves.iter().next() {
+            None => Ok(()),
+            Some(_) => write!(formatter, " {} {}", PositionWord::Moves, self.moves),
         }
     }
 }

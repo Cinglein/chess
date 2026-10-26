@@ -16,10 +16,10 @@ env:
   CARGO_BUILD_JOBS: 4
 
 jobs:
-  affected:
+  plan:
     runs-on: ubuntu-latest
     outputs:
-      plan: ${{ steps.plan.outputs.plan }}
+      shards: ${{ steps.plan.outputs.shards }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,17 +30,17 @@ jobs:
         with:
           tool: cargo-mutants
       - id: plan
-        run: echo "plan=$(cargo xtask affected)" >> "$GITHUB_OUTPUT"
+        run: echo "shards=$(cargo xtask mutants-plan)" >> "$GITHUB_OUTPUT"
 
   full:
-    needs: affected
-    if: fromJSON(needs.affected.outputs.plan).jobs.full != null && fromJSON(needs.affected.outputs.plan).jobs.full.shard_count > 0
+    needs: plan
+    if: needs.plan.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.affected.outputs.plan).jobs.full.shards }}
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     env:
       MUTANTS_SHARD: ${{ matrix.shard }}
     steps:
@@ -66,7 +66,7 @@ jobs:
           path: target/mutants
 
   mutants-gate:
-    needs: [affected, full]
+    needs: [plan, full]
     if: always()
     runs-on: ubuntu-latest
     permissions:

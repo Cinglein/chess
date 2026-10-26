@@ -1,8 +1,6 @@
-mod command_line;
-
 use std::process::ExitCode;
 
-use command_line::CommandLine;
+use arena::CommandLine;
 
 fn main() -> ExitCode {
     match CommandLine::play() {

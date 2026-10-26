@@ -5,12 +5,10 @@ version = 4
 [[package]]
 name = "affected"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
- "enum-map",
  "serde",
  "serde_json",
- "settings",
- "strum",
  "syn 2.0.119",
  "task",
 ]
@@ -84,7 +82,7 @@ dependencies = [
  "rand 0.10.3",
  "search",
  "serde",
- "settings",
+ "settings 0.1.0",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -279,6 +277,7 @@ checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 [[package]]
 name = "const_shape"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -297,9 +296,12 @@ dependencies = [
 [[package]]
 name = "corpus_check"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "const_shape",
+ "crate_graph",
  "distinct_signatures",
+ "enum_predicates",
  "expression_flow",
  "fn_shape",
  "literal_names",
@@ -315,14 +317,16 @@ dependencies = [
  "primitive_boundary",
  "private_fns",
  "public_surface",
- "settings",
+ "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
  "settings_shape",
  "state_graph",
  "strum",
  "task",
  "test_budget",
+ "thin_main",
  "thiserror",
  "type_shape",
+ "vec_out_params",
 ]
 
 [[package]]
@@ -332,6 +336,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "crate_graph"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+ "task",
 ]
 
 [[package]]
@@ -380,7 +395,7 @@ dependencies = [
  "eval",
  "proptest",
  "serde",
- "settings",
+ "settings 0.1.0",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -421,6 +436,7 @@ dependencies = [
 [[package]]
 name = "distinct_signatures"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -477,6 +493,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum_predicates"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
+
+[[package]]
 name = "enumset"
 version = "1.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -528,6 +553,7 @@ dependencies = [
 [[package]]
 name = "expression_flow"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -551,6 +577,7 @@ dependencies = [
 [[package]]
 name = "fn_shape"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -609,6 +636,16 @@ dependencies = [
  "libc",
  "r-efi 6.0.0",
  "rand_core 0.10.1",
+]
+
+[[package]]
+name = "go_limits"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "proptest",
+ "search",
+ "strum",
 ]
 
 [[package]]
@@ -692,6 +729,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 [[package]]
 name = "literal_names"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -709,6 +747,7 @@ dependencies = [
 [[package]]
 name = "manual_iteration"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -722,8 +761,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "meta-xtask"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "affected",
+ "corpus_check",
+ "crate_graph",
+ "mutant_costs",
+ "mutation",
+ "serde",
+ "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "stacked",
+ "strum",
+ "task",
+ "test_time",
+ "thiserror",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
 name = "module_nesting"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "task",
 ]
@@ -737,6 +797,7 @@ checksum = "4caf9c718f831a8568f030576e6a6e6aa487ed5f8732ddb0ba79e9a3ea0421ca"
 [[package]]
 name = "mutant_costs"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "serde",
  "serde_json",
@@ -746,9 +807,13 @@ dependencies = [
 [[package]]
 name = "mutation"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "affected",
- "settings",
+ "serde",
+ "serde_json",
+ "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "strum",
  "sysinfo",
  "task",
 ]
@@ -756,6 +821,7 @@ dependencies = [
 [[package]]
 name = "named_lifetimes"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -764,6 +830,7 @@ dependencies = [
 [[package]]
 name = "named_numbers"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -773,14 +840,17 @@ dependencies = [
 [[package]]
 name = "no_comments"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "ra-ap-rustc_lexer",
  "task",
+ "unicode-ident",
 ]
 
 [[package]]
 name = "no_forwarders"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -789,6 +859,7 @@ dependencies = [
 [[package]]
 name = "no_free_fns"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -797,6 +868,7 @@ dependencies = [
 [[package]]
 name = "no_numbers_in_binaries"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "named_numbers",
  "syn 2.0.119",
@@ -806,6 +878,7 @@ dependencies = [
 [[package]]
 name = "no_parameter_bags"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -949,6 +1022,7 @@ dependencies = [
 [[package]]
 name = "primitive_boundary"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -957,6 +1031,7 @@ dependencies = [
 [[package]]
 name = "private_fns"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -994,6 +1069,7 @@ dependencies = [
 [[package]]
 name = "public_surface"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -1253,8 +1329,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "serde",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
 name = "settings_shape"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1284,6 +1370,7 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 [[package]]
 name = "stacked"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "strum",
  "task",
@@ -1292,6 +1379,7 @@ dependencies = [
 [[package]]
 name = "state_graph"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "derive_more",
  "quote",
@@ -1366,6 +1454,7 @@ dependencies = [
 [[package]]
 name = "task"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "derive_more",
  "enum-map",
@@ -1373,7 +1462,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
- "settings",
+ "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
  "strum",
  "syn 2.0.119",
  "sysinfo",
@@ -1397,6 +1486,7 @@ dependencies = [
 [[package]]
 name = "test_budget"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "derive_more",
  "proc-macro2",
@@ -1407,9 +1497,18 @@ dependencies = [
 [[package]]
 name = "test_time"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
- "settings",
  "strum",
+ "task",
+]
+
+[[package]]
+name = "thin_main"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "syn 2.0.119",
  "task",
 ]
 
@@ -1524,7 +1623,7 @@ dependencies = [
  "eval",
  "rand 0.10.3",
  "serde",
- "settings",
+ "settings 0.1.0",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -1537,6 +1636,7 @@ version = "0.1.0"
 [[package]]
 name = "type_shape"
 version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -1549,11 +1649,23 @@ version = "0.1.0"
 dependencies = [
  "board",
  "derive_more",
- "eval",
+ "go_limits",
  "itertools",
  "proptest",
- "search",
  "serde",
+ "strum",
+ "thiserror",
+ "uci_response",
+]
+
+[[package]]
+name = "uci_response"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "eval",
+ "proptest",
+ "search",
  "strum",
  "thiserror",
 ]
@@ -1593,6 +1705,15 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
+
+[[package]]
+name = "vec_out_params"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+dependencies = [
+ "syn 2.0.119",
+ "task",
+]
 
 [[package]]
 name = "viriformat"
@@ -1838,48 +1959,10 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "affected",
- "board",
- "const_shape",
- "corpus_check",
- "derive_more",
- "distinct_signatures",
- "enum-map",
- "expression_flow",
- "fn_shape",
- "literal_names",
  "magics",
- "manual_iteration",
- "module_nesting",
- "mutant_costs",
- "mutation",
- "named_lifetimes",
- "named_numbers",
- "no_comments",
- "no_forwarders",
- "no_free_fns",
- "no_numbers_in_binaries",
- "no_parameter_bags",
- "primitive_boundary",
- "private_fns",
- "proc-macro2",
- "public_surface",
- "quote",
- "ra-ap-rustc_lexer",
- "serde",
- "serde_json",
- "settings",
- "settings_shape",
- "stacked",
- "state_graph",
+ "meta-xtask",
  "strum",
- "syn 2.0.119",
- "sysinfo",
  "task",
- "test_budget",
- "test_time",
- "thiserror",
- "toml 0.9.12+spec-1.1.0",
- "type_shape",
 ]
 
 [[package]]

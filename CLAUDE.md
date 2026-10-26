@@ -12,22 +12,24 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   with alpha-beta negamax; depth zero is quiescence, captures only with stand pat; `Depth`
   newtype.
 - `crates/uci`: `no_std` protocol types: `Command` parsed by `TryFrom<&str>` (its `Position` holds a
-  `Board` and typed `Moves`, its `EngineOption` typed variants), `Response`
-  printed by `Display`, and the `Receiver` trait through which a command is delivered, so no
-  other crate matches on `Command`.
+  `Board` and typed `Moves`, its `EngineOption` typed variants), and the `Receiver` trait through
+  which a command is delivered, so no other crate matches on `Command`. It re-exports `GoLimits`
+  and `Clock` from `crates/go_limits` and `Response` (printed by `Display`) from
+  `crates/uci_response`, both `no_std`.
 - `crates/engine`: `std` orchestration. `Engine<S: Sink>` owns the board, the transposition
   table, the stop flag, and its output sink, and implements `Receiver`; `Thinker` runs
   iterative deepening against a `Deadline` built from the `go` limits and a `TimeBudget`.
-- `crates/chess`: the UCI binary: a stdin thread that also raises the stop flag on `stop` and
-  `quit`, a stdout sink, and a fold of commands over the engine.
+- `crates/chess`: the UCI binary. Its library's `Session` holds a stdin thread that also raises the
+  stop flag on `stop` and `quit`, a stdout sink, and a fold of commands over the engine.
 - `crates/arena`: `std` match runner. `Opponent` is the trait a game talks to: `UciProcess`
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
-- `tooling/task`: the library behind xtask: `SourceFile`, `Report`, `Violation`, `Site`, `Failure`,
-  `Policy` from `tooling/policy.toml`, `Workspace`, `CommandLine`, and the shared scanners. Tooling
-  crates live under `tooling/` (lints under `tooling/lints/`), one crate per lint or task, so the
-  affected graph, the public surface, and the mutation run judge each on its own.
+- Tooling comes from meta-development (`meta-xtask`, git tag `v0.1.0`, in `xtask/Cargo.toml`):
+  the lints, affected, mutation, test-time, stacked, and the `task` library (`Workspace`,
+  `CommandLine`, `Failure`, `Policy` from `tooling/policy.toml`). `tooling/policy.toml` holds every
+  limit; `tooling/lint-baseline.toml` holds the lint counts allowed. Only chess-specific tooling
+  lives here: `tooling/magics`.
 - `crates/settings`: `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
   file or writes the embedded defaults when it is missing, and `SettingsError` names what went wrong.
 - `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
@@ -43,20 +45,11 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   selected by target in the manifest, so CI compiles the crate against bullet's mock device.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
   wasm). Crates are added when their milestone starts.
-- `xtask`: repository tooling (`cargo xtask ci`, `cargo xtask lint`, which parses every file once
-  and runs `const-shape`, `distinct-signatures`, `expression-flow`, `fn-shape`, `literal-names`,
-  `manual-iteration`, `module-nesting`, `named-lifetimes`, `named-numbers`, `no-comments`,
-  `no-forwarders`, `no-free-fns`, `no-numbers-in-binaries`, `no-parameter-bags`,
-  `primitive-boundary`, `private-fns`, `public-surface`, `settings-shape`, `state-graph`,
-  `test-budget`, and `type-shape`, `cargo xtask wasm`,
-  `cargo xtask clippy`, `cargo xtask test`, `cargo xtask test-time`, `cargo xtask stacked`,
-  `cargo xtask affected`, which prints the crates a change reaches as changed crates plus their
-  reverse dependents, and `--affected` on `ci`, `clippy`, `wasm`, `test`, `test-time`, and
-  `mutants-full`, which restricts them to that set, `cargo xtask mutants`,
-  `cargo xtask mutants-full`, `cargo xtask mutant-costs <directory>`, which prints the
-  `[mutant_millis]` table measured from the shard artifacts' `outcomes.json` under a directory,
-  `cargo xtask magics`). Lints return a `Report` of
-  `Violation`s at a `Site`; every xtask error is a `Failure` variant.
+- `xtask`: `cargo xtask magics`, `cargo xtask wasm`, and `cargo xtask ci` (meta-development's
+  `ci`, then `wasm`) are chess's own; every other task (`lint`, `clippy`, `test`, `test-time`,
+  `stacked`, `affected`, `mutants`, `mutants-full`, `mutants-plan`, `mutants-diff-plan`,
+  `mutant-costs`, and each lint by name) is meta-development's. `--affected` restricts `ci`,
+  `clippy`, `wasm`, `test`, and `test-time` to the crates a change reaches.
 
 ## Rules
 
@@ -93,7 +86,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   rest) plus `Display` values such as a `CrateName`, and `Workspace::line` roots it.
 - Index tables by enum with `enum_map::EnumMap`, never by an integer method on the enum. An `as`
   cast is allowed only inside a `const fn`, `const` item, or `const` block, or in a bit boundary
-  file (the one list in `tooling/task/src/bit_boundary.rs`); elsewhere use `From`, `TryFrom`,
+  file (the one list, `bit_boundary` in `tooling/policy.toml`); elsewhere use `From`, `TryFrom`,
   or an `EnumMap`. Loops in const context walk a slice with
   `while let [head, rest @ ..]` or recurse; no counter loops. `cargo xtask const-shape` enforces
   both.
@@ -120,7 +113,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   type's door and never waits there. A primitive number type (`u8`..`u128`, `i8`..`i128`, `f32`,
   `f64`) appears in a field, variant, const, or signature only in
   the file of a newtype over it (`Depth(u8)`, `NodeCount(u64)`, `Score(i32)`) or in a bit-boundary
-  file (`BitBoundary` in `tooling/task`: `square/`, `bitboard/`, `direction.rs`, `slider/magic.rs`,
+  file (`bit_boundary` in `tooling/policy.toml`: `square/`, `bitboard/`, `direction.rs`, `slider/magic.rs`,
   `slider/magics.rs`, `slider/attack_table.rs`, `zobrist_keys/split_mix.rs`, `tooling/magics/src/`;
   const-shape, primitive-boundary and named-numbers share it). Locals and
   turbofish (`token.parse::<u64>()`) are the crossing itself and are exempt. A `usize` is a
@@ -136,7 +129,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `wire_types` in `tooling/policy.toml`, matched by full path through the file's `use` tree)
   appear only in the file of a newtype over them. `cargo xtask primitive-boundary`
   enforces both.
-- A binary is wiring. Every file reached from a `main.rs` under `crates/` is free of numeric
+- A binary is wiring. A `main.rs` holds only `fn main` and imports, so each binary's
+  `command_line` module lives in its library (`cargo xtask thin-main`). Every file reached from a
+  `main.rs` under `crates/` is free of numeric
   literals outside tests: a number a binary needs is a setting, read from its config file, whose defaults are
   data in an embedded `.default.toml` rather than code. `cargo xtask no-numbers-in-binaries`
   enforces it. A settings struct lives in the binary, implements `settings::EmbeddedDefaults`
@@ -215,7 +210,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   are `#[ignore]` and run outside the PR gate.
 - Tests are judged by the mutants they kill. `cargo xtask mutants` runs `cargo-mutants` on the
   lines a PR changes against `origin/main`, tested by the changed crates and the dependents
-  that have tests, in three parallel slices (`MUTANTS_SLICE=k/n`), and every mutant in
+  that have tests, in the shards `cargo xtask mutants-diff-plan` packs (`MUTANTS_SHARD`), and every mutant in
   the diff must be caught, unviable, or a timeout (a mutant that hangs a test is a mutant the
   tests noticed), so no PR adds debt. `cargo xtask mutants-full` mutates the
   whole workspace, or one `MUTANTS_SHARD`: `board/0/5` is one slice of a crate, `eval+fen` is a
@@ -231,10 +226,10 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   that run's shard artifacts and refresh the table with `cargo xtask mutant-costs <directory>`). A missed mutant anywhere
   fails the shard. A mutant no test can
   observe, such as a destructor, is named one by one in `exclude_re`. Tables of literals (`slider/magics.rs`, the
-  piece-square `placement_table.rs`), `xtask`, and every binary's `main.rs` tree (`main.rs` and the
-  `command_line` module it declares) are excluded in `.cargo/mutants.toml`: the run builds with
-  `--lib`, so a mutant in a binary is never compiled and would pass vacuously; a binary's logic
-  that deserves a mutant belongs in its library. Full
+  piece-square `placement_table.rs`), `xtask`, and every binary's `main.rs` and its library's
+  `command_line` module are excluded in `.cargo/mutants.toml`: the run builds with
+  `--lib`, so a mutant in a binary is never compiled and would pass vacuously, and no test drives
+  a command line; logic that deserves a mutant belongs outside `command_line`. Full
   crate runs are slow and memory-heavy, and two at once once crashed the owner's laptop, so
   `cargo xtask mutants` is the only way to run them: it takes an exclusive lock, refuses if a
   `cargo-mutants` process already exists or the granted budget is not free, and runs in place,
@@ -248,13 +243,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   runs `--lib` because every test lives in a library, the in-diff mutants job is cut at 6 minutes
   and a shard at 8, and anything slower is a bug to fix, not a timeout to raise. CI runs only
   what a change reaches: every CI job runs its task with `--affected` on a pull request and does
-  nothing when no crate it covers changed; the Mutants workflow's `affected` job publishes the
-  plan from `cargo xtask affected`, one entry per job (`fmt`, `clippy`, `test`, `lint`,
-  `mutants`, `full`) with that job's crates and, for `full`, the packed shards. A crate change reaches every job over the crate and its dependents. An xtask change
-  reaches `fmt`, `lint`, and xtask's own `clippy` and `test` always, and `mutants` or `full`
-  only when the changed file is in the `use` and `mod` closure of that job's entry files
-  (`task/mutants/mod.rs`; `task/affected/mod.rs`, `main.rs`, `lib.rs`, `task/mod.rs`, and
-  `Cargo.toml` reach every job); a tool rerun covers every crate. Pushes to `main` and the Monday
+  nothing when no crate it covers changed; the Mutants workflow's `plan` job publishes the
+  packed shards from `cargo xtask mutants-plan`. A crate change reaches the crate and its
+  dependents; a tool rerun covers every crate. Pushes to `main` and the Monday
   schedule run everything, including the Mutants workflow, and `ci-gate` (on a PR) and
   `mutants-gate` (on `main`) always run and fail if any job they need failed, so `ci-gate` is
   the check to require.

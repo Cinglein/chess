@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct RoundCount(usize);
 
 impl RoundCount {
+    #[cfg(test)]
     #[must_use]
     pub const fn new(rounds: usize) -> RoundCount {
         RoundCount(rounds)

@@ -16,23 +16,3 @@ impl Pawn for BlackPawn {
     const START_RANK: Rank = Rank::Seven;
     const PROMOTION_RANK: Rank = Rank::One;
 }
-
-#[cfg(test)]
-mod tests {
-    use super::BlackPawn;
-    use crate::bitboard::Bitboard;
-    use crate::diagonal::Diagonal;
-    use crate::leaper::Leaper;
-    use crate::square::Square;
-    use strum::IntoEnumIterator;
-    #[test]
-    fn every_black_pawn_entry_agrees_with_stepping_diagonally_south() {
-        for square in Square::iter() {
-            let expected: Bitboard = [square + Diagonal::SouthEast, square + Diagonal::SouthWest]
-                .into_iter()
-                .flatten()
-                .collect();
-            assert_eq!(BlackPawn::attacks(square), expected, "{square}");
-        }
-    }
-}

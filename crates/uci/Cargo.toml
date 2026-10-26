@@ -9,16 +9,16 @@ repository.workspace = true
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
 derive_more = { version = "2", default-features = false, features = ["display", "from_str"] }
-eval = { version = "0.1.0", path = "../eval" }
+go_limits = { version = "0.1.0", path = "../go_limits" }
 itertools = { version = "0.14", default-features = false }
 proptest = { version = "1", optional = true }
-search = { version = "0.1.0", path = "../search" }
 serde = { version = "1", default-features = false, features = ["derive"], optional = true }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 thiserror = { version = "2", default-features = false }
+uci_response = { version = "0.1.0", path = "../uci_response" }
 
 [features]
-proptest = ["dep:proptest", "board/proptest", "eval/proptest", "search/proptest"]
+proptest = ["dep:proptest", "board/proptest", "go_limits/proptest", "uci_response/proptest"]
 serde = ["dep:serde"]
 
 [lints]
@@ -26,6 +26,5 @@ workspace = true
 
 [dev-dependencies]
 board = { version = "0.1.0", path = "../board", features = ["proptest"] }
-eval = { version = "0.1.0", path = "../eval", features = ["proptest"] }
+go_limits = { version = "0.1.0", path = "../go_limits", features = ["proptest"] }
 proptest = "1"
-search = { version = "0.1.0", path = "../search", features = ["proptest"] }

@@ -124,11 +124,11 @@ impl Opponent for UciProcess {
         self.send(Command::Go(limits))?;
         self.await_response(Self::allowance(&limits), None, |score, response| {
             let score = response.info().map(|info| info.score()).or(score);
-            if response.is_best_move() {
-                ControlFlow::Break(ChosenMove::from_best_move(response.best_move(), score))
-            } else {
-                ControlFlow::Continue(score)
-            }
+            response
+                .best_move()
+                .map_or(ControlFlow::Continue(score), |notation| {
+                    ControlFlow::Break(ChosenMove::from_best_move(notation, score))
+                })
         })?
         .ok_or(ArenaError::NoMove)
     }
@@ -149,7 +149,6 @@ mod tests {
     use engine::{Engine, Sink};
     use std::env;
     use std::io::{self, BufRead};
-    use std::ops::ControlFlow;
     use std::process::Command as ProcessCommand;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
@@ -187,11 +186,7 @@ mod tests {
                         Ok(command) => command.deliver_to(engine),
                         Err(_) => engine,
                     };
-                    if engine.is_ending() {
-                        ControlFlow::Break(engine)
-                    } else {
-                        ControlFlow::Continue(engine)
-                    }
+                    (!engine.is_ending()).then_some(engine)
                 },
             );
         }
@@ -202,13 +197,7 @@ mod tests {
             if response == Response::ReadyOk {
                 thread::sleep(Self::SETUP);
             }
-            let acted_on = response.is_best_move()
-                || response.info().is_some()
-                || response == Response::UciOk
-                || response == Response::ReadyOk;
-            if acted_on {
-                println!("{response}");
-            }
+            println!("{response}");
         }
     }
 

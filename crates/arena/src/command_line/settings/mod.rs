@@ -1,4 +1,4 @@
-use arena::{DrawAdjudication, ResignAdjudication, RoundCount, TimeControl, WorkerCount};
+use crate::{DrawAdjudication, ResignAdjudication, RoundCount, TimeControl, WorkerCount};
 use board::FullmoveNumber;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
@@ -54,7 +54,7 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::Settings;
-    use arena::Rules;
+    use crate::Rules;
     use settings::EmbeddedDefaults;
     #[test]
     fn default_settings_survive_a_trip_through_toml_and_agree_with_the_library_rules() {

@@ -8,8 +8,8 @@ pub use records::Records;
 
 use std::path::{Path, PathBuf};
 
+use crate::ShuffleSeed;
 use clap::Parser;
-use trainer::ShuffleSeed;
 
 #[derive(Debug, Parser)]
 #[command(about = "Shuffle a bullet data file and train the network on it with bullet")]

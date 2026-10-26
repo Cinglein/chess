@@ -1,6 +1,6 @@
+use crate::{Machine, Schedule};
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
-use trainer::{Machine, Schedule};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

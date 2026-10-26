@@ -1,6 +1,6 @@
 use std::io;
 
-use datagen::DatagenError;
+use crate::DatagenError;
 use thiserror::Error;
 
 use settings::SettingsError;

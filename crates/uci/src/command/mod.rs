@@ -1,11 +1,13 @@
 mod command_word;
-mod go_limits;
 mod position;
+mod urgency;
 
-pub use go_limits::{Clock, GoLimits, Increment, Remaining};
 pub use position::Position;
+pub use urgency::Urgency;
 
 use core::fmt;
+
+use go_limits::GoLimits;
 
 use crate::engine_option::EngineOption;
 
@@ -28,8 +30,16 @@ pub enum Command<'line> {
 
 impl<'line> Command<'line> {
     #[must_use]
-    pub const fn interrupts(&self) -> bool {
-        matches!(self, Command::Stop | Command::Quit)
+    pub const fn urgency(&self) -> Urgency {
+        match self {
+            Command::Stop | Command::Quit => Urgency::Interrupting,
+            Command::Uci
+            | Command::IsReady
+            | Command::SetOption(_)
+            | Command::UciNewGame
+            | Command::Position(_)
+            | Command::Go(_) => Urgency::Queued,
+        }
     }
 
     const fn word(&self) -> CommandWord {
@@ -67,10 +77,7 @@ impl<'line> TryFrom<&'line str> for Command<'line> {
         let (head, rest) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
-        match head
-            .parse::<CommandWord>()
-            .map_err(|_| UciError::UnknownCommand)?
-        {
+        match head.parse::<CommandWord>().map_err(|_| UciError::Command)? {
             CommandWord::Uci => Ok(Command::Uci),
             CommandWord::IsReady => Ok(Command::IsReady),
             CommandWord::SetOption => EngineOption::try_from(rest).map(Command::SetOption),
@@ -97,7 +104,7 @@ impl fmt::Display for Command<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::Command;
+    use super::{Command, Urgency};
     const LINES: [&str; 11] = [
         "uci",
         "isready",
@@ -117,7 +124,8 @@ mod tests {
         for line in LINES {
             let command = Command::try_from(line).unwrap();
             assert_eq!(command.to_string(), line);
-            assert_eq!(command.interrupts(), line == "stop" || line == "quit");
+            let interrupting = command.urgency() == Urgency::Interrupting;
+            assert_eq!(interrupting, line == "stop" || line == "quit");
         }
         assert!(Command::try_from("dance").is_err());
     }

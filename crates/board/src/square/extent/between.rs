@@ -9,12 +9,12 @@ impl Extent for Between {
     fn trace(from: Square, to: Square) -> Bitboard {
         let origin = Bitboard::from_square(from);
         let target = Bitboard::from_square(to);
-        if from.aligned_by::<Rook>(to) {
-            Rook::attacks(from, target) & Rook::attacks(to, origin)
-        } else if from.aligned_by::<Bishop>(to) {
-            Bishop::attacks(from, target) & Bishop::attacks(to, origin)
-        } else {
-            Bitboard::EMPTY
-        }
+        from.sight::<Rook>(to)
+            .map(|_| Rook::attacks(from, target) & Rook::attacks(to, origin))
+            .or_else(|| {
+                from.sight::<Bishop>(to)
+                    .map(|_| Bishop::attacks(from, target) & Bishop::attacks(to, origin))
+            })
+            .unwrap_or(Bitboard::EMPTY)
     }
 }

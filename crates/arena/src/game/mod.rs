@@ -20,6 +20,7 @@ use board::{Board, Color, State};
 use uci::{Clock, Position, Remaining};
 
 use crate::chosen_move::ChosenMove;
+use crate::flag::Flag;
 use crate::opponent::Opponent;
 use crate::rules::Rules;
 use outcome::Outcome;
@@ -98,12 +99,14 @@ impl Game {
     fn played(self, chosen: ChosenMove, spent: Duration) -> ControlFlow<Finished, Game> {
         let side = self.board.side_to_move();
         let notation = chosen.notation();
-        let timely = (!self
+        let timely = match self
             .rules
             .thinking()
-            .forfeits(spent, self.clock.time::<Remaining>(side)))
-        .then_some(())
-        .ok_or(Termination::TimeForfeit);
+            .flag(spent, self.clock.time::<Remaining>(side))
+        {
+            Flag::Standing => Ok(()),
+            Flag::Fallen => Err(Termination::TimeForfeit),
+        };
         let reached = self
             .board
             .resolve_move(notation)
@@ -151,7 +154,6 @@ mod tests {
     use board::{Board, Color, FullmoveNumber, PlyCount};
     use eval::Score;
     use std::num::NonZeroU16;
-    use std::ops::ControlFlow;
     use std::time::Duration;
     use uci::{Clock, Increment, Remaining};
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
@@ -237,24 +239,19 @@ mod tests {
 
     #[test]
     fn a_played_move_charges_the_mover_for_its_thinking_time_and_adds_the_increment() {
-        let board: Board = START.parse().unwrap();
-        let game = Game::from(board).ruled_by(QUICK.timed(GENEROUS));
-        let ControlFlow::Continue(after) = game.advance(
-            &mut InProcessEngine::default(),
-            &mut InProcessEngine::default(),
-        ) else {
-            panic!()
-        };
-        let charged = after.clock.time::<Remaining>(MOVER);
+        let engine = &mut InProcessEngine::default();
+        let game = Game::from(Board::START).ruled_by(QUICK.timed(GENEROUS));
+        let after = game
+            .advance(engine, &mut InProcessEngine::default())
+            .continue_value()
+            .unwrap();
+        let [charged, waiting] = [MOVER, WAITER].map(|side| after.clock.time::<Remaining>(side));
         let before = GENEROUS.time::<Remaining>(MOVER);
         let increment = GENEROUS.time::<Increment>(MOVER);
         assert!(
             charged > before && charged < before + increment,
             "{charged:?}"
         );
-        assert_eq!(
-            after.clock.time::<Remaining>(WAITER),
-            GENEROUS.time::<Remaining>(WAITER)
-        );
+        assert_eq!(waiting, GENEROUS.time::<Remaining>(WAITER));
     }
 }

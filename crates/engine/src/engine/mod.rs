@@ -136,30 +136,30 @@ mod tests {
         }
     }
 
+    impl Engine<Vec<String>> {
+        fn after(lines: &[&str]) -> Engine<Vec<String>> {
+            let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
+            lines.iter().fold(fresh, |engine, line| {
+                Command::try_from(*line).unwrap().deliver_to(engine)
+            })
+        }
+    }
+
     #[test]
     fn a_placed_position_searched_to_depth_two_announces_the_mate_and_quit_ends_the_engine() {
-        let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
-        let placed = Command::try_from(PLACE).unwrap().deliver_to(fresh);
-        let engine = Command::try_from(SEARCH).unwrap().deliver_to(placed);
+        let engine = Engine::after(&[PLACE, SEARCH]);
         let announced = engine.sink();
         assert!(
-            announced.iter().any(|line| line == EXPECTED),
+            announced.iter().any(|line| line == EXPECTED) && !engine.is_ending(),
             "{announced:?}"
         );
-        assert!(!engine.is_ending());
-        assert!(
-            Command::try_from(QUIT)
-                .unwrap()
-                .deliver_to(engine)
-                .is_ending()
-        );
+        assert!(Engine::after(&[QUIT]).is_ending());
     }
 
     #[test]
     fn a_timed_search_deepens_past_the_opening_plies_and_stops_inside_its_allowance() {
-        let fresh = Engine::new(Arc::new(AtomicBool::new(false)), Vec::new());
         let started = Instant::now();
-        let engine = Command::try_from(TIMED).unwrap().deliver_to(fresh);
+        let engine = Engine::after(&[TIMED]);
         let elapsed = started.elapsed();
         let deepest = engine
             .sink()

@@ -3,15 +3,11 @@ use thiserror::Error;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
 pub enum UciError {
     #[error("unknown command")]
-    UnknownCommand,
+    Command,
     #[error("position needs startpos or fen")]
-    UnknownPosition,
+    Position,
     #[error("setoption needs a name and a value")]
-    UnknownOption,
-    #[error("unknown response")]
-    UnknownResponse,
-    #[error("info needs a depth and a score")]
-    IncompleteInfo,
+    EngineOption,
     #[error("bestmove needs a move in long algebraic notation")]
-    UnknownMove,
+    Move,
 }

@@ -1,0 +1,24 @@
+[package]
+name = "go_limits"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+board = { version = "0.1.0", path = "../board" }
+proptest = { version = "1", optional = true }
+search = { version = "0.1.0", path = "../search" }
+strum = { version = "0.28", default-features = false, features = ["derive"] }
+
+[features]
+proptest = ["dep:proptest", "board/proptest", "search/proptest"]
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+board = { version = "0.1.0", path = "../board", features = ["proptest"] }
+proptest = "1"
+search = { version = "0.1.0", path = "../search", features = ["proptest"] }
