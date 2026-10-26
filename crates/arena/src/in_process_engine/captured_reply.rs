@@ -22,11 +22,7 @@ impl CapturedReply {
 impl Sink for CapturedReply {
     fn emit(&mut self, response: Response<'_>) {
         *self = CapturedReply {
-            best_move: if response.is_best_move() {
-                response.best_move()
-            } else {
-                self.best_move
-            },
+            best_move: response.best_move().unwrap_or(self.best_move),
             score: response
                 .info()
                 .map_or(self.score, |info| Some(info.score())),

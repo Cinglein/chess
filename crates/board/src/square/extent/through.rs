@@ -9,14 +9,14 @@ impl Extent for Through {
     fn trace(from: Square, to: Square) -> Bitboard {
         let ends =
             Bitboard::from_square(from).combined(Bitboard::from_square(to), SetOperation::Union);
-        if from.aligned_by::<Rook>(to) {
-            (Rook::attacks(from, Bitboard::EMPTY) & Rook::attacks(to, Bitboard::EMPTY))
-                .combined(ends, SetOperation::DisjointUnion)
-        } else if from.aligned_by::<Bishop>(to) {
-            (Bishop::attacks(from, Bitboard::EMPTY) & Bishop::attacks(to, Bitboard::EMPTY))
-                .combined(ends, SetOperation::DisjointUnion)
-        } else {
-            Bitboard::EMPTY
-        }
+        from.sight::<Rook>(to)
+            .map(|sight| sight & Rook::attacks(to, Bitboard::EMPTY))
+            .or_else(|| {
+                from.sight::<Bishop>(to)
+                    .map(|sight| sight & Bishop::attacks(to, Bitboard::EMPTY))
+            })
+            .map_or(Bitboard::EMPTY, |line| {
+                line.combined(ends, SetOperation::DisjointUnion)
+            })
     }
 }

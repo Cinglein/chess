@@ -18,11 +18,7 @@ impl Outcome {
     #[must_use]
     pub fn new(side_to_move: Color, termination: Termination) -> Outcome {
         Outcome {
-            verdict: if termination.defeats_the_side_to_move() {
-                Verdict::Win(!side_to_move)
-            } else {
-                Verdict::Draw
-            },
+            verdict: termination.verdict(side_to_move),
             termination,
         }
     }

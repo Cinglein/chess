@@ -1,6 +1,7 @@
-use board::{Board, HalfmoveClock};
+use board::{Board, Color, HalfmoveClock};
 use derive_more::Display;
 
+use super::outcome::Verdict;
 use super::record::Record;
 use super::repetition_count::RepetitionCount;
 use super::streaks::Streaks;
@@ -83,14 +84,19 @@ impl Termination {
     }
 
     #[must_use]
-    pub const fn defeats_the_side_to_move(&self) -> bool {
-        matches!(
-            self,
+    pub fn verdict(&self, side_to_move: Color) -> Verdict {
+        match self {
             Termination::Checkmate
-                | Termination::Resignation
-                | Termination::TimeForfeit
-                | Termination::IllegalMove
-                | Termination::Failure(_)
-        )
+            | Termination::Resignation
+            | Termination::TimeForfeit
+            | Termination::IllegalMove
+            | Termination::Failure(_) => Verdict::Win(!side_to_move),
+            Termination::Stalemate
+            | Termination::FiftyMoves
+            | Termination::Repetition
+            | Termination::InsufficientMaterial
+            | Termination::MoveLimit
+            | Termination::DrawAdjudicated => Verdict::Draw,
+        }
     }
 }

@@ -124,11 +124,11 @@ impl Opponent for UciProcess {
         self.send(Command::Go(limits))?;
         self.await_response(Self::allowance(&limits), None, |score, response| {
             let score = response.info().map(|info| info.score()).or(score);
-            if response.is_best_move() {
-                ControlFlow::Break(ChosenMove::from_best_move(response.best_move(), score))
-            } else {
-                ControlFlow::Continue(score)
-            }
+            response
+                .best_move()
+                .map_or(ControlFlow::Continue(score), |notation| {
+                    ControlFlow::Break(ChosenMove::from_best_move(notation, score))
+                })
         })?
         .ok_or(ArenaError::NoMove)
     }
@@ -202,7 +202,7 @@ mod tests {
             if response == Response::ReadyOk {
                 thread::sleep(Self::SETUP);
             }
-            let acted_on = response.is_best_move()
+            let acted_on = response.best_move().is_some()
                 || response.info().is_some()
                 || response == Response::UciOk
                 || response == Response::ReadyOk;

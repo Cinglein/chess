@@ -20,6 +20,7 @@ use board::{Board, Color, State};
 use uci::{Clock, Position, Remaining};
 
 use crate::chosen_move::ChosenMove;
+use crate::flag::Flag;
 use crate::opponent::Opponent;
 use crate::rules::Rules;
 use outcome::Outcome;
@@ -98,12 +99,14 @@ impl Game {
     fn played(self, chosen: ChosenMove, spent: Duration) -> ControlFlow<Finished, Game> {
         let side = self.board.side_to_move();
         let notation = chosen.notation();
-        let timely = (!self
+        let timely = match self
             .rules
             .thinking()
-            .forfeits(spent, self.clock.time::<Remaining>(side)))
-        .then_some(())
-        .ok_or(Termination::TimeForfeit);
+            .flag(spent, self.clock.time::<Remaining>(side))
+        {
+            Flag::Standing => Ok(()),
+            Flag::Fallen => Err(Termination::TimeForfeit),
+        };
         let reached = self
             .board
             .resolve_move(notation)

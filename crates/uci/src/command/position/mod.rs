@@ -65,10 +65,9 @@ impl fmt::Display for Position<'_> {
             write!(formatter, "{} {}", PositionWord::Fen, self.start)
         };
         setup?;
-        if self.moves.is_empty() {
-            Ok(())
-        } else {
-            write!(formatter, " {} {}", PositionWord::Moves, self.moves)
+        match self.moves.iter().next() {
+            None => Ok(()),
+            Some(_) => write!(formatter, " {} {}", PositionWord::Moves, self.moves),
         }
     }
 }

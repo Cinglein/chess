@@ -70,8 +70,9 @@ impl Square {
         X::trace(self, other)
     }
 
-    pub(super) fn aligned_by<S: Slider>(self, other: Square) -> bool {
-        S::attacks(self, Bitboard::EMPTY).contains(other)
+    pub(super) fn sight<S: Slider>(self, other: Square) -> Option<Bitboard> {
+        let open = S::attacks(self, Bitboard::EMPTY);
+        open.contains(other).then_some(open)
     }
 }
 

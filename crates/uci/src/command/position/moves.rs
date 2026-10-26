@@ -22,14 +22,6 @@ impl Moves<'_> {
     fn parsed(word: &str) -> Result<LongAlgebraic, UciError> {
         word.parse().map_err(|_| UciError::UnknownMove)
     }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        match self {
-            Moves::Played(moves) => moves.is_empty(),
-            Moves::Written(text) => text.trim().is_empty(),
-        }
-    }
 }
 
 impl fmt::Display for Moves<'_> {

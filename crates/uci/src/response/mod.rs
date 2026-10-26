@@ -25,9 +25,9 @@ pub enum Response<'line> {
 
 impl Response<'_> {
     #[must_use]
-    pub const fn best_move(&self) -> Option<LongAlgebraic> {
+    pub const fn best_move(&self) -> Option<Option<LongAlgebraic>> {
         match self {
-            Response::BestMove(Some(notation)) => Some(*notation),
+            Response::BestMove(notation) => Some(*notation),
             _ => None,
         }
     }
@@ -38,11 +38,6 @@ impl Response<'_> {
             Response::Info(info) => Some(*info),
             _ => None,
         }
-    }
-
-    #[must_use]
-    pub const fn is_best_move(&self) -> bool {
-        matches!(self, Response::BestMove(_))
     }
 
     const fn word(&self) -> ResponseWord {
@@ -140,7 +135,7 @@ mod tests {
                 prop_assert_eq!(Response::try_from(line.as_str()), Ok(response));
             }
             prop_assert_eq!(report.info(), Some(info));
-            prop_assert_eq!((best.best_move(), best.is_best_move(), report.is_best_move()), (notation, true, false));
+            prop_assert_eq!((best.best_move(), report.best_move()), (Some(notation), None));
         });
     }
 
