@@ -111,22 +111,23 @@ mod tests {
     const STOCKFISH_INFO_KEPT: &str = "info depth 1 score cp 0 nodes 0 nps 0 time 1";
     const REPORT: &str = "info depth 5 score mate 1 nodes 66 nps 33000 time 2 pv a1a8";
     const MATED: &str = "info depth 1 score mate 0 nodes 0 nps 0 time 0";
-    const KEPT: [(&str, &str); 7] = [
-        ("id name chess", "id name chess"),
-        ("id author Cinglein", "id author Cinglein"),
-        ("uciok", "uciok"),
-        ("readyok", "readyok"),
-        (REPORT, REPORT),
-        (STOCKFISH_INFO, STOCKFISH_INFO_KEPT),
-        ("bestmove (none) ponder e7e5", "bestmove 0000"),
-    ];
-    const REJECTED: [(&str, ResponseError); 3] = [
-        ("info string Using 1 thread", ResponseError::IncompleteInfo),
+    const PARSED: [(&str, Result<&str, ResponseError>); 10] = [
+        ("id name chess", Ok("id name chess")),
+        ("id author Cinglein", Ok("id author Cinglein")),
+        ("uciok", Ok("uciok")),
+        ("readyok", Ok("readyok")),
+        (REPORT, Ok(REPORT)),
+        (STOCKFISH_INFO, Ok(STOCKFISH_INFO_KEPT)),
+        ("bestmove (none) ponder e7e5", Ok("bestmove 0000")),
+        (
+            "info string Using 1 thread",
+            Err(ResponseError::IncompleteInfo),
+        ),
         (
             "Stockfish 19 by the Stockfish developers",
-            ResponseError::UnknownResponse,
+            Err(ResponseError::UnknownResponse),
         ),
-        ("bestmove zz", ResponseError::UnknownMove),
+        ("bestmove zz", Err(ResponseError::UnknownMove)),
     ];
 
     #[test]
@@ -144,22 +145,11 @@ mod tests {
 
     #[test]
     fn every_response_prints_as_the_line_the_arena_keeps_and_lines_without_a_search_are_rejected() {
-        for (line, kept) in KEPT {
-            assert_eq!(
-                Response::try_from(line).unwrap().to_string(),
-                kept,
-                "{line}"
-            );
+        for (line, kept) in PARSED {
+            let printed = Response::try_from(line).map(|response| response.to_string());
+            assert_eq!(printed, kept.map(String::from), "{line}");
         }
-        for (line, error) in REJECTED {
-            assert_eq!(Response::try_from(line), Err(error), "{line}");
-        }
-        assert_eq!(
-            Response::try_from(MATED)
-                .unwrap()
-                .info()
-                .map(|info| info.score()),
-            Some(-Score::mate_in(0))
-        );
+        let mated = Response::try_from(MATED).unwrap().info();
+        assert_eq!(mated.map(|info| info.score()), Some(-Score::mate_in(0)));
     }
 }
