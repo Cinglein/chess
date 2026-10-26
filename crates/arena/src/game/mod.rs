@@ -172,6 +172,8 @@ mod tests {
     const A_MINUTE: Duration = Duration::from_secs(60);
     const NO_TIME: Clock = Clock::new(A_NANOSECOND, A_NANOSECOND, Duration::ZERO, Duration::ZERO);
     const GENEROUS: Clock = Clock::new(A_MINUTE, A_MINUTE, Duration::from_secs(1), Duration::ZERO);
+    const MOVER: Color = Color::White;
+    const WAITER: Color = Color::Black;
     const ONE_MOVE: FullmoveNumber = FullmoveNumber::new(NonZeroU16::MIN);
     const TWO_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(2).unwrap());
     const EIGHT_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(8).unwrap());
@@ -243,14 +245,13 @@ mod tests {
             .advance(engine, &mut InProcessEngine::default())
             .continue_value()
             .unwrap();
-        let [charged, waiting] =
-            [Color::White, Color::Black].map(|side| after.clock.time::<Remaining>(side));
-        let before = GENEROUS.time::<Remaining>(Color::White);
-        let increment = GENEROUS.time::<Increment>(Color::White);
+        let [charged, waiting] = [MOVER, WAITER].map(|side| after.clock.time::<Remaining>(side));
+        let before = GENEROUS.time::<Remaining>(MOVER);
+        let increment = GENEROUS.time::<Increment>(MOVER);
         assert!(
             charged > before && charged < before + increment,
             "{charged:?}"
         );
-        assert_eq!(waiting, GENEROUS.time::<Remaining>(Color::Black));
+        assert_eq!(waiting, GENEROUS.time::<Remaining>(WAITER));
     }
 }
