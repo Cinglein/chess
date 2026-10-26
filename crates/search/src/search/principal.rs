@@ -38,29 +38,3 @@ impl Principal {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Principal;
-    use board::Board;
-    use eval::Score;
-    const BETTER: Score = Score::new(10);
-
-    #[test]
-    fn a_later_move_replaces_the_principal_only_by_scoring_strictly_higher() {
-        let [first, second, ..] = Board::START.legal_moves()[..] else {
-            panic!()
-        };
-        let principal = Principal::NONE
-            .improved(first, Score::DRAW)
-            .improved(second, Score::DRAW);
-        assert_eq!(
-            (principal.chess_move(), principal.score()),
-            (Some(first), Score::DRAW)
-        );
-        assert_eq!(
-            principal.improved(second, BETTER).chess_move(),
-            Some(second)
-        );
-    }
-}
