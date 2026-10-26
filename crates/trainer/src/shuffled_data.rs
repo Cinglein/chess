@@ -66,11 +66,9 @@ mod tests {
         }
 
         fn first_bytes(path: &std::path::Path) -> Vec<u8> {
-            fs::read(path)
-                .unwrap()
-                .as_chunks::<{ ShuffledData::RECORD_BYTES }>()
-                .0
-                .iter()
+            let bytes = fs::read(path).unwrap();
+            bytes
+                .chunks(ShuffledData::RECORD_BYTES)
                 .map(|record| record[0])
                 .collect()
         }
@@ -79,22 +77,14 @@ mod tests {
     #[test]
     fn shuffling_permutes_whole_records_reproducibly_from_a_seed() {
         let input = Fixture::data_file("whole.data", RECORDS * ShuffledData::RECORD_BYTES);
-        let shuffled = ShuffledData::written_beside(&input, SEED).unwrap();
-        let again = ShuffledData::written_beside(&input, SEED).unwrap();
-        let order = Fixture::first_bytes(shuffled.path());
+        let [order, again, other] = [SEED, SEED, OTHER_SEED].map(|seed| {
+            Fixture::first_bytes(ShuffledData::written_beside(&input, seed).unwrap().path())
+        });
+        let original = Fixture::first_bytes(&input);
         let mut sorted = order.clone();
         sorted.sort_unstable();
-        assert_eq!(
-            (sorted, &order),
-            (
-                Fixture::first_bytes(&input),
-                &Fixture::first_bytes(again.path())
-            )
-        );
-        let other = ShuffledData::written_beside(&input, OTHER_SEED).unwrap();
-        assert!(
-            order != Fixture::first_bytes(&input) && order != Fixture::first_bytes(other.path())
-        );
+        assert_eq!((&sorted, &again), (&original, &order));
+        assert!(order != original && order != other);
     }
 
     #[test]
