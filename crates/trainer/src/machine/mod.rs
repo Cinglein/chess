@@ -15,6 +15,11 @@ pub struct Machine {
 
 impl Machine {
     #[must_use]
+    pub fn output_directory(&self) -> &str {
+        &self.output_directory
+    }
+
+    #[must_use]
     pub fn local_settings(&self) -> LocalSettings<'_> {
         LocalSettings {
             threads: self.threads.count(),

@@ -12,8 +12,8 @@ impl EvalScale {
     }
 
     #[must_use]
-    pub fn centipawns(self) -> Score {
-        Score::new(i32::from(self.0))
+    pub const fn centipawns(self) -> Score {
+        Score::new(self.0 as i32)
     }
 
     #[must_use]

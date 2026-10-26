@@ -1,8 +1,11 @@
 mod batch_count;
+mod checkpoint;
 mod decay;
 mod learning_rate;
 mod superbatch_count;
 mod wdl_weight;
+
+pub use checkpoint::Checkpoint;
 
 use batch_count::BatchCount;
 use bullet_lib::trainer::schedule::TrainingSchedule;

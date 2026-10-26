@@ -13,6 +13,7 @@ enum-map = "3"
 proptest = { version = "1", optional = true }
 serde = { version = "1", default-features = false, features = ["derive"], optional = true }
 strum = { version = "0.28", default-features = false }
+thiserror = { version = "2", default-features = false }
 
 [features]
 proptest = ["dep:proptest"]
@@ -22,4 +23,5 @@ serde = ["dep:serde"]
 workspace = true
 
 [dev-dependencies]
+board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 proptest = "1"
