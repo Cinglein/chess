@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/*",
     "tooling/affected",
+    "tooling/corpus_check",
     "tooling/lints/*",
     "tooling/magics",
     "tooling/mutant_costs",
@@ -94,6 +95,9 @@ opt-level = 0
 opt-level = 0
 
 [profile.test.package.affected]
+opt-level = 0
+
+[profile.test.package.corpus_check]
 opt-level = 0
 
 [profile.test.package.magics]
