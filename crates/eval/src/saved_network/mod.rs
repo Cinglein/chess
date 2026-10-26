@@ -52,6 +52,7 @@ impl<'bytes> TryFrom<&'bytes [u8]> for SavedNetwork<'bytes> {
 mod tests {
     use super::{SavedNetwork, SavedNetworkError, Table};
     use crate::network_format::NetworkFormat;
+    use crate::score::Score;
     use board::{Board, Color, Piece, PieceKind, Square};
     use proptest::prelude::*;
     use strum::{EnumCount, VariantArray};
@@ -65,6 +66,13 @@ mod tests {
     }
 
     impl Reference {
+        const OUTPUT_WEIGHTS: usize =
+            NetworkFormat::INPUT_SIZE * NetworkFormat::HIDDEN_SIZE + NetworkFormat::HIDDEN_SIZE;
+        const BYTES: usize = (Self::OUTPUT_WEIGHTS
+            + NetworkFormat::BOTH_PERSPECTIVES_SIZE
+            + NetworkFormat::OUTPUT_SIZE)
+            * size_of::<i16>();
+
         fn seeded(seed: u64) -> Reference {
             let weights = (0..Table::WEIGHT_LENGTH)
                 .scan(seed | 1, |state, _| {
@@ -112,11 +120,7 @@ mod tests {
                     let activation = ((bias + summed)
                         / f64::from(NetworkFormat::HIDDEN_QUANTISATION.factor()))
                     .clamp(0.0, 1.0);
-                    let output_weight = self.weights[Table::WEIGHT_LENGTH
-                        - 1
-                        - NetworkFormat::BOTH_PERSPECTIVES_SIZE
-                        + half
-                        + index];
+                    let output_weight = self.weights[Self::OUTPUT_WEIGHTS + half + index];
                     activation * activation * f64::from(output_weight)
                         / f64::from(NetworkFormat::OUTPUT_QUANTISATION.factor())
                 })
@@ -124,8 +128,9 @@ mod tests {
         }
 
         fn oracle(&self, board: &Board) -> f64 {
-            let bias = f64::from(self.weights[Table::WEIGHT_LENGTH - 1])
-                / f64::from(NetworkFormat::OUTPUT_BIAS_QUANTISATION.factor());
+            let bias = f64::from(
+                self.weights[Self::OUTPUT_WEIGHTS + NetworkFormat::BOTH_PERSPECTIVES_SIZE],
+            ) / f64::from(NetworkFormat::OUTPUT_BIAS_QUANTISATION.factor());
             let dots = self.perspective_dot(Color::White, board)
                 + self.perspective_dot(Color::Black, board);
             (dots + bias) * f64::from(NetworkFormat::EVAL_SCALE.per_unit())
@@ -224,13 +229,19 @@ mod tests {
     }
 
     #[test]
-    fn a_network_of_the_wrong_length_is_refused_with_both_lengths() {
+    fn a_wrong_length_is_refused_and_the_loudest_network_never_reads_as_a_mate() {
         assert_eq!(
             SavedNetwork::try_from(&[][..]),
             Err(SavedNetworkError::Length {
-                expected_bytes: SavedNetwork::BYTE_LENGTH,
+                expected_bytes: Reference::BYTES,
                 found_bytes: 0
             })
         );
+        let loudest = i16::MAX.to_le_bytes().repeat(Table::WEIGHT_LENGTH);
+        let score = SavedNetwork::try_from(loudest.as_slice())
+            .unwrap()
+            .evaluate(&Board::START);
+        assert_eq!(score.mate_in_moves(), None);
+        assert!(score > Score::new(i32::from(i16::MAX) / 2));
     }
 }

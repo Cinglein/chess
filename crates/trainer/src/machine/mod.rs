@@ -47,9 +47,10 @@ mod tests {
             (
                 local.threads,
                 local.batch_queue_size,
-                local.output_directory
+                local.output_directory,
+                machine.output_directory()
             ),
-            (3, 4, "nets")
+            (3, 4, "nets", "nets")
         );
         assert!(local.test_set.is_none());
     }
