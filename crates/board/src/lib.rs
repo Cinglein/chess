@@ -36,6 +36,7 @@ pub use chess_move::{ChessMove, MoveKind};
 pub use color::Color;
 pub use long_algebraic::LongAlgebraic;
 pub use node_count::NodeCount;
+pub use piece::Piece;
 pub use piece_kind::PieceKind;
 pub use ply_count::PlyCount;
 pub use slider::{Bishop, Magic, Rook, Slider};

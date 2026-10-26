@@ -15,6 +15,11 @@ pub struct Machine {
 
 impl Machine {
     #[must_use]
+    pub fn output_directory(&self) -> &str {
+        &self.output_directory
+    }
+
+    #[must_use]
     pub fn local_settings(&self) -> LocalSettings<'_> {
         LocalSettings {
             threads: self.threads.count(),
@@ -42,9 +47,10 @@ mod tests {
             (
                 local.threads,
                 local.batch_queue_size,
-                local.output_directory
+                local.output_directory,
+                machine.output_directory()
             ),
-            (3, 4, "nets")
+            (3, 4, "nets", "nets")
         );
         assert!(local.test_set.is_none());
     }
