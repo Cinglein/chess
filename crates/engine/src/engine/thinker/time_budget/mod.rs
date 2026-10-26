@@ -32,20 +32,15 @@ mod tests {
     use board::Color;
     use std::time::Duration;
     use uci::Clock;
-    const COMFORTABLE: Clock = Clock::new(
-        Duration::from_secs(60),
-        Duration::from_secs(60),
-        Duration::from_secs(1),
-        Duration::ZERO,
-    );
-    const NEARLY_OUT: Clock = Clock::new(
-        Duration::from_millis(20),
-        Duration::from_millis(20),
-        Duration::from_millis(50),
-        Duration::ZERO,
-    );
-    const SHARE_PLUS_INCREMENT: Duration = Duration::from_secs(3);
-    const SHARE_ALONE: Duration = Duration::from_secs(2);
+    const MINUTE: Duration = Duration::from_secs(60);
+    const MOMENT: Duration = Duration::from_millis(20);
+    const COMFORTABLE: Clock = Clock::new(MINUTE, MINUTE, Duration::from_secs(1), Duration::ZERO);
+    const NEARLY_OUT: Clock = Clock::new(MOMENT, MOMENT, TimeBudget::SAFETY_MARGIN, Duration::ZERO);
+    const ALLOTTED: [(Clock, Color, Duration); 3] = [
+        (COMFORTABLE, Color::White, Duration::from_secs(3)),
+        (COMFORTABLE, Color::Black, Duration::from_secs(2)),
+        (NEARLY_OUT, Color::White, TimeBudget::LEAST),
+    ];
     const ALLOWANCE: Duration = Duration::from_secs(4);
     const HALF: Duration = Duration::from_secs(2);
     const JUST_UNDER_HALF: Duration = HALF.saturating_sub(Duration::from_nanos(1));
@@ -53,15 +48,9 @@ mod tests {
     #[test]
     fn a_move_gets_a_thirtieth_of_its_clock_plus_its_increment_but_never_more_than_the_clock_holds()
     {
-        assert_eq!(
-            TimeBudget::allot(&COMFORTABLE, Color::White),
-            SHARE_PLUS_INCREMENT
-        );
-        assert_eq!(TimeBudget::allot(&COMFORTABLE, Color::Black), SHARE_ALONE);
-        assert_eq!(
-            TimeBudget::allot(&NEARLY_OUT, Color::White),
-            TimeBudget::LEAST
-        );
+        for (clock, side, allotted) in ALLOTTED {
+            assert_eq!(TimeBudget::allot(&clock, side), allotted, "{side:?}");
+        }
     }
 
     #[test]
