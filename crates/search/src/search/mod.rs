@@ -1,6 +1,8 @@
 mod depth;
 mod interrupt;
 mod negamax;
+#[cfg(test)]
+mod opening;
 mod principal;
 #[cfg(test)]
 mod uninterrupted;
@@ -8,6 +10,8 @@ mod uninterrupted;
 pub use depth::Depth;
 pub use interrupt::Interrupt;
 pub use negamax::{TableEntry, TranspositionTable};
+#[cfg(test)]
+use opening::Opening;
 #[cfg(test)]
 use uninterrupted::Uninterrupted;
 
@@ -110,32 +114,79 @@ impl<E: Evaluator> From<Board> for Search<E> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Search, TableEntry, TranspositionTable, Uninterrupted};
+    use super::negamax::Window;
+    use super::{
+        Negamax, Opening, RootDistance, Search, TableEntry, TranspositionTable, Uninterrupted,
+    };
+    use crate::search::depth::Depth;
     use board::Board;
     use eval::{PieceSquareTables, Score};
+    use proptest::prelude::*;
     const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
     const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
     const STALEMATE: &str = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1";
-    const DEFENDED_PAWN: &str = "6k1/8/4p3/3p4/8/8/8/3Q2K1 w - - 0 1";
-    const KNIGHT_FORK: &str = "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
-    const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const MATES: [(&str, u8, u8); 2] = [(MATE_IN_ONE, 2, 1), (MATE_IN_TWO, 3, 3)];
     const MATING_MOVE: &str = "a1a8";
-    const GREEDY_CAPTURE: &str = "d1d5";
-    const FORKING_CHECK: &str = "b5c7";
-    const TABLE_DEPTH: u8 = 5;
     const TABLE_ENTRIES: usize = 1 << 16;
+    const CASES: u32 = 12;
 
     struct Fixture;
 
     impl Fixture {
-        fn searched(fen: &str, depth: u8, entries: usize) -> Search<PieceSquareTables> {
-            let mut store = vec![TableEntry::EMPTY; entries];
-            let mut table = TranspositionTable::new(&mut store);
-            let board: Board = fen.parse().unwrap();
-            (0..depth).fold(Search::from(board), |search, _| {
-                search.deepen(&mut table, &Uninterrupted)
+        fn searched(
+            board: Board,
+            depth: Depth,
+            table: &mut TranspositionTable<'_>,
+        ) -> Search<PieceSquareTables> {
+            (0..depth.plies()).fold(Search::from(board), |search, _| {
+                search.deepen(table, &Uninterrupted)
             })
+        }
+
+        fn from_fen(fen: &str, depth: u8) -> Search<PieceSquareTables> {
+            let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
+            let mut table = TranspositionTable::new(&mut store);
+            Self::searched(fen.parse().unwrap(), Depth::new(depth), &mut table)
+        }
+
+        fn without_table(board: Board, depth: Depth) -> Search<PieceSquareTables> {
+            Self::searched(board, depth, &mut TranspositionTable::new(&mut []))
+        }
+
+        fn deepened_once_more(
+            board: Board,
+            table: &mut TranspositionTable<'_>,
+        ) -> Search<PieceSquareTables> {
+            Self::without_table(board, Depth::new(1)).deepen(table, &Uninterrupted)
+        }
+    }
+
+    struct Oracle;
+
+    impl Oracle {
+        fn score(board: &Board, depth: Depth, distance: RootDistance) -> Score {
+            let moves = board.legal_moves();
+            match depth.decremented() {
+                None => Negamax::<PieceSquareTables, Uninterrupted>::new(
+                    &mut TranspositionTable::new(&mut []),
+                    &Uninterrupted,
+                )
+                .score(board, Depth::ZERO, distance, Window::FULL),
+                Some(_) if moves.is_empty() && board.in_check() => {
+                    -Score::mate_in(distance.plies())
+                }
+                Some(_) if moves.is_empty() => Score::DRAW,
+                Some(remaining) => moves
+                    .into_iter()
+                    .filter_map(|chess_move| board.make_move(chess_move))
+                    .map(|after| -Self::score(&after, remaining, distance.deeper()))
+                    .max()
+                    .unwrap(),
+            }
+        }
+
+        fn reply_score(board: &Board, depth: Depth) -> Score {
+            -Self::score(board, depth, RootDistance::ROOT.deeper())
         }
     }
 
@@ -143,41 +194,45 @@ mod tests {
     fn mates_are_found_at_the_depth_that_reaches_them_and_stalemate_has_no_move_and_a_drawn_score()
     {
         for (fen, depth, plies) in MATES {
-            let search = Fixture::searched(fen, depth, TABLE_ENTRIES);
+            let search = Fixture::from_fen(fen, depth);
             assert_eq!(search.score(), Score::mate_in(plies), "{fen}");
         }
-        let best = Fixture::searched(MATE_IN_ONE, 2, TABLE_ENTRIES).best_move();
+        let best = Fixture::from_fen(MATE_IN_ONE, 2).best_move();
         assert_eq!(
             best.map(|chess_move| chess_move.to_string()).as_deref(),
             Some(MATING_MOVE)
         );
-        let search = Fixture::searched(STALEMATE, 1, TABLE_ENTRIES);
+        let search = Fixture::from_fen(STALEMATE, 1);
         assert_eq!((search.best_move(), search.score()), (None, Score::DRAW));
     }
 
     #[test]
-    fn at_depth_one_a_defended_pawn_is_left_alone_and_a_check_that_forks_the_queen_is_played() {
-        let search = Fixture::searched(DEFENDED_PAWN, 1, TABLE_ENTRIES);
-        let best = search.best_move().map(|chess_move| chess_move.to_string());
-        assert!(best.as_deref() != Some(GREEDY_CAPTURE) && search.score() > Score::DRAW);
-        let search = Fixture::searched(KNIGHT_FORK, 1, TABLE_ENTRIES);
-        let best = search.best_move().map(|chess_move| chess_move.to_string());
-        assert_eq!(
-            (best.as_deref(), search.score() > Score::DRAW),
-            (Some(FORKING_CHECK), true)
-        );
+    fn alpha_beta_scores_as_the_full_width_tree_over_full_window_leaves_and_its_best_move_earns_that_score()
+     {
+        proptest!(ProptestConfig::with_cases(CASES), |(board in Opening::boards(), depth in (1..=2u8).prop_map(Depth::new))| {
+            let search = Fixture::without_table(board, depth);
+            prop_assert_eq!(search.score(), Oracle::score(&board, depth, RootDistance::ROOT), "{} at {}", board, depth);
+            let replied = search.best_move().and_then(|chess_move| board.make_move(chess_move));
+            prop_assert_eq!(
+                replied.map_or(search.score(), |after| Oracle::reply_score(&after, depth.decremented().unwrap())),
+                search.score(),
+                "{} at {}", board, depth
+            );
+        });
     }
 
     #[test]
-    fn the_table_cuts_nodes_without_changing_the_score() {
-        let without = Fixture::searched(START, TABLE_DEPTH, 0);
-        let with = Fixture::searched(START, TABLE_DEPTH, TABLE_ENTRIES);
-        assert_eq!(with.score(), without.score());
-        assert!(
-            with.nodes() < without.nodes(),
-            "{} vs {}",
-            with.nodes(),
-            without.nodes()
-        );
+    fn one_deepen_scores_the_same_with_a_fresh_table_a_warmed_table_or_none_and_the_warmed_table_saves_nodes()
+     {
+        proptest!(ProptestConfig::with_cases(CASES), |(board in Opening::boards())| {
+            prop_assume!(!board.legal_moves().is_empty());
+            let without = Fixture::deepened_once_more(board, &mut TranspositionTable::new(&mut []));
+            let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
+            let mut table = TranspositionTable::new(&mut store);
+            let fresh = Fixture::deepened_once_more(board, &mut table);
+            let warmed = Fixture::deepened_once_more(board, &mut table);
+            prop_assert_eq!((fresh.score(), warmed.score()), (without.score(), without.score()), "{}", board);
+            prop_assert!(warmed.nodes() < fresh.nodes(), "{}: {} vs {}", board, warmed.nodes(), fresh.nodes());
+        });
     }
 }
