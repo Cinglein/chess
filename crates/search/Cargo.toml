@@ -19,5 +19,6 @@ proptest = ["dep:proptest"]
 workspace = true
 
 [dev-dependencies]
+board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 eval = { version = "0.1.0", path = "../eval", features = ["proptest"] }
 proptest = "1"

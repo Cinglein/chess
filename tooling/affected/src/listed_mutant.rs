@@ -13,7 +13,11 @@ pub struct ListedMutant {
 
 impl ListedMutant {
     pub fn tally(json: &str) -> Result<BTreeMap<CrateName, MutantCount>, Failure> {
-        let listed: Vec<ListedMutant> = serde_json::from_str(json).map_err(Failure::MutantList)?;
+        let listed: Vec<ListedMutant> = if json.bytes().all(|byte| byte.is_ascii_whitespace()) {
+            Vec::new()
+        } else {
+            serde_json::from_str(json).map_err(Failure::MutantList)?
+        };
         Ok(listed
             .into_iter()
             .fold(BTreeMap::new(), |mut counts, mutant| {
@@ -37,6 +41,6 @@ mod tests {
             (counts[&"board".parse().unwrap()], counts.len()),
             (MutantCount::from(BOARD), BOARD)
         );
-        assert!(ListedMutant::tally("{").is_err());
+        assert!(ListedMutant::tally("{").is_err() && ListedMutant::tally("\n").unwrap().is_empty());
     }
 }
