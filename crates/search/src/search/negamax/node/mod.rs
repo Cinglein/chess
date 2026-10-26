@@ -46,10 +46,6 @@ impl<'position> Node<'position> {
         Node { hash_move, ..self }
     }
 
-    pub(crate) const fn at_depth(self, depth: Depth) -> Self {
-        Node { depth, ..self }
-    }
-
     pub(crate) fn search<R: Regime, E: Evaluator, I: Interrupt>(
         self,
         regime: &R,
@@ -68,7 +64,7 @@ impl<'position> Node<'position> {
         negamax: &mut Negamax<'_, '_, '_, E, I>,
     ) -> Score {
         match self.depth.decremented() {
-            Some(remaining) => self.at_depth(remaining).search(&FullWidth, negamax),
+            Some(_) => self.search(&FullWidth, negamax),
             None if self.board.in_check() => self.search(&FullWidth, negamax),
             None => self.search(&Quiescence, negamax),
         }
@@ -91,7 +87,7 @@ impl<'position> Node<'position> {
             let conclusion = self.best_of(regime, negamax, moves, floor);
             negamax.table.store(TableEntry::remember(
                 self.board.hash(),
-                self.depth.incremented(),
+                self.depth,
                 self.distance,
                 conclusion,
             ));
@@ -118,7 +114,12 @@ impl<'position> Node<'position> {
                 Bounds::new(self.window, floor),
                 |bounds, (chess_move, child)| {
                     let window = bounds.child_window();
-                    let score = -negamax.score(&child, self.depth, self.distance.deeper(), window);
+                    let score = -negamax.score(
+                        &child,
+                        self.depth.decremented().unwrap_or(Depth::ZERO),
+                        self.distance.deeper(),
+                        window,
+                    );
                     bounds.admit(chess_move, score).map_break(|cut| {
                         negamax
                             .killers
