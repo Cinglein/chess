@@ -178,26 +178,26 @@ mod tests {
                     .unwrap(),
             }
         }
-
-        fn reply_score(board: &Board, depth: Depth) -> Score {
-            -Self::score(board, depth, RootDistance::ROOT.deeper())
-        }
     }
 
     #[test]
     fn mates_are_found_at_the_depth_that_reaches_them_and_stalemate_has_no_move_and_a_drawn_score()
     {
         for (fen, depth, plies) in MATES {
-            let search = Fixture::from_fen(fen, depth);
-            assert_eq!(search.score(), Score::mate_in(plies), "{fen}");
+            assert_eq!(
+                Fixture::from_fen(fen, depth).score(),
+                Score::mate_in(plies),
+                "{fen}"
+            );
         }
-        let best = Fixture::from_fen(MATE_IN_ONE, 2).best_move();
+        let best = Fixture::from_fen(MATE_IN_ONE, 2)
+            .best_move()
+            .map(|chess_move| chess_move.to_string());
+        let stalemated = Fixture::from_fen(STALEMATE, 1);
         assert_eq!(
-            best.map(|chess_move| chess_move.to_string()).as_deref(),
-            Some(MATING_MOVE)
+            (best.as_deref(), stalemated.best_move(), stalemated.score()),
+            (Some(MATING_MOVE), None, Score::DRAW)
         );
-        let search = Fixture::from_fen(STALEMATE, 1);
-        assert_eq!((search.best_move(), search.score()), (None, Score::DRAW));
     }
 
     #[test]
@@ -207,11 +207,8 @@ mod tests {
             let search = Fixture::without_table(board, depth);
             prop_assert_eq!(search.score(), Oracle::score(&board, depth, RootDistance::ROOT), "{} at {}", board, depth);
             let replied = search.best_move().and_then(|chess_move| board.make_move(chess_move));
-            prop_assert_eq!(
-                replied.map_or(search.score(), |after| Oracle::reply_score(&after, depth.decremented().unwrap())),
-                search.score(),
-                "{} at {}", board, depth
-            );
+            let reply = |after: Board| -Oracle::score(&after, depth.decremented().unwrap(), RootDistance::ROOT.deeper());
+            prop_assert_eq!(replied.map_or(search.score(), reply), search.score(), "{} at {}", board, depth);
         });
     }
 

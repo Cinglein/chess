@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 674651c17a20cb98ed2129e233d6c0ee0884a2cd0109d7ef2859830cd8ba4590 # shrinks to board = Board { placement: Placement { pieces: {White: {Pawn: Bitboard(0x000000000000ff00), Knight: Bitboard(0x0000000000000042), Bishop: Bitboard(0x0000000000000024), Rook: Bitboard(0x0000000000000081), Queen: Bitboard(0x0000000000000008), King: Bitboard(0x0000000000000010)}, Black: {Pawn: Bitboard(0x00ff000000000000), Knight: Bitboard(0x4200000000000000), Bishop: Bitboard(0x2400000000000000), Rook: Bitboard(0x8100000000000000), Queen: Bitboard(0x0800000000000000), King: Bitboard(0x1000000000000000)}}, hand: Empty, hash: Zobrist(17193064884680686022) }, side_to_move: White, castling_rights: CastlingRights(EnumSet(WhiteKingside | WhiteQueenside | BlackKingside | BlackQueenside)), en_passant_file: None, halfmove_clock: HalfmoveClock(0), fullmove_number: FullmoveNumber(1) }
