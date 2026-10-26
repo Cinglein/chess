@@ -4,7 +4,7 @@ use core::fmt;
 
 use identity_word::IdentityWord;
 
-use crate::uci_error::UciError;
+use crate::response_error::ResponseError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Identity<'line> {
@@ -13,16 +13,16 @@ pub enum Identity<'line> {
 }
 
 impl<'line> TryFrom<&'line str> for Identity<'line> {
-    type Error = UciError;
+    type Error = ResponseError;
 
-    fn try_from(rest: &'line str) -> Result<Identity<'line>, UciError> {
+    fn try_from(rest: &'line str) -> Result<Identity<'line>, ResponseError> {
         let trimmed = rest.trim();
         let (kind, text) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
         match kind
             .parse::<IdentityWord>()
-            .map_err(|_| UciError::UnknownResponse)?
+            .map_err(|_| ResponseError::UnknownResponse)?
         {
             IdentityWord::Name => Ok(Identity::Name(text.trim())),
             IdentityWord::Author => Ok(Identity::Author(text.trim())),

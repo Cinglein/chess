@@ -3,10 +3,10 @@
 mod command;
 mod engine_option;
 mod receiver;
-mod response;
 mod uci_error;
 
-pub use command::{Clock, Command, GoLimits, Increment, Position, Remaining, Urgency};
+pub use command::{Command, Position, Urgency};
 pub use engine_option::{Elo, EngineOption, Switch};
+pub use go_limits::{Clock, GoLimits, Increment, Remaining};
 pub use receiver::Receiver;
-pub use response::{Identity, Response, SearchInfo};
+pub use uci_response::{Identity, Response, SearchInfo};

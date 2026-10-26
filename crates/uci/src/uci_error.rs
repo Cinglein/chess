@@ -8,10 +8,6 @@ pub enum UciError {
     UnknownPosition,
     #[error("setoption needs a name and a value")]
     UnknownOption,
-    #[error("unknown response")]
-    UnknownResponse,
-    #[error("info needs a depth and a score")]
-    IncompleteInfo,
     #[error("bestmove needs a move in long algebraic notation")]
     UnknownMove,
 }

@@ -1,5 +1,8 @@
+#![cfg_attr(not(test), no_std)]
+
 mod identity;
 mod no_move;
+mod response_error;
 mod response_word;
 mod search_info;
 
@@ -12,7 +15,7 @@ use board::LongAlgebraic;
 use no_move::NoMove;
 use response_word::ResponseWord;
 
-use crate::uci_error::UciError;
+use crate::response_error::ResponseError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Response<'line> {
@@ -50,29 +53,29 @@ impl Response<'_> {
         }
     }
 
-    fn parse_best_move(rest: &str) -> Result<Self, UciError> {
+    fn parse_best_move(rest: &str) -> Result<Self, ResponseError> {
         let text = rest.split_whitespace().next().unwrap_or("");
         match text.parse::<NoMove>() {
             Ok(_) => Ok(Response::BestMove(None)),
             Err(_) => text
                 .parse()
                 .map(|notation| Response::BestMove(Some(notation)))
-                .map_err(|_| UciError::UnknownMove),
+                .map_err(|_| ResponseError::UnknownMove),
         }
     }
 }
 
 impl<'line> TryFrom<&'line str> for Response<'line> {
-    type Error = UciError;
+    type Error = ResponseError;
 
-    fn try_from(line: &'line str) -> Result<Response<'line>, UciError> {
+    fn try_from(line: &'line str) -> Result<Response<'line>, ResponseError> {
         let trimmed = line.trim();
         let (head, rest) = trimmed
             .split_once(char::is_whitespace)
             .unwrap_or((trimmed, ""));
         match head
             .parse::<ResponseWord>()
-            .map_err(|_| UciError::UnknownResponse)?
+            .map_err(|_| ResponseError::UnknownResponse)?
         {
             ResponseWord::Id => Identity::try_from(rest).map(Response::Id),
             ResponseWord::UciOk => Ok(Response::UciOk),
@@ -99,7 +102,7 @@ impl fmt::Display for Response<'_> {
 #[cfg(test)]
 mod tests {
     use super::{Response, SearchInfo};
-    use crate::uci_error::UciError;
+    use crate::response_error::ResponseError;
     use board::LongAlgebraic;
     use eval::Score;
     use proptest::prelude::*;
@@ -117,13 +120,13 @@ mod tests {
         (STOCKFISH_INFO, STOCKFISH_INFO_KEPT),
         ("bestmove (none) ponder e7e5", "bestmove 0000"),
     ];
-    const REJECTED: [(&str, UciError); 3] = [
-        ("info string Using 1 thread", UciError::IncompleteInfo),
+    const REJECTED: [(&str, ResponseError); 3] = [
+        ("info string Using 1 thread", ResponseError::IncompleteInfo),
         (
             "Stockfish 19 by the Stockfish developers",
-            UciError::UnknownResponse,
+            ResponseError::UnknownResponse,
         ),
-        ("bestmove zz", UciError::UnknownMove),
+        ("bestmove zz", ResponseError::UnknownMove),
     ];
 
     #[test]

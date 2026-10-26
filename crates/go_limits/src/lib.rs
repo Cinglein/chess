@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), no_std)]
+
 mod clock;
 mod go_builder;
 mod go_key;

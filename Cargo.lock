@@ -639,6 +639,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "go_limits"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "proptest",
+ "search",
+ "strum",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1639,11 +1649,23 @@ version = "0.1.0"
 dependencies = [
  "board",
  "derive_more",
- "eval",
+ "go_limits",
  "itertools",
  "proptest",
- "search",
  "serde",
+ "strum",
+ "thiserror",
+ "uci_response",
+]
+
+[[package]]
+name = "uci_response"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "eval",
+ "proptest",
+ "search",
  "strum",
  "thiserror",
 ]

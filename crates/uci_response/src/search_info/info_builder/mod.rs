@@ -7,7 +7,7 @@ use search::Depth;
 
 use super::SearchInfo;
 use super::info_key::InfoKey;
-use crate::uci_error::UciError;
+use crate::response_error::ResponseError;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct InfoBuilder {
@@ -31,10 +31,10 @@ impl InfoBuilder {
         }
     }
 
-    pub(super) fn info(self) -> Result<SearchInfo, UciError> {
+    pub(super) fn info(self) -> Result<SearchInfo, ResponseError> {
         Ok(SearchInfo {
-            depth: self.depth.ok_or(UciError::IncompleteInfo)?,
-            score: self.score.ok_or(UciError::IncompleteInfo)?,
+            depth: self.depth.ok_or(ResponseError::IncompleteInfo)?,
+            score: self.score.ok_or(ResponseError::IncompleteInfo)?,
             nodes: self.nodes.unwrap_or_default(),
             elapsed: self.elapsed.unwrap_or_default(),
             best_move: self.best_move,

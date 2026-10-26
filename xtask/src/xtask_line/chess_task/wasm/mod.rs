@@ -6,7 +6,15 @@ use wasm_argument::WasmArgument;
 pub struct Wasm;
 
 impl Wasm {
-    const CRATES: &[&str] = &["board", "eval", "fen", "search", "uci"];
+    const CRATES: &[&str] = &[
+        "board",
+        "eval",
+        "fen",
+        "go_limits",
+        "search",
+        "uci",
+        "uci_response",
+    ];
 
     pub fn run(workspace: &Workspace, selection: &Selection) -> Result<(), Failure> {
         Self::CRATES

@@ -10,7 +10,7 @@ use info_builder::InfoBuilder;
 use info_key::InfoKey;
 use search::{Depth, Search};
 
-use crate::uci_error::UciError;
+use crate::response_error::ResponseError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SearchInfo {
@@ -45,16 +45,16 @@ impl SearchInfo {
 }
 
 impl TryFrom<&str> for SearchInfo {
-    type Error = UciError;
+    type Error = ResponseError;
 
-    fn try_from(rest: &str) -> Result<SearchInfo, UciError> {
+    fn try_from(rest: &str) -> Result<SearchInfo, ResponseError> {
         if rest
             .split_whitespace()
             .next()
             .and_then(|head| head.parse::<InfoKey>().ok())
             == Some(InfoKey::String)
         {
-            Err(UciError::IncompleteInfo)
+            Err(ResponseError::IncompleteInfo)
         } else {
             rest.split_whitespace()
                 .fold(InfoBuilder::default(), InfoBuilder::absorb)

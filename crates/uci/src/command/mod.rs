@@ -1,13 +1,13 @@
 mod command_word;
-mod go_limits;
 mod position;
 mod urgency;
 
-pub use go_limits::{Clock, GoLimits, Increment, Remaining};
 pub use position::Position;
 pub use urgency::Urgency;
 
 use core::fmt;
+
+use go_limits::GoLimits;
 
 use crate::engine_option::EngineOption;
 
