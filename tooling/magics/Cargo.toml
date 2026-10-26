@@ -8,7 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-task = { path = "../task" }
+task = { git = "https://github.com/Cinglein/meta-dev", tag = "v0.1.0" }
 enum-map = { version = "3", features = ["serde"] }
 board = { path = "../../crates/board" }
 

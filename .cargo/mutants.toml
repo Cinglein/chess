@@ -9,30 +9,14 @@ exclude_globs = [
 ]
 exclude_re = [
     "arbitrary_with",
-    "MutantCosts::measure",
     "<impl Drop for UciProcess>::drop",
     "Network::trainer",
-    "Stacked::",
-    "TestBinary::discover",
-    "TestBinary::timings",
-    "TestBinary::tests",
-    "TestTime::run",
-    "Affected::run",
-    "Affected::loads",
-    "Changes::(reaches|since_main)",
-    "Workspace::locate",
-    "Scope::(applied|changed_lines|shard_runs|write_diff)",
     "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",
     "MagicSearch::spreads_well",
     "<impl Iterator for XorShift>::next",
     "XorShift::sparse",
-    "Mutants::run",
-    "Mutants::refuse_if_another_run_exists",
-    "Mutants::refuse_if_memory_is_short",
-    "MutantsRun::accepted",
-    "MemoryWatch<'policy>::(sample|enforce|grown|children_outside)",
 ]
 additional_cargo_args = ["--lib"]
 minimum_test_timeout = 10.0

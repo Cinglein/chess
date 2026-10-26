@@ -55,20 +55,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask lint
 
-  mutants:
+  mutants-plan:
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - id: plan
+        run: echo "shards=$(cargo xtask mutants-diff-plan)" >> "$GITHUB_OUTPUT"
+
+  mutants:
+    needs: mutants-plan
+    if: github.event_name == 'pull_request' && needs.mutants-plan.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     strategy:
       fail-fast: false
       matrix:
-        slice: [0, 1, 2, 3]
+        shard: ${{ fromJSON(needs.mutants-plan.outputs.shards) }}
     env:
-      MUTANTS_SLICE: ${{ matrix.slice }}/4
+      MUTANTS_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +106,7 @@ jobs:
           CARGO_INCREMENTAL: 1
 
   ci-gate:
-    needs: [fmt, clippy, test, lint, mutants]
+    needs: [fmt, clippy, test, lint, mutants-plan, mutants]
     if: always()
     runs-on: ubuntu-latest
     steps:

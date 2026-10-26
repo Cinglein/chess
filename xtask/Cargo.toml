@@ -8,49 +8,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-affected = { path = "../tooling/affected" }
-corpus_check = { path = "../tooling/corpus_check" }
+meta-xtask = { git = "https://github.com/Cinglein/meta-dev", tag = "v0.1.0" }
+affected = { git = "https://github.com/Cinglein/meta-dev", tag = "v0.1.0" }
+task = { git = "https://github.com/Cinglein/meta-dev", tag = "v0.1.0" }
 magics = { path = "../tooling/magics" }
-stacked = { path = "../tooling/stacked" }
-test_time = { path = "../tooling/test_time" }
-const_shape = { path = "../tooling/lints/const_shape" }
-distinct_signatures = { path = "../tooling/lints/distinct_signatures" }
-expression_flow = { path = "../tooling/lints/expression_flow" }
-fn_shape = { path = "../tooling/lints/fn_shape" }
-literal_names = { path = "../tooling/lints/literal_names" }
-manual_iteration = { path = "../tooling/lints/manual_iteration" }
-module_nesting = { path = "../tooling/lints/module_nesting" }
-named_lifetimes = { path = "../tooling/lints/named_lifetimes" }
-named_numbers = { path = "../tooling/lints/named_numbers" }
-no_comments = { path = "../tooling/lints/no_comments" }
-no_forwarders = { path = "../tooling/lints/no_forwarders" }
-no_free_fns = { path = "../tooling/lints/no_free_fns" }
-no_numbers_in_binaries = { path = "../tooling/lints/no_numbers_in_binaries" }
-no_parameter_bags = { path = "../tooling/lints/no_parameter_bags" }
-primitive_boundary = { path = "../tooling/lints/primitive_boundary" }
-private_fns = { path = "../tooling/lints/private_fns" }
-public_surface = { path = "../tooling/lints/public_surface" }
-settings_shape = { path = "../tooling/lints/settings_shape" }
-state_graph = { path = "../tooling/lints/state_graph" }
-test_budget = { path = "../tooling/lints/test_budget" }
-type_shape = { path = "../tooling/lints/type_shape" }
-mutation = { path = "../tooling/mutation" }
-mutant_costs = { path = "../tooling/mutant_costs" }
-settings = { path = "../crates/settings" }
-task = { path = "../tooling/task" }
-toml = "0.9"
-derive_more = { version = "2", features = ["display"] }
-sysinfo = "0.39"
-board = { path = "../crates/board" }
-enum-map = { version = "3", features = ["serde"] }
-proc-macro2 = { version = "1", features = ["span-locations"] }
-quote = "1"
-rustc_lexer = { package = "ra-ap-rustc_lexer", version = "0.174.0" }
 strum = { version = "0.28", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-syn = { version = "2", features = ["full", "parsing", "visit"] }
-thiserror = "2"
 
 [lints]
 workspace = true
