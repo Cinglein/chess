@@ -154,7 +154,6 @@ mod tests {
     use board::{Board, Color, FullmoveNumber, PlyCount};
     use eval::Score;
     use std::num::NonZeroU16;
-    use std::ops::ControlFlow;
     use std::time::Duration;
     use uci::{Clock, Increment, Remaining};
     const BARE_KINGS: &str = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
@@ -173,8 +172,6 @@ mod tests {
     const A_MINUTE: Duration = Duration::from_secs(60);
     const NO_TIME: Clock = Clock::new(A_NANOSECOND, A_NANOSECOND, Duration::ZERO, Duration::ZERO);
     const GENEROUS: Clock = Clock::new(A_MINUTE, A_MINUTE, Duration::from_secs(1), Duration::ZERO);
-    const MOVER: Color = Color::White;
-    const WAITER: Color = Color::Black;
     const ONE_MOVE: FullmoveNumber = FullmoveNumber::new(NonZeroU16::MIN);
     const TWO_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(2).unwrap());
     const EIGHT_MOVES: FullmoveNumber = FullmoveNumber::new(NonZeroU16::new(8).unwrap());
@@ -240,24 +237,20 @@ mod tests {
 
     #[test]
     fn a_played_move_charges_the_mover_for_its_thinking_time_and_adds_the_increment() {
-        let board: Board = START.parse().unwrap();
-        let game = Game::from(board).ruled_by(QUICK.timed(GENEROUS));
-        let ControlFlow::Continue(after) = game.advance(
-            &mut InProcessEngine::default(),
-            &mut InProcessEngine::default(),
-        ) else {
-            panic!()
-        };
-        let charged = after.clock.time::<Remaining>(MOVER);
-        let before = GENEROUS.time::<Remaining>(MOVER);
-        let increment = GENEROUS.time::<Increment>(MOVER);
+        let engine = &mut InProcessEngine::default();
+        let game = Game::from(Board::START).ruled_by(QUICK.timed(GENEROUS));
+        let after = game
+            .advance(engine, &mut InProcessEngine::default())
+            .continue_value()
+            .unwrap();
+        let [charged, waiting] =
+            [Color::White, Color::Black].map(|side| after.clock.time::<Remaining>(side));
+        let before = GENEROUS.time::<Remaining>(Color::White);
+        let increment = GENEROUS.time::<Increment>(Color::White);
         assert!(
             charged > before && charged < before + increment,
             "{charged:?}"
         );
-        assert_eq!(
-            after.clock.time::<Remaining>(WAITER),
-            GENEROUS.time::<Remaining>(WAITER)
-        );
+        assert_eq!(waiting, GENEROUS.time::<Remaining>(Color::Black));
     }
 }

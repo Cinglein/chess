@@ -149,7 +149,6 @@ mod tests {
     use engine::{Engine, Sink};
     use std::env;
     use std::io::{self, BufRead};
-    use std::ops::ControlFlow;
     use std::process::Command as ProcessCommand;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
@@ -187,11 +186,7 @@ mod tests {
                         Ok(command) => command.deliver_to(engine),
                         Err(_) => engine,
                     };
-                    if engine.is_ending() {
-                        ControlFlow::Break(engine)
-                    } else {
-                        ControlFlow::Continue(engine)
-                    }
+                    (!engine.is_ending()).then_some(engine)
                 },
             );
         }
@@ -202,13 +197,7 @@ mod tests {
             if response == Response::ReadyOk {
                 thread::sleep(Self::SETUP);
             }
-            let acted_on = response.best_move().is_some()
-                || response.info().is_some()
-                || response == Response::UciOk
-                || response == Response::ReadyOk;
-            if acted_on {
-                println!("{response}");
-            }
+            println!("{response}");
         }
     }
 
