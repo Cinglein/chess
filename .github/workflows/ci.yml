@@ -17,16 +17,24 @@ env:
   SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
 
 jobs:
-  fmt:
+  ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git remote set-head origin --auto
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
-          components: rustfmt
-      - run: cargo fmt --all --check
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo xtask ci $SCOPE
+        env:
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
 
-  clippy:
+  wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,29 +45,7 @@ jobs:
           components: clippy
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask clippy $SCOPE
       - run: cargo xtask wasm $SCOPE
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask test $SCOPE
-      - run: cargo xtask test-time $SCOPE
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask lint
 
   mutants-plan:
     if: github.event_name == 'pull_request'
@@ -106,7 +92,7 @@ jobs:
           CARGO_INCREMENTAL: 1
 
   ci-gate:
-    needs: [fmt, clippy, test, lint, mutants-plan, mutants]
+    needs: [ci, wasm, mutants-plan, mutants]
     if: always()
     runs-on: ubuntu-latest
     steps:

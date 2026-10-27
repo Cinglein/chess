@@ -6,6 +6,7 @@ A Rust chess engine with a neural network evaluation trained using [bullet](http
 
 ```
 cargo xtask ci
+cargo xtask wasm
 ```
 
-Runs formatting, clippy, tests, and the no-comments check exactly as CI does.
+Runs formatting, clippy, tests, the lints, and the wasm build exactly as CI does.
