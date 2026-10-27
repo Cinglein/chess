@@ -5,12 +5,21 @@ version = 4
 [[package]]
 name = "affected"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "serde",
  "serde_json",
  "syn 2.0.119",
  "task",
+]
+
+[[package]]
+name = "android_system_properties"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae221649c9976a6f6c56ae1facf410f3ddb33cc661c4b7b61020a912d4237fbc"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -74,6 +83,7 @@ name = "arena"
 version = "0.1.0"
 dependencies = [
  "board",
+ "chess_settings",
  "clap",
  "derive_more",
  "engine",
@@ -82,7 +92,6 @@ dependencies = [
  "rand 0.10.3",
  "search",
  "serde",
- "settings 0.1.0",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -204,6 +213,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
+name = "cc"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86e055fa6e3e40ad6187ba25b6855eeb635d5271f8e0f0e1e9a5826b8d75bea0"
+dependencies = [
+ "find-msvc-tools",
+ "shlex",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -226,6 +245,27 @@ version = "0.1.0"
 dependencies = [
  "engine",
  "uci",
+]
+
+[[package]]
+name = "chess_settings"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
+name = "chrono"
+version = "0.4.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
+dependencies = [
+ "iana-time-zone",
+ "num-traits",
+ "serde",
+ "windows-link",
 ]
 
 [[package]]
@@ -277,7 +317,7 @@ checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 [[package]]
 name = "const_shape"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -294,9 +334,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-foundation-sys"
+version = "0.8.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
 name = "corpus_check"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "const_shape",
  "crate_graph",
@@ -317,7 +363,7 @@ dependencies = [
  "primitive_boundary",
  "private_fns",
  "public_surface",
- "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "settings",
  "settings_shape",
  "state_graph",
  "strum",
@@ -341,7 +387,7 @@ dependencies = [
 [[package]]
 name = "crate_graph"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -390,12 +436,12 @@ dependencies = [
  "arena",
  "board",
  "bulletformat",
+ "chess_settings",
  "clap",
  "derive_more",
  "eval",
  "proptest",
  "serde",
- "settings 0.1.0",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -436,7 +482,7 @@ dependencies = [
 [[package]]
 name = "distinct_signatures"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -495,7 +541,7 @@ dependencies = [
 [[package]]
 name = "enum_predicates"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -553,7 +599,7 @@ dependencies = [
 [[package]]
 name = "expression_flow"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -575,9 +621,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "find-msvc-tools"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
+
+[[package]]
 name = "fn_shape"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -661,6 +713,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "iana-time-zone"
+version = "0.1.65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e31bc9ad994ba00e440a8aa5c9ef0ec67d5cb5e5cb0cc7f8b744a35b389cc470"
+dependencies = [
+ "android_system_properties",
+ "core-foundation-sys",
+ "iana-time-zone-haiku",
+ "js-sys",
+ "log",
+ "wasm-bindgen",
+ "windows-core",
+]
+
+[[package]]
+name = "iana-time-zone-haiku"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -729,11 +805,17 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 [[package]]
 name = "literal_names"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
 ]
+
+[[package]]
+name = "log"
+version = "0.4.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "magics"
@@ -747,7 +829,7 @@ dependencies = [
 [[package]]
 name = "manual_iteration"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -761,20 +843,72 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "meta-log"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
+dependencies = [
+ "chrono",
+ "meta-schema",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "meta-schema"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
+dependencies = [
+ "chrono",
+ "serde",
+ "strum",
+ "thiserror",
+]
+
+[[package]]
+name = "meta-severity"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
+dependencies = [
+ "meta-schema",
+ "meta-state",
+ "serde",
+ "strum",
+ "thiserror",
+]
+
+[[package]]
+name = "meta-state"
+version = "0.1.0"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
+dependencies = [
+ "chrono",
+ "meta-schema",
+ "thiserror",
+]
+
+[[package]]
 name = "meta-xtask"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "affected",
  "corpus_check",
  "crate_graph",
+ "meta-log",
+ "meta-schema",
+ "meta-severity",
+ "meta-state",
  "mutant_costs",
  "mutation",
  "serde",
- "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "serde_json",
+ "settings",
  "stacked",
  "strum",
  "task",
+ "tempfile",
+ "test_budget",
  "test_time",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -783,7 +917,7 @@ dependencies = [
 [[package]]
 name = "module_nesting"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "task",
 ]
@@ -797,7 +931,7 @@ checksum = "4caf9c718f831a8568f030576e6a6e6aa487ed5f8732ddb0ba79e9a3ea0421ca"
 [[package]]
 name = "mutant_costs"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "serde",
  "serde_json",
@@ -807,12 +941,12 @@ dependencies = [
 [[package]]
 name = "mutation"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "affected",
  "serde",
  "serde_json",
- "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "settings",
  "strum",
  "sysinfo",
  "task",
@@ -821,7 +955,7 @@ dependencies = [
 [[package]]
 name = "named_lifetimes"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -830,7 +964,7 @@ dependencies = [
 [[package]]
 name = "named_numbers"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -840,7 +974,7 @@ dependencies = [
 [[package]]
 name = "no_comments"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "ra-ap-rustc_lexer",
  "task",
@@ -850,7 +984,7 @@ dependencies = [
 [[package]]
 name = "no_forwarders"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -859,7 +993,7 @@ dependencies = [
 [[package]]
 name = "no_free_fns"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -868,7 +1002,7 @@ dependencies = [
 [[package]]
 name = "no_numbers_in_binaries"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "named_numbers",
  "syn 2.0.119",
@@ -878,7 +1012,7 @@ dependencies = [
 [[package]]
 name = "no_parameter_bags"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -1022,7 +1156,7 @@ dependencies = [
 [[package]]
 name = "primitive_boundary"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -1031,7 +1165,7 @@ dependencies = [
 [[package]]
 name = "private_fns"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -1069,7 +1203,7 @@ dependencies = [
 [[package]]
 name = "public_surface"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -1322,16 +1456,7 @@ dependencies = [
 [[package]]
 name = "settings"
 version = "0.1.0"
-dependencies = [
- "serde",
- "thiserror",
- "toml 0.9.12+spec-1.1.0",
-]
-
-[[package]]
-name = "settings"
-version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "serde",
  "toml 0.9.12+spec-1.1.0",
@@ -1340,7 +1465,7 @@ dependencies = [
 [[package]]
 name = "settings_shape"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1362,6 +1487,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
 name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1370,7 +1501,7 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 [[package]]
 name = "stacked"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "strum",
  "task",
@@ -1379,7 +1510,7 @@ dependencies = [
 [[package]]
 name = "state_graph"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "derive_more",
  "quote",
@@ -1454,15 +1585,18 @@ dependencies = [
 [[package]]
 name = "task"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "derive_more",
  "enum-map",
+ "meta-schema",
+ "meta-severity",
+ "meta-state",
  "proc-macro2",
  "quote",
  "serde",
  "serde_json",
- "settings 0.1.0 (git+https://github.com/Cinglein/meta-dev?tag=v0.1.0)",
+ "settings",
  "strum",
  "syn 2.0.119",
  "sysinfo",
@@ -1486,7 +1620,7 @@ dependencies = [
 [[package]]
 name = "test_budget"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "derive_more",
  "proc-macro2",
@@ -1497,16 +1631,17 @@ dependencies = [
 [[package]]
 name = "test_time"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "strum",
  "task",
+ "tempfile",
 ]
 
 [[package]]
 name = "thin_main"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",
@@ -1618,12 +1753,12 @@ version = "0.1.0"
 dependencies = [
  "bullet_lib",
  "bulletformat",
+ "chess_settings",
  "clap",
  "derive_more",
  "eval",
  "rand 0.10.3",
  "serde",
- "settings 0.1.0",
  "strum",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
@@ -1636,7 +1771,7 @@ version = "0.1.0"
 [[package]]
 name = "type_shape"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -1709,7 +1844,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 [[package]]
 name = "vec_out_params"
 version = "0.1.0"
-source = "git+https://github.com/Cinglein/meta-dev?tag=v0.1.0#1e033eace0546492de6fc99e6eb7bad3fffec198"
+source = "git+https://github.com/Cinglein/meta-dev?rev=07466e5815cb672b9423c68b77a7b326301e7c58#07466e5815cb672b9423c68b77a7b326301e7c58"
 dependencies = [
  "syn 2.0.119",
  "task",

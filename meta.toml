@@ -1,0 +1,4 @@
+remote = "origin"
+protected = ["main", "meta/log"]
+log_branches = ["meta/log"]
+required_workflows = ["CI", "Mutants"]

@@ -2,3 +2,4 @@
 arena.toml
 mutants.out/
 mutants.out.old/
+/meta.local.toml

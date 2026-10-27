@@ -25,12 +25,15 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   drives a child process over pipes with a reader thread and timeouts, `InProcessEngine` drives
   `engine::Engine` in process so tests need no binary.
 - `crates/tui`: terminal UI binary for playing against the engine.
-- Tooling comes from meta-development (`meta-xtask`, git tag `v0.1.0`, in `xtask/Cargo.toml`):
+- Tooling comes from meta-development (`meta-xtask`, pinned by git revision in `xtask/Cargo.toml`):
   the lints, affected, mutation, test-time, stacked, and the `task` library (`Workspace`,
   `CommandLine`, `Failure`, `Policy` from `tooling/policy.toml`). `tooling/policy.toml` holds every
-  limit; `tooling/lint-baseline.toml` holds the lint counts allowed. Only chess-specific tooling
-  lives here: `tooling/magics`.
-- `crates/settings`: `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
+  limit and budget; `tooling/lint-baseline.toml` holds the lint counts allowed; `meta.toml`
+  configures the `meta` command. Work is tracked in this repo's `meta/log` branch: open and claim a
+  task (`meta open`, `meta claim <task> --worktree`) and work on its `task-<id>` branch, or CI
+  fails. Only chess-specific tooling lives here: `tooling/magics`.
+- `crates/settings` (package `chess_settings`, library `settings`, since meta-development has a
+  `settings` crate too): `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
   file or writes the embedded defaults when it is missing, and `SettingsError` names what went wrong.
 - `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
   itself at fixed nodes from `RandomOpenings` on worker threads and streams every `Finished`
@@ -45,9 +48,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   selected by target in the manifest, so CI compiles the crate against bullet's mock device.
 - Crates are `no_std` unless the feature they exist for needs `std`. Planned: `web` (Dioxus,
   wasm). Crates are added when their milestone starts.
-- `xtask`: `cargo xtask magics`, `cargo xtask wasm`, and `cargo xtask ci` (meta-development's
-  `ci`, then `wasm`) are chess's own; every other task (`lint`, `clippy`, `test`, `test-time`,
-  `stacked`, `affected`, `mutants`, `mutants-full`, `mutants-plan`, `mutants-diff-plan`,
+- `xtask`: `cargo xtask magics` and `cargo xtask wasm` are chess's own; every other task (`ci`,
+  `lint`, `clippy`, `test`, `test-time`, `stacked`, `affected`, `mutants`, `mutants-full`, `mutants-plan`, `mutants-diff-plan`,
   `mutant-costs`, and each lint by name) is meta-development's. `--affected` restricts `ci`,
   `clippy`, `wasm`, `test`, and `test-time` to the crates a change reaches.
 
@@ -236,9 +238,9 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   one mutant at a time, with the compiler tasks the budget allows (3). The session hook denies a raw `cargo mutants`.
 - No documentation in the repository: no `docs/`, no notes, no design documents. The README
   stays a few lines. Anything the owner should read goes in the chat.
-- CI must pass: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with the pedantic
-  group enabled, `cargo test`, `cargo xtask wasm`, and `cargo xtask lint` as one CI job covering
-  comments, free functions, the test budget, and the state graph. Run `cargo xtask ci` locally
+- CI must pass: the `ci` job runs `cargo xtask ci` (the tracked-work check, `cargo fmt --check`,
+  `cargo clippy --all-targets -- -D warnings` with the pedantic group enabled, the timed tests,
+  the lints, and the budgets), and the `wasm` job runs `cargo xtask wasm`. Run both locally
   before opening a PR. A PR's checks finish inside 5 minutes, ideally 1: `cargo xtask test`
   runs `--lib` because every test lives in a library, the in-diff mutants job is cut at 6 minutes
   and a shard at 8, and anything slower is a bug to fix, not a timeout to raise. CI runs only
