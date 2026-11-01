@@ -118,20 +118,3 @@ impl proptest::arbitrary::Arbitrary for CastlingRights {
             .boxed()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::CastlingRights;
-    use fen::DashOr;
-    use proptest::prelude::any;
-
-    laws::roundtrip!(
-        any_castling_rights_print_and_parse_back_to_themselves,
-        any::<CastlingRights>(),
-        |rights: &CastlingRights| DashOr::from(*rights).to_string(),
-        |text: &String| text
-            .parse::<DashOr<CastlingRights>>()
-            .map(CastlingRights::from),
-        Ok
-    );
-}

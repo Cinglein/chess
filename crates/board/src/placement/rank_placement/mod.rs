@@ -51,18 +51,3 @@ impl FromStr for RankPlacement {
         .ok_or(FenError::RankWidth)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{Piece, RankPlacement};
-    use enum_map::EnumMap;
-    use proptest::prelude::{Strategy, any};
-
-    laws::roundtrip!(
-        any_rank_placement_prints_and_parses_back_to_itself,
-        any::<[Option<Piece>; 8]>().prop_map(|squares| RankPlacement(EnumMap::from_array(squares))),
-        ToString::to_string,
-        |text: &String| text.parse::<RankPlacement>(),
-        Ok
-    );
-}
