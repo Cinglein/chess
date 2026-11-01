@@ -12,7 +12,7 @@ use crate::square::Square;
 use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct CastlingRights(EnumSet<CastlingRight>);
+pub(crate) struct CastlingRights(EnumSet<CastlingRight>);
 
 impl State for CastlingRights {}
 

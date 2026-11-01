@@ -73,7 +73,7 @@ impl Board {
     }
 
     #[must_use]
-    pub const fn castling_rights(&self) -> CastlingRights {
+    pub(crate) const fn castling_rights(&self) -> CastlingRights {
         self.castling_rights
     }
 

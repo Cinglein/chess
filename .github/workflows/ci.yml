@@ -14,7 +14,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  LINT_REVISION: 0c69ba4e8022b7d4eb1af9d92be8179c243c3058
+  LINT_TAG: v0.1.1
   MUTANT_SHARDS: 4
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: lint-runner
-      - run: cargo +1.99.0 install --locked --git https://github.com/Studio-Terza/meta-dev --rev "$LINT_REVISION" lint
+      - run: cargo +1.99.0 install --locked --git https://github.com/Studio-Terza/meta-dev --tag "$LINT_TAG" lint
       - run: lint .
 
   wasm:

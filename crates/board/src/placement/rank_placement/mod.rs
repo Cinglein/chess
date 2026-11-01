@@ -18,7 +18,7 @@ use crate::square::Square;
 use rank_token::RankToken;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Newtype)]
-pub struct RankPlacement(EnumMap<File, Option<Piece>>);
+pub(crate) struct RankPlacement(EnumMap<File, Option<Piece>>);
 
 impl RankPlacement {
     pub fn pieces(self, rank: Rank) -> impl Iterator<Item = PlacedPiece> {
