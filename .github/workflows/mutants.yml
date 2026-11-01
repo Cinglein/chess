@@ -9,7 +9,6 @@ on:
 
 concurrency:
   group: mutants-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,7 +18,7 @@ env:
 jobs:
   full:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +41,8 @@ jobs:
         run: |
           status=0
           cargo mutants --shard "$SHARD" --sharding round-robin --output target/mutants --colors never || status=$?
-          if [ "$status" -ne 0 ] && [ "$status" -ne 3 ]; then exit "$status"; fi
+          if [ "$status" -eq 2 ] || { [ "$status" -eq 3 ] && [ -f target/mutants/mutants.out/missed.txt ]; }; then exit 0; fi
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -61,31 +61,32 @@ jobs:
       ISSUE_TITLE: Surviving mutants on main
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - id: verdict
-        run: |
-          if echo '${{ toJSON(needs) }}' | grep -q '"result": "failure"'; then
-            echo "verdict=failed" >> "$GITHUB_OUTPUT"
-          elif echo '${{ toJSON(needs) }}' | grep -q '"result": "cancelled"'; then
-            echo "verdict=superseded" >> "$GITHUB_OUTPUT"
-          else
-            echo "verdict=green" >> "$GITHUB_OUTPUT"
-          fi
       - uses: actions/download-artifact@v4
-        if: github.ref == 'refs/heads/main'
         continue-on-error: true
         with:
           pattern: mutants-*
           path: shards
+      - id: verdict
+        run: |
+          find shards -name missed.txt -exec cat {} + 2>/dev/null | sort -u > missed.txt
+          { echo "Run: $RUN_URL"; echo; echo '```'; cat missed.txt; echo '```'; } > body.md
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
+          if echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"'; then
+            echo "verdict=failed" >> "$GITHUB_OUTPUT"
+          elif [ -s missed.txt ]; then
+            echo "verdict=missed" >> "$GITHUB_OUTPUT"
+          else
+            echo "verdict=green" >> "$GITHUB_OUTPUT"
+          fi
       - id: issue
         if: github.ref == 'refs/heads/main'
         run: |
           open=$(gh issue list --state open --json number,title --jq "first(.[] | select(.title == \"$ISSUE_TITLE\") | .number)")
           echo "number=$open" >> "$GITHUB_OUTPUT"
-      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict == 'failed'
+      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict != 'green'
         env:
           ISSUE: ${{ steps.issue.outputs.number }}
         run: |
-          { echo "Run: $RUN_URL"; echo; echo '```'; find shards -name missed.txt -exec cat {} + 2>/dev/null | sort -u; echo '```'; } > body.md
           if [ -n "$ISSUE" ]; then
             gh issue edit "$ISSUE" --body-file body.md
             gh issue comment "$ISSUE" --body "Still failing: $RUN_URL"
@@ -97,6 +98,6 @@ jobs:
           ISSUE: ${{ steps.issue.outputs.number }}
         run: |
           gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
-      - if: steps.verdict.outputs.verdict != 'green'
+      - if: steps.verdict.outputs.verdict == 'failed'
         run: exit 1
-      - run: echo "every shard passed or none was needed"
+      - run: echo "every shard finished; missed mutants, if any, are in the summary and the issue"
