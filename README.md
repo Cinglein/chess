@@ -11,4 +11,4 @@ cargo test
 lint .
 ```
 
-`lint` is the runner from [meta-dev](https://github.com/Studio-Terza/meta-dev), at the revision in `.github/workflows/ci.yml`. `cargo run -p magics` regenerates the magic tables.
+`lint` is the runner from [meta-dev](https://github.com/Studio-Terza/meta-dev), at the tag in `.github/workflows/ci.yml`. `cargo run -p magics` regenerates the magic tables.

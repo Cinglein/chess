@@ -25,7 +25,7 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   `crates/arena_cli` holds the `arena` binary and its command line.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Tooling: lints run through the `lint` binary from Studio-Terza/meta-dev, installed in CI at the
-  commit `LINT_REVISION` in `.github/workflows/ci.yml`. There is no lint configuration and no
+  tag `LINT_TAG` in `.github/workflows/ci.yml`. There is no lint configuration and no
   baseline. `tooling/magics` regenerates the magic tables: `cargo run -p magics`.
 - `crates/game`: `Game`, `Rules`, the `Opponent` trait and what a game produces (`Finished`, `Label`).
 - `crates/tally`: `Tally` and `Verdict`, the Elo arithmetic of a series.
