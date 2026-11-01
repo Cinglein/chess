@@ -21,7 +21,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
   iterative deepening against a `Deadline` built from the `go` limits and a `TimeBudget`.
 - `crates/chess`: the UCI binary. Its library's `Session` holds a stdin thread that also raises the
   stop flag on `stop` and `quit`, a stdout sink, and a fold of commands over the engine.
-- `crates/arena`: `std` match runner. `Series` plays paired games between two `Entrant`s from `Openings`.
+- `crates/arena`: `std` match runner. `Series` plays paired games between two `Entrant`s from `Openings`;
+  `crates/arena_cli` holds the `arena` binary and its command line.
 - `crates/tui`: terminal UI binary for playing against the engine.
 - Tooling: lints run through the `lint` binary from Studio-Terza/meta-dev, installed in CI at the
   commit `LINT_REVISION` in `.github/workflows/ci.yml`. There is no lint configuration and no
@@ -33,12 +34,13 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - `crates/settings` (package `chess_settings`, library `settings`, since meta-development has a
   `settings` crate too): `std` settings loading shared by the binaries: `EmbeddedDefaults` reads a toml
   file or writes the embedded defaults when it is missing, and `SettingsError` names what went wrong.
-- `crates/datagen`: `std` training data binary. `SelfPlay` plays the in-process engine against
+- `crates/datagen`: `std` training data library, with the `datagen` binary in `crates/datagen_cli`. `SelfPlay` plays the in-process engine against
   itself at fixed nodes from `RandomOpenings` on worker threads and streams every `Finished`
   game over a channel; `Example` turns each `Label` into bullet's 32-byte `ChessBoard` record
   through the `bulletformat` crate; `datagen.toml` holds nodes per move, opening plies, the
   position target, and concurrency, and `--seed` defaults to the clock.
-- `crates/trainer`: `std` training binary over bullet, pinned by git revision. `ShuffledData` writes a
+- `crates/trainer`: `std` training library over bullet, pinned by git revision, with the `trainer` binary in
+  `crates/trainer_cli`. `ShuffledData` writes a
   seeded permutation of the data file beside it; `trainer_schedule`'s `Schedule` and `Machine` turn `trainer.toml` into
   bullet's `TrainingSchedule` and `LocalSettings`; `trainer_network`'s `Network::trainer` builds the
   `(768 -> HIDDEN)x2 -> 1` graph from `eval::NetworkFormat`, which holds the sizes, quantisation

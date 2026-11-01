@@ -1,0 +1,28 @@
+[package]
+name = "trainer_cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "trainer"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+settings = { package = "chess_settings", version = "0.1.0", path = "../settings" }
+thiserror = "2"
+trainer = { version = "0.1.0", path = "../trainer" }
+trainer_network = { version = "0.1.0", path = "../trainer_network" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf91c6ccac47e72d561062a46b5", features = ["metal"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf91c6ccac47e72d561062a46b5" }
+
+[lints]
+workspace = true

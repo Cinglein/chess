@@ -1,6 +1,8 @@
-use crate::Machine;
+mod machine;
+
+use ::settings::EmbeddedDefaults;
+use machine::Machine;
 use serde::Deserialize;
-use settings::EmbeddedDefaults;
 use trainer_schedule::{NetId, Schedule};
 
 #[derive(Debug, PartialEq, Deserialize)]

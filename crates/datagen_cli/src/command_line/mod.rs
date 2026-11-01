@@ -1,19 +1,17 @@
 mod arguments;
 mod command_line_error;
-mod settings;
 
-pub use self::settings::Settings;
 pub use command_line_error::CommandLineError;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::time::Instant;
 
-use crate::{Example, Progress, SelfPlay};
-use ::settings::EmbeddedDefaults;
 use arena::RandomOpenings;
 use arguments::{Arguments, Config, Output};
 use clap::Parser;
+use datagen::{Example, PositionCount, Progress, SelfPlay, Settings};
 use game::Rules;
+use settings::EmbeddedDefaults;
 
 pub struct CommandLine;
 
@@ -33,7 +31,7 @@ impl CommandLine {
         let progress = games.iter().try_fold(
             Progress::towards(settings.positions()),
             |progress, finished| -> Result<Progress, CommandLineError> {
-                let written = Example::write_labels(finished.labels(), &mut output)?;
+                let written: PositionCount = Example::write_labels(finished.labels(), &mut output)?;
                 Ok(Self::reported(progress.advanced(written)))
             },
         )?;

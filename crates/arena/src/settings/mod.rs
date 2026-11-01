@@ -1,8 +1,9 @@
-use crate::{RoundCount, WorkerCount};
+use crate::WorkerCount;
+use crate::round_count::RoundCount;
+use ::settings::EmbeddedDefaults;
 use board::FullmoveNumber;
 use game::{DrawAdjudication, ResignAdjudication, TimeControl};
 use serde::Deserialize;
-use settings::EmbeddedDefaults;
 use uci::Elo;
 
 #[derive(Debug, PartialEq, Deserialize)]

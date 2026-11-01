@@ -1,8 +1,8 @@
 use crate::PositionCount;
+use ::settings::EmbeddedDefaults;
 use arena::WorkerCount;
 use board::{NodeCount, PlyCount};
 use serde::Deserialize;
-use settings::EmbeddedDefaults;
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]

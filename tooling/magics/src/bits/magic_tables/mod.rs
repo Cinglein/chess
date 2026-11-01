@@ -10,8 +10,8 @@ use board::{Bishop, Rook, Slider, Square};
 use enum_map::EnumMap;
 
 use super::xor_shift::XorShift;
-pub use hex_literal::HexLiteral;
-pub use magic_search::MagicSearch;
+use hex_literal::HexLiteral;
+use magic_search::MagicSearch;
 
 pub struct MagicTables {
     rook: EnumMap<Square, u64>,
@@ -35,8 +35,12 @@ impl MagicTables {
         fs::write(workspace_root.join(Self::OUTPUT), self.to_string())
     }
 
+    pub fn multiplier<S: Slider>(square: Square, rng: &mut XorShift) -> u64 {
+        MagicSearch::new::<S>(square).find_multiplier(rng)
+    }
+
     fn find_all<S: Slider>(rng: &mut XorShift) -> EnumMap<Square, u64> {
-        EnumMap::from_fn(|square| MagicSearch::new::<S>(square).find_multiplier(rng))
+        EnumMap::from_fn(|square| Self::multiplier::<S>(square, rng))
     }
 
     fn fmt_table(

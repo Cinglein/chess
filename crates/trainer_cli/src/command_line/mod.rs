@@ -1,14 +1,12 @@
 mod arguments;
 mod command_line_error;
-mod settings;
 
-pub use self::settings::Settings;
-use crate::ShuffledData;
-use ::settings::EmbeddedDefaults;
 use arguments::{Arguments, Config, Records};
 use bullet_lib::value::loader::DirectSequentialDataLoader;
 use clap::Parser;
 pub use command_line_error::CommandLineError;
+use settings::EmbeddedDefaults;
+use trainer::{Settings, ShuffledData};
 use trainer_network::Network;
 
 pub struct CommandLine;

@@ -1,9 +1,10 @@
-use board::{Board, ChessMove, MoveKind, NodeCount, SplitMix64};
+use board::{Board, ChessMove, MoveKind, NodeCount};
 use core::cell::{Cell, RefCell};
 use core::marker::PhantomData;
 use eval::{Evaluator, PieceKindValue, PieceSquareTables, Score};
 use proptest::prelude::*;
 use search::{Depth, Interrupt, Search, TableEntry, TranspositionTable};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
 const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";
@@ -99,9 +100,9 @@ impl Salted {
     const OFFSETS: u64 = 17;
 
     fn score(board: &Board) -> Score {
-        let mixed = SplitMix64::new(board.hash().bits() ^ SALT.get())
-            .next()
-            .output();
+        let mut hasher = DefaultHasher::new();
+        (board.hash().bits() ^ SALT.get()).hash(&mut hasher);
+        let mixed = hasher.finish();
         let offset = SALT.get() % Self::OFFSETS;
         Score::new(i32::try_from(mixed % Self::SPREAD + offset).unwrap() - 12)
     }

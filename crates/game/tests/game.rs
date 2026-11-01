@@ -49,8 +49,9 @@ const DRAWN_WHEN_LEVEL: Rules = QUICK
 const RESIGNABLE: Rules = QUICK.adjudicated_by(Rules::DEFAULT.draw(), LOST_FOR_ONE_PLY);
 const OUT_OF_TIME: Rules = Rules::DEFAULT.timed(NO_TIME).lasting_at_most(ONE_MOVE);
 const CUT_AT_TWO_MOVES: Rules = RESIGNABLE.lasting_at_most(TWO_MOVES);
-const FIXTURES: [(&str, Rules, &str, usize); 7] = [
+const FIXTURES: [(&str, Rules, &str, usize); 8] = [
     (MATE_IN_ONE, QUICK, "1-0 {checkmate}", 1),
+    (MATE_IN_ONE, QUICK.timed(NO_TIME), "1-0 {checkmate}", 1),
     (MATE_IN_ONE, DRAW_CLAIMABLE, "1-0 {checkmate}", 1),
     (BARE_KINGS, QUICK, "1/2-1/2 {insufficient material}", 0),
     (ROOK_EACH, DRAWN_WHEN_LEVEL, "1/2-1/2 {draw adjudicated}", 4),

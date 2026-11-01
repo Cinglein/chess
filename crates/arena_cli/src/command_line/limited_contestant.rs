@@ -1,4 +1,4 @@
-use crate::Entrant;
+use arena::Entrant;
 use game::{ArenaError, Opponent};
 use uci::Elo;
 

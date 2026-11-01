@@ -64,7 +64,6 @@ version = "0.1.0"
 dependencies = [
  "board",
  "chess_settings",
- "clap",
  "derive_more",
  "enum-map",
  "eval",
@@ -76,6 +75,19 @@ dependencies = [
  "tally",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
+ "uci",
+]
+
+[[package]]
+name = "arena_cli"
+version = "0.1.0"
+dependencies = [
+ "arena",
+ "chess_settings",
+ "clap",
+ "game",
+ "opponent_ports",
+ "thiserror",
  "uci",
 ]
 
@@ -387,7 +399,6 @@ dependencies = [
  "board",
  "bulletformat",
  "chess_settings",
- "clap",
  "derive_more",
  "eval",
  "game",
@@ -398,6 +409,18 @@ dependencies = [
  "tally",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
+name = "datagen_cli"
+version = "0.1.0"
+dependencies = [
+ "arena",
+ "chess_settings",
+ "clap",
+ "datagen",
+ "game",
+ "thiserror",
 ]
 
 [[package]]
@@ -1347,7 +1370,6 @@ dependencies = [
  "bullet_lib",
  "bulletformat",
  "chess_settings",
- "clap",
  "derive_more",
  "rand 0.10.3",
  "serde",
@@ -1356,6 +1378,18 @@ dependencies = [
  "toml 0.9.12+spec-1.1.0",
  "trainer_network",
  "trainer_schedule",
+]
+
+[[package]]
+name = "trainer_cli"
+version = "0.1.0"
+dependencies = [
+ "bullet_lib",
+ "chess_settings",
+ "clap",
+ "thiserror",
+ "trainer",
+ "trainer_network",
 ]
 
 [[package]]
