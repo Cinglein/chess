@@ -1,5 +1,6 @@
-use board::Board;
-use fen::FenError;
+use board::{Board, CastlingRights};
+use fen::{DashOr, FenError};
+use proptest::prelude::any;
 
 const RIGHTS: [&str; 16] = [
     "-", "K", "Q", "KQ", "k", "Kk", "Qk", "KQk", "q", "Kq", "Qq", "KQq", "kq", "Kkq", "Qkq", "KQkq",
@@ -32,3 +33,13 @@ fn repeated_or_unknown_letters_are_rejected() {
         );
     }
 }
+
+laws::roundtrip!(
+    any_castling_rights_print_as_a_fen_field_and_parse_back_to_themselves,
+    any::<CastlingRights>(),
+    |rights: &CastlingRights| DashOr::from(*rights).to_string(),
+    |text: &String| text
+        .parse::<DashOr<CastlingRights>>()
+        .map(CastlingRights::from),
+    Ok
+);
