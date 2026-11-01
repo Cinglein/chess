@@ -1,7 +1,8 @@
-use crate::{ArenaError, Entrant, Opponent};
+use crate::Entrant;
+use game::{ArenaError, Opponent};
 use uci::Elo;
 
-use super::arguments::Contestant;
+use opponent_ports::Contestant;
 
 pub struct LimitedContestant<'arguments> {
     contestant: &'arguments Contestant,

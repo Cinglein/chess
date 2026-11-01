@@ -10,9 +10,10 @@ use std::time::Instant;
 
 use crate::{Example, Progress, SelfPlay};
 use ::settings::EmbeddedDefaults;
-use arena::{RandomOpenings, Rules};
+use arena::RandomOpenings;
 use arguments::{Arguments, Config, Output};
 use clap::Parser;
+use game::Rules;
 
 pub struct CommandLine;
 

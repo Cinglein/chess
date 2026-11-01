@@ -1,5 +1,5 @@
-use arena::Verdict;
 use board::Color;
+use tally::Verdict;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WhiteResult(f32);

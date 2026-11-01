@@ -101,12 +101,14 @@ impl proptest::arbitrary::Arbitrary for SearchInfo {
     fn arbitrary_with((): ()) -> Self::Strategy {
         use core::num::NonZeroI32;
         use proptest::strategy::Strategy;
+        const WIDEST_CENTIPAWNS: i32 = 29_999;
+        const LONGEST_MATE_MOVES: i32 = 100;
         let score = proptest::prop_oneof![
-            (-29_999i32..=29_999).prop_map(Score::new),
-            (1i32..=100).prop_map(|moves| Score::mating_in_moves(
+            (-WIDEST_CENTIPAWNS..=WIDEST_CENTIPAWNS).prop_map(Score::new),
+            (1i32..=LONGEST_MATE_MOVES).prop_map(|moves| Score::mating_in_moves(
                 NonZeroI32::new(moves).unwrap_or(NonZeroI32::MIN)
             )),
-            (-100i32..=-1).prop_map(|moves| Score::mating_in_moves(
+            (-LONGEST_MATE_MOVES..=-1).prop_map(|moves| Score::mating_in_moves(
                 NonZeroI32::new(moves).unwrap_or(NonZeroI32::MIN)
             )),
         ];

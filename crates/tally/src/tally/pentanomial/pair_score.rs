@@ -1,0 +1,43 @@
+use enum_map::Enum;
+use strum::{EnumCount, VariantArray};
+
+use super::score_fraction::ScoreFraction;
+use crate::tally::game_score::GameScore;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, EnumCount, VariantArray)]
+#[repr(u8)]
+pub(in crate::tally) enum PairScore {
+    TwoLosses,
+    LossAndDraw,
+    Split,
+    WinAndDraw,
+    TwoWins,
+}
+
+impl PairScore {
+    pub(in crate::tally) const fn new(as_white: GameScore, as_black: GameScore) -> PairScore {
+        match (as_white, as_black) {
+            (GameScore::Loss, GameScore::Loss) => PairScore::TwoLosses,
+            (GameScore::Loss, GameScore::Draw) | (GameScore::Draw, GameScore::Loss) => {
+                PairScore::LossAndDraw
+            }
+            (GameScore::Win, GameScore::Loss)
+            | (GameScore::Loss, GameScore::Win)
+            | (GameScore::Draw, GameScore::Draw) => PairScore::Split,
+            (GameScore::Win, GameScore::Draw) | (GameScore::Draw, GameScore::Win) => {
+                PairScore::WinAndDraw
+            }
+            (GameScore::Win, GameScore::Win) => PairScore::TwoWins,
+        }
+    }
+
+    pub(super) const fn fraction(self) -> ScoreFraction {
+        match self {
+            PairScore::TwoLosses => ScoreFraction::NONE,
+            PairScore::LossAndDraw => ScoreFraction::QUARTER,
+            PairScore::Split => ScoreFraction::HALF,
+            PairScore::WinAndDraw => ScoreFraction::THREE_QUARTERS,
+            PairScore::TwoWins => ScoreFraction::ALL,
+        }
+    }
+}

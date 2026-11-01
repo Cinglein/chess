@@ -3,14 +3,15 @@ mod command_line_error;
 mod limited_contestant;
 mod settings;
 
+pub use self::settings::Settings;
 pub use command_line_error::CommandLineError;
 
-use crate::{Openings, Rules, Series};
+use crate::{Openings, Series};
 use ::settings::EmbeddedDefaults;
 use arguments::{Arguments, Challenger, Reference};
 use clap::Parser;
+use game::Rules;
 use limited_contestant::LimitedContestant;
-use settings::Settings;
 
 pub struct CommandLine;
 

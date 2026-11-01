@@ -13,16 +13,15 @@ clap = { version = "4", features = ["derive"] }
 enum-map = "3"
 rand = "0.10"
 eval = { version = "0.1.0", path = "../eval", features = ["serde"] }
+game = { version = "0.1.0", path = "../game" }
+opponent_ports = { version = "0.1.0", path = "../opponent_ports" }
 serde = { version = "1", features = ["derive"] }
-engine = { version = "0.1.0", path = "../engine" }
 derive_more = { version = "2", features = ["add", "display", "from_str", "sum"] }
 thiserror = "2"
 toml = "0.9"
+tally = { version = "0.1.0", path = "../tally" }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 uci = { version = "0.1.0", path = "../uci", features = ["serde"] }
-
-[dev-dependencies]
-search = { version = "0.1.0", path = "../search" }
 
 [lints]
 workspace = true
