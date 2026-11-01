@@ -4,12 +4,13 @@ use core::fmt;
 
 use identity_word::IdentityWord;
 
+use crate::line_text::LineText;
 use crate::response_error::ResponseError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Identity<'line> {
-    Name(&'line str),
-    Author(&'line str),
+    Name(LineText<'line>),
+    Author(LineText<'line>),
 }
 
 impl<'line> TryFrom<&'line str> for Identity<'line> {
@@ -24,8 +25,8 @@ impl<'line> TryFrom<&'line str> for Identity<'line> {
             .parse::<IdentityWord>()
             .map_err(|_| ResponseError::UnknownResponse)?
         {
-            IdentityWord::Name => Ok(Identity::Name(text.trim())),
-            IdentityWord::Author => Ok(Identity::Author(text.trim())),
+            IdentityWord::Name => Ok(Identity::Name(LineText::new(text.trim()))),
+            IdentityWord::Author => Ok(Identity::Author(LineText::new(text.trim()))),
         }
     }
 }

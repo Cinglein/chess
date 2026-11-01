@@ -1,4 +1,5 @@
 use enum_map::EnumMap;
+use newtype::Newtype;
 use strum::{EnumCount, VariantArray};
 
 use crate::bitboard::Bitboard;
@@ -6,14 +7,10 @@ use crate::bitboard::SetOperation;
 use crate::direction::Direction;
 use crate::square::Square;
 
+#[derive(Newtype)]
 pub struct Leaps(&'static [&'static [Direction]]);
 
 impl Leaps {
-    #[must_use]
-    pub const fn new(jumps: &'static [&'static [Direction]]) -> Leaps {
-        Leaps(jumps)
-    }
-
     #[must_use]
     pub const fn attacks_from(&self, origin: Bitboard) -> Bitboard {
         let mut attacks = Bitboard::EMPTY;

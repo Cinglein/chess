@@ -2,9 +2,9 @@ mod white_result;
 
 use std::io::Write;
 
-use arena::Label;
 use board::{Color, PieceKind};
 use bulletformat::{BulletFormat, ChessBoard};
+use game::Label;
 
 use crate::datagen_error::DatagenError;
 use crate::position_count::PositionCount;
@@ -56,44 +56,5 @@ impl TryFrom<Label> for Example {
         )
         .map(Example)
         .map_err(|_| DatagenError::Piece)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Example;
-    use arena::{Label, Verdict};
-    use board::{Board, Color};
-    use bulletformat::ChessBoard;
-    use eval::Score;
-    use proptest::prelude::*;
-    use std::str::FromStr;
-    struct Oracle;
-
-    impl Oracle {
-        fn parsed(label: &Label) -> ChessBoard {
-            let white_result = match label.verdict().winner() {
-                Some(Color::White) => "1.0",
-                Some(Color::Black) => "0.0",
-                None => "0.5",
-            };
-            let line = format!(
-                "{} | {} | {white_result}",
-                label.board(),
-                label.score_for(Color::White)
-            );
-            ChessBoard::from_str(&line).unwrap()
-        }
-    }
-
-    #[test]
-    fn an_example_agrees_with_bullets_own_reading_of_the_position_as_text_and_writes_one_record() {
-        proptest!(|(board: Board, score: Score, winner: Option<Color>)| {
-            let label = Label::new(board, score, winner.map_or(Verdict::Draw, Verdict::Win));
-            prop_assert_eq!(Example::try_from(label).unwrap().0, Oracle::parsed(&label));
-            let mut written = Vec::new();
-            let count = Example::write_labels([label].into_iter(), &mut written).unwrap();
-            prop_assert_eq!((count.count(), written.len()), (1, size_of::<ChessBoard>()));
-        });
     }
 }

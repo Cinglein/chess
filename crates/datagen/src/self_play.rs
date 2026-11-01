@@ -5,7 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 use crate::position_count::PositionCount;
-use arena::{Finished, Game, InProcessEngine, RandomOpenings, Rules, WorkerCount};
+use arena::{RandomOpenings, WorkerCount};
+use game::{Finished, Game, Rules};
+use opponent_ports::InProcessEngine;
 
 pub struct SelfPlay {
     openings: Mutex<RandomOpenings>,
@@ -58,41 +60,5 @@ impl SelfPlay {
                 .fetch_add(finished.labels().count(), Ordering::Relaxed);
             sender.send(finished)
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{PositionCount, SelfPlay};
-    use arena::{Finished, RandomOpenings, Rules, Seed, WorkerCount};
-    use board::{FullmoveNumber, NodeCount, PlyCount};
-    use std::num::NonZeroU16;
-    const SEED: Seed = Seed::new(3);
-    const PLIES: PlyCount = PlyCount::new(6);
-    const SHORT: Rules = Rules::at_fixed_nodes(NodeCount::new(64))
-        .lasting_at_most(FullmoveNumber::new(NonZeroU16::new(6).unwrap()));
-    const ONE: PositionCount = PositionCount::new(1);
-
-    impl SelfPlay {
-        fn games_until(target: PositionCount) -> Vec<Finished> {
-            SelfPlay::new(RandomOpenings::seeded(SEED, PLIES), SHORT, target)
-                .play(WorkerCount::new(1))
-                .into_iter()
-                .collect()
-        }
-    }
-
-    #[test]
-    fn self_play_stops_at_the_game_that_reaches_the_target_and_replays_the_same_games_from_a_seed()
-    {
-        let first = SelfPlay::games_until(ONE);
-        let labels = PositionCount::new(first.iter().map(|game| game.labels().count()).sum());
-        let exact = SelfPlay::games_until(labels);
-        let more = SelfPlay::games_until(labels + ONE);
-        assert_eq!((first.len(), exact.len(), more.len()), (1, 1, 2));
-        assert_eq!(
-            first.first().map(ToString::to_string),
-            exact.first().map(ToString::to_string)
-        );
     }
 }

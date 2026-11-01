@@ -1,18 +1,16 @@
 use derive_more::{Display, FromStr};
+use newtype::Newtype;
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, FromStr)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, FromStr, Newtype,
+)]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct PlyCount(u16);
 
 impl PlyCount {
     pub const ZERO: PlyCount = PlyCount(0);
-
-    #[must_use]
-    pub const fn new(plies: u16) -> PlyCount {
-        PlyCount(plies)
-    }
 
     #[must_use]
     pub const fn plies(self) -> u16 {
@@ -25,7 +23,7 @@ impl PlyCount {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for PlyCount {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<PlyCount>;

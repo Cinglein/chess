@@ -1,15 +1,29 @@
 use core::iter::Sum;
 use core::num::NonZeroI32;
 use core::ops::{Add, Neg};
+use newtype::Newtype;
 
 use derive_more::{Add, Display, FromStr, Sub};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display, FromStr,
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Add,
+    Sub,
+    Display,
+    FromStr,
+    Newtype,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct Score(i32);
 
 impl Score {
@@ -18,11 +32,6 @@ impl Score {
     const MATE: Score = Score(31_000);
     const PLIES_PER_MOVE: i32 = 2;
     pub const LONGEST_MATE: Score = Score(30_000);
-
-    #[must_use]
-    pub const fn new(centipawns: i32) -> Score {
-        Score(centipawns)
-    }
 
     #[must_use]
     pub const fn centipawns(self) -> i32 {
@@ -103,7 +112,7 @@ impl Sum for Score {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Score {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<Score>;
@@ -117,37 +126,3 @@ impl proptest::arbitrary::Arbitrary for Score {
 const _: () = assert!(
     Score::LONGEST_MATE.0 < Score::MATE.0 - u8::MAX as i32 && Score::MATE.0 < Score::INFINITY.0
 );
-
-#[cfg(test)]
-mod tests {
-    use super::Score;
-    use core::num::{NonZeroI8, NonZeroI32};
-    use proptest::prelude::*;
-    const PLIES: u8 = 3;
-    const TWO_MOVES: NonZeroI32 = NonZeroI32::new(2).unwrap();
-
-    #[test]
-    fn a_mate_distance_in_moves_survives_the_trip_through_a_score_and_a_quicker_mate_scores_higher()
-    {
-        proptest!(|(moves: NonZeroI8)| {
-            let moves = NonZeroI32::from(moves);
-            prop_assert_eq!(
-                (Score::mating_in_moves(moves).mate_in_moves(), (-Score::mating_in_moves(moves)).mate_in_moves()),
-                (Some(moves.get()), Some(-moves.get()))
-            );
-            if let Some(later) = NonZeroI32::new(moves.get() + 1) {
-                prop_assert!(Score::mating_in_moves(moves) > Score::mating_in_moves(later));
-            }
-        });
-        assert_eq!(Score::mating_in_moves(TWO_MOVES), Score::mate_in(PLIES));
-    }
-
-    #[test]
-    fn centipawns_never_read_as_a_mate_and_a_table_scores_each_entry() {
-        proptest!(|(score: Score, centipawns: [i32; 4])| {
-            prop_assert_eq!(score.mate_in_moves().is_none(), score > -Score::LONGEST_MATE && score < Score::LONGEST_MATE);
-            prop_assert_eq!(Score::new(score.centipawns()), score);
-            prop_assert!(Score::table(centipawns).iter().zip(centipawns).all(|(scored, raw)| *scored == Score::new(raw)));
-        });
-    }
-}

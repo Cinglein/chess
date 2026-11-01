@@ -12,14 +12,15 @@ use option_name::OptionName;
 use option_word::OptionWord;
 
 use crate::uci_error::UciError;
+use uci_response::LineText;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EngineOption<'line> {
     LimitStrength(Switch),
     Elo(Elo),
     Other {
-        name: &'line str,
-        setting: &'line str,
+        name: LineText<'line>,
+        setting: LineText<'line>,
     },
 }
 
@@ -43,8 +44,8 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
                 .map(EngineOption::Elo)
                 .map_err(|_| UciError::EngineOption),
             Err(_) => Ok(EngineOption::Other {
-                name: name.trim(),
-                setting,
+                name: LineText::new(name.trim()),
+                setting: LineText::new(setting),
             }),
         }
     }
@@ -69,26 +70,5 @@ impl fmt::Display for EngineOption<'_> {
                 write!(formatter, "{name} {} {setting}", OptionWord::Value)
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Elo, EngineOption, Switch};
-    use proptest::prelude::*;
-    const OTHER: EngineOption<'static> = EngineOption::Other {
-        name: "Hash",
-        setting: "16",
-    };
-
-    #[test]
-    fn typed_and_foreign_options_print_back_to_themselves() {
-        proptest!(|(rating: u16, limited: bool)| {
-            let switch = if limited { Switch::True } else { Switch::False };
-            for option in [EngineOption::Elo(Elo::new(rating)), EngineOption::LimitStrength(switch), OTHER] {
-                let line = option.to_string();
-                prop_assert_eq!(EngineOption::try_from(line.as_str()), Ok(option));
-            }
-        });
     }
 }

@@ -13,4 +13,5 @@ thiserror = { version = "2", default-features = false }
 workspace = true
 
 [dev-dependencies]
+laws.workspace = true
 proptest = "1"

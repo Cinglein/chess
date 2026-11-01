@@ -1,0 +1,114 @@
+mod draw_adjudication;
+mod resign_adjudication;
+mod thinking;
+mod time_control;
+
+pub use draw_adjudication::DrawAdjudication;
+pub use resign_adjudication::ResignAdjudication;
+pub use thinking::Thinking;
+pub use time_control::TimeControl;
+
+use std::num::NonZeroU16;
+use std::time::Duration;
+
+use board::{FullmoveNumber, NodeCount, PlyCount};
+use eval::Score;
+use uci::Clock;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Rules {
+    clock: Clock,
+    thinking: Thinking,
+    longest_game: FullmoveNumber,
+    draw: DrawAdjudication,
+    resign: ResignAdjudication,
+}
+
+impl Rules {
+    pub const DEFAULT: Rules = Rules {
+        thinking: Thinking::Timed,
+        clock: Clock::new(
+            Duration::from_secs(10),
+            Duration::from_secs(10),
+            Duration::from_millis(100),
+            Duration::from_millis(100),
+        ),
+        longest_game: FullmoveNumber::new(NonZeroU16::new(500).unwrap()),
+        draw: DrawAdjudication::new(
+            FullmoveNumber::new(NonZeroU16::new(40).unwrap()),
+            Score::new(10),
+            PlyCount::new(8),
+        ),
+        resign: ResignAdjudication::new(Score::new(800), PlyCount::new(6)),
+    };
+
+    #[must_use]
+    pub fn new(
+        time_control: TimeControl,
+        longest_game: FullmoveNumber,
+        draw: DrawAdjudication,
+        resign: ResignAdjudication,
+    ) -> Rules {
+        Rules {
+            clock: Clock::from(time_control),
+            thinking: Thinking::Timed,
+            longest_game,
+            draw,
+            resign,
+        }
+    }
+
+    #[must_use]
+    pub const fn at_fixed_nodes(nodes_per_move: NodeCount) -> Rules {
+        Rules {
+            thinking: Thinking::FixedNodes(nodes_per_move),
+            ..Rules::DEFAULT
+        }
+    }
+
+    #[must_use]
+    pub const fn timed(self, clock: Clock) -> Rules {
+        Rules { clock, ..self }
+    }
+
+    #[must_use]
+    pub const fn lasting_at_most(self, longest_game: FullmoveNumber) -> Rules {
+        Rules {
+            longest_game,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub const fn adjudicated_by(self, draw: DrawAdjudication, resign: ResignAdjudication) -> Rules {
+        Rules {
+            draw,
+            resign,
+            ..self
+        }
+    }
+
+    pub(crate) const fn thinking(&self) -> Thinking {
+        self.thinking
+    }
+
+    #[must_use]
+    pub const fn clock(&self) -> Clock {
+        self.clock
+    }
+
+    #[must_use]
+    pub const fn longest_game(&self) -> FullmoveNumber {
+        self.longest_game
+    }
+
+    #[must_use]
+    pub const fn draw(&self) -> DrawAdjudication {
+        self.draw
+    }
+
+    #[must_use]
+    pub const fn resign(&self) -> ResignAdjudication {
+        self.resign
+    }
+}

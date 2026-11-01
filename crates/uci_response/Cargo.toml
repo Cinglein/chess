@@ -8,7 +8,9 @@ repository.workspace = true
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
+derive_more = { version = "2", default-features = false, features = ["display"] }
 eval = { version = "0.1.0", path = "../eval" }
+newtype.workspace = true
 proptest = { version = "1", optional = true }
 search = { version = "0.1.0", path = "../search" }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
@@ -21,6 +23,7 @@ proptest = ["dep:proptest", "board/proptest", "eval/proptest", "search/proptest"
 workspace = true
 
 [dev-dependencies]
+uci_response = { version = "0.1.0", path = ".", features = ["proptest"] }
 board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 eval = { version = "0.1.0", path = "../eval", features = ["proptest"] }
 proptest = "1"

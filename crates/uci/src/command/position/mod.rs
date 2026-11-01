@@ -9,6 +9,7 @@ use board::{Board, LongAlgebraic};
 use position_word::PositionWord;
 
 use crate::uci_error::UciError;
+use uci_response::LineText;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Position<'moves> {
@@ -52,7 +53,7 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
         }?;
         Ok(Position {
             start,
-            moves: Moves::Written(moves),
+            moves: Moves::Written(LineText::new(moves)),
         })
     }
 }
@@ -69,21 +70,5 @@ impl fmt::Display for Position<'_> {
             None => Ok(()),
             Some(_) => write!(formatter, " {} {}", PositionWord::Moves, self.moves),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Position;
-    use board::{Board, LongAlgebraic};
-    use proptest::prelude::*;
-    #[test]
-    fn a_played_position_prints_as_a_line_that_parses_to_the_same_start_and_moves() {
-        proptest!(|(board: Board, played in proptest::collection::vec(any::<LongAlgebraic>(), 0..8))| {
-            let line = Position::played(board, &played).to_string();
-            let parsed = Position::try_from(line.as_str()).unwrap();
-            prop_assert_eq!(parsed.start(), board);
-            prop_assert_eq!(parsed.moves().iter().collect::<Result<Vec<_>, _>>().unwrap(), played);
-        });
     }
 }

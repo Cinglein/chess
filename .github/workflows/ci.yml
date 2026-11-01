@@ -14,7 +14,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+  LINT_TAG: v0.1.4
+  MUTANT_SHARDS: 4
 
 jobs:
   ci:
@@ -23,62 +24,48 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: git remote set-head origin --auto
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask ci $SCOPE
-        env:
-          PULL_REQUEST: ${{ github.event.pull_request.number }}
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: lint-runner
+      - run: cargo +1.99.0 install --locked --git https://github.com/Studio-Terza/meta-dev --tag "$LINT_TAG" lint
+      - run: lint .
 
   wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: clippy
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask wasm $SCOPE
-
-  mutants-plan:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    outputs:
-      shards: ${{ steps.plan.outputs.shards }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-mutants
-      - id: plan
-        run: echo "shards=$(cargo xtask mutants-diff-plan)" >> "$GITHUB_OUTPUT"
+      - run: cargo wasm-clippy
 
   mutants:
-    needs: mutants-plan
-    if: github.event_name == 'pull_request' && needs.mutants-plan.outputs.shards != '[]'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.mutants-plan.outputs.shards) }}
-    env:
-      MUTANTS_SHARD: ${{ matrix.shard }}
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
@@ -86,16 +73,20 @@ jobs:
           shared-key: mutants
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-mutants
-      - run: cargo xtask mutants
+          tool: cargo-mutants@27.1.0
+      - run: git diff --output=changed.diff HEAD^1 HEAD -- '*.rs'
+      - name: mutants in changed lines
         env:
+          ACCEPT: "3"
           CARGO_INCREMENTAL: 1
+          SHARD: ${{ matrix.shard }}/${{ env.MUTANT_SHARDS }}
+        run: cargo ci-accept cargo mutants --in-diff changed.diff --shard "$SHARD"
 
   ci-gate:
-    needs: [ci, wasm, mutants-plan, mutants]
+    needs: [ci, lint, wasm, mutants]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"' && exit 1
-          echo "every job passed or was not needed"
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "every job passed or was not needed"

@@ -1,23 +1,24 @@
 exclude_globs = [
-    "xtask/**",
     "crates/*/src/main.rs",
+    "tooling/*/src/main.rs",
+    "tooling/accept_ports/**",
+    "tooling/report_ports/**",
     "crates/*/src/command_line/**",
     "crates/chess/**",
     "crates/tui/**",
-    "crates/board/src/slider/magics.rs",
+    "crates/board/src/slider/bits/magics.rs",
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
 exclude_re = [
     "arbitrary_with",
     "<impl Drop for UciProcess>::drop",
     "Network::trainer",
-    "Magics::run",
     "MagicTables::write",
     "MagicTables::find_all",
     "MagicSearch::spreads_well",
     "<impl Iterator for XorShift>::next",
     "XorShift::sparse",
 ]
-additional_cargo_args = ["--lib"]
 minimum_test_timeout = 10.0
+test_workspace = true
 cap_lints = false

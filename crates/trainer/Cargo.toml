@@ -9,13 +9,12 @@ repository.workspace = true
 [dependencies]
 settings = { package = "chess_settings", version = "0.1.0", path = "../settings" }
 bulletformat = "1.8.0"
-clap = { version = "4", features = ["derive"] }
-derive_more = { version = "2", features = ["display", "from_str"] }
-eval = { version = "0.1.0", path = "../eval" }
+derive_more = { version = "2", features = ["display", "from_str", "into"] }
 rand = "0.10"
 serde = { version = "1", features = ["derive"] }
-strum = { version = "0.28", default-features = false, features = ["derive"] }
 thiserror = "2"
+trainer_network = { version = "0.1.0", path = "../trainer_network" }
+trainer_schedule = { version = "0.1.0", path = "../trainer_schedule" }
 toml = "0.9"
 
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -26,3 +25,6 @@ bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf9
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -79,7 +79,7 @@ impl fmt::Display for GoLimits {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for GoLimits {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<GoLimits>;
@@ -95,19 +95,5 @@ impl proptest::arbitrary::Arbitrary for GoLimits {
             proptest::arbitrary::any::<Clock>().prop_map(GoLimits::Clock),
         ]
         .boxed()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::GoLimits;
-    use proptest::prelude::*;
-    #[test]
-    fn limits_print_back_to_themselves_and_expose_exactly_their_own_kind() {
-        proptest!(|(limits: GoLimits)| {
-            prop_assert_eq!(GoLimits::from(limits.to_string().as_str()), limits);
-            let exposed = [limits.depth().is_some(), limits.nodes().is_some(), limits.move_time().is_some(), limits.clock().is_some()];
-            prop_assert_eq!(exposed.iter().filter(|kind| **kind).count(), usize::from(limits != GoLimits::Infinite));
-        });
     }
 }

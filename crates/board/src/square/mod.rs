@@ -1,17 +1,15 @@
+mod bits;
 mod extent;
 
 pub use extent::{Between, Extent, Through};
 
 use core::fmt;
-use core::ops::Add;
 use core::str::FromStr;
 
 use enum_map::Enum;
 use strum::{EnumCount, EnumIter, FromRepr, ParseError, VariantArray};
 
-use crate::axis::Axis;
 use crate::bitboard::Bitboard;
-use crate::direction::Direction;
 use crate::file::File;
 use crate::rank::Rank;
 use crate::slider::Slider;
@@ -45,6 +43,8 @@ pub enum Square {
 }
 
 impl Square {
+    const MIRROR_INDEX_MASK: usize = 0b11_1000;
+
     #[must_use]
     pub const fn new(file: File, rank: Rank) -> Square {
         Self::VARIANTS[rank as usize * File::COUNT + file as usize]
@@ -62,7 +62,7 @@ impl Square {
 
     #[must_use]
     pub const fn mirrored(self) -> Square {
-        Self::VARIANTS[self as usize ^ 0b11_1000]
+        Self::VARIANTS[self as usize ^ Self::MIRROR_INDEX_MASK]
     }
 
     #[must_use]
@@ -73,20 +73,6 @@ impl Square {
     pub(super) fn sight<S: Slider>(self, other: Square) -> Option<Bitboard> {
         let open = S::attacks(self, Bitboard::EMPTY);
         open.contains(other).then_some(open)
-    }
-}
-
-impl<D: Into<Direction>> Add<D> for Square {
-    type Output = Option<Square>;
-
-    fn add(self, direction: D) -> Option<Square> {
-        let direction = direction.into();
-        let file_index = (self.file() as u8).checked_add_signed(direction.step(Axis::File))?;
-        let rank_index = (self.rank() as u8).checked_add_signed(direction.step(Axis::Rank))?;
-        Some(Square::new(
-            File::from_repr(file_index)?,
-            Rank::from_repr(rank_index)?,
-        ))
     }
 }
 
@@ -116,37 +102,12 @@ impl FromStr for Square {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Square {
     type Parameters = ();
     type Strategy = proptest::sample::Select<Square>;
 
     fn arbitrary_with((): ()) -> Self::Strategy {
         proptest::sample::select(<Square as strum::VariantArray>::VARIANTS)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Square;
-    use super::{Between, Through};
-    use crate::bitboard::SetOperation;
-    use proptest::prelude::*;
-    const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
-
-    #[test]
-    fn aligned_squares_lie_on_their_line_and_between_lies_inside_it() {
-        proptest!(|(origin: Square, other: Square)| {
-            let line = origin.line::<Through>(other);
-            prop_assert!(line.is_empty() || (line.contains(origin) && line.contains(other)));
-            prop_assert!(origin.line::<Between>(other).combined(line, SetOperation::Difference).is_empty() && line == other.line::<Through>(origin));
-        });
-    }
-
-    #[test]
-    fn malformed_square_text_is_rejected() {
-        for text in UNPARSEABLE {
-            assert!(text.parse::<Square>().is_err(), "{text}");
-        }
     }
 }

@@ -10,6 +10,7 @@ repository.workspace = true
 board = { version = "0.1.0", path = "../board" }
 derive_more = { version = "2", default-features = false, features = ["display", "from_str"] }
 eval = { version = "0.1.0", path = "../eval" }
+newtype.workspace = true
 proptest = { version = "1", optional = true }
 
 [features]
@@ -19,6 +20,7 @@ proptest = ["dep:proptest"]
 workspace = true
 
 [dev-dependencies]
+search = { version = "0.1.0", path = ".", features = ["proptest"] }
 board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 eval = { version = "0.1.0", path = "../eval", features = ["proptest"] }
 proptest = "1"

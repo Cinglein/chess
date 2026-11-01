@@ -1,19 +1,6 @@
-use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use derive_more::{Display, From, Into};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, From, Into, Deserialize)]
 #[serde(transparent)]
 pub struct RoundCount(usize);
-
-impl RoundCount {
-    #[cfg(test)]
-    #[must_use]
-    pub const fn new(rounds: usize) -> RoundCount {
-        RoundCount(rounds)
-    }
-
-    #[must_use]
-    pub const fn count(self) -> usize {
-        self.0
-    }
-}

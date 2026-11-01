@@ -9,9 +9,8 @@ pub struct DoublePush {
     destination: Square,
 }
 
-impl DoublePush {
-    #[must_use]
-    pub const fn new(origin: Square, destination: Square) -> DoublePush {
+impl From<(Square, Square)> for DoublePush {
+    fn from((origin, destination): (Square, Square)) -> DoublePush {
         DoublePush {
             origin,
             destination,

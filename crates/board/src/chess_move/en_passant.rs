@@ -9,9 +9,8 @@ pub struct EnPassant {
     destination: Square,
 }
 
-impl EnPassant {
-    #[must_use]
-    pub const fn new(origin: Square, destination: Square) -> EnPassant {
+impl From<(Square, Square)> for EnPassant {
+    fn from((origin, destination): (Square, Square)) -> EnPassant {
         EnPassant {
             origin,
             destination,

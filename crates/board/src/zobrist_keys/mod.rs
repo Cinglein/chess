@@ -1,4 +1,4 @@
-mod split_mix;
+mod bits;
 
 use enum_map::EnumMap;
 use strum::{EnumCount, VariantArray};
@@ -12,7 +12,7 @@ use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
 use crate::square::Square;
 use crate::zobrist::Zobrist;
-pub(crate) use split_mix::SplitMix64;
+pub use bits::SplitMix64;
 
 type SquareKeys = [Zobrist; Square::COUNT];
 
@@ -119,41 +119,5 @@ impl ZobristKeys {
             keys = rest;
         }
         generator
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ZobristKeys;
-    use crate::castling_right::CastlingRight;
-    use crate::color::Color;
-    use crate::file::File;
-    use crate::piece::Piece;
-    use crate::piece_kind::PieceKind;
-    use crate::square::Square;
-    use crate::zobrist::Zobrist;
-    use std::collections::HashSet;
-    use strum::{IntoEnumIterator, VariantArray};
-    #[test]
-    fn every_key_is_distinct_and_nonzero() {
-        let keys = &ZobristKeys::KEYS;
-        let pieces = Color::iter().flat_map(|color| {
-            PieceKind::iter().flat_map(move |kind| {
-                Square::iter().map(move |square| keys.piece(Piece::new(color, kind), square))
-            })
-        });
-        let rights = CastlingRight::VARIANTS
-            .iter()
-            .map(|right| keys.castling(right.to_string().parse().unwrap()));
-        let files = File::iter().map(|file| keys.en_passant(Some(file)));
-        let all: Vec<u64> = pieces
-            .chain(rights)
-            .chain(files)
-            .chain([keys.side_to_move(Color::Black)])
-            .map(Zobrist::bits)
-            .collect();
-        let distinct: HashSet<u64> = all.iter().copied().collect();
-        assert_eq!(distinct.len(), all.len());
-        assert!(!distinct.contains(&0));
     }
 }
