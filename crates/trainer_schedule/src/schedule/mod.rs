@@ -13,7 +13,6 @@ use decay::Decay;
 use eval::NetworkFormat;
 use learning_rate::LearningRate;
 pub use net_id::NetId;
-use newtype::Newtype;
 use serde::Deserialize;
 use superbatch_count::SuperbatchCount;
 use wdl_weight::WdlWeight;
@@ -35,7 +34,7 @@ impl Schedule {
     #[must_use]
     pub fn training_schedule(&self, net_id: &NetId) -> TrainingSchedule<StepLR, ConstantWDL> {
         TrainingSchedule {
-            net_id: net_id.clone().into_inner(),
+            net_id: net_id.clone().into(),
             eval_scale: NetworkFormat::EVAL_SCALE.per_unit(),
             steps: self
                 .batches_per_superbatch

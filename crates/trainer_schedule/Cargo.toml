@@ -8,10 +8,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-derive_more = { version = "2", features = ["display"] }
+derive_more = { version = "2", features = ["display", "into"] }
 eval = { version = "0.1.0", path = "../eval" }
 newtype.workspace = true
 serde = { version = "1", features = ["derive"] }
+thiserror = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 bullet_lib = { git = "https://github.com/jw1912/bullet", rev = "c004ebf04025edf91c6ccac47e72d561062a46b5", features = ["metal"] }
