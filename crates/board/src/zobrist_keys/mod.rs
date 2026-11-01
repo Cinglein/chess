@@ -12,7 +12,7 @@ use crate::piece::Piece;
 use crate::piece_kind::PieceKind;
 use crate::square::Square;
 use crate::zobrist::Zobrist;
-pub(crate) use bits::SplitMix64;
+pub use bits::SplitMix64;
 
 type SquareKeys = [Zobrist; Square::COUNT];
 
