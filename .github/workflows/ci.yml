@@ -14,7 +14,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
   LINT_REVISION: 0c69ba4e8022b7d4eb1af9d92be8179c243c3058
   MUTANT_SHARDS: 4
 
@@ -25,9 +24,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: git remote set-head origin --auto
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: rustfmt, clippy
@@ -46,20 +42,17 @@ jobs:
           shared-key: lint-runner
       - run: cargo +1.99.0 install --locked --git https://github.com/Studio-Terza/meta-dev --rev "$LINT_REVISION" lint
       - run: lint .
-        continue-on-error: ${{ github.base_ref != 'main' }}
 
   wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: clippy
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo xtask wasm $SCOPE
+      - run: cargo clippy --target wasm32-unknown-unknown -p board -p eval -p fen -p go_limits -p search -p uci -p uci_response -- -D warnings
 
   mutants:
     if: github.event_name == 'pull_request'

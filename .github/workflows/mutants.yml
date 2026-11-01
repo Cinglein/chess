@@ -14,39 +14,18 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
+  MUTANT_SHARDS: 12
 
 jobs:
-  plan:
-    runs-on: ubuntu-latest
-    outputs:
-      shards: ${{ steps.plan.outputs.shards }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@1.98.0
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-mutants
-      - id: plan
-        run: echo "shards=$(cargo xtask mutants-plan)" >> "$GITHUB_OUTPUT"
-
   full:
-    needs: plan
-    if: needs.plan.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
-    env:
-      MUTANTS_SHARD: ${{ matrix.shard }}
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
@@ -55,10 +34,15 @@ jobs:
           cache-on-failure: true
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-mutants
-      - run: cargo xtask mutants-full
+          tool: cargo-mutants@27.1.0
+      - name: mutants in shard
         env:
           CARGO_INCREMENTAL: 1
+          SHARD: ${{ matrix.shard }}/${{ env.MUTANT_SHARDS }}
+        run: |
+          status=0
+          cargo mutants --shard "$SHARD" --sharding round-robin --output target/mutants --colors never || status=$?
+          if [ "$status" -ne 0 ] && [ "$status" -ne 3 ]; then exit "$status"; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -66,7 +50,7 @@ jobs:
           path: target/mutants
 
   mutants-gate:
-    needs: [plan, full]
+    needs: [full]
     if: always()
     runs-on: ubuntu-latest
     permissions:

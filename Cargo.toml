@@ -3,7 +3,6 @@ resolver = "3"
 members = [
     "crates/*",
     "tooling/magics",
-    "xtask",
 ]
 
 [workspace.package]
@@ -24,9 +23,6 @@ opt-level = 2
 debug = "line-tables-only"
 
 [profile.test.package.magics]
-opt-level = 0
-
-[profile.test.package.xtask]
 opt-level = 0
 
 [profile.release]
