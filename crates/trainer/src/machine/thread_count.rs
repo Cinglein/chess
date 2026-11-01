@@ -2,9 +2,9 @@ use std::num::NonZeroUsize;
 use std::thread;
 
 use derive_more::{Display, Into};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Into, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Into, Deserialize)]
 #[serde(transparent)]
 pub struct ThreadCount(usize);
 

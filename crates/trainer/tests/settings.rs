@@ -1,8 +1,10 @@
 use settings::EmbeddedDefaults;
 use trainer::Settings;
+use trainer_schedule::NetId;
 #[test]
-fn default_settings_survive_a_trip_through_toml() {
-    let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
-    let read: Settings = toml::from_str(&written).unwrap();
-    assert_eq!(read, Settings::defaults());
+fn the_embedded_defaults_parse_and_name_the_net() {
+    assert_eq!(
+        Settings::defaults().net_id(),
+        &NetId::new("chess".to_owned())
+    );
 }

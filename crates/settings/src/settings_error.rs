@@ -10,6 +10,4 @@ pub enum SettingsError {
     Write(io::Error),
     #[error("the settings file is malformed: {0}")]
     Format(#[from] toml::de::Error),
-    #[error("the default settings could not be written out: {0}")]
-    Serialize(#[from] toml::ser::Error),
 }

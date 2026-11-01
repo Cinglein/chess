@@ -77,6 +77,14 @@ impl Fixture {
     }
 }
 
+laws::roundtrip!(
+    any_board_prints_and_parses_back_to_itself,
+    any::<Board>(),
+    ToString::to_string,
+    |text: &String| text.parse::<Board>(),
+    Ok
+);
+
 #[test]
 fn positions_roundtrip_through_fen_and_malformed_fields_are_named() {
     assert_eq!(START.parse::<Board>(), Ok(Board::START));

@@ -2,11 +2,9 @@ use std::num::NonZeroUsize;
 use std::thread;
 
 use derive_more::{Display, From};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, From, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, From, Deserialize)]
 #[serde(transparent)]
 pub struct WorkerCount(usize);
 

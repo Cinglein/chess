@@ -1,11 +1,11 @@
 use crate::{RoundCount, WorkerCount};
 use board::FullmoveNumber;
 use game::{DrawAdjudication, ResignAdjudication, TimeControl};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use settings::EmbeddedDefaults;
 use uci::Elo;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     #[serde(default = "WorkerCount::one_per_core")]

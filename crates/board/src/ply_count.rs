@@ -1,12 +1,12 @@
 use derive_more::{Display, FromStr};
 use newtype::Newtype;
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(
     Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, FromStr, Newtype,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct PlyCount(u16);
 
 impl PlyCount {

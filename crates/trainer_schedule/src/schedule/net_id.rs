@@ -1,6 +1,6 @@
 use newtype::Newtype;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Newtype)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Newtype)]
 #[serde(transparent)]
 pub struct NetId(String);

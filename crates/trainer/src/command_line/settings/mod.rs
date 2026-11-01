@@ -1,9 +1,9 @@
 use crate::Machine;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use settings::EmbeddedDefaults;
 use trainer_schedule::{NetId, Schedule};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     net_id: NetId,

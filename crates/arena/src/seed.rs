@@ -1,11 +1,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use derive_more::{Display, From, FromStr, Into};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Display, From, FromStr, Into, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, From, FromStr, Into, Deserialize)]
 #[serde(transparent)]
 pub struct Seed(u64);
 
