@@ -1,11 +1,9 @@
-mod layer;
-
+use crate::layer::{Biases, Layer, Weights};
 use bullet_lib::game::inputs::Chess768;
 use bullet_lib::nn::optimiser::{AdamW, AdamWOptimiser};
 use bullet_lib::trainer::save::SavedFormat;
 use bullet_lib::value::{NoOutputBuckets, ValueTrainer, ValueTrainerBuilder};
 use eval::NetworkFormat;
-use layer::{Biases, Layer, Weights};
 
 pub struct Network;
 

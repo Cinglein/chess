@@ -1758,11 +1758,31 @@ dependencies = [
  "chess_settings",
  "clap",
  "derive_more",
- "eval",
  "rand 0.10.3",
  "serde",
- "strum",
  "thiserror",
+ "toml 0.9.12+spec-1.1.0",
+ "trainer_network",
+ "trainer_schedule",
+]
+
+[[package]]
+name = "trainer_network"
+version = "0.1.0"
+dependencies = [
+ "bullet_lib",
+ "eval",
+ "strum",
+]
+
+[[package]]
+name = "trainer_schedule"
+version = "0.1.0"
+dependencies = [
+ "bullet_lib",
+ "derive_more",
+ "eval",
+ "serde",
  "toml 0.9.12+spec-1.1.0",
 ]
 
