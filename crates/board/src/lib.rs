@@ -40,3 +40,4 @@ pub use slider::{Bishop, Magic, Rook, Slider};
 pub use square::Square;
 pub use state::State;
 pub use zobrist::Zobrist;
+pub use zobrist_keys::SplitMix64;
