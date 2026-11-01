@@ -1,6 +1,7 @@
 use board::LongAlgebraic;
 use eval::Score;
 use proptest::prelude::*;
+use search::SearchReport;
 use uci_response::{Response, SearchInfo};
 const STOCKFISH_INFO: &str =
     "info depth 1 seldepth 0 multipv 1 score cp 0 nodes 0 nps 0 hashfull 0 tbhits 0 time 1 pv ";

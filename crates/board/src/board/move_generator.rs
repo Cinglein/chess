@@ -8,7 +8,9 @@ use crate::bitboard::Bitboard;
 use crate::bitboard::SetOperation;
 use crate::castling_right::CastlingRight;
 use crate::castling_squares::CastlingSquares;
-use crate::chess_move::{Castling, ChessMove, DoublePush, EnPassant, MoveKind, Normal, Promotion};
+use crate::chess_move::{
+    Castling, ChessMove, DoublePush, EnPassant, MoveKind, Normal, Promotion, Step,
+};
 use crate::end::Destination;
 use crate::end::Origin;
 use crate::leaper::{King, Knight, Leaper, Pawn};
@@ -75,7 +77,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
             .board
             .en_passant_square()
             .filter(|target| P::attacks(from).contains(*target))
-            .map(|target| ChessMove::EnPassant(EnPassant::new(from, target)))
+            .map(|target| ChessMove::EnPassant(EnPassant::between(from, target)))
             .filter(|chess_move| {
                 chess_move
                     .play(*self.board.placement())
@@ -88,14 +90,14 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
         self.moves.extend(
             (destinations & !promoting)
                 .into_iter()
-                .map(|to| ChessMove::Normal(Normal::new(from, to))),
+                .map(|to| ChessMove::Normal(Normal::between(from, to))),
         );
         self.moves.extend(promoting.into_iter().flat_map(|to| {
             PromotionPiece::iter()
                 .map(move |piece| ChessMove::Promotion(Promotion::new(from, to, piece)))
         }));
         self.moves
-            .extend(double.map(|to| ChessMove::DoublePush(DoublePush::new(from, to))));
+            .extend(double.map(|to| ChessMove::DoublePush(DoublePush::between(from, to))));
         self.moves.extend(en_passant);
     }
 
@@ -104,7 +106,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
         self.moves.extend(pieces.into_iter().flat_map(|from| {
             (attacks(from) & safety.allowed(from))
                 .into_iter()
-                .map(move |to| ChessMove::Normal(Normal::new(from, to)))
+                .map(move |to| ChessMove::Normal(Normal::between(from, to)))
         }));
     }
 
@@ -123,7 +125,7 @@ impl<'board, P: Pawn> MoveGenerator<'board, P> {
                         .attackers(*to, !P::COLOR, without_king)
                         .is_empty()
                 })
-                .map(|to| ChessMove::Normal(Normal::new(king, to))),
+                .map(|to| ChessMove::Normal(Normal::between(king, to))),
         );
         self.moves.extend(
             CastlingRight::VARIANTS

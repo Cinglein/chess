@@ -2,6 +2,7 @@ mod game_count;
 mod game_score;
 mod pentanomial;
 
+use board::Incremented;
 use std::fmt;
 
 use board::Color;
@@ -45,7 +46,7 @@ impl Tally {
         self.wins + self.draws + self.losses
     }
 
-    const fn counted(self, score: GameScore) -> Tally {
+    fn counted(self, score: GameScore) -> Tally {
         match score {
             GameScore::Win => Tally {
                 wins: self.wins.incremented(),

@@ -17,7 +17,7 @@ impl Machine {
     #[must_use]
     pub fn local_settings(&self) -> LocalSettings<'_> {
         LocalSettings {
-            threads: self.threads.count(),
+            threads: usize::from(self.threads),
             test_set: None,
             output_directory: &self.output_directory,
             batch_queue_size: self.batch_queue_size,

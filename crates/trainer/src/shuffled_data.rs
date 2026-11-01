@@ -22,7 +22,7 @@ impl ShuffledData {
         let bytes = fs::read(input).map_err(TrainerError::Read)?;
         let (records, remainder) = bytes.as_chunks::<{ Self::RECORD_BYTES }>();
         let mut order: Vec<usize> = (0..records.len()).collect();
-        order.shuffle(&mut StdRng::seed_from_u64(seed.bits()));
+        order.shuffle(&mut StdRng::seed_from_u64(u64::from(seed)));
         let path = input.with_extension(Self::EXTENSION);
         if remainder.is_empty() {
             let mut output = BufWriter::new(File::create(&path).map_err(TrainerError::Write)?);

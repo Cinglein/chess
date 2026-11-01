@@ -13,7 +13,7 @@ impl RandomOpenings {
     #[must_use]
     pub fn seeded(seed: Seed, plies: PlyCount) -> RandomOpenings {
         RandomOpenings {
-            generator: StdRng::seed_from_u64(seed.bits()),
+            generator: StdRng::seed_from_u64(u64::from(seed)),
             plies,
         }
     }

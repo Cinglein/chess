@@ -1,3 +1,4 @@
+use crate::incremented::Incremented;
 use derive_more::{Display, FromStr};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -18,11 +19,6 @@ impl PlyCount {
     pub const fn plies(self) -> u16 {
         self.0
     }
-
-    #[must_use]
-    pub const fn incremented(self) -> PlyCount {
-        PlyCount(self.0.saturating_add(1))
-    }
 }
 
 #[cfg(feature = "proptest")]
@@ -35,5 +31,11 @@ impl proptest::arbitrary::Arbitrary for PlyCount {
         proptest::arbitrary::any::<u16>()
             .prop_map(PlyCount::new)
             .boxed()
+    }
+}
+
+impl Incremented for PlyCount {
+    fn incremented(self) -> PlyCount {
+        PlyCount(self.0.saturating_add(1))
     }
 }

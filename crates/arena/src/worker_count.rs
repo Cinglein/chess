@@ -1,19 +1,16 @@
 use std::num::NonZeroUsize;
 use std::thread;
 
-use derive_more::Display;
+use derive_more::{Display, From};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, From, Serialize, Deserialize,
+)]
 #[serde(transparent)]
 pub struct WorkerCount(usize);
 
 impl WorkerCount {
-    #[must_use]
-    pub const fn new(workers: usize) -> WorkerCount {
-        WorkerCount(workers)
-    }
-
     #[must_use]
     pub fn one_per_core() -> WorkerCount {
         WorkerCount(

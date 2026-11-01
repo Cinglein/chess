@@ -22,6 +22,8 @@ impl Openings {
 
     #[must_use]
     pub fn repeated(rounds: RoundCount) -> Vec<Board> {
-        (0..rounds.count()).flat_map(|_| Self::boards()).collect()
+        (0..usize::from(rounds))
+            .flat_map(|_| Self::boards())
+            .collect()
     }
 }

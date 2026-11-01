@@ -1,3 +1,4 @@
+use search::SearchReport;
 mod line_reader;
 
 use std::io::Write;

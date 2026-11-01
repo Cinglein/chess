@@ -1,3 +1,4 @@
+use crate::incremented::Incremented;
 use derive_more::{Display, FromStr};
 
 use crate::state::State;
@@ -14,9 +15,10 @@ impl HalfmoveClock {
     pub const fn new(plies: u8) -> Self {
         HalfmoveClock(plies)
     }
+}
 
-    #[must_use]
-    pub const fn incremented(self) -> Self {
+impl Incremented for HalfmoveClock {
+    fn incremented(self) -> HalfmoveClock {
         HalfmoveClock(self.0.saturating_add(1))
     }
 }

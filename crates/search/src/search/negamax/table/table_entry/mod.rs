@@ -5,8 +5,8 @@ use eval::Score;
 
 use super::super::super::depth::Depth;
 use super::super::window::Window;
+use super::Conclusion;
 use super::bound_kind::BoundKind;
-use super::conclusion::Conclusion;
 use super::root_distance::RootDistance;
 use stored_score::StoredScore;
 
@@ -37,9 +37,9 @@ impl TableEntry {
         TableEntry {
             hash,
             depth,
-            best_move: conclusion.best_move(),
-            score: StoredScore::new(conclusion.score(), distance),
-            kind: conclusion.kind(),
+            best_move: conclusion.best_move,
+            score: StoredScore::new(conclusion.score, distance),
+            kind: conclusion.kind,
         }
     }
 

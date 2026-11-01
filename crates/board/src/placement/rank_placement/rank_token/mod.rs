@@ -40,7 +40,7 @@ impl TryFrom<char> for RankToken {
         match u8::try_from(letter)
             .ok()
             .filter(|_| letter.is_ascii_digit())
-            .map(|digit| EmptyRun::new(digit - b'0'))
+            .map(|digit| EmptyRun::from(digit - b'0'))
         {
             Some(run) => Ok(RankToken::Empties(run)),
             None => letter

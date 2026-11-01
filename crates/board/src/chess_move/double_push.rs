@@ -1,4 +1,4 @@
-use super::MoveKind;
+use super::{MoveKind, Step};
 use crate::file::File;
 use crate::placement::PiecePlacement;
 use crate::square::Square;
@@ -9,9 +9,8 @@ pub struct DoublePush {
     destination: Square,
 }
 
-impl DoublePush {
-    #[must_use]
-    pub const fn new(origin: Square, destination: Square) -> DoublePush {
+impl Step for DoublePush {
+    fn between(origin: Square, destination: Square) -> DoublePush {
         DoublePush {
             origin,
             destination,

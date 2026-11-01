@@ -16,7 +16,7 @@ eval = { version = "0.1.0", path = "../eval", features = ["serde"] }
 game = { version = "0.1.0", path = "../game" }
 opponent_ports = { version = "0.1.0", path = "../opponent_ports" }
 serde = { version = "1", features = ["derive"] }
-derive_more = { version = "2", features = ["add", "display", "from_str", "sum"] }
+derive_more = { version = "2", features = ["add", "display", "from", "from_str", "into", "sum"] }
 thiserror = "2"
 toml = "0.9"
 tally = { version = "0.1.0", path = "../tally" }

@@ -1,5 +1,5 @@
 use engine::{Engine, Sink};
-use search::Depth;
+use search::{Depth, SearchReport};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;

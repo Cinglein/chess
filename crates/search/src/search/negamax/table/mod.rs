@@ -1,14 +1,38 @@
 mod bound_kind;
-mod conclusion;
 mod root_distance;
 mod table_entry;
 
 pub use bound_kind::BoundKind;
-pub(crate) use conclusion::Conclusion;
 pub(crate) use root_distance::RootDistance;
 pub use table_entry::TableEntry;
 
-use board::Zobrist;
+use board::{ChessMove, Zobrist};
+use eval::Score;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Conclusion {
+    best_move: Option<ChessMove>,
+    score: Score,
+    kind: BoundKind,
+}
+
+impl Conclusion {
+    pub(crate) const fn new(
+        best_move: Option<ChessMove>,
+        score: Score,
+        kind: BoundKind,
+    ) -> Conclusion {
+        Conclusion {
+            best_move,
+            score,
+            kind,
+        }
+    }
+
+    pub(crate) const fn score(&self) -> Score {
+        self.score
+    }
+}
 
 pub struct TranspositionTable<'store> {
     entries: &'store mut [TableEntry],
