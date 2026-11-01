@@ -12,7 +12,7 @@ const MATES: [(&str, u8, u8); 2] = [(MATE_IN_ONE, 2, 1), (MATE_IN_TWO, 3, 3)];
 const MATING_MOVE: &str = "a1a8";
 const LOCKED: &str = "4k3/8/8/p6p/P6P/8/8/4K3 w - - 0 1";
 const CONTACT: &str = "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1";
-const CLASH: &str = "4k3/8/2p1p3/3P1P2/8/8/8/4K3 w - - 0 1";
+const POCKETED_KINGS: &str = "6bk/5ppp/5P2/8/8/2p5/PPP5/KB6 w - - 0 1";
 const TACTICAL: &str = "r3k3/1P4P1/8/3q4/2P1N3/3R4/8/4K2n w - - 0 1";
 const OPENING_LENGTH: usize = 8;
 const TABLE_ENTRIES: usize = 1 << 16;
@@ -388,7 +388,7 @@ fn a_mate_read_back_from_the_table_keeps_its_distance_from_the_root() {
 fn any_evaluator_scores_as_the_full_width_tree_with_no_table_a_fresh_one_or_a_warmed_one() {
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(
         salt: u64,
-        fen in prop::sample::select(&[LOCKED, CONTACT, CLASH]),
+        fen in prop::sample::select(&[LOCKED, POCKETED_KINGS]),
         depth in (1..=3u8).prop_map(Depth::new),
     )| {
         SALT.set(salt);
@@ -409,7 +409,7 @@ fn any_evaluator_scores_as_the_full_width_tree_with_no_table_a_fresh_one_or_a_wa
 fn a_warmed_table_answers_for_each_child_as_the_full_width_tree_does() {
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(
         salt: u64,
-        fen in prop::sample::select(&[LOCKED, CLASH]),
+        fen in prop::sample::select(&[LOCKED, POCKETED_KINGS]),
     )| {
         SALT.set(salt);
         let board: Board = fen.parse().unwrap();
