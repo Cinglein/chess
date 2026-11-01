@@ -19,15 +19,3 @@ impl Quantisation {
         Quantisation(self.0 * other.0)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Quantisation;
-    const THREE: Quantisation = Quantisation::new(3);
-    const FOUR: Quantisation = Quantisation::new(4);
-
-    #[test]
-    fn quantisations_multiply_when_two_quantised_layers_meet() {
-        assert_eq!(THREE.times(FOUR).factor(), 12);
-    }
-}

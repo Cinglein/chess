@@ -591,6 +591,7 @@ dependencies = [
  "board",
  "derive_more",
  "enum-map",
+ "eval",
  "proptest",
  "serde",
  "strum",
@@ -695,6 +696,7 @@ name = "go_limits"
 version = "0.1.0"
 dependencies = [
  "board",
+ "go_limits",
  "proptest",
  "search",
  "strum",
@@ -1790,6 +1792,7 @@ dependencies = [
  "serde",
  "strum",
  "thiserror",
+ "uci",
  "uci_response",
 ]
 
@@ -1803,6 +1806,7 @@ dependencies = [
  "search",
  "strum",
  "thiserror",
+ "uci_response",
 ]
 
 [[package]]

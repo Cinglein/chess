@@ -25,6 +25,7 @@ serde = ["dep:serde"]
 workspace = true
 
 [dev-dependencies]
+uci = { version = "0.1.0", path = ".", features = ["proptest"] }
 board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 go_limits = { version = "0.1.0", path = "../go_limits", features = ["proptest"] }
 proptest = "1"

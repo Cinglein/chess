@@ -21,18 +21,3 @@ impl EvalScale {
         f32::from(self.0)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::EvalScale;
-    use super::Score;
-    const SCALE: EvalScale = EvalScale::new(40);
-
-    #[test]
-    fn an_eval_scale_is_the_same_number_as_a_score_and_as_a_float() {
-        assert_eq!(
-            (SCALE.centipawns(), SCALE.per_unit()),
-            (Score::new(40), 40.0)
-        );
-    }
-}
