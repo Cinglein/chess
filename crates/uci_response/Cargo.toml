@@ -21,6 +21,7 @@ proptest = ["dep:proptest", "board/proptest", "eval/proptest", "search/proptest"
 workspace = true
 
 [dev-dependencies]
+uci_response = { version = "0.1.0", path = ".", features = ["proptest"] }
 board = { version = "0.1.0", path = "../board", features = ["proptest"] }
 eval = { version = "0.1.0", path = "../eval", features = ["proptest"] }
 proptest = "1"
