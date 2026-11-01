@@ -1,11 +1,13 @@
 use game::{ArenaError, Opponent};
-use opponent_ports::UciProcess;
+use opponent_ports::Contestant;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use uci::Elo;
 
 const SCRATCH: &str = env!("CARGO_TARGET_TMPDIR");
 const EXECUTABLE: u32 = 0o755;
+const LIMIT: Elo = Elo::new(1500);
 const READY_BEFORE_UCIOK: &str = "read line; printf 'readyok\nreadyok\n'";
 const GONE_BEFORE_READYOK: &str = "read line; printf 'uciok\n'";
 const GONE_AT_NEW_GAME: &str = "while read line; do case $line in \
@@ -21,8 +23,8 @@ impl ScriptedEngine {
         path
     }
 
-    fn spawned(name: &str, script: &str) -> Result<UciProcess, ArenaError> {
-        UciProcess::spawn(&Self::written(name, script), &[])
+    fn spawned(name: &str, script: &str) -> Result<Box<dyn Opponent>, ArenaError> {
+        Contestant::Program(Self::written(name, script)).opponent(LIMIT)
     }
 }
 

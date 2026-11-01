@@ -60,17 +60,15 @@ impl Rules {
 
     #[must_use]
     pub const fn at_fixed_nodes(nodes_per_move: NodeCount) -> Rules {
-        Rules::DEFAULT.thinking_by(Thinking::FixedNodes(nodes_per_move))
+        Rules {
+            thinking: Thinking::FixedNodes(nodes_per_move),
+            ..Rules::DEFAULT
+        }
     }
 
     #[must_use]
     pub const fn timed(self, clock: Clock) -> Rules {
         Rules { clock, ..self }
-    }
-
-    #[must_use]
-    pub const fn thinking_by(self, thinking: Thinking) -> Rules {
-        Rules { thinking, ..self }
     }
 
     #[must_use]
@@ -90,8 +88,7 @@ impl Rules {
         }
     }
 
-    #[must_use]
-    pub const fn thinking(&self) -> Thinking {
+    pub(crate) const fn thinking(&self) -> Thinking {
         self.thinking
     }
 

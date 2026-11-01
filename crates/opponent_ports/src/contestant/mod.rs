@@ -1,10 +1,13 @@
+mod uci_process;
+
 use std::path::PathBuf;
 
 use game::{ArenaError, Opponent};
 
-use crate::{InProcessEngine, UciProcess};
+use crate::InProcessEngine;
 use strum::EnumString;
 use uci::{Elo, EngineOption, Switch};
+use uci_process::UciProcess;
 
 #[derive(Clone, Debug, PartialEq, Eq, EnumString)]
 #[repr(u8)]

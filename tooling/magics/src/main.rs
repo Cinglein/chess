@@ -1,10 +1,10 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use magics::Magics;
+use magics::{MagicTables, XorShift};
 
 fn main() -> ExitCode {
-    match Magics::run(Path::new(".")) {
+    match MagicTables::find(&mut XorShift::from(MagicTables::SEED)).write(Path::new(".")) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");
