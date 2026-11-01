@@ -1,10 +1,11 @@
-use arena::{Label, Verdict};
 use board::{Board, Color};
 use bulletformat::{BulletFormat, ChessBoard};
 use datagen::Example;
 use eval::Score;
+use game::Label;
 use proptest::prelude::*;
 use std::str::FromStr;
+use tally::Verdict;
 struct Oracle;
 
 impl Oracle {

@@ -1,5 +1,3 @@
-mod tally;
-
 use std::collections::VecDeque;
 use std::iter;
 use std::sync::Mutex;
@@ -8,11 +6,11 @@ use std::thread::{self, Scope, ScopedJoinHandle};
 use board::Board;
 use tally::Tally;
 
-use crate::arena_error::ArenaError;
 use crate::entrant::Entrant;
-use crate::game::{Finished, Game};
-use crate::rules::Rules;
 use crate::worker_count::WorkerCount;
+use game::ArenaError;
+use game::Rules;
+use game::{Finished, Game};
 
 pub struct Series<'entrants> {
     challenger: &'entrants dyn Entrant,
@@ -90,32 +88,5 @@ impl<'entrants> Series<'entrants> {
                 tally.recorded_pair(as_white.outcome().verdict(), as_black.outcome().verdict())
             },
         ))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Series, WorkerCount};
-    use crate::fixtures::{InProcess, MATE_IN_ONE, QUICK};
-    use board::Board;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    const TALLIED: &str = "+2 =0 -2 2/4 Elo +0 (+0 to +0) inconclusive";
-    const PAIRS: usize = 2;
-    const GAMES: usize = 2 * PAIRS;
-
-    #[test]
-    fn a_series_plays_each_opening_from_both_sides_reports_every_game_and_tallies_for_the_challenger()
-     {
-        let openings = vec![MATE_IN_ONE.parse::<Board>().unwrap(); PAIRS];
-        let reported = AtomicUsize::new(0);
-        let tally = Series::new(&InProcess, &InProcess, QUICK)
-            .play(openings, WorkerCount::one_per_core(), &|_| {
-                reported.fetch_add(1, Ordering::Relaxed);
-            })
-            .unwrap();
-        assert_eq!(
-            (tally.to_string(), reported.into_inner()),
-            (TALLIED.to_owned(), GAMES)
-        );
     }
 }

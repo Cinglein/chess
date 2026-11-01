@@ -5,7 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 use crate::position_count::PositionCount;
-use arena::{Finished, Game, InProcessEngine, RandomOpenings, Rules, WorkerCount};
+use arena::{RandomOpenings, WorkerCount};
+use game::{Finished, Game, Rules};
+use opponent_ports::InProcessEngine;
 
 pub struct SelfPlay {
     openings: Mutex<RandomOpenings>,

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
-use std::process::Command;
 
-use crate::{ArenaError, InProcessEngine, Opponent, UciProcess};
+use game::{ArenaError, Opponent};
+use opponent_ports::{InProcessEngine, UciProcess};
 use strum::EnumString;
 use uci::{Elo, EngineOption, Switch};
 
@@ -23,7 +23,7 @@ impl Contestant {
                     EngineOption::LimitStrength(Switch::True),
                     EngineOption::Elo(limit_elo),
                 ];
-                Ok(Box::new(UciProcess::spawn(Command::new(path), &options)?))
+                Ok(Box::new(UciProcess::spawn(path, &options)?))
             }
         }
     }

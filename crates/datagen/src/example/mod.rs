@@ -2,9 +2,9 @@ mod white_result;
 
 use std::io::Write;
 
-use arena::Label;
 use board::{Color, PieceKind};
 use bulletformat::{BulletFormat, ChessBoard};
+use game::Label;
 
 use crate::datagen_error::DatagenError;
 use crate::position_count::PositionCount;

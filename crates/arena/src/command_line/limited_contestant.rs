@@ -1,4 +1,5 @@
-use crate::{ArenaError, Entrant, Opponent};
+use crate::Entrant;
+use game::{ArenaError, Opponent};
 use uci::Elo;
 
 use super::arguments::Contestant;

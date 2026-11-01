@@ -86,13 +86,14 @@ dependencies = [
  "chess_settings",
  "clap",
  "derive_more",
- "engine",
  "enum-map",
  "eval",
+ "game",
+ "opponent_ports",
  "rand 0.10.3",
- "search",
  "serde",
  "strum",
+ "tally",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
  "uci",
@@ -244,7 +245,10 @@ dependencies = [
 name = "chess"
 version = "0.1.0"
 dependencies = [
+ "board",
  "engine",
+ "game",
+ "opponent_ports",
  "uci",
 ]
 
@@ -441,8 +445,11 @@ dependencies = [
  "clap",
  "derive_more",
  "eval",
+ "game",
+ "opponent_ports",
  "proptest",
  "serde",
+ "tally",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -666,6 +673,22 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
+]
+
+[[package]]
+name = "game"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "derive_more",
+ "enum-map",
+ "eval",
+ "opponent_ports",
+ "serde",
+ "strum",
+ "tally",
+ "thiserror",
+ "uci",
 ]
 
 [[package]]
@@ -1142,6 +1165,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
+name = "opponent_ports"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "engine",
+ "eval",
+ "game",
+ "search",
+ "uci",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1583,6 +1618,16 @@ dependencies = [
  "objc2-io-kit",
  "objc2-open-directory",
  "windows",
+]
+
+[[package]]
+name = "tally"
+version = "0.1.0"
+dependencies = [
+ "board",
+ "derive_more",
+ "enum-map",
+ "strum",
 ]
 
 [[package]]

@@ -1,5 +1,6 @@
-use crate::{DrawAdjudication, ResignAdjudication, RoundCount, TimeControl, WorkerCount};
+use crate::{RoundCount, WorkerCount};
 use board::FullmoveNumber;
+use game::{DrawAdjudication, ResignAdjudication, TimeControl};
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
 use uci::Elo;
@@ -22,53 +23,38 @@ impl EmbeddedDefaults for Settings {
 }
 
 impl Settings {
+    #[must_use]
     pub const fn concurrency(&self) -> WorkerCount {
         self.concurrency
     }
 
+    #[must_use]
     pub const fn rounds(&self) -> RoundCount {
         self.rounds
     }
 
+    #[must_use]
     pub const fn limit_elo(&self) -> Elo {
         self.limit_elo
     }
 
+    #[must_use]
     pub const fn longest_game(&self) -> FullmoveNumber {
         self.longest_game
     }
 
+    #[must_use]
     pub const fn time_control(&self) -> TimeControl {
         self.time_control
     }
 
+    #[must_use]
     pub const fn draw_adjudication(&self) -> DrawAdjudication {
         self.draw_adjudication
     }
 
+    #[must_use]
     pub const fn resign_adjudication(&self) -> ResignAdjudication {
         self.resign_adjudication
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Settings;
-    use crate::Rules;
-    use settings::EmbeddedDefaults;
-    #[test]
-    fn default_settings_survive_a_trip_through_toml_and_agree_with_the_library_rules() {
-        let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
-        let read: Settings = toml::from_str(&written).unwrap();
-        assert_eq!(read, Settings::defaults());
-        assert_eq!(
-            Rules::new(
-                read.time_control(),
-                read.longest_game(),
-                read.draw_adjudication(),
-                read.resign_adjudication()
-            ),
-            Rules::DEFAULT
-        );
     }
 }

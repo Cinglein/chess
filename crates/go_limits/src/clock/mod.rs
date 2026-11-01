@@ -81,7 +81,8 @@ impl proptest::arbitrary::Arbitrary for Clock {
 
     fn arbitrary_with((): ()) -> Self::Strategy {
         use proptest::strategy::Strategy;
-        proptest::arbitrary::any::<[u32; 4]>()
+        const PARTS: usize = 4;
+        proptest::arbitrary::any::<[u32; PARTS]>()
             .prop_map(|[white, black, white_increment, black_increment]| {
                 Clock::new(
                     Duration::from_millis(u64::from(white)),

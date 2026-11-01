@@ -10,5 +10,10 @@ repository.workspace = true
 engine = { version = "0.1.0", path = "../engine" }
 uci = { version = "0.1.0", path = "../uci" }
 
+[dev-dependencies]
+board = { version = "0.1.0", path = "../board" }
+game = { version = "0.1.0", path = "../game" }
+opponent_ports = { version = "0.1.0", path = "../opponent_ports" }
+
 [lints]
 workspace = true
