@@ -81,7 +81,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants@27.1.0
-      - run: git diff --no-renames HEAD^1 HEAD -- '*.rs' > "$RUNNER_TEMP/changed.diff"
+      - run: git diff HEAD^1 HEAD -- '*.rs' > "$RUNNER_TEMP/changed.diff"
       - name: mutants in changed lines
         env:
           CARGO_INCREMENTAL: 1
