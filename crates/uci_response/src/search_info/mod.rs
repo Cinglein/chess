@@ -8,7 +8,7 @@ use board::{LongAlgebraic, NodeCount};
 use eval::{Evaluator, Score};
 use info_builder::InfoBuilder;
 use info_key::InfoKey;
-use search::{Depth, Search, SearchReport};
+use search::{Depth, Search};
 
 use crate::response_error::ResponseError;
 
@@ -34,13 +34,15 @@ impl SearchInfo {
     }
 }
 
-impl SearchReport for SearchInfo {
-    fn depth(&self) -> Depth {
-        self.depth
+impl AsRef<Depth> for SearchInfo {
+    fn as_ref(&self) -> &Depth {
+        &self.depth
     }
+}
 
-    fn score(&self) -> Score {
-        self.score
+impl AsRef<Score> for SearchInfo {
+    fn as_ref(&self) -> &Score {
+        &self.score
     }
 }
 

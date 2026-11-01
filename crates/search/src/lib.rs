@@ -2,4 +2,4 @@
 
 mod search;
 
-pub use search::{Depth, Interrupt, Search, SearchReport, TableEntry, TranspositionTable};
+pub use search::{Depth, Interrupt, Search, TableEntry, TranspositionTable};

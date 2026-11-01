@@ -1,3 +1,4 @@
+use newtype::Newtype;
 use strum::{EnumCount, VariantArray};
 
 use crate::bitboard::Bitboard;
@@ -11,15 +12,10 @@ use crate::square::Square;
 
 const _: () = assert!(Orthogonal::COUNT == Diagonal::COUNT);
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Newtype)]
 pub struct Rays([Direction; Orthogonal::COUNT]);
 
 impl Rays {
-    #[must_use]
-    pub const fn new(directions: [Direction; Orthogonal::COUNT]) -> Rays {
-        Rays(directions)
-    }
-
     #[must_use]
     pub const fn attacks_by_ray(self, square: Square, occupied: Bitboard) -> Bitboard {
         let origin = Bitboard::from_square(square);

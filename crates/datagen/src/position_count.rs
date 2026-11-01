@@ -1,3 +1,4 @@
+use newtype::Newtype;
 use std::time::Duration;
 
 use derive_more::{Add, Display};
@@ -16,16 +17,12 @@ use serde::{Deserialize, Serialize};
     Display,
     Serialize,
     Deserialize,
+    Newtype,
 )]
 #[serde(transparent)]
 pub struct PositionCount(usize);
 
 impl PositionCount {
-    #[must_use]
-    pub const fn new(positions: usize) -> PositionCount {
-        PositionCount(positions)
-    }
-
     #[must_use]
     pub const fn count(self) -> usize {
         self.0

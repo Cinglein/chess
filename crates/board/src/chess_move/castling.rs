@@ -7,16 +7,10 @@ use crate::leaper::King;
 use crate::placement::PiecePlacement;
 use crate::slider::Rook;
 use crate::square::Square;
+use newtype::Newtype;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Newtype)]
 pub struct Castling(CastlingRight);
-
-impl Castling {
-    #[must_use]
-    pub const fn new(right: CastlingRight) -> Castling {
-        Castling(right)
-    }
-}
 
 impl MoveKind for Castling {
     fn origin(&self) -> Square {

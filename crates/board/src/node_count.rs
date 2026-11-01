@@ -1,4 +1,5 @@
 use core::time::Duration;
+use newtype::Newtype;
 
 use derive_more::{Add, AddAssign, Display, FromStr, Sum};
 #[cfg(feature = "serde")]
@@ -19,6 +20,7 @@ use serde::{Deserialize, Serialize};
     Sum,
     Display,
     FromStr,
+    Newtype,
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct NodeCount(u64);
@@ -27,11 +29,6 @@ impl NodeCount {
     pub const ZERO: NodeCount = NodeCount(0);
     pub const ONE: NodeCount = NodeCount(1);
     const MILLIS_PER_SECOND: u64 = 1000;
-
-    #[must_use]
-    pub const fn new(nodes: u64) -> NodeCount {
-        NodeCount(nodes)
-    }
 
     #[must_use]
     pub const fn count(self) -> u64 {

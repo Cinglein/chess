@@ -1,15 +1,9 @@
 use super::Bitboard;
 use crate::square::Square;
+use newtype::Newtype;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Newtype)]
 pub struct SquareIter(Bitboard);
-
-impl SquareIter {
-    #[must_use]
-    pub const fn new(bitboard: Bitboard) -> SquareIter {
-        SquareIter(bitboard)
-    }
-}
 
 impl Iterator for SquareIter {
     type Item = Square;

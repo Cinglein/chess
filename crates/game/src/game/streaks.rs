@@ -1,4 +1,3 @@
-use board::Incremented;
 use board::{Color, PlyCount};
 use enum_map::EnumMap;
 use eval::Score;

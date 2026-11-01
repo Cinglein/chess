@@ -12,6 +12,10 @@ rust-version = "1.98"
 license = "MIT"
 repository = "https://github.com/Cinglein/chess"
 
+[workspace.dependencies]
+laws = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.0" }
+newtype = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.0" }
+
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }

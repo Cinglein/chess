@@ -2,7 +2,7 @@ mod game_count;
 mod game_score;
 mod pentanomial;
 
-use board::Incremented;
+use newtype::Counter;
 use std::fmt;
 
 use board::Color;

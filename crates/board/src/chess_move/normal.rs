@@ -1,4 +1,4 @@
-use super::{MoveKind, Step};
+use super::MoveKind;
 use crate::placement::PiecePlacement;
 use crate::square::Square;
 
@@ -8,8 +8,8 @@ pub struct Normal {
     destination: Square,
 }
 
-impl Step for Normal {
-    fn between(origin: Square, destination: Square) -> Normal {
+impl From<(Square, Square)> for Normal {
+    fn from((origin, destination): (Square, Square)) -> Normal {
         Normal {
             origin,
             destination,

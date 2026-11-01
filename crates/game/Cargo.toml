@@ -12,6 +12,7 @@ board = { version = "0.1.0", path = "../board", features = ["serde"] }
 derive_more = { version = "2", features = ["add", "display", "from_str", "sum"] }
 enum-map = "3"
 eval = { version = "0.1.0", path = "../eval", features = ["serde"] }
+newtype.workspace = true
 serde = { version = "1", features = ["derive"] }
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 tally = { version = "0.1.0", path = "../tally" }

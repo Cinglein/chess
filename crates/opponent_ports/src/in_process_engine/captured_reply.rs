@@ -1,7 +1,6 @@
 use board::LongAlgebraic;
 use engine::Sink;
 use eval::Score;
-use search::SearchReport;
 use uci::Response;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -26,7 +25,7 @@ impl Sink for CapturedReply {
             best_move: response.best_move().unwrap_or(self.best_move),
             score: response
                 .info()
-                .map_or(self.score, |info| Some(info.score())),
+                .map_or(self.score, |info| Some(*info.as_ref())),
         };
     }
 }
