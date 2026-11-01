@@ -11,6 +11,7 @@ pub struct MagicSearch {
 }
 
 impl MagicSearch {
+    #[must_use]
     pub fn new<S: Slider>(square: Square) -> MagicSearch {
         let mask = S::relevant_occupancy(square);
         let attacks = SubsetIter::new(mask)
