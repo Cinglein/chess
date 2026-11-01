@@ -1423,6 +1423,7 @@ dependencies = [
  "derive_more",
  "eval",
  "proptest",
+ "search",
 ]
 
 [[package]]
