@@ -106,11 +106,19 @@ impl Salted {
         Score::new(i32::try_from(mixed % Self::SPREAD + offset).unwrap() - 12)
     }
 
-    fn evaluations_during<T>(run: impl FnOnce() -> T) -> (T, Vec<Board>) {
+    fn evaluations_during<T>(run: impl FnOnce() -> T) -> Evaluations<T> {
         EVALUATED.with_borrow_mut(Vec::clear);
         let outcome = run();
-        (outcome, EVALUATED.take())
+        Evaluations {
+            outcome,
+            boards: EVALUATED.take(),
+        }
     }
+}
+
+struct Evaluations<T> {
+    outcome: T,
+    boards: Vec<Board>,
 }
 
 struct Traced;
@@ -122,10 +130,16 @@ impl Evaluator for Traced {
     }
 }
 
+#[derive(Clone, Copy)]
+struct Branch {
+    chess_move: ChessMove,
+    child: Board,
+}
+
 struct Tree;
 
 impl Tree {
-    fn children(board: &Board) -> impl Iterator<Item = (ChessMove, Board)> + use<> {
+    fn branches(board: &Board) -> impl Iterator<Item = Branch> + use<> {
         let position = *board;
         position
             .legal_moves()
@@ -133,12 +147,12 @@ impl Tree {
             .filter_map(move |chess_move| {
                 position
                     .make_move(chess_move)
-                    .map(|child| (chess_move, child))
+                    .map(|child| Branch { chess_move, child })
             })
     }
 
     fn is_child(parent: &Board, board: &Board) -> bool {
-        Self::children(parent).any(|(_, child)| child == *board)
+        Self::branches(parent).any(|branch| branch.child == *board)
     }
 
     fn rich_boards() -> impl Strategy<Value = Board> {
@@ -149,23 +163,26 @@ impl Tree {
     }
 }
 
-struct Rank;
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Rank {
+    Quiet,
+    Capture { victim: Score, attacker: Score },
+    Promotion,
+}
 
 impl Rank {
-    fn of(chess_move: ChessMove, board: &Board) -> (bool, Option<(Score, Score)>) {
+    fn of(chess_move: ChessMove, board: &Board) -> Rank {
         let placement = board.placement();
-        let promotes = chess_move.promotion_piece().is_some();
-        let gain = chess_move
+        let capture = chess_move
             .victim(placement)
             .zip(placement.piece_at(chess_move.origin()))
-            .filter(|_| !promotes)
-            .map(|(victim, attacker)| {
-                (
-                    PieceKindValue::material(victim.kind()),
-                    -PieceKindValue::material(attacker.kind()),
-                )
+            .map_or(Rank::Quiet, |(victim, attacker)| Rank::Capture {
+                victim: PieceKindValue::material(victim.kind()),
+                attacker: -PieceKindValue::material(attacker.kind()),
             });
-        (promotes, gain)
+        chess_move
+            .promotion_piece()
+            .map_or(capture, |_| Rank::Promotion)
     }
 }
 
@@ -178,24 +195,25 @@ struct Visit {
 
 impl Visit {
     fn two_plies_below(root: &Board, evaluated: &[Board]) -> Vec<Visit> {
-        let leaves: Vec<Visit> = Tree::children(root)
-            .flat_map(|(root_move, child)| {
-                Tree::children(&child).map(move |(reply, leaf)| (root_move, reply, leaf))
-            })
-            .map(|(root_move, reply, leaf)| Visit {
-                root_move,
-                reply,
-                score: Salted::score(&leaf),
+        let leaves: Vec<(Board, Visit)> = Tree::branches(root)
+            .flat_map(|branch| {
+                Tree::branches(&branch.child).map(move |reply| {
+                    let visit = Visit {
+                        root_move: branch.chess_move,
+                        reply: reply.chess_move,
+                        score: Salted::score(&reply.child),
+                    };
+                    (reply.child, visit)
+                })
             })
             .collect();
         evaluated
             .iter()
             .filter_map(|board| {
-                leaves.iter().copied().find(|visit| {
-                    root.make_move(visit.root_move)
-                        .and_then(|child| child.make_move(visit.reply))
-                        .is_some_and(|leaf| leaf == *board)
-                })
+                leaves
+                    .iter()
+                    .find(|(leaf, _)| leaf == board)
+                    .map(|(_, visit)| *visit)
             })
             .collect()
     }
@@ -398,9 +416,9 @@ fn a_warmed_table_answers_for_each_child_as_the_full_width_tree_does() {
         let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
         let mut table = TranspositionTable::new(&mut store);
         let _ = Fixture::<Salted>::searched(board, THREE_PLIES, &mut table);
-        for (_, child) in Tree::children(&board) {
-            let expected = Oracle::<Salted>::new().full_width(&child, TWO_PLIES, 0);
-            let answered = Fixture::<Salted>::searched(child, TWO_PLIES, &mut table);
+        for branch in Tree::branches(&board) {
+            let expected = Oracle::<Salted>::new().full_width(&branch.child, TWO_PLIES, 0);
+            let answered = Fixture::<Salted>::searched(branch.child, TWO_PLIES, &mut table);
             prop_assert_eq!(Some(answered.score()), expected);
         }
     });
@@ -428,27 +446,26 @@ fn the_root_keeps_the_first_of_equally_good_moves() {
     let board: Board = LOCKED.parse().unwrap();
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(salt: u64)| {
         SALT.set(salt);
-        let (search, evaluated) =
+        let Evaluations { outcome: search, boards } =
             Salted::evaluations_during(|| Fixture::<Salted>::without_table(board, ONE_PLY));
-        let best = evaluated
+        let best = boards
             .iter()
-            .filter_map(|leaf| Tree::children(&board).find(|(_, child)| child == leaf))
-            .min_by_key(|(_, child)| Salted::score(child));
-        prop_assert_eq!(search.best_move(), best.map(|(chess_move, _)| chess_move));
+            .filter_map(|leaf| Tree::branches(&board).find(|branch| branch.child == *leaf))
+            .min_by_key(|branch| Salted::score(&branch.child));
+        prop_assert_eq!(search.best_move(), best.map(|branch| branch.chess_move));
     });
 }
 
 #[test]
 fn the_root_tries_promotions_then_captures_by_gain_then_quiet_moves() {
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(board in Tree::rich_boards())| {
-        let (_, evaluated) =
+        let evaluated =
             Salted::evaluations_during(|| Fixture::<Traced>::without_table(board, ONE_PLY));
-        let ranks: Vec<_> = evaluated
+        let ranks: Vec<Rank> = evaluated
+            .boards
             .iter()
-            .filter_map(|leaf| {
-                Tree::children(&board).find(|(_, child)| child == leaf)
-            })
-            .map(|(chess_move, _)| Rank::of(chess_move, &board))
+            .filter_map(|leaf| Tree::branches(&board).find(|branch| branch.child == *leaf))
+            .map(|branch| Rank::of(branch.chess_move, &board))
             .collect();
         prop_assert!(ranks.is_sorted_by(|earlier, later| earlier >= later), "{}", board);
     });
@@ -462,8 +479,8 @@ fn a_deepening_starts_from_the_move_the_last_one_chose() {
         let mut table = TranspositionTable::new(&mut []);
         let shallow = Fixture::<Salted>::without_table(board, ONE_PLY);
         let principal = board.make_move(shallow.best_move().unwrap()).unwrap();
-        let (_, evaluated) =
-            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted));
+        let evaluated =
+            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted)).boards;
         prop_assert!(Tree::is_child(&principal, &evaluated[0]));
     });
 }
@@ -471,13 +488,13 @@ fn a_deepening_starts_from_the_move_the_last_one_chose() {
 #[test]
 fn a_sibling_stops_at_its_refutation_and_tries_the_last_two_refutations_before_other_quiet_moves() {
     let board: Board = LOCKED.parse().unwrap();
-    let replies = Tree::children(&Tree::children(&board).next().unwrap().1).count();
+    let replies = Tree::branches(&Tree::branches(&board).next().unwrap().child).count();
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(salt: u64)| {
         SALT.set(salt);
         let mut table = TranspositionTable::new(&mut []);
         let shallow = Fixture::<Salted>::without_table(board, ONE_PLY);
-        let (_, evaluated) =
-            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted));
+        let evaluated =
+            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted)).boards;
         let visits = Visit::two_plies_below(&board, &evaluated);
         let mut best = Score::INFINITY.negated();
         let mut killers: Vec<ChessMove> = Vec::new();
@@ -508,7 +525,7 @@ fn a_position_met_again_tries_the_first_reply_that_earned_its_score_before_any_o
         SALT.set(salt);
         let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
         let mut table = TranspositionTable::new(&mut store);
-        let (shallow, evaluated) = Salted::evaluations_during(|| {
+        let Evaluations { outcome: shallow, boards: evaluated } = Salted::evaluations_during(|| {
             Fixture::<Salted>::searched(board, TWO_PLIES, &mut table)
         });
         let principal = shallow.best_move().unwrap();
@@ -522,8 +539,8 @@ fn a_position_met_again_tries_the_first_reply_that_earned_its_score_before_any_o
             .make_move(principal)
             .and_then(|child| child.make_move(reply))
             .unwrap();
-        let (_, deeper) =
-            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted));
+        let deeper =
+            Salted::evaluations_during(|| shallow.deepen(&mut table, &Uninterrupted)).boards;
         prop_assert!(Tree::is_child(&remembered, &deeper[0]));
     });
 }
@@ -531,7 +548,7 @@ fn a_position_met_again_tries_the_first_reply_that_earned_its_score_before_any_o
 #[test]
 fn repeating_a_deepening_against_its_own_table_visits_each_root_move_once_and_scores_the_same() {
     let board: Board = LOCKED.parse().unwrap();
-    let root_moves = Tree::children(&board).count();
+    let root_moves = Tree::branches(&board).count();
     proptest!(ProptestConfig::with_cases(SALTED_CASES), |(salt: u64)| {
         SALT.set(salt);
         let mut store = vec![TableEntry::EMPTY; TABLE_ENTRIES];
