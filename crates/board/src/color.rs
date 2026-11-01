@@ -37,7 +37,7 @@ impl Not for Color {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Color {
     type Parameters = ();
     type Strategy = proptest::sample::Select<Color>;

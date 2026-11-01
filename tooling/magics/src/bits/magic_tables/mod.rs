@@ -8,9 +8,9 @@ use std::path::Path;
 use board::{Bishop, Rook, Slider, Square};
 use enum_map::EnumMap;
 
-use crate::xor_shift::XorShift;
-use hex_literal::HexLiteral;
-use magic_search::MagicSearch;
+use super::xor_shift::XorShift;
+pub use hex_literal::HexLiteral;
+pub use magic_search::MagicSearch;
 use task::Failure;
 use task::Site;
 
@@ -21,13 +21,15 @@ pub struct MagicTables {
 
 impl MagicTables {
     pub const SEED: u64 = 0x9E37_79B9_7F4A_7C15;
-    const OUTPUT: &str = "crates/board/src/slider/magics.rs";
+    const OUTPUT: &str = "crates/board/src/slider/bits/magics.rs";
+
+    #[must_use]
+    pub const fn new(rook: EnumMap<Square, u64>, bishop: EnumMap<Square, u64>) -> MagicTables {
+        MagicTables { rook, bishop }
+    }
 
     pub fn find(rng: &mut XorShift) -> MagicTables {
-        MagicTables {
-            rook: Self::find_all::<Rook>(rng),
-            bishop: Self::find_all::<Bishop>(rng),
-        }
+        Self::new(Self::find_all::<Rook>(rng), Self::find_all::<Bishop>(rng))
     }
 
     pub fn write(&self, workspace_root: &Path) -> Result<(), Failure> {
@@ -51,7 +53,7 @@ impl MagicTables {
     ) -> fmt::Result {
         writeln!(
             formatter,
-            "pub(super) const {name}: EnumMap<Square, u64> = EnumMap::from_array(["
+            "pub(crate) const {name}: EnumMap<Square, u64> = EnumMap::from_array(["
         )?;
         values
             .values()
@@ -69,23 +71,5 @@ impl fmt::Display for MagicTables {
         Self::fmt_table(formatter, "ROOK", &self.rook)?;
         writeln!(formatter)?;
         Self::fmt_table(formatter, "BISHOP", &self.bishop)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::MagicTables;
-    use enum_map::EnumMap;
-    const EXPECTED: [&str; 3] = [
-        "pub(super) const ROOK: EnumMap<Square, u64>",
-        "pub(super) const BISHOP: EnumMap<Square, u64>", "    0xffff_ffff_ffff_ffff,\n]);",
-    ];
-
-    #[test]
-    fn the_tables_print_as_two_named_constants_of_grouped_hex_literals() {
-        let full = EnumMap::from_fn(|_| u64::MAX);
-        let tables = MagicTables { rook: full, bishop: full };
-        let printed = tables.to_string();
-        assert!(EXPECTED.iter().all(|part| printed.contains(part)));
     }
 }

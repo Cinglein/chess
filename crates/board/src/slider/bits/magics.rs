@@ -2,7 +2,7 @@ use enum_map::EnumMap;
 
 use crate::square::Square;
 
-pub(super) const ROOK: EnumMap<Square, u64> = EnumMap::from_array([
+pub(crate) const ROOK: EnumMap<Square, u64> = EnumMap::from_array([
     0x1080_0040_0880_1020,
     0x0840_0920_02c0_3000,
     0x1900_2000_1040_0900,
@@ -69,7 +69,7 @@ pub(super) const ROOK: EnumMap<Square, u64> = EnumMap::from_array([
     0x4000_0028_4084_0112,
 ]);
 
-pub(super) const BISHOP: EnumMap<Square, u64> = EnumMap::from_array([
+pub(crate) const BISHOP: EnumMap<Square, u64> = EnumMap::from_array([
     0xa010_0411_0800_3100,
     0x0060_8202_0a00_2900,
     0x6810_0106_1920_0000,

@@ -103,7 +103,7 @@ impl Sum for Score {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Score {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<Score>;

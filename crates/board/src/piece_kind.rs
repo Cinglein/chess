@@ -36,7 +36,7 @@ pub enum PieceKind {
     King,
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for PieceKind {
     type Parameters = ();
     type Strategy = proptest::sample::Select<PieceKind>;

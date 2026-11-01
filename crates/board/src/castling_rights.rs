@@ -106,7 +106,7 @@ impl FromStr for CastlingRights {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for CastlingRights {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<CastlingRights>;
@@ -116,33 +116,5 @@ impl proptest::arbitrary::Arbitrary for CastlingRights {
         proptest::arbitrary::any::<u8>()
             .prop_map(|bits| CastlingRights(EnumSet::from_u8_truncated(bits)))
             .boxed()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::CastlingRights;
-    use fen::{DashOr, FenError};
-    use proptest::prelude::*;
-    const REJECTED: [&str; 3] = ["KK", "x", ""];
-
-    #[test]
-    fn any_set_of_rights_prints_as_a_fen_field_that_parses_back() {
-        proptest!(|(rights: CastlingRights)| {
-            let field = DashOr::from((!rights.is_none()).then_some(rights)).to_string();
-            let parsed: Option<CastlingRights> = field.parse::<DashOr<CastlingRights>>().unwrap().into();
-            prop_assert_eq!(parsed.unwrap_or(CastlingRights::NONE), rights);
-        });
-    }
-
-    #[test]
-    fn repeated_unknown_or_missing_letters_are_rejected() {
-        for text in REJECTED {
-            assert_eq!(
-                text.parse::<CastlingRights>(),
-                Err(FenError::CastlingRights),
-                "{text}"
-            );
-        }
     }
 }

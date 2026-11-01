@@ -30,7 +30,7 @@ impl Depth {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Depth {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<Depth>;

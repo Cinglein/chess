@@ -25,7 +25,7 @@ impl PlyCount {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for PlyCount {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<PlyCount>;

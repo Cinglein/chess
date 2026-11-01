@@ -79,7 +79,7 @@ impl fmt::Display for GoLimits {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for GoLimits {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<GoLimits>;
