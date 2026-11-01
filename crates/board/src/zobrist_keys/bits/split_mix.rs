@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub(crate) struct SplitMix64 {
+pub struct SplitMix64 {
     state: u64,
     output: u64,
 }
@@ -10,14 +10,16 @@ impl SplitMix64 {
     const SECOND_MIXER: u64 = 0x94D0_49BB_1331_11EB;
     pub(crate) const SEEDED: SplitMix64 = SplitMix64::new(0x0C4E_55B0_A4D6_4C10);
 
-    pub(crate) const fn new(seed: u64) -> SplitMix64 {
+    #[must_use]
+    pub const fn new(seed: u64) -> SplitMix64 {
         SplitMix64 {
             state: seed,
             output: 0,
         }
     }
 
-    pub(crate) const fn next(self) -> SplitMix64 {
+    #[must_use]
+    pub const fn next(self) -> SplitMix64 {
         let state = self.state.wrapping_add(Self::GOLDEN_GAMMA);
         let mixed = (state ^ (state >> 30)).wrapping_mul(Self::FIRST_MIXER);
         let mixed = (mixed ^ (mixed >> 27)).wrapping_mul(Self::SECOND_MIXER);
@@ -27,7 +29,8 @@ impl SplitMix64 {
         }
     }
 
-    pub(crate) const fn output(self) -> u64 {
+    #[must_use]
+    pub const fn output(self) -> u64 {
         self.output
     }
 }
