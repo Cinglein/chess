@@ -20,7 +20,7 @@ const LAST: usize = 6;
 #[test]
 fn the_schedule_drops_the_learning_rate_on_its_step_and_saves_on_its_rate() {
     let schedule: Schedule = toml::from_str(WRITTEN).unwrap();
-    let training = schedule.training_schedule(&NetId::new(NET.to_owned()));
+    let training = schedule.training_schedule(&NetId::try_from(NET.to_owned()).unwrap());
     let rates = [BEFORE_DROP, AFTER_DROP].map(|superbatch| {
         (
             training.lr(FIRST_BATCH, superbatch),
@@ -31,4 +31,11 @@ fn the_schedule_drops_the_learning_rate_on_its_step_and_saves_on_its_rate() {
         (rates, training.steps.end_superbatch),
         ([(START, false), (DROPPED, true)], LAST)
     );
+}
+
+#[test]
+fn a_net_id_is_a_nonempty_word() {
+    let verdicts =
+        ["net-1_a", "", "a b", "a/b"].map(|text| NetId::try_from(text.to_owned()).is_ok());
+    assert_eq!(verdicts, [true, false, false, false]);
 }

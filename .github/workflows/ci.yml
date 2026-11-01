@@ -14,7 +14,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  LINT_TAG: v0.1.4
+  LINT_TAG: v0.1.5
   MUTANT_SHARDS: 4
 
 jobs:

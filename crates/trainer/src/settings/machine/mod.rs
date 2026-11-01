@@ -1,6 +1,8 @@
+mod output_directory;
 mod thread_count;
 
 use bullet_lib::trainer::settings::LocalSettings;
+use output_directory::OutputDirectory;
 use serde::Deserialize;
 use thread_count::ThreadCount;
 
@@ -10,7 +12,7 @@ pub struct Machine {
     #[serde(default)]
     threads: ThreadCount,
     batch_queue_size: usize,
-    output_directory: String,
+    output_directory: OutputDirectory,
 }
 
 impl Machine {
@@ -19,7 +21,7 @@ impl Machine {
         LocalSettings {
             threads: usize::from(self.threads),
             test_set: None,
-            output_directory: &self.output_directory,
+            output_directory: self.output_directory.as_ref(),
             batch_queue_size: self.batch_queue_size,
         }
     }

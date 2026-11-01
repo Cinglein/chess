@@ -15,8 +15,8 @@ license = "MIT"
 repository = "https://github.com/Cinglein/chess"
 
 [workspace.dependencies]
-laws = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.4" }
-newtype = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.4" }
+laws = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.5" }
+newtype = { git = "https://github.com/Studio-Terza/meta-dev", tag = "v0.1.5" }
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }

@@ -715,7 +715,7 @@ dependencies = [
 [[package]]
 name = "laws"
 version = "0.1.0"
-source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.4#d0e6565dbf5479d56f8fa50b043e843f1e4aef4a"
+source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.5#8e79c8d00b87606d25237d84a29eb927965bf3fb"
 dependencies = [
  "proptest",
 ]
@@ -761,7 +761,7 @@ checksum = "4caf9c718f831a8568f030576e6a6e6aa487ed5f8732ddb0ba79e9a3ea0421ca"
 [[package]]
 name = "newtype"
 version = "0.1.0"
-source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.4#d0e6565dbf5479d56f8fa50b043e843f1e4aef4a"
+source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.5#8e79c8d00b87606d25237d84a29eb927965bf3fb"
 dependencies = [
  "newtype-derive",
 ]
@@ -769,7 +769,7 @@ dependencies = [
 [[package]]
 name = "newtype-derive"
 version = "0.1.0"
-source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.4#d0e6565dbf5479d56f8fa50b043e843f1e4aef4a"
+source = "git+https://github.com/Studio-Terza/meta-dev?tag=v0.1.5#8e79c8d00b87606d25237d84a29eb927965bf3fb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1244,7 +1244,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys",
@@ -1418,6 +1418,7 @@ dependencies = [
  "eval",
  "newtype",
  "serde",
+ "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
 
