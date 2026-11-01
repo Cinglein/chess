@@ -101,7 +101,7 @@ impl Board {
 
     #[must_use]
     pub fn hash(&self) -> Zobrist {
-        self.placement.hash()
+        Zobrist::from(&self.placement)
             ^ ZobristKeys::KEYS.castling(self.castling_rights)
             ^ ZobristKeys::KEYS.en_passant(self.en_passant_file)
             ^ ZobristKeys::KEYS.side_to_move(self.side_to_move)

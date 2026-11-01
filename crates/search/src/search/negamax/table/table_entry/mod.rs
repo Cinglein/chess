@@ -5,9 +5,8 @@ use eval::Score;
 
 use super::super::super::depth::Depth;
 use super::super::window::Window;
+use super::Conclusion;
 use super::bound_kind::BoundKind;
-use super::conclusion::Conclusion;
-use super::remembered::Remembered;
 use super::root_distance::RootDistance;
 use stored_score::StoredScore;
 
@@ -38,14 +37,22 @@ impl TableEntry {
         TableEntry {
             hash,
             depth,
-            best_move: conclusion.best_move(),
-            score: StoredScore::new(conclusion.score(), distance),
-            kind: conclusion.kind(),
+            best_move: conclusion.best_move,
+            score: StoredScore::new(conclusion.score, distance),
+            kind: conclusion.kind,
         }
+    }
+
+    pub(crate) const fn hash(&self) -> Zobrist {
+        self.hash
     }
 
     pub(crate) const fn depth(&self) -> Depth {
         self.depth
+    }
+
+    pub(crate) const fn best_move(&self) -> Option<ChessMove> {
+        self.best_move
     }
 
     pub(crate) fn settles(
@@ -65,17 +72,5 @@ impl TableEntry {
                 BoundKind::AtMost | BoundKind::AtLeast => None,
             }
         }
-    }
-}
-
-impl Remembered for TableEntry {
-    fn best_move(&self) -> Option<ChessMove> {
-        self.best_move
-    }
-}
-
-impl From<TableEntry> for Zobrist {
-    fn from(entry: TableEntry) -> Zobrist {
-        entry.hash
     }
 }
