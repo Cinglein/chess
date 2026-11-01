@@ -68,11 +68,6 @@ impl<H: Hand> Placement<H> {
     }
 
     #[must_use]
-    pub const fn hash(&self) -> Zobrist {
-        self.hash
-    }
-
-    #[must_use]
     pub fn occupied_by(&self, color: Color) -> Bitboard {
         self.pieces[color]
             .values()
@@ -275,5 +270,11 @@ impl FromStr for PiecePlacement {
         } else {
             Err(FenError::RankCount)
         }
+    }
+}
+
+impl<H: Hand> From<&Placement<H>> for Zobrist {
+    fn from(placement: &Placement<H>) -> Zobrist {
+        placement.hash
     }
 }

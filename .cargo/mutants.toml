@@ -18,4 +18,5 @@ exclude_re = [
     "XorShift::sparse",
 ]
 minimum_test_timeout = 10.0
+test_workspace = true
 cap_lints = false
