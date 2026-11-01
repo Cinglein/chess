@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
 eval = { version = "0.1.0", path = "../eval" }
+newtype.workspace = true
 search = { version = "0.1.0", path = "../search" }
 uci = { version = "0.1.0", path = "../uci" }
 

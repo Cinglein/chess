@@ -1,13 +1,27 @@
 use core::iter::Sum;
 use core::num::NonZeroI32;
 use core::ops::{Add, Neg};
+use newtype::Newtype;
 
 use derive_more::{Add, Display, FromStr, Sub};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 #[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Add, Sub, Display, FromStr,
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Add,
+    Sub,
+    Display,
+    FromStr,
+    Newtype,
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct Score(i32);
@@ -18,11 +32,6 @@ impl Score {
     const MATE: Score = Score(31_000);
     const PLIES_PER_MOVE: i32 = 2;
     pub const LONGEST_MATE: Score = Score(30_000);
-
-    #[must_use]
-    pub const fn new(centipawns: i32) -> Score {
-        Score(centipawns)
-    }
 
     #[must_use]
     pub const fn centipawns(self) -> i32 {

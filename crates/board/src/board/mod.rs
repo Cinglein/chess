@@ -5,7 +5,6 @@ mod move_generator;
 #[cfg(feature = "proptest")]
 mod playout;
 
-use crate::incremented::Incremented;
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
 pub use move_generator::MoveGenerator;
@@ -153,7 +152,7 @@ impl Board {
             },
             fullmove_number: match self.side_to_move {
                 Color::White => self.fullmove_number,
-                Color::Black => self.fullmove_number.incremented(),
+                Color::Black => self.fullmove_number.following(),
             },
         })
     }

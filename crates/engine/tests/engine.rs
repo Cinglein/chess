@@ -1,5 +1,5 @@
 use engine::{Engine, Sink};
-use search::{Depth, SearchReport};
+use search::Depth;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -39,7 +39,7 @@ impl Lines {
         self.0
             .iter()
             .filter_map(|line| Response::try_from(line.as_str()).ok()?.info())
-            .map(|info| info.depth())
+            .map(|info| *AsRef::<Depth>::as_ref(&info))
             .max()
     }
 

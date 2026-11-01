@@ -3,7 +3,7 @@ use core::cell::{Cell, RefCell};
 use core::marker::PhantomData;
 use eval::{Evaluator, PieceKindValue, PieceSquareTables, Score};
 use proptest::prelude::*;
-use search::{Depth, Interrupt, Search, SearchReport, TableEntry, TranspositionTable};
+use search::{Depth, Interrupt, Search, TableEntry, TranspositionTable};
 
 const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
 const MATE_IN_TWO: &str = "7k/8/8/8/8/8/R7/1R4K1 w - - 0 1";

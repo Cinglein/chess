@@ -1,3 +1,4 @@
+use newtype::Newtype;
 mod placed_piece;
 mod rank_token;
 
@@ -16,14 +17,10 @@ use crate::rank::Rank;
 use crate::square::Square;
 use rank_token::RankToken;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Newtype)]
 pub struct RankPlacement(EnumMap<File, Option<Piece>>);
 
 impl RankPlacement {
-    pub fn new(squares: EnumMap<File, Option<Piece>>) -> Self {
-        RankPlacement(squares)
-    }
-
     pub fn pieces(self, rank: Rank) -> impl Iterator<Item = PlacedPiece> {
         self.0.into_iter().filter_map(move |(file, piece)| {
             piece.map(|piece| PlacedPiece::new(Square::new(file, rank), piece))

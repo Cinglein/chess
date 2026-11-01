@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use board::{Board, LongAlgebraic};
 use deadline::Deadline;
 use eval::PieceSquareTables;
-use search::{Depth, Search, SearchReport, TableEntry, TranspositionTable};
+use search::{Depth, Search, TableEntry, TranspositionTable};
 use time_budget::TimeBudget;
 use uci::{GoLimits, Response, SearchInfo};
 

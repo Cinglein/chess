@@ -1,4 +1,3 @@
-use search::SearchReport;
 mod line_reader;
 
 use std::io::Write;
@@ -122,7 +121,7 @@ impl Opponent for UciProcess {
         self.send(Command::Position(position))?;
         self.send(Command::Go(limits))?;
         self.await_response(Self::allowance(&limits), None, |score, response| {
-            let score = response.info().map(|info| info.score()).or(score);
+            let score = response.info().map(|info| *info.as_ref()).or(score);
             response
                 .best_move()
                 .map_or(ControlFlow::Continue(score), |notation| {

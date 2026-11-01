@@ -1,7 +1,6 @@
 use board::LongAlgebraic;
 use eval::Score;
 use proptest::prelude::*;
-use search::SearchReport;
 use uci_response::{Response, SearchInfo};
 const STOCKFISH_INFO: &str =
     "info depth 1 seldepth 0 multipv 1 score cp 0 nodes 0 nps 0 hashfull 0 tbhits 0 time 1 pv ";
@@ -52,5 +51,8 @@ fn every_response_prints_as_the_line_the_arena_keeps_and_lines_without_a_search_
         assert_eq!(printed.as_deref().map_err(String::as_str), kept, "{line}");
     }
     let mated = Response::try_from(MATED).unwrap().info();
-    assert_eq!(mated.map(|info| info.score()), Some(-Score::mate_in(0)));
+    assert_eq!(
+        mated.map(|info| *AsRef::<Score>::as_ref(&info)),
+        Some(-Score::mate_in(0))
+    );
 }

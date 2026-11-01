@@ -4,7 +4,6 @@ mod en_passant;
 mod move_kind;
 mod normal;
 mod promotion;
-mod step;
 
 pub use castling::Castling;
 pub use double_push::DoublePush;
@@ -12,7 +11,6 @@ pub use en_passant::EnPassant;
 pub use move_kind::MoveKind;
 pub use normal::Normal;
 pub use promotion::Promotion;
-pub use step::Step;
 
 use core::fmt;
 

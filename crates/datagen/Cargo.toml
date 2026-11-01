@@ -7,7 +7,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-settings = { package = "chess_settings", version = "0.1.0", path = "../settings" }
 arena = { version = "0.1.0", path = "../arena" }
 board = { version = "0.1.0", path = "../board", features = ["serde"] }
 bulletformat = "1.8.0"
@@ -15,9 +14,11 @@ clap = { version = "4", features = ["derive"] }
 derive_more = { version = "2", features = ["add", "display"] }
 eval = { version = "0.1.0", path = "../eval" }
 game = { version = "0.1.0", path = "../game" }
+newtype.workspace = true
 opponent_ports = { version = "0.1.0", path = "../opponent_ports" }
-tally = { version = "0.1.0", path = "../tally" }
 serde = { version = "1", features = ["derive"] }
+settings = { package = "chess_settings", version = "0.1.0", path = "../settings" }
+tally = { version = "0.1.0", path = "../tally" }
 thiserror = "2"
 toml = "0.9"
 
