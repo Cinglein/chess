@@ -35,7 +35,6 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
-      - run: cargo xtask lint
 
   lint:
     runs-on: ubuntu-latest
