@@ -20,6 +20,10 @@ const UNBOUNDED: &str = "go infinite";
 const SETTLED_DEPTH: Depth = Depth::new(4);
 const SEARCH_CEILING: Depth = Depth::new(63);
 const STOP_AFTER: Duration = Duration::from_millis(20);
+const REPORT_LAG: Duration = Duration::from_millis(10);
+const SHORT_OF_THE_LAG: &str = "go movetime 10";
+const MANY_MOVES_OF_LAG: &str = "go wtime 6000 btime 6000";
+const ONE_PLY: Depth = Depth::new(1);
 
 #[derive(Default)]
 struct Lines(Vec<String>);
@@ -41,6 +45,28 @@ impl Lines {
 
     fn answered(&self) -> bool {
         self.0.iter().any(|line| line.starts_with("bestmove"))
+    }
+}
+
+#[derive(Default)]
+struct Lagging(Lines);
+
+impl Sink for Lagging {
+    fn emit(&mut self, response: Response<'_>) {
+        self.0.emit(response);
+        thread::sleep(REPORT_LAG);
+    }
+}
+
+impl Lagging {
+    fn deepest_after(line: &str) -> Option<Depth> {
+        let fresh = Engine::new(Arc::default(), Lagging::default());
+        Command::try_from(line)
+            .unwrap()
+            .deliver_to(fresh)
+            .sink()
+            .0
+            .deepest()
     }
 }
 
@@ -128,4 +154,11 @@ fn a_move_spends_its_own_sides_clock_and_never_more_than_that_clock_holds() {
         assert!(engine.sink().answered(), "{lines:?}");
         assert!(elapsed < Duration::from_secs(1), "{lines:?}: {elapsed:?}");
     }
+}
+
+#[test]
+fn a_search_past_half_its_allowance_starts_no_new_ply_and_a_clock_grants_a_share_of_what_it_holds()
+{
+    assert_eq!(Lagging::deepest_after(SHORT_OF_THE_LAG), Some(ONE_PLY));
+    assert!(Lagging::deepest_after(MANY_MOVES_OF_LAG) > Some(ONE_PLY));
 }

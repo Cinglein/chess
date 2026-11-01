@@ -1,6 +1,9 @@
 use board::{Board, ChessMove, LongAlgebraic, MoveKind, Square};
 use fen::FenError;
 use proptest::prelude::*;
+use proptest::strategy::ValueTree;
+use proptest::test_runner::TestRunner;
+const RANDOM_SAMPLES: usize = 16;
 const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const ROUNDTRIPS: [&str; 2] = [
     "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2",
@@ -109,4 +112,14 @@ fn any_reachable_position_roundtrips_through_fen_and_its_hash_matches_a_fresh_pa
             prop_assert_eq!(next.to_string().parse::<Board>().unwrap().hash(), next.hash());
         }
     });
+}
+
+#[test]
+fn random_boards_walk_away_from_the_start() {
+    let mut runner = TestRunner::deterministic();
+    let boards = any::<Board>();
+    assert!(
+        (0..RANDOM_SAMPLES)
+            .any(|_| { boards.new_tree(&mut runner).unwrap().current() != Board::START })
+    );
 }
