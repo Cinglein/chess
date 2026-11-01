@@ -1,9 +1,9 @@
 use std::process::ExitCode;
 
-use datagen::CommandLine;
+use trainer_cli::CommandLine;
 
 fn main() -> ExitCode {
-    match CommandLine::generate() {
+    match CommandLine::train() {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");

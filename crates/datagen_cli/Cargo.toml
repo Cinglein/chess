@@ -1,0 +1,23 @@
+[package]
+name = "datagen_cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "datagen"
+path = "src/main.rs"
+
+[dependencies]
+arena = { version = "0.1.0", path = "../arena" }
+clap = { version = "4", features = ["derive"] }
+datagen = { version = "0.1.0", path = "../datagen" }
+game = { version = "0.1.0", path = "../game" }
+settings = { package = "chess_settings", version = "0.1.0", path = "../settings" }
+thiserror = "2"
+
+[lints]
+workspace = true
