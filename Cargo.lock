@@ -219,6 +219,7 @@ dependencies = [
  "board",
  "engine",
  "game",
+ "newtype",
  "opponent_ports",
  "uci",
 ]
@@ -228,6 +229,7 @@ name = "chess_settings"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "tempfile",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -1262,6 +1264,7 @@ dependencies = [
  "derive_more",
  "rand 0.10.3",
  "serde",
+ "tempfile",
  "thiserror",
  "toml 0.9.12+spec-1.1.0",
  "trainer_network",
@@ -1284,6 +1287,7 @@ dependencies = [
  "bullet_lib",
  "derive_more",
  "eval",
+ "newtype",
  "serde",
  "toml 0.9.12+spec-1.1.0",
 ]
@@ -1300,6 +1304,7 @@ dependencies = [
  "derive_more",
  "go_limits",
  "itertools",
+ "newtype",
  "proptest",
  "serde",
  "strum",
@@ -1313,7 +1318,9 @@ name = "uci_response"
 version = "0.1.0"
 dependencies = [
  "board",
+ "derive_more",
  "eval",
+ "newtype",
  "proptest",
  "search",
  "strum",

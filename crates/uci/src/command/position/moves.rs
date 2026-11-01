@@ -2,20 +2,24 @@ use core::fmt;
 
 use board::LongAlgebraic;
 use itertools::{Either, Itertools};
+use newtype::Newtype;
+use uci_response::LineText;
 
 use crate::uci_error::UciError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Moves<'source> {
     Played(&'source [LongAlgebraic]),
-    Written(&'source str),
+    Written(LineText<'source>),
 }
 
 impl Moves<'_> {
     pub fn iter(&self) -> impl Iterator<Item = Result<LongAlgebraic, UciError>> + '_ {
         match self {
             Moves::Played(moves) => Either::Left(moves.iter().copied().map(Ok)),
-            Moves::Written(text) => Either::Right(text.split_whitespace().map(Self::parsed)),
+            Moves::Written(text) => {
+                Either::Right(text.into_inner().split_whitespace().map(Self::parsed))
+            }
         }
     }
 
@@ -28,7 +32,7 @@ impl fmt::Display for Moves<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Moves::Played(moves) => write!(formatter, "{}", moves.iter().format(" ")),
-            Moves::Written(text) => formatter.write_str(text.trim()),
+            Moves::Written(text) => formatter.write_str(text.into_inner().trim()),
         }
     }
 }

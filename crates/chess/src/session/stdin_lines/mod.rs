@@ -1,3 +1,5 @@
+mod input_line;
+
 use std::io::{self, BufRead};
 use std::ops::ControlFlow;
 use std::sync::Arc;
@@ -7,10 +9,12 @@ use std::thread;
 
 use uci::{Command, Urgency};
 
+use input_line::InputLine;
+
 pub struct StdinLines;
 
 impl StdinLines {
-    pub fn spawn(stop: Arc<AtomicBool>) -> Receiver<String> {
+    pub fn spawn(stop: Arc<AtomicBool>) -> Receiver<InputLine> {
         let (sender, receiver) = mpsc::channel();
         thread::spawn(move || {
             io::stdin()
@@ -22,13 +26,13 @@ impl StdinLines {
         receiver
     }
 
-    fn relay(stop: &AtomicBool, sender: &Sender<String>, line: String) -> ControlFlow<()> {
+    fn relay(stop: &AtomicBool, sender: &Sender<InputLine>, line: String) -> ControlFlow<()> {
         stop.fetch_or(
             Command::try_from(line.as_str())
                 .is_ok_and(|command| command.urgency() == Urgency::Interrupting),
             Ordering::Relaxed,
         );
-        match sender.send(line) {
+        match sender.send(InputLine::new(line)) {
             Ok(()) => ControlFlow::Continue(()),
             Err(_) => ControlFlow::Break(()),
         }

@@ -11,7 +11,7 @@ use board::{Board, State};
 use lifecycle::Lifecycle;
 use search::TableEntry;
 use thinker::Thinker;
-use uci::{EngineOption, GoLimits, Identity, Position, Receiver, Response};
+use uci::{EngineOption, GoLimits, Identity, LineText, Position, Receiver, Response};
 
 pub struct Engine<S: Sink> {
     board: Board,
@@ -70,8 +70,10 @@ impl<S: Sink> Engine<S> {
 
 impl<'line, S: Sink> Receiver<'line> for Engine<S> {
     fn identify(mut self) -> Self {
-        self.sink.emit(Response::Id(Identity::Name(Self::NAME)));
-        self.sink.emit(Response::Id(Identity::Author(Self::AUTHOR)));
+        self.sink
+            .emit(Response::Id(Identity::Name(LineText::new(Self::NAME))));
+        self.sink
+            .emit(Response::Id(Identity::Author(LineText::new(Self::AUTHOR))));
         self.sink.emit(Response::UciOk);
         self
     }

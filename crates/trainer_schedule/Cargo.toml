@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 derive_more = { version = "2", features = ["display"] }
 eval = { version = "0.1.0", path = "../eval" }
+newtype.workspace = true
 serde = { version = "1", features = ["derive"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]

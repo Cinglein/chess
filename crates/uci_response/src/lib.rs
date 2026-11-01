@@ -1,12 +1,14 @@
 #![cfg_attr(not(test), no_std)]
 
 mod identity;
+mod line_text;
 mod no_move;
 mod response_error;
 mod response_word;
 mod search_info;
 
 pub use identity::Identity;
+pub use line_text::LineText;
 pub use search_info::SearchInfo;
 
 use core::fmt;

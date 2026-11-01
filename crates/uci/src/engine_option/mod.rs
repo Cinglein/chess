@@ -12,14 +12,15 @@ use option_name::OptionName;
 use option_word::OptionWord;
 
 use crate::uci_error::UciError;
+use uci_response::LineText;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EngineOption<'line> {
     LimitStrength(Switch),
     Elo(Elo),
     Other {
-        name: &'line str,
-        setting: &'line str,
+        name: LineText<'line>,
+        setting: LineText<'line>,
     },
 }
 
@@ -43,8 +44,8 @@ impl<'line> TryFrom<&'line str> for EngineOption<'line> {
                 .map(EngineOption::Elo)
                 .map_err(|_| UciError::EngineOption),
             Err(_) => Ok(EngineOption::Other {
-                name: name.trim(),
-                setting,
+                name: LineText::new(name.trim()),
+                setting: LineText::new(setting),
             }),
         }
     }
