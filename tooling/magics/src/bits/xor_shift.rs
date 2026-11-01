@@ -1,13 +1,14 @@
 pub struct XorShift(u64);
 
 impl XorShift {
-    #[must_use]
-    pub const fn new(seed: u64) -> XorShift {
-        XorShift(seed)
-    }
-
     pub fn sparse(&mut self) -> u64 {
         self.take(3).fold(u64::MAX, |bits, word| bits & word)
+    }
+}
+
+impl From<u64> for XorShift {
+    fn from(seed: u64) -> XorShift {
+        XorShift(seed)
     }
 }
 

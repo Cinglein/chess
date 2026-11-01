@@ -5,6 +5,7 @@ mod move_generator;
 #[cfg(feature = "proptest")]
 mod playout;
 
+use crate::incremented::Incremented;
 pub use fullmove_number::FullmoveNumber;
 pub use halfmove_clock::HalfmoveClock;
 pub use move_generator::MoveGenerator;

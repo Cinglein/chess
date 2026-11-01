@@ -8,7 +8,7 @@ use board::{LongAlgebraic, NodeCount};
 use eval::{Evaluator, Score};
 use info_builder::InfoBuilder;
 use info_key::InfoKey;
-use search::{Depth, Search};
+use search::{Depth, Search, SearchReport};
 
 use crate::response_error::ResponseError;
 
@@ -32,14 +32,14 @@ impl SearchInfo {
             best_move: search.best_move().map(LongAlgebraic::from),
         }
     }
+}
 
-    #[must_use]
-    pub const fn depth(&self) -> Depth {
+impl SearchReport for SearchInfo {
+    fn depth(&self) -> Depth {
         self.depth
     }
 
-    #[must_use]
-    pub const fn score(&self) -> Score {
+    fn score(&self) -> Score {
         self.score
     }
 }

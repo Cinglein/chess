@@ -4,6 +4,7 @@ mod pair_count;
 mod pair_score;
 mod score_fraction;
 
+use board::Incremented;
 pub use elo_estimate::EloEstimate;
 pub(super) use pair_score::PairScore;
 

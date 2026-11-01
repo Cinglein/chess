@@ -1,3 +1,4 @@
+use board::Incremented;
 use derive_more::{Display, FromStr};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, FromStr)]
@@ -14,11 +15,6 @@ impl Depth {
     #[must_use]
     pub const fn plies(self) -> u8 {
         self.0
-    }
-
-    #[must_use]
-    pub const fn incremented(self) -> Depth {
-        Depth(self.0.saturating_add(1))
     }
 
     #[must_use]
@@ -40,5 +36,11 @@ impl proptest::arbitrary::Arbitrary for Depth {
         proptest::arbitrary::any::<u8>()
             .prop_map(Depth::new)
             .boxed()
+    }
+}
+
+impl Incremented for Depth {
+    fn incremented(self) -> Depth {
+        Depth(self.0.saturating_add(1))
     }
 }

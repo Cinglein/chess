@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 board = { version = "0.1.0", path = "../board" }
-derive_more = { version = "2", features = ["add", "display", "from_str", "sum"] }
+derive_more = { version = "2", features = ["add", "display", "from", "from_str", "sum"] }
 enum-map = "3"
 strum = { version = "0.28", default-features = false, features = ["derive"] }
 

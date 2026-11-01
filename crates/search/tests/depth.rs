@@ -1,3 +1,4 @@
+use board::Incremented;
 use proptest::prelude::*;
 use search::Depth;
 #[test]

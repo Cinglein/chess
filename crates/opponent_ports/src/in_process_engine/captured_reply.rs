@@ -1,6 +1,7 @@
 use board::LongAlgebraic;
 use engine::Sink;
 use eval::Score;
+use search::SearchReport;
 use uci::Response;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

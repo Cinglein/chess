@@ -5,6 +5,7 @@ mod progress;
 mod table;
 mod window;
 
+use table::Remembered;
 pub(crate) use table::RootDistance;
 pub use table::{TableEntry, TranspositionTable};
 pub(crate) use window::{Bound, Lower, Window};

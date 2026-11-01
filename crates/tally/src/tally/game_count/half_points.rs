@@ -1,14 +1,12 @@
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+use derive_more::From;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, From)]
 pub(in crate::tally) struct HalfPoints(usize);
 
 impl HalfPoints {
     const PER_POINT: usize = 2;
-
-    pub(super) const fn new(half_points: usize) -> HalfPoints {
-        HalfPoints(half_points)
-    }
 }
 
 impl fmt::Display for HalfPoints {

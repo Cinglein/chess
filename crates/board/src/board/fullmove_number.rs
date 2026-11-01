@@ -1,3 +1,4 @@
+use crate::incremented::Incremented;
 use core::num::NonZeroU16;
 
 use derive_more::{Display, FromStr};
@@ -19,9 +20,10 @@ impl FullmoveNumber {
     pub const fn new(number: NonZeroU16) -> Self {
         FullmoveNumber(number)
     }
+}
 
-    #[must_use]
-    pub const fn incremented(self) -> Self {
+impl Incremented for FullmoveNumber {
+    fn incremented(self) -> FullmoveNumber {
         FullmoveNumber(self.0.saturating_add(1))
     }
 }

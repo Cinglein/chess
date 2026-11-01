@@ -3,7 +3,7 @@ use board::{FullmoveNumber, NodeCount, PlyCount};
 use datagen::{PositionCount, SelfPlay};
 use game::{Finished, Rules};
 use std::num::NonZeroU16;
-const SEED: Seed = Seed::new(3);
+const SEED: u64 = 3;
 const PLIES: PlyCount = PlyCount::new(6);
 const SHORT: Rules = Rules::at_fixed_nodes(NodeCount::new(64))
     .lasting_at_most(FullmoveNumber::new(NonZeroU16::new(6).unwrap()));
@@ -13,10 +13,14 @@ struct Fixture;
 
 impl Fixture {
     fn games_until(target: PositionCount) -> Vec<Finished> {
-        SelfPlay::new(RandomOpenings::seeded(SEED, PLIES), SHORT, target)
-            .play(WorkerCount::new(1))
-            .into_iter()
-            .collect()
+        SelfPlay::new(
+            RandomOpenings::seeded(Seed::from(SEED), PLIES),
+            SHORT,
+            target,
+        )
+        .play(WorkerCount::from(1))
+        .into_iter()
+        .collect()
     }
 }
 

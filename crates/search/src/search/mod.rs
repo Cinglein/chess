@@ -2,10 +2,13 @@ mod depth;
 mod interrupt;
 mod negamax;
 mod principal;
+mod search_report;
 
+use board::Incremented;
 pub use depth::Depth;
 pub use interrupt::Interrupt;
 pub use negamax::{TableEntry, TranspositionTable};
+pub use search_report::SearchReport;
 
 use core::marker::PhantomData;
 
@@ -33,18 +36,8 @@ impl<E: Evaluator> Search<E> {
     }
 
     #[must_use]
-    pub const fn depth(&self) -> Depth {
-        self.depth
-    }
-
-    #[must_use]
     pub const fn best_move(&self) -> Option<ChessMove> {
         self.best_move
-    }
-
-    #[must_use]
-    pub const fn score(&self) -> Score {
-        self.score
     }
 
     #[must_use]
@@ -88,6 +81,16 @@ impl<E: Evaluator> Search<E> {
                 ..self
             }
         }
+    }
+}
+
+impl<E: Evaluator> SearchReport for Search<E> {
+    fn depth(&self) -> Depth {
+        self.depth
+    }
+
+    fn score(&self) -> Score {
+        self.score
     }
 }
 

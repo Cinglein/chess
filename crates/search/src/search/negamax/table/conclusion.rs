@@ -2,6 +2,7 @@ use board::ChessMove;
 use eval::Score;
 
 use super::bound_kind::BoundKind;
+use super::remembered::Remembered;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Conclusion {
@@ -23,15 +24,17 @@ impl Conclusion {
         }
     }
 
-    pub(crate) const fn best_move(&self) -> Option<ChessMove> {
-        self.best_move
-    }
-
     pub(crate) const fn score(&self) -> Score {
         self.score
     }
 
     pub(crate) const fn kind(&self) -> BoundKind {
         self.kind
+    }
+}
+
+impl Remembered for Conclusion {
+    fn best_move(&self) -> Option<ChessMove> {
+        self.best_move
     }
 }
