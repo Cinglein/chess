@@ -1,6 +1,8 @@
 exclude_globs = [
     "crates/*/src/main.rs",
     "tooling/*/src/main.rs",
+    "tooling/accept_ports/**",
+    "tooling/report_ports/**",
     "crates/*/src/command_line/**",
     "crates/chess/**",
     "crates/tui/**",

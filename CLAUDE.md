@@ -27,6 +27,8 @@ Rust chess engine trained with `bullet`, 1000 Elo as a floor, with a terminal UI
 - Tooling: lints run through the `lint` binary from Studio-Terza/meta-dev, installed in CI at the
   tag `LINT_TAG` in `.github/workflows/ci.yml`. There is no lint configuration and no
   baseline. `tooling/magics` regenerates the magic tables: `cargo run -p magics`.
+  Workflow steps are one line; the logic is Rust: `cargo ci-accept` (`tooling/accept_ports`) runs a command and
+  maps listed exit codes to success, and `cargo ci-report` (`tooling/report_ports`) writes the mutants summary and issue.
 - `crates/game`: `Game`, `Rules`, the `Opponent` trait and what a game produces (`Finished`, `Label`).
 - `crates/tally`: `Tally` and `Verdict`, the Elo arithmetic of a series.
 - `crates/opponent_ports`: `UciProcess`, `InProcessEngine` and `Contestant`; the only code that

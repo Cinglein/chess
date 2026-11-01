@@ -14,7 +14,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: 4
-  LINT_TAG: v0.1.1
+  LINT_TAG: v0.1.4
   MUTANT_SHARDS: 4
 
 jobs:
@@ -52,7 +52,7 @@ jobs:
           components: clippy
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --target wasm32-unknown-unknown -p board -p eval -p fen -p go_limits -p search -p uci -p uci_response -- -D warnings
+      - run: cargo wasm-clippy
 
   mutants:
     if: github.event_name == 'pull_request'
@@ -74,28 +74,19 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-mutants@27.1.0
-      - run: git diff HEAD^1 HEAD -- '*.rs' > "$RUNNER_TEMP/changed.diff"
+      - run: git diff --output=changed.diff HEAD^1 HEAD -- '*.rs'
       - name: mutants in changed lines
         env:
+          ACCEPT: "3"
           CARGO_INCREMENTAL: 1
           SHARD: ${{ matrix.shard }}/${{ env.MUTANT_SHARDS }}
-        run: |
-          status=0
-          cargo mutants --in-diff "$RUNNER_TEMP/changed.diff" --shard "$SHARD" --output "$RUNNER_TEMP" --colors never || status=$?
-          missed="$RUNNER_TEMP/mutants.out/missed.txt"
-          if [ -s "$missed" ]; then
-            { echo '### Missed mutants'; echo '```'; cat "$missed"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            sed 's/^/::error::missed mutant: /' "$missed"
-            exit 2
-          fi
-          if [ "$status" -eq 3 ] && [ -f "$missed" ]; then exit 0; fi
-          exit "$status"
+        run: cargo ci-accept cargo mutants --in-diff changed.diff --shard "$SHARD"
 
   ci-gate:
     needs: [ci, lint, wasm, mutants]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"' && exit 1
-          echo "every job passed or was not needed"
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "every job passed or was not needed"
