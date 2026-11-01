@@ -2,22 +2,10 @@ use newtype::Newtype;
 use std::time::Duration;
 
 use derive_more::{Add, Display};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Add,
-    Display,
-    Serialize,
-    Deserialize,
-    Newtype,
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Add, Display, Deserialize, Newtype,
 )]
 #[serde(transparent)]
 pub struct PositionCount(usize);

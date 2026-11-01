@@ -14,11 +14,11 @@ use eval::NetworkFormat;
 use learning_rate::LearningRate;
 pub use net_id::NetId;
 use newtype::Newtype;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use superbatch_count::SuperbatchCount;
 use wdl_weight::WdlWeight;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Schedule {
     batch_size: usize,

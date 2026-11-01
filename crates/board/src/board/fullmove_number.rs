@@ -3,12 +3,12 @@ use newtype::Newtype;
 
 use derive_more::{Display, FromStr};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::state::State;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Display, FromStr, Newtype)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct FullmoveNumber(NonZeroU16);
 
 impl State for FullmoveNumber {}

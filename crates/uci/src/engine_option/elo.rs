@@ -1,9 +1,9 @@
 use derive_more::{Display, FromStr};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Display, FromStr)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct Elo(u16);
 
 impl Elo {

@@ -1,8 +1,8 @@
 use board::{FullmoveNumber, PlyCount};
 use eval::Score;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DrawAdjudication {
     after_move: FullmoveNumber,

@@ -1,10 +1,10 @@
 use bullet_lib::trainer::schedule::TrainingSteps;
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::superbatch_count::SuperbatchCount;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Deserialize)]
 #[serde(transparent)]
 pub struct BatchCount(usize);
 

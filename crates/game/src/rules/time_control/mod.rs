@@ -1,15 +1,14 @@
 mod time_control_error;
 
-use std::fmt;
 use std::str::FromStr;
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use time_control_error::TimeControlError;
 use uci::Clock;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "String", into = "String")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "String")]
 pub struct TimeControl {
     base: Duration,
     increment: Duration,
@@ -43,22 +42,5 @@ impl TryFrom<String> for TimeControl {
 
     fn try_from(text: String) -> Result<TimeControl, TimeControlError> {
         text.parse()
-    }
-}
-
-impl From<TimeControl> for String {
-    fn from(time_control: TimeControl) -> String {
-        time_control.to_string()
-    }
-}
-
-impl fmt::Display for TimeControl {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "{}+{}",
-            self.base.as_secs_f64(),
-            self.increment.as_secs_f64()
-        )
     }
 }

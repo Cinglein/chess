@@ -1,10 +1,10 @@
 mod thread_count;
 
 use bullet_lib::trainer::settings::LocalSettings;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use thread_count::ThreadCount;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Machine {
     #[serde(default)]

@@ -1,4 +1,5 @@
 use board::Square;
+use proptest::prelude::any;
 
 const UNPARSEABLE: [&str; 5] = ["e9", "i1", "e", "", "e44"];
 const MIRRORED: [(Square, Square); 3] = [
@@ -6,6 +7,14 @@ const MIRRORED: [(Square, Square); 3] = [
     (Square::E2, Square::E7),
     (Square::H8, Square::H1),
 ];
+
+laws::roundtrip!(
+    any_square_prints_and_parses_back_to_itself,
+    any::<Square>(),
+    ToString::to_string,
+    |text: &String| text.parse::<Square>(),
+    Ok
+);
 
 #[test]
 fn malformed_square_text_is_rejected() {

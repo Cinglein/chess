@@ -1,10 +1,10 @@
 use crate::PositionCount;
 use arena::WorkerCount;
 use board::{NodeCount, PlyCount};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use settings::EmbeddedDefaults;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     #[serde(default = "WorkerCount::one_per_core")]

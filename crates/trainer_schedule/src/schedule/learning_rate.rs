@@ -1,11 +1,11 @@
 use bullet_lib::trainer::schedule::lr::StepLR;
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::decay::Decay;
 use super::superbatch_count::SuperbatchCount;
 
-#[derive(Clone, Copy, Debug, PartialEq, Display, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Display, Deserialize)]
 #[serde(transparent)]
 pub struct LearningRate(f32);
 

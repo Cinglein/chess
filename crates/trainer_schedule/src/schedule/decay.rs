@@ -1,7 +1,7 @@
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Display, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Display, Deserialize)]
 #[serde(transparent)]
 pub struct Decay(f32);
 

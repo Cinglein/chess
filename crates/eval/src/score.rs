@@ -5,7 +5,7 @@ use newtype::Newtype;
 
 use derive_more::{Add, Display, FromStr, Sub};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(
     Clone,
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
     FromStr,
     Newtype,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
 pub struct Score(i32);
 
 impl Score {
