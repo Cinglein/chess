@@ -23,7 +23,7 @@ impl Thinking {
     #[must_use]
     pub fn flag(&self, spent: Duration, remaining: Duration) -> Flag {
         match self {
-            Thinking::Timed if spent > remaining => Flag::Fallen,
+            Thinking::Timed if remaining.checked_sub(spent).is_none() => Flag::Fallen,
             Thinking::Timed | Thinking::FixedNodes(_) => Flag::Standing,
         }
     }
