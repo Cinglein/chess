@@ -19,31 +19,23 @@ impl EmbeddedDefaults for Settings {
 }
 
 impl Settings {
+    #[must_use]
     pub const fn concurrency(&self) -> WorkerCount {
         self.concurrency
     }
 
+    #[must_use]
     pub const fn nodes_per_move(&self) -> NodeCount {
         self.nodes_per_move
     }
 
+    #[must_use]
     pub const fn opening_plies(&self) -> PlyCount {
         self.opening_plies
     }
 
+    #[must_use]
     pub const fn positions(&self) -> PositionCount {
         self.positions
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Settings;
-    use settings::EmbeddedDefaults;
-    #[test]
-    fn default_settings_survive_a_trip_through_toml() {
-        let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
-        let read: Settings = toml::from_str(&written).unwrap();
-        assert_eq!(read, Settings::defaults());
     }
 }

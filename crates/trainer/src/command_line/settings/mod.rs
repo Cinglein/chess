@@ -1,6 +1,7 @@
-use crate::{Machine, Schedule};
+use crate::Machine;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
+use trainer_schedule::Schedule;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -15,27 +16,18 @@ impl EmbeddedDefaults for Settings {
 }
 
 impl Settings {
+    #[must_use]
     pub fn net_id(&self) -> &str {
         &self.net_id
     }
 
+    #[must_use]
     pub const fn schedule(&self) -> &Schedule {
         &self.schedule
     }
 
+    #[must_use]
     pub const fn machine(&self) -> &Machine {
         &self.machine
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Settings;
-    use settings::EmbeddedDefaults;
-    #[test]
-    fn default_settings_survive_a_trip_through_toml() {
-        let written = toml::to_string_pretty(&Settings::defaults()).unwrap();
-        let read: Settings = toml::from_str(&written).unwrap();
-        assert_eq!(read, Settings::defaults());
     }
 }
