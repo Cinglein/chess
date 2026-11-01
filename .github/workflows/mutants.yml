@@ -36,18 +36,15 @@ jobs:
           tool: cargo-mutants@27.1.0
       - name: mutants in shard
         env:
+          ACCEPT: "2 3"
           CARGO_INCREMENTAL: 1
           SHARD: ${{ matrix.shard }}/${{ env.MUTANT_SHARDS }}
-        run: |
-          status=0
-          cargo mutants --shard "$SHARD" --sharding round-robin --output target/mutants --colors never || status=$?
-          if [ "$status" -eq 2 ] || { [ "$status" -eq 3 ] && [ -f target/mutants/mutants.out/missed.txt ]; }; then exit 0; fi
-          exit "$status"
+        run: cargo ci-accept cargo mutants --shard "$SHARD" --sharding round-robin
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mutants-${{ strategy.job-index }}
-          path: target/mutants
+          path: mutants.out
 
   mutants-gate:
     needs: [full]
@@ -59,45 +56,18 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       ISSUE_TITLE: Surviving mutants on main
+      FAILED: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+      ON_MAIN: ${{ github.ref == 'refs/heads/main' }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.0
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           pattern: mutants-*
           path: shards
-      - id: verdict
-        run: |
-          find shards -name missed.txt -exec cat {} + 2>/dev/null | sort -u > missed.txt
-          { echo "Run: $RUN_URL"; echo; echo '```'; cat missed.txt; echo '```'; } > body.md
-          cat body.md >> "$GITHUB_STEP_SUMMARY"
-          if echo '${{ toJSON(needs) }}' | grep -qE '"result": "(failure|cancelled)"'; then
-            echo "verdict=failed" >> "$GITHUB_OUTPUT"
-          elif [ -s missed.txt ]; then
-            echo "verdict=missed" >> "$GITHUB_OUTPUT"
-          else
-            echo "verdict=green" >> "$GITHUB_OUTPUT"
-          fi
-      - id: issue
-        if: github.ref == 'refs/heads/main'
-        run: |
-          open=$(gh issue list --state open --json number,title --jq "first(.[] | select(.title == \"$ISSUE_TITLE\") | .number)")
-          echo "number=$open" >> "$GITHUB_OUTPUT"
-      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict != 'green'
-        env:
-          ISSUE: ${{ steps.issue.outputs.number }}
-        run: |
-          if [ -n "$ISSUE" ]; then
-            gh issue edit "$ISSUE" --body-file body.md
-            gh issue comment "$ISSUE" --body "Still failing: $RUN_URL"
-          else
-            gh issue create --title "$ISSUE_TITLE" --body-file body.md
-          fi
-      - if: github.ref == 'refs/heads/main' && steps.verdict.outputs.verdict == 'green' && steps.issue.outputs.number != ''
-        env:
-          ISSUE: ${{ steps.issue.outputs.number }}
-        run: |
-          gh issue close "$ISSUE" --comment "Green again: $RUN_URL"
-      - if: steps.verdict.outputs.verdict == 'failed'
+      - run: cargo ci-report "$RUN_URL" "$ISSUE_TITLE" "$FAILED" "$ON_MAIN"
+      - if: env.FAILED == 'true'
         run: exit 1
-      - run: echo "every shard finished; missed mutants, if any, are in the summary and the issue"
+      - run: echo "every shard finished, and any missed mutants are in the summary and the issue"

@@ -1,2 +1,7 @@
 [build]
 jobs = 3
+
+[alias]
+wasm-clippy = "clippy --target wasm32-unknown-unknown -p board -p eval -p fen -p go_limits -p search -p uci -p uci_response -- -D warnings"
+ci-accept = "run -q -p accept_ports --"
+ci-report = "run -q -p report_ports --"
