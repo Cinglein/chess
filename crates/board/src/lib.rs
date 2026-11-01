@@ -30,7 +30,6 @@ mod zobrist_keys;
 
 pub use bitboard::{Bitboard, SetOperation, SubsetIter};
 pub use board::{Board, FullmoveNumber, HalfmoveClock, MoveList};
-pub use castling_rights::CastlingRights;
 pub use chess_move::{ChessMove, MoveKind};
 pub use color::Color;
 pub use long_algebraic::LongAlgebraic;

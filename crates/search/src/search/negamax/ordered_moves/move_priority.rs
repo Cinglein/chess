@@ -1,4 +1,4 @@
-use board::{Board, ChessMove, MoveKind, PieceKind};
+use board::{Board, ChessMove, MoveKind, Piece};
 use eval::{PieceKindValue, Score};
 
 use super::killers::Killers;
@@ -26,7 +26,7 @@ impl MovePriority {
             _ if principal == Some(chess_move) => MovePriority::Principal,
             _ if chess_move.promotion_piece().is_some() => MovePriority::Promotion,
             (Some(victim), Some(attacker)) => {
-                MovePriority::Capture(CaptureGain::new(victim.kind(), attacker.kind()))
+                MovePriority::Capture(CaptureGain::new(victim, attacker))
             }
             _ if killers.remembers(chess_move) => MovePriority::Killer,
             _ => MovePriority::Quiet,
@@ -41,10 +41,10 @@ pub(crate) struct CaptureGain {
 }
 
 impl CaptureGain {
-    fn new(victim: PieceKind, attacker: PieceKind) -> CaptureGain {
+    fn new(victim: Piece, attacker: Piece) -> CaptureGain {
         CaptureGain {
-            victim: PieceKindValue::material(victim),
-            cheapest_attacker: -PieceKindValue::material(attacker),
+            victim: PieceKindValue::material(victim.kind()),
+            cheapest_attacker: -PieceKindValue::material(attacker.kind()),
         }
     }
 }
