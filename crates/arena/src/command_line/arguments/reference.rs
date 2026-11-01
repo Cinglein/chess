@@ -1,6 +1,6 @@
 use super::Arguments;
-use super::contestant::Contestant;
 use super::role::Role;
+use opponent_ports::Contestant;
 
 pub struct Reference;
 

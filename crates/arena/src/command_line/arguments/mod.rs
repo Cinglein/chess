@@ -1,16 +1,15 @@
 mod challenger;
-mod contestant;
 mod reference;
 mod role;
 
 pub use challenger::Challenger;
-pub use contestant::Contestant;
 pub use reference::Reference;
 pub use role::Role;
 
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
+use opponent_ports::Contestant;
 
 #[derive(Debug, Parser)]
 #[command(about = "Play paired games from a set of openings and tally them for the challenger")]

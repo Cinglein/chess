@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::num::NonZeroU16;
 use std::str::FromStr;
+use std::thread;
 use std::time::Duration;
 use uci::{Clock, GoLimits, Increment, Position, Remaining};
 const MATE_IN_ONE: &str = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
@@ -25,6 +26,7 @@ const STALEMATED: &str = "position fen 7k/5Q2/6K1/8/8/8/8/8 b - - 0 1\n1/2-1/2 {
 const FIFTY_MOVES: &str =
     "position fen 4k3/8/8/8/8/8/8/4K2R w - - 100 60\n1/2-1/2 {fifty moves without progress}";
 const NO_MOVE: &str = "position startpos\n0-1 {engine failure: the engine had no move}";
+const A_MILLISECOND: Duration = Duration::from_millis(1);
 const A_NANOSECOND: Duration = Duration::from_nanos(1);
 const A_MINUTE: Duration = Duration::from_secs(60);
 const NO_TIME: Clock = Clock::new(A_NANOSECOND, A_NANOSECOND, Duration::ZERO, Duration::ZERO);
@@ -107,6 +109,20 @@ impl Opponent for &Script {
     }
 }
 
+struct SlowMover;
+
+impl Opponent for SlowMover {
+    fn begin_game(&mut self) -> Result<(), ArenaError> {
+        Ok(())
+    }
+
+    fn choose_move(&mut self, _: Position<'_>, _: GoLimits) -> Result<ChosenMove, ArenaError> {
+        thread::sleep(A_MILLISECOND);
+        let notation = OPENING_MOVE.parse().map_err(|_| ArenaError::NoMove)?;
+        Ok(ChosenMove::new(notation, None))
+    }
+}
+
 #[derive(Default)]
 struct ClockReader {
     seen: Option<Clock>,
@@ -155,10 +171,9 @@ fn scripted_games_end_by_repetition_stalemate_fifty_moves_an_illegal_move_or_a_f
 
 #[test]
 fn a_played_move_charges_the_mover_for_its_thinking_time_and_adds_the_increment() {
-    let script: Script = OPENING_MOVE.parse().unwrap();
     let mut reader = ClockReader::default();
     let game = Game::from(Board::START).ruled_by(Rules::DEFAULT.timed(GENEROUS));
-    let _finished = game.play(&mut &script, &mut reader);
+    let _finished = game.play(&mut SlowMover, &mut reader);
     let after = reader.seen.unwrap();
     let [charged, waiting] = [MOVER, WAITER].map(|side| after.time::<Remaining>(side));
     let before = GENEROUS.time::<Remaining>(MOVER);

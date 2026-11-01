@@ -1,5 +1,5 @@
 use super::Arguments;
-use super::contestant::Contestant;
+use opponent_ports::Contestant;
 
 pub trait Role {
     fn pick(arguments: &Arguments) -> &Contestant;

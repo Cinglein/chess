@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use game::{ArenaError, Opponent};
-use opponent_ports::{InProcessEngine, UciProcess};
+
+use crate::{InProcessEngine, UciProcess};
 use strum::EnumString;
 use uci::{Elo, EngineOption, Switch};
 

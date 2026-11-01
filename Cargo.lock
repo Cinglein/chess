@@ -1173,6 +1173,7 @@ dependencies = [
  "eval",
  "game",
  "search",
+ "strum",
  "uci",
 ]
 
