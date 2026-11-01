@@ -2,22 +2,13 @@ mod bits;
 
 pub use bits::{HexLiteral, MagicSearch, MagicTables, XorShift};
 
-use task::Failure;
-use task::Workspace;
-use task::{CargoArgument, Program};
+use std::io;
+use std::path::Path;
 
 pub struct Magics;
 
 impl Magics {
-    const BOARD: &str = "board";
-
-    pub fn run(workspace: &Workspace) -> Result<(), Failure> {
-        MagicTables::find(&mut XorShift::from(MagicTables::SEED)).write(workspace.root())?;
-        workspace
-            .line(Program::Cargo)
-            .argument(CargoArgument::Fmt)
-            .argument(CargoArgument::Package)
-            .argument(Self::BOARD)
-            .run()
+    pub fn run(workspace_root: &Path) -> io::Result<()> {
+        MagicTables::find(&mut XorShift::from(MagicTables::SEED)).write(workspace_root)
     }
 }

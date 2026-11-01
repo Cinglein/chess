@@ -5,8 +5,10 @@ A Rust chess engine with a neural network evaluation trained using [bullet](http
 ## Development
 
 ```
-cargo xtask ci
-cargo xtask wasm
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+lint .
 ```
 
-Runs formatting, clippy, tests, the lints, and the wasm build exactly as CI does.
+`lint` is the runner from [meta-dev](https://github.com/Studio-Terza/meta-dev), at the revision in `.github/workflows/ci.yml`. `cargo run -p magics` regenerates the magic tables.

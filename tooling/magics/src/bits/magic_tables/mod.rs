@@ -3,6 +3,7 @@ mod magic_search;
 
 use std::fmt;
 use std::fs;
+use std::io;
 use std::path::Path;
 
 use board::{Bishop, Rook, Slider, Square};
@@ -11,8 +12,6 @@ use enum_map::EnumMap;
 use super::xor_shift::XorShift;
 pub use hex_literal::HexLiteral;
 pub use magic_search::MagicSearch;
-use task::Failure;
-use task::Site;
 
 pub struct MagicTables {
     rook: EnumMap<Square, u64>,
@@ -32,14 +31,8 @@ impl MagicTables {
         Self::new(Self::find_all::<Rook>(rng), Self::find_all::<Bishop>(rng))
     }
 
-    pub fn write(&self, workspace_root: &Path) -> Result<(), Failure> {
-        let path = workspace_root.join(Self::OUTPUT);
-        fs::write(&path, self.to_string()).map_err(|error| Failure::Io {
-            site: Site::File(Self::OUTPUT.into()),
-            error,
-        })?;
-        println!("wrote {}", Self::OUTPUT);
-        Ok(())
+    pub fn write(&self, workspace_root: &Path) -> io::Result<()> {
+        fs::write(workspace_root.join(Self::OUTPUT), self.to_string())
     }
 
     fn find_all<S: Slider>(rng: &mut XorShift) -> EnumMap<Square, u64> {
