@@ -1,8 +1,8 @@
 use proptest::prelude::*;
-use uci::{Elo, EngineOption, Switch};
+use uci::{Elo, EngineOption, LineText, Switch};
 const OTHER: EngineOption<'static> = EngineOption::Other {
-    name: "Hash",
-    setting: "16",
+    name: LineText::new("Hash"),
+    setting: LineText::new("16"),
 };
 
 #[test]

@@ -1,12 +1,12 @@
 use crate::Machine;
 use serde::{Deserialize, Serialize};
 use settings::EmbeddedDefaults;
-use trainer_schedule::Schedule;
+use trainer_schedule::{NetId, Schedule};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
-    net_id: String,
+    net_id: NetId,
     schedule: Schedule,
     machine: Machine,
 }
@@ -17,7 +17,7 @@ impl EmbeddedDefaults for Settings {
 
 impl Settings {
     #[must_use]
-    pub fn net_id(&self) -> &str {
+    pub const fn net_id(&self) -> &NetId {
         &self.net_id
     }
 

@@ -1,9 +1,11 @@
-use crate::layer::{Biases, Layer, Weights};
+mod layer;
+
 use bullet_lib::game::inputs::Chess768;
 use bullet_lib::nn::optimiser::{AdamW, AdamWOptimiser};
 use bullet_lib::trainer::save::SavedFormat;
 use bullet_lib::value::{NoOutputBuckets, ValueTrainer, ValueTrainerBuilder};
 use eval::NetworkFormat;
+use layer::{Biases, Layer, Part, Weights};
 
 pub struct Network;
 
@@ -15,16 +17,16 @@ impl Network {
             .optimiser(AdamW)
             .inputs(Chess768)
             .save_format(&[
-                SavedFormat::id(Layer::Hidden.saved_as::<Weights>())
+                SavedFormat::id(Weights::saved_name(Layer::Hidden))
                     .round()
                     .quantise::<i16>(NetworkFormat::HIDDEN_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Hidden.saved_as::<Biases>())
+                SavedFormat::id(Biases::saved_name(Layer::Hidden))
                     .round()
                     .quantise::<i16>(NetworkFormat::HIDDEN_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Output.saved_as::<Weights>())
+                SavedFormat::id(Weights::saved_name(Layer::Output))
                     .round()
                     .quantise::<i16>(NetworkFormat::OUTPUT_QUANTISATION.factor()),
-                SavedFormat::id(Layer::Output.saved_as::<Biases>())
+                SavedFormat::id(Biases::saved_name(Layer::Output))
                     .round()
                     .quantise::<i16>(NetworkFormat::OUTPUT_BIAS_QUANTISATION.factor()),
             ])

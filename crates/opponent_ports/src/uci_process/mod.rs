@@ -16,6 +16,7 @@ use game::ArenaError;
 use game::ChosenMove;
 use game::Opponent;
 
+#[must_use]
 pub struct UciProcess {
     child: Child,
     stdin: ChildStdin,

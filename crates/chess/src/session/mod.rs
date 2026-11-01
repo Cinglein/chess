@@ -20,7 +20,7 @@ impl Session {
         let _finished = lines
             .iter()
             .try_fold(Engine::new(stop, StdoutSink), |engine, line| {
-                let engine = match Command::try_from(line.as_str()) {
+                let engine = match Command::try_from(line.as_ref()) {
                     Ok(command) => command.deliver_to(engine),
                     Err(_) => engine,
                 };

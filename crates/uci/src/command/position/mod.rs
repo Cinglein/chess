@@ -9,6 +9,7 @@ use board::{Board, LongAlgebraic};
 use position_word::PositionWord;
 
 use crate::uci_error::UciError;
+use uci_response::LineText;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Position<'moves> {
@@ -52,7 +53,7 @@ impl<'line> TryFrom<&'line str> for Position<'line> {
         }?;
         Ok(Position {
             start,
-            moves: Moves::Written(moves),
+            moves: Moves::Written(LineText::new(moves)),
         })
     }
 }

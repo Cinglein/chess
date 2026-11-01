@@ -8,6 +8,7 @@ repository.workspace = true
 
 [dependencies]
 engine = { version = "0.1.0", path = "../engine" }
+newtype.workspace = true
 uci = { version = "0.1.0", path = "../uci" }
 
 [dev-dependencies]

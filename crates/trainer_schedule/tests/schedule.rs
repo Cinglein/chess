@@ -1,4 +1,4 @@
-use trainer_schedule::Schedule;
+use trainer_schedule::{NetId, Schedule};
 const WRITTEN: &str = "
     batch_size = 8
     batches_per_superbatch = 4
@@ -20,7 +20,7 @@ const LAST: usize = 6;
 #[test]
 fn the_schedule_drops_the_learning_rate_on_its_step_and_saves_on_its_rate() {
     let schedule: Schedule = toml::from_str(WRITTEN).unwrap();
-    let training = schedule.training_schedule(NET);
+    let training = schedule.training_schedule(&NetId::new(NET.to_owned()));
     let rates = [BEFORE_DROP, AFTER_DROP].map(|superbatch| {
         (
             training.lr(FIRST_BATCH, superbatch),
