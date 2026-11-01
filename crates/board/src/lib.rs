@@ -16,8 +16,6 @@ mod leaper;
 mod long_algebraic;
 mod node_count;
 mod orthogonal;
-#[cfg(test)]
-mod perft_position;
 mod piece;
 mod piece_kind;
 mod placement;
@@ -42,3 +40,4 @@ pub use slider::{Bishop, Magic, Rook, Slider};
 pub use square::Square;
 pub use state::State;
 pub use zobrist::Zobrist;
+pub use zobrist_keys::SplitMix64;

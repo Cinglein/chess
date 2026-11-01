@@ -26,4 +26,5 @@ serde = ["dep:serde"]
 workspace = true
 
 [dev-dependencies]
+board = { version = "0.1.0", path = ".", features = ["proptest"] }
 proptest = "1"

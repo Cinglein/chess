@@ -26,7 +26,7 @@ impl CastlingRight {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for CastlingRight {
     type Parameters = ();
     type Strategy = proptest::sample::Select<CastlingRight>;

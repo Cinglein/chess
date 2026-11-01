@@ -4,7 +4,7 @@ exclude_globs = [
     "crates/*/src/command_line/**",
     "crates/chess/**",
     "crates/tui/**",
-    "crates/board/src/slider/magics.rs",
+    "crates/board/src/slider/bits/magics.rs",
     "crates/eval/src/piece_square_tables/placement_table.rs",
 ]
 exclude_re = [

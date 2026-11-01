@@ -3,18 +3,19 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use enum_map::EnumMap;
 use strum::{EnumCount, VariantArray};
 
-use super::{Magic, Rays};
+use super::super::Rays;
+use super::magic::Magic;
 use crate::bitboard::Bitboard;
 use crate::square::Square;
 
-pub(super) struct AttackTable<const SIZE: usize> {
+pub(in super::super) struct AttackTable<const SIZE: usize> {
     rays: Rays,
     magics: EnumMap<Square, Magic>,
     attack_slots: [AtomicU64; SIZE],
 }
 
 impl<const SIZE: usize> AttackTable<SIZE> {
-    pub(super) const fn new(rays: Rays, multipliers: &EnumMap<Square, u64>) -> Self {
+    pub(in super::super) const fn new(rays: Rays, multipliers: &EnumMap<Square, u64>) -> Self {
         AttackTable {
             rays,
             magics: Self::magics(rays, multipliers),
@@ -22,7 +23,7 @@ impl<const SIZE: usize> AttackTable<SIZE> {
         }
     }
 
-    pub(super) fn attacks(&self, square: Square, occupied: Bitboard) -> Bitboard {
+    pub(in super::super) fn attacks(&self, square: Square, occupied: Bitboard) -> Bitboard {
         let slot = &self.attack_slots[self.magics[square].index(occupied)];
         match slot.load(Ordering::Relaxed) {
             0 => {

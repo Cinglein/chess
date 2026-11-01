@@ -44,7 +44,7 @@ impl From<PromotionPiece> for PieceKind {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for PromotionPiece {
     type Parameters = ();
     type Strategy = proptest::sample::Select<PromotionPiece>;

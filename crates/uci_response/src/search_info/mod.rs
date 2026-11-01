@@ -93,7 +93,7 @@ impl fmt::Display for SearchInfo {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for SearchInfo {
     type Parameters = ();
     type Strategy = proptest::strategy::BoxedStrategy<SearchInfo>;

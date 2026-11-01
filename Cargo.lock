@@ -145,6 +145,7 @@ name = "board"
 version = "0.1.0"
 dependencies = [
  "arrayvec",
+ "board",
  "derive_more",
  "enum-map",
  "enum_dispatch",

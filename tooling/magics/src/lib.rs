@@ -1,9 +1,7 @@
-mod magic_tables;
-mod xor_shift;
+mod bits;
 
-use magic_tables::MagicTables;
+pub use bits::{HexLiteral, MagicSearch, MagicTables, XorShift};
 
-use crate::xor_shift::XorShift;
 use task::Failure;
 use task::Workspace;
 use task::{CargoArgument, Program};

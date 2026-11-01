@@ -1,12 +1,10 @@
-mod attack_table;
 mod bishop;
-mod magic;
-mod magics;
+mod bits;
 mod rays;
 mod rook;
 
 pub use bishop::Bishop;
-pub use magic::Magic;
+pub use bits::Magic;
 pub use rays::Rays;
 pub use rook::Rook;
 
@@ -27,57 +25,5 @@ pub trait Slider {
     #[must_use]
     fn relevant_occupancy(square: Square) -> Bitboard {
         Self::RAYS.relevant_occupancy(square)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Bishop, Rook, Slider};
-    use crate::bitboard::{Bitboard, SubsetIter};
-    use crate::square::Square;
-    use proptest::prelude::*;
-    use strum::IntoEnumIterator;
-    trait Checks: Slider {
-        fn first_relevant_occupancy_where_the_lookup_differs() -> Option<(Square, Bitboard)> {
-            Square::iter()
-                .flat_map(|square| {
-                    SubsetIter::new(Self::relevant_occupancy(square))
-                        .map(move |occupied| (square, occupied))
-                })
-                .find(|(square, occupied)| {
-                    Self::attacks(*square, *occupied) != Self::attacks_by_ray(*square, *occupied)
-                })
-        }
-
-        fn first_square_where_irrelevant_pieces_matter(occupied: Bitboard) -> Option<Square> {
-            Square::iter().find(|square| {
-                let relevant = occupied & Self::relevant_occupancy(*square);
-                Self::attacks(*square, occupied) != Self::attacks_by_ray(*square, relevant)
-            })
-        }
-    }
-
-    impl<S: Slider> Checks for S {}
-
-    #[test]
-    fn lookups_match_ray_walking_for_every_relevant_occupancy() {
-        assert_eq!(
-            Rook::first_relevant_occupancy_where_the_lookup_differs(),
-            None
-        );
-        assert_eq!(
-            Bishop::first_relevant_occupancy_where_the_lookup_differs(),
-            None
-        );
-    }
-
-    #[test]
-    fn lookups_ignore_pieces_outside_the_relevant_occupancy() {
-        proptest!(|(occupied: Bitboard)| {
-            prop_assert_eq!(
-                (Rook::first_square_where_irrelevant_pieces_matter(occupied), Bishop::first_square_where_irrelevant_pieces_matter(occupied)),
-                (None, None)
-            );
-        });
     }
 }

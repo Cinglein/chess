@@ -2,7 +2,7 @@ use std::iter;
 
 use board::{Bitboard, Magic, Slider, Square, SubsetIter};
 
-use crate::xor_shift::XorShift;
+use super::super::xor_shift::XorShift;
 
 pub struct MagicSearch {
     mask: Bitboard,
@@ -11,6 +11,7 @@ pub struct MagicSearch {
 }
 
 impl MagicSearch {
+    #[must_use]
     pub fn new<S: Slider>(square: Square) -> MagicSearch {
         let mask = S::relevant_occupancy(square);
         let attacks = SubsetIter::new(mask)
@@ -47,26 +48,5 @@ impl MagicSearch {
 
     fn spreads_well(&self, candidate: u64) -> bool {
         (self.mask.bits().wrapping_mul(candidate) >> 56).count_ones() >= 6
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::MagicSearch;
-    use crate::xor_shift::XorShift;
-    use board::{Bishop, Magic, Slider, Square, SubsetIter};
-    #[test]
-    fn a_found_magic_maps_every_occupancy_to_its_attacks() {
-        let square = Square::D4;
-        let multiplier = MagicSearch::new::<Bishop>(square).find_multiplier(&mut XorShift::new(7));
-        let mask = Bishop::relevant_occupancy(square);
-        let magic = Magic::new(mask, multiplier, 0);
-        let mut table = vec![None; magic.table_size()];
-        for subset in SubsetIter::new(mask) {
-            let attacks = Bishop::attacks_by_ray(square, subset);
-            let slot = &mut table[magic.index(subset)];
-            assert!(slot.is_none_or(|stored| stored == attacks));
-            *slot = Some(attacks);
-        }
     }
 }

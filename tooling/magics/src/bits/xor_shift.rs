@@ -1,6 +1,7 @@
 pub struct XorShift(u64);
 
 impl XorShift {
+    #[must_use]
     pub const fn new(seed: u64) -> XorShift {
         XorShift(seed)
     }

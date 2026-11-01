@@ -31,7 +31,7 @@ pub enum File {
     H,
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for File {
     type Parameters = ();
     type Strategy = proptest::sample::Select<File>;

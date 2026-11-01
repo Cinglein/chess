@@ -38,7 +38,7 @@ pub enum Rank {
     Eight,
 }
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for Rank {
     type Parameters = ();
     type Strategy = proptest::sample::Select<Rank>;
